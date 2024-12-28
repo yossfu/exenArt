@@ -4,34 +4,202 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Galería de Imágenes</title>
-    <link rel="stylesheet" href="style.css"> <!-- Enlace al archivo CSS -->
-    <link rel="icon" href="icon.png" type="image/png"> <!-- Icono de la página -->
-    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet"> <!-- Boxicons -->
+    <style>
+        * {
+            box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho y alto */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212; /* Fondo oscuro */
+            color: #e0e0e0; /* Texto claro */
+            margin: 0; /* Eliminar márgenes por defecto */
+            padding: 0; /* Eliminar padding por defecto */
+            overflow-x: hidden; /* Evitar desplazamiento horizontal */
+        }
+
+        header {
+            background-color: #1f1f1f; /* Color de fondo del header */
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Sombra en el header */
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 40px; /* Ajustar tamaño del icono */
+            height: auto; /* Mantener proporción */
+            border-radius: 50%; /* Hacer el icono redondo */
+        }
+
+        .menu {
+            display: flex;
+            margin-left: 20px; /* Espacio entre icono y menú */
+        }
+
+        .tab-button {
+            color: white;
+            padding: 10px;
+            text-decoration: none; /* Sin subrayado */
+            transition: background-color 0.3s; /* Transición suave para el hover */
+        }
+
+        .tab-button:hover {
+            background-color: rgba(255, 255, 255, 0.1); /* Efecto hover */
+        }
+
+        .search-container {
+            text-align: center;
+            margin: 20px auto;
+        }
+
+        .search-container input {
+            padding: 10px;
+            width: calc(100% - 22px); /* Ancho del buscador */
+            max-width: 400px; /* Ancho máximo */
+            border-radius: 5px; /* Bordes redondeados */
+            border: none; /* Sin borde */
+            background-color: #333; /* Fondo del buscador */
+            color: white; /* Color del texto */
+        }
+
+        .tags-container {
+            text-align: center; /* Centrar las etiquetas */
+            margin-top: 20px; /* Espaciado superior */
+        }
+
+        .tag {
+            display: inline-block; /* Mostrar como bloque en línea */
+            background-color: #444; /* Color de fondo de la etiqueta */
+            color: white; /* Color del texto */
+            padding: 10px 15px; /* Espaciado interno */
+            margin: 5px; /* Espacio entre etiquetas */
+            border-radius: 5px; /* Bordes redondeados */
+            cursor: pointer; /* Cambiar cursor al pasar el mouse */
+            transition: background-color 0.3s; /* Transición suave para el hover */
+        }
+
+        .tag:hover {
+            background-color: #555; /* Color al pasar el mouse */
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(250px, 1fr)); /* Tres columnas fijas con un mínimo de ancho adaptable a la pantalla */
+            gap: 10px; /* Espacio entre las imágenes */
+            padding: 20px; /* Espaciado interno en la cuadrícula */
+        }
+
+        .grid-item {
+            background-color: #222; /* Fondo gris oscuro para cada item */
+            border-radius: 5px; /* Bordes redondeados */
+            overflow: hidden; /* Ocultar desbordamiento */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Sombra en cada item */
+           transition :transform 0.3s ease-in-out ;/* Efecto de transformación suave al hacer hover */ 
+       } 
+
+       .grid-item:hover { 
+           transform :scale(1.05) ;/* Efecto zoom al pasar el mouse sobre el item */ 
+       } 
+
+       .grid-item img { 
+           width :100% ;/* Asegura que la imagen ocupe todo el espacio del contenedor */ 
+           height :auto ;/* Mantiene la proporción de la imagen */ 
+       } 
+
+       footer { 
+           text-align:center ; 
+           padding :20px ;
+           background-color:#1f1f1f ; 
+           position :relative ; 
+           bottom :0 ; 
+           width :100% ; 
+       }
+    </style>
 </head>
 <body>
 
-<div id="header-container"></div> <!-- Contenedor para el encabezado -->
+<header>
+    <div class="top-bar">
+        <img src="https://i.ibb.co/Fnt08ty/Exen-Profil-E.jpg" alt="Icono" class="header-icon"> <!-- Icono -->
+        <nav class="menu">
+            <a href="#" class="tab-button">Home</a>
+            <a href="#" class="tab-button">Chat</a>
+            <a href="#" class="tab-button">Sobre mí</a>
+        </nav>
+    </div>
+    <hr class="divider"> <!-- Divisor -->
+</header>
 
 <div class="search-container">
     <input type="text" id="search" placeholder="Buscar por etiqueta..." />
 </div>
 
-<hr class="divider"> <!-- Divisor estilizado -->
+<hr class="divider"> <!-- Divisor -->
+
+<div class="tags-container">
+    <h3>Etiquetas:</h3>
+    <div id="tags-list">
+        <span class="tag" data-tag="anime">Anime</span>
+        <span class="tag" data-tag="ropa">Ropa</span>
+        <span class="tag" data-tag="naturaleza">Naturaleza</span>
+        <span class="tag" data-tag="viajes">Viajes</span>
+        <span class="tag" data-tag="arte">Arte</span>
+    </div>
+</div>
+
+<hr class="divider"> <!-- Divisor -->
 
 <main id="gallery">
     <div class="grid" id="image-grid"></div> <!-- Contenedor para el grid -->
-    <div class="pagination">
-        <button id="prevPage">Anterior</button>
-        <span id="pageInfo"></span>
-        <button id="nextPage">Siguiente</button>
-    </div>
 </main>
+
+<hr class="divider"> <!-- Divisor -->
 
 <footer>
     <p>&copy; 2024 Tu Nombre. Todos los derechos reservados.</p>
 </footer>
 
-<script src="header.js"></script> <!-- Cargar el encabezado -->
-<script src="image-grid.js"></script> <!-- Enlaza tu JavaScript para cargar imágenes -->
-</body>
-</html>
+<script>
+// Datos JSON (normalmente esto se cargaría desde un archivo externo)
+const imagesData = [
+    {
+       "id": 1,
+       "url": "https://i.ibb.co/GRjGxSB/Picsart-24-12-16-17-18-00-738.jpg",
+       "title": "Bello swetter",
+       "description": "Un suéter bonito en un entorno natural.",
+       "tags": ["anime", "ropa", "bello"],
+       "redirectUrl": "kiki.html" // Redirigir a kiki.html
+   },
+   {
+       "id": 2,
+       "url": "http://example.com/image2.jpg",
+       "title": "Título de la Imagen 2",
+       "description": "Descripción de la imagen 2.",
+       "tags": ["tag1", "tag3"],
+       "redirectUrl": "image2.html"
+   },
+   {
+       "id": 3,
+       "url": "http://example.com/image3.jpg",
+       "title": "Título de la Imagen 3",
+       "description": "Descripción de la imagen 3.",
+       "tags": ["tag2", "tag4"],
+       "redirectUrl": "image3.html"
+   }
+];
+
+const imageGrid = document.getElementById('image-grid');
+
+// Generar elementos para cada imagen
+imagesData.forEach(item => {
+    const imageItem = document.createElement('div');
+    imageItem.className = 'grid-item';
+    imageItem.dataset.tags = item.tags.join(','); // Agregar tags como atributo data
+    imageItem.innerHTML = `
+         <a href="${item.redirectUrl}"> <!-- Usa redirectUrl para el enlace -->
+             <img src="${item.url}" alt="${item.title}">
+         </a>
