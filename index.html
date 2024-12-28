@@ -59,64 +59,86 @@
         .search-container input {
             padding: 10px;
             width: calc(100% - 22px); /* Ancho del buscador */
-            max-width: 400px; /* Ancho máximo */
+            max-width: 300px; /* Ancho máximo */
             border-radius: 5px; /* Bordes redondeados */
             border: none; /* Sin borde */
             background-color: #333; /* Fondo del buscador */
             color: white; /* Color del texto */
         }
 
-        .tags-container {
-            text-align: center; /* Centrar las etiquetas */
-            margin-top: 20px; /* Espaciado superior */
+        .banner-container {
+            text-align: center;
+            margin-top: 20px;
+            background-image: linear-gradient(to right, #ff5722, #e64a19); /* Degradado de fondo */
+            padding: 40px; /* Espaciado interno aumentado */
+            border-radius: 10px; /* Bordes redondeados */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Sombra para el banner */
         }
 
-        .tag {
-            display: inline-block; /* Mostrar como bloque en línea */
-            background-color: #444; /* Color de fondo de la etiqueta */
-            color: white; /* Color del texto */
-            padding: 10px 15px; /* Espaciado interno */
-            margin: 5px; /* Espacio entre etiquetas */
-            border-radius: 5px; /* Bordes redondeados */
-            cursor: pointer; /* Cambiar cursor al pasar el mouse */
-            transition: background-color 0.3s; /* Transición suave para el hover */
+        .banner h2 {
+            color: white;
         }
 
-        .tag:hover {
-            background-color: #555; /* Color al pasar el mouse */
+        .banner p {
+            color: #fff3e0; /* Color más claro para el texto del párrafo */
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(250px, 1fr)); /* Tres columnas fijas con un mínimo de ancho adaptable a la pantalla */
-            gap: 10px; /* Espacio entre las imágenes */
-            padding: 20px; /* Espaciado interno en la cuadrícula */
-        }
+        .grid-container {
+           max-width :1200px ;/* Limitar el ancho máximo del contenedor */ 
+           margin :auto ;/* Centrar contenedor */ 
+           padding :20px ;/* Espaciado interno */ 
+       } 
 
-        .grid-item {
-            background-color: #222; /* Fondo gris oscuro para cada item */
-            border-radius: 5px; /* Bordes redondeados */
-            overflow: hidden; /* Ocultar desbordamiento */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Sombra en cada item */
+       .flex-container { 
+           display:flex ; 
+           flex-wrap :wrap ;/* Permitir que los elementos se ajusten a la siguiente línea */ 
+           justify-content :space-between ;/* Espacio entre los elementos */ 
+       } 
+
+       .flex-item { 
+           flex :0 1 calc(33.33% - 10px);/* Cada imagen ocupa un tercio del ancho menos el espacio */ 
+           background-color:#222 ;/* Fondo gris oscuro para cada item */ 
+           border-radius :5px ;/* Bordes redondeados */ 
+           overflow:hidden ;/* Ocultar desbordamiento */ 
+           margin-bottom :10px; /* Espacio entre filas */ 
            transition :transform 0.3s ease-in-out ;/* Efecto de transformación suave al hacer hover */ 
        } 
 
-       .grid-item:hover { 
+       .flex-item:hover { 
            transform :scale(1.05) ;/* Efecto zoom al pasar el mouse sobre el item */ 
        } 
 
-       .grid-item img { 
+       .flex-item img { 
            width :100% ;/* Asegura que la imagen ocupe todo el espacio del contenedor */ 
            height :auto ;/* Mantiene la proporción de la imagen */ 
        } 
 
        footer { 
            text-align:center ; 
-           padding :20px ;
+           padding :20px ; 
            background-color:#1f1f1f ; 
            position :relative ; 
            bottom :0 ; 
-           width :100% ; 
+           width :100%; 
+       }
+       
+       .pagination {
+           text-align:center ;
+           margin-top :20px ;
+       }
+
+       .pagination button {
+           background-color:#ff5722 ;
+           color:white ;
+           border:none ;
+           padding :10px ;
+           margin :5px ;
+           border-radius :5px ;
+           cursor:pointer ;
+       }
+       
+       .pagination button:hover {
+           background-color:#e64a19 ;
        }
     </style>
 </head>
@@ -140,22 +162,22 @@
 
 <hr class="divider"> <!-- Divisor -->
 
-<div class="tags-container">
-    <h3>Etiquetas:</h3>
-    <div id="tags-list">
-        <span class="tag" data-tag="anime">Anime</span>
-        <span class="tag" data-tag="ropa">Ropa</span>
-        <span class="tag" data-tag="naturaleza">Naturaleza</span>
-        <span class="tag" data-tag="viajes">Viajes</span>
-        <span class="tag" data-tag="arte">Arte</span>
+<!-- Banner Promocional -->
+<div class="banner-container">
+    <div class="banner">
+        <h2>¡Descubre nuestras ofertas especiales!</h2>
+        <p>Aprovecha descuentos exclusivos en nuestros productos más populares.</p>
     </div>
 </div>
 
 <hr class="divider"> <!-- Divisor -->
 
-<main id="gallery">
-    <div class="grid" id="image-grid"></div> <!-- Contenedor para el grid -->
+<main id="gallery" class="grid-container">
+    <div class="flex-container" id="image-grid"></div> <!-- Contenedor para el grid -->
 </main>
+
+<!-- Paginación -->
+<div class="pagination" id="pagination"></div>
 
 <hr class="divider"> <!-- Divisor -->
 
@@ -164,42 +186,78 @@
 </footer>
 
 <script>
-// Datos JSON (normalmente esto se cargaría desde un archivo externo)
-const imagesData = [
-    {
-       "id": 1,
-       "url": "https://i.ibb.co/GRjGxSB/Picsart-24-12-16-17-18-00-738.jpg",
-       "title": "Bello swetter",
-       "description": "Un suéter bonito en un entorno natural.",
-       "tags": ["anime", "ropa", "bello"],
-       "redirectUrl": "kiki.html" // Redirigir a kiki.html
-   },
-   {
-       "id": 2,
-       "url": "http://example.com/image2.jpg",
-       "title": "Título de la Imagen 2",
-       "description": "Descripción de la imagen 2.",
-       "tags": ["tag1", "tag3"],
-       "redirectUrl": "image2.html"
-   },
-   {
-       "id": 3,
-       "url": "http://example.com/image3.jpg",
-       "title": "Título de la Imagen 3",
-       "description": "Descripción de la imagen 3.",
-       "tags": ["tag2", "tag4"],
-       "redirectUrl": "image3.html"
-   }
-];
+// Cargar datos JSON desde un archivo externo
+fetch('imagenes.json')
+   .then(response => response.json())
+   .then(imagesData => {
+       const imageGrid = document.getElementById('image-grid');
+       
+       const itemsPerPage = 15; // Número de imágenes por página
+       let currentPage = 1;
 
-const imageGrid = document.getElementById('image-grid');
+       function renderImages(page) {
+           // Limpiar la cuadrícula
+           imageGrid.innerHTML = '';
 
-// Generar elementos para cada imagen
-imagesData.forEach(item => {
-    const imageItem = document.createElement('div');
-    imageItem.className = 'grid-item';
-    imageItem.dataset.tags = item.tags.join(','); // Agregar tags como atributo data
-    imageItem.innerHTML = `
-         <a href="${item.redirectUrl}"> <!-- Usa redirectUrl para el enlace -->
-             <img src="${item.url}" alt="${item.title}">
-         </a>
+           // Calcular los índices de inicio y fin
+           const startIndex = (page - 1) * itemsPerPage;
+           const endIndex = startIndex + itemsPerPage;
+
+           // Generar elementos para cada imagen en la página actual
+           imagesData.slice(startIndex, endIndex).forEach(item => {
+               const imageItem = document.createElement('div');
+               imageItem.className = 'flex-item';
+               imageItem.dataset.tags = item.tags.join(','); // Agregar tags como atributo data
+               imageItem.innerHTML = `
+                    <a href="${item.redirectUrl}"> <!-- Usa redirectUrl para el enlace -->
+                        <img src="${item.url}" alt="${item.title}">
+                    </a>
+                    <p>${item.title}</p> <!-- Mostrar solo el título -->
+               `;
+               imageGrid.appendChild(imageItem); // Agregar el elemento a la cuadrícula
+           });
+       }
+
+       // Renderizar las imágenes al cargar
+       renderImages(currentPage);
+
+       // Manejar búsqueda dinámica
+       document.getElementById('search').addEventListener('input', function() {
+          const searchTerm = this.value.toLowerCase().trim();
+          const gridItems = document.querySelectorAll('.flex-item');
+
+          gridItems.forEach(item => {
+              const title = item.querySelector('p').textContent.toLowerCase();
+              const description = imagesData.find(img => img.url === item.querySelector('img').src).description.toLowerCase(); // Obtener descripción desde JSON
+              const tags = item.dataset.tags.split(','); // Obtener los tags desde el dataset
+
+              // Dividir el término de búsqueda en palabras y filtrar palabras menores a tres letras
+              const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 3);
+
+              // Verificar si alguna palabra está presente en el título, descripción o los tags
+              const matchesTitle = searchWords.some(word => title.includes(word));
+              const matchesDescription = searchWords.some(word => description.includes(word));
+              const matchesTags = tags.some(tag =>
+                  searchWords.some(word => tag.toLowerCase().includes(word))
+              );
+
+              if (matchesTitle || matchesDescription || matchesTags) {
+                  item.style.display = ''; // Muestra el item si hay coincidencia
+              } else {
+                  item.style.display = 'none'; // Oculta el item si no hay coincidencia
+              }
+          });
+
+          // Si no hay texto en la búsqueda, mostrar todas las imágenes nuevamente
+          if (searchTerm === '') {
+              gridItems.forEach(item => item.style.display = '');
+          }
+      });
+
+   })
+   .catch(error => console.error('Error cargando el JSON:', error));
+
+</script>
+
+</body>
+</html>
