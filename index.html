@@ -165,8 +165,8 @@
 <!-- Banner Promocional -->
 <div class="banner-container">
     <div class="banner">
-        <h2>¡Descubre nuestras ofertas especiales!</h2>
-        <p>Aprovecha descuentos exclusivos en nuestros productos más populares.</p>
+        <h2>¡BIENVENIDOS!</h2>
+        <p>Recuerda dejarme tus suegerencias en los comentarios🖤. Si nos encontramos por el chat no olvides saludarme 😃.</p>
     </div>
 </div>
 
@@ -182,7 +182,7 @@
 <hr class="divider"> <!-- Divisor -->
 
 <footer>
-    <p>&copy; 2024 Tu Nombre. Todos los derechos reservados.</p>
+    <p>&copy; 2024 ExenE. Todos los derechos reservados.</p>
 </footer>
 
 <script>
@@ -216,6 +216,24 @@ fetch('imagenes.json')
                `;
                imageGrid.appendChild(imageItem); // Agregar el elemento a la cuadrícula
            });
+           
+           renderPagination(imagesData.length); // Renderizar la paginación después de mostrar las imágenes
+       }
+
+       function renderPagination(totalItems) {
+           const pagination = document.getElementById('pagination');
+           pagination.innerHTML = ''; // Limpiar la paginación existente
+           const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+           for (let i = 1; i <= totalPages; i++) {
+               const button = document.createElement('button');
+               button.textContent = i;
+               button.onclick = () => {
+                   currentPage = i;
+                   renderImages(currentPage);
+               };
+               pagination.appendChild(button);
+           }
        }
 
        // Renderizar las imágenes al cargar

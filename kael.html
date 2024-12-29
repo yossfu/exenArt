@@ -126,8 +126,8 @@
        <img src='https://i.ibb.co/Fnt08ty/Exen-Profil-E.jpg' alt='Icono' class='header-icon'>  
        <nav class='menu'>  
            <a href='index.html' class='tab-button'>Home</a>  
-           <a href='chat.html' class='tab-button'>Chat</a>  
-           <a href='yo.html' class='tab-button'>Sobre mí</a>  
+           <a href='#' class='tab-button'>Chat</a>  
+           <a href='#' class='tab-button'>Sobre mí</a>  
        </nav>  
    </div>  
    <hr class='divider'>  
@@ -163,12 +163,12 @@
 <hr class='divider'>  
 
 <footer>   
-   <p>&copy; 2024 exenE. Todos los derechos reservados.</p>   
+   <p>&copy; 2024 ExenArts. Todos los derechos reservados.</p>   
 </footer>   
 
 <script>
 // Define el ID de la imagen que quieres cargar
-const imageId = 🔴; // Cambia este número al ID correspondiente
+const imageId = 10; // Cambia este número al ID correspondiente
 
 fetch('imagenes.json')
    .then(response => response.json())
@@ -192,36 +192,20 @@ fetch('imagenes.json')
 
 function loadSimilarImages(tags, allImages) {
    const similarImagesGrid = document.getElementById('similar-images-grid');
-   let similarImages = []; // Array para almacenar imágenes similares
-
    allImages.forEach(item => {
        if (item.id !== imageId && item.tags.some(tag => tags.includes(tag))) { // Filtrar imágenes similares
-           similarImages.push(item); // Agregar a la lista de imágenes similares
+           const imageElement = document.createElement('div');
+           imageElement.className = 'similar-image-item';
+           imageElement.innerHTML = `
+               <a href="${item.redirectUrl}">
+                   <img src="${item.url}" alt="${item.title}">
+               </a>
+               <p>${item.title}</p>`;
+           similarImagesGrid.appendChild(imageElement);
        }
    });
-
-   // Ordenar las imágenes similares según la cantidad de coincidencias
-   similarImages.sort((a, b) => {
-       const aMatches = a.tags.filter(tag => tags.includes(tag)).length;
-       const bMatches = b.tags.filter(tag => tags.includes(tag)).length;
-       return bMatches - aMatches; // Ordenar de mayor a menor coincidencia
-   });
-
-   // Limitar a un máximo de 8 imágenes similares
-   for (let i = 0; i < Math.min(8, similarImages.length); i++) {
-       const item = similarImages[i];
-       const imageElement = document.createElement('div');
-       imageElement.className = 'similar-image-item';
-       imageElement.innerHTML = `
-           <a href="${item.redirectUrl}">
-               <img src="${item.url}" alt="${item.title}">
-           </a>
-           <p>${item.title}</p>`;
-       similarImagesGrid.appendChild(imageElement);
-   }
 }
 </script>
 
 </body>
 </html>
-
