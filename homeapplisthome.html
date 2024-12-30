@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galería de Imágenes</title>
+    <style>
+        * {
+            box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho y alto */
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212; /* Fondo oscuro */
+            color: #e0e0e0; /* Texto claro */
+            margin: 0; /* Eliminar márgenes por defecto */
+            padding: 0; /* Eliminar padding por defecto */
+            overflow-x: hidden; /* Evitar desplazamiento horizontal */
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #1f1f1f; /* Color de fondo del header */
+            position: fixed; /* Fijar en la parte superior */
+            top: 0;
+            width: 100%; /* Ancho completo */
+            z-index: 1000; /* Asegurar que esté por encima de otros elementos */
+        }
+
+        .header-button {
+            background-color: #ff5722; /* Color del botón */
+            color: white;
+            border: none;
+            border-radius: 5px; /* Bordes redondeados */
+            padding: 10px 15px; /* Espaciado interno */
+            cursor: pointer;
+            transition: background-color 0.3s; /* Transición suave para el hover */
+        }
+
+        .header-button:hover {
+            background-color: #e64a19; /* Efecto hover */
+        }
+
+        .search-container {
+            text-align: center;
+            margin-top: 60px; /* Espacio para el header fijo */
+        }
+
+        .search-container input {
+            padding: 10px;
+            width: calc(100% - 22px); /* Ancho del buscador */
+            max-width: 300px; /* Ancho máximo */
+            border-radius: 25px; /* Bordes redondeados */
+            border: none; /* Sin borde */
+            background-color: #333; /* Fondo del buscador */
+            color: white; /* Color del texto */
+            transition: background-color 0.3s;
+        }
+
+        .search-container input:focus {
+            background-color: #444; /* Cambiar color al enfocar */
+        }
+
+        .grid-container {
+           max-width :1200px ;/* Limitar el ancho máximo del contenedor */ 
+           margin :auto ;/* Centrar contenedor */ 
+           padding :20px ;/* Espaciado interno */ 
+       } 
+
+       .flex-container { 
+           display:flex ; 
+           flex-wrap :wrap ;/* Permitir que los elementos se ajusten a la siguiente línea */ 
+           justify-content :space-between ;/* Espacio entre los elementos */ 
+       } 
+
+       .flex-item { 
+           flex :0 1 calc(33.33% - 10px);/* Cada imagen ocupa un tercio del ancho menos el espacio */ 
+           background-color:#222 ;/* Fondo gris oscuro para cada item */ 
+           border-radius :15px ;/* Bordes redondeados */ 
+           overflow:hidden ;/* Ocultar desbordamiento */ 
+           margin-bottom :20px; /* Espacio entre filas */ 
+           transition :transform 0.3s ease-in-out , box-shadow 0.3s ease-in-out; /* Efecto de transformación suave al hacer hover */ 
+           box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+       } 
+
+       .flex-item:hover { 
+           transform :scale(1.05) ;/* Efecto zoom al pasar el mouse sobre el item */ 
+           box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Sombra más intensa al hacer hover */
+       } 
+
+       .flex-item img { 
+           width :100% ;/* Asegura que la imagen ocupe todo el espacio del contenedor */ 
+           height :auto ;/* Mantiene la proporción de la imagen */ 
+           border-radius: 15px; /* Bordes redondeados para las imágenes */
+       } 
+
+       .menu-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #1f1f1f; /* Color de fondo del menú */
+            position: fixed; /* Fijar en la parte inferior */
+            bottom: 0;
+            width: 100%; /* Ancho completo */
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.5); /* Sombra en el menú */
+        }
+
+        .menu-button {
+            background-color: #ff5722; /* Color del botón */
+            color: white;
+            border: none;
+            border-radius: 50%; /* Botón redondo */
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s; /* Transición suave para el hover */
+        }
+
+        .menu-button:hover {
+            background-color: #e64a19; /* Efecto hover */
+            transform: scale(1.1); /* Efecto de aumento al pasar el mouse sobre el botón */
+        }
+
+        .home-button {
+            position: relative; /* Para permitir que sobresalga */
+        }
+
+        .home-button.active {
+            outline: none; /* Evitar el contorno predeterminado al hacer clic */
+        }
+
+        .home-button::after {
+            content: '';
+            position: absolute;
+            top: -10px; /* Ajustar la posición para que sobresalga un poco hacia arriba */
+            left: -10px; /* Ajustar la posición para que sobresalga un poco hacia la izquierda */
+            width: calc(100% + 20px); /* Ampliar el área que sobresale */
+            height: calc(100% + 20px); /* Ampliar el área que sobresale */
+            border-radius: 50%; /* Mantener forma redonda */
+            background-color: rgba(255,87,34,0.5); /* Fondo semi-transparente para destacar el botón cuando está activo */
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-container">
+    <button class="header-button" id="forum">Foro</button> <!-- Botón Foro -->
+</div>
+
+<div class="search-container">
+    <input type="text" id="search" placeholder="Buscar por etiqueta..." />
+</div>
+
+<hr class="divider"> <!-- Divisor -->
+
+<main id="gallery" class="grid-container">
+    <div class="flex-container" id="image-grid"></div> <!-- Contenedor para el grid -->
+</main>
+
+<!-- Menú de Aplicación -->
+<div class="menu-container">
+    <button class="menu-button" id="prev-page">&lt;</button> <!-- Flecha anterior -->
+    <button class="menu-button home-button" id="home">Home</button> <!-- Botón Home -->
+    <button class="menu-button" id="next-page">&gt;</button> <!-- Flecha siguiente -->
+</div>
+
+<script>
+// Cargar datos JSON desde un archivo externo
+fetch('imagenes.json')
+   .then(response => response.json())
+   .then(imagesData => {
+       const imageGrid = document.getElementById('image-grid');
+       
+       const itemsPerPage = 15; // Número de imágenes por página
+       let currentPage = 1;
+
+       function renderImages(page) {
+           // Limpiar la cuadrícula
+           imageGrid.innerHTML = '';
+
+           // Calcular los índices de inicio y fin
+           const startIndex = (page - 1) * itemsPerPage;
+           const endIndex = startIndex + itemsPerPage;
+
+           // Generar elementos para cada imagen en la página actual
+           imagesData.slice(startIndex, endIndex).forEach(item => {
+               const imageItem = document.createElement('div');
+               imageItem.className = 'flex-item';
+               imageItem.dataset.tags = item.tags.join(','); // Agregar tags como atributo data
+               imageItem.innerHTML = `
+                    <a href="${item.redirectUrl}"> <!-- Usa redirectUrl para el enlace -->
+                        <img src="${item.url}" alt="${item.title}">
+                    </a>
+                    <p>${item.title}</p> <!-- Mostrar solo el título -->
+               `;
+               imageGrid.appendChild(imageItem); // Agregar el elemento a la cuadrícula
+           });
+           
+           // No se necesita paginación numérica ya que se navega con flechas
+       }
+
+       // Renderizar las imágenes al cargar
+       renderImages(currentPage);
+
+       // Manejar búsqueda dinámica
+       document.getElementById('search').addEventListener('input', function() {
+          const searchTerm = this.value.toLowerCase().trim();
+          const filteredItems = imagesData.filter(item => {
+              const titleMatch = item.title.toLowerCase().includes(searchTerm);
+              const descriptionMatch = item.description?.toLowerCase().includes(searchTerm);
+              const tagsMatch = item.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+              return titleMatch || descriptionMatch || tagsMatch;
+          });
+
+          // Limpiar la cuadrícula y mostrar resultados filtrados
+          imageGrid.innerHTML = '';
+          filteredItems.forEach(item => {
+              const imageItem = document.createElement('div');
+              imageItem.className = 'flex-item';
+              imageItem.dataset.tags = item.tags.join(','); // Agregar tags como atributo data
+              imageItem.innerHTML = `
+                    <a href="${item.redirectUrl}"> <!-- Usa redirectUrl para el enlace -->
+                        <img src="${item.url}" alt="${item.title}">
+                    </a>
+                    <p>${item.title}</p> <!-- Mostrar solo el título -->
+               `;
+              imageGrid.appendChild(imageItem); // Agregar el elemento a la cuadrícula
+          });
+
+          // Si no hay texto en la búsqueda, mostrar todas las imágenes nuevamente
+          if (searchTerm === '') {
+              renderImages(currentPage);
+          }
+      });
+
+      // Manejar navegación entre páginas
+      document.getElementById('prev-page').addEventListener('click', () => {
+          if (currentPage > 1) {
+              currentPage--;
+              renderImages(currentPage);
+          }
+      });
+
+      document.getElementById('next-page').addEventListener('click', () => {
+          if (currentPage * itemsPerPage < imagesData.length) {
+              currentPage++;
+              renderImages(currentPage);
+          }
+      });
+
+      // Manejar clic en Home
+      document.getElementById('home').addEventListener('click', () => {
+          currentPage = 1; // Ir a la primera página
+          renderImages(currentPage);
+      });
+
+      // Redirigir al foro
+      document.getElementById('forum').addEventListener('click', () => {
+          window.location.href = "go:A"; // Redirigir a la URL especificada
+      });
+
+   })
+   .catch(error => console.error('Error cargando el JSON:', error));
+
+</script>
+
+</body>
+</html>
