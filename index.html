@@ -51,6 +51,21 @@
             background-color: rgba(255, 255, 255, 0.1); /* Efecto hover */
         }
 
+        .social-icons {
+            margin-left: auto; /* Empujar los íconos a la derecha */
+        }
+
+        .social-icon {
+            width: 30px; /* Ajustar tamaño del ícono */
+            height: auto; /* Mantener proporción */
+            margin-left: 10px; /* Espacio entre íconos */
+            transition: transform 0.3s; /* Efecto de transición suave */
+        }
+
+        .social-icon:hover {
+            transform: scale(1.1); /* Efecto zoom al pasar el mouse sobre el ícono */
+        }
+
         .search-container {
             text-align: center;
             margin: 20px auto;
@@ -148,10 +163,20 @@
     <div class="top-bar">
         <img src="https://i.ibb.co/Fnt08ty/Exen-Profil-E.jpg" alt="Icono" class="header-icon"> <!-- Icono -->
         <nav class="menu">
-            <a href="#" class="tab-button">Home</a>
-            <a href="#" class="tab-button">Chat</a>
-            <a href="#" class="tab-button">Sobre mí</a>
+            <a href="index.html" class="tab-button">Home</a>
+            <a href="chat.html" class="tab-button">Chat</a>
+            <a href="yo.html" class="tab-button">Sobre mí</a>
         </nav>
+        
+        <!-- Íconos de redes sociales en el header -->
+        <div class="social-icons">
+            <a href="https://www.facebook.com/exenie?mibextid=ZbWKwL" target="_blank">
+                <img src="https://img.icons8.com/?size=512&id=118497&format=png" alt="Facebook" class="social-icon">
+            </a>
+            <a href="https://www.twitter.com/exeneqiel" target="_blank">
+                <img src="https://img.icons8.com/?size=512&id=5MQ0gPAYYx7a&format=png" alt="Twitter" class="social-icon">
+            </a>
+        </div>
     </div>
     <hr class="divider"> <!-- Divisor -->
 </header>
@@ -244,31 +269,32 @@ fetch('imagenes.json')
           const searchTerm = this.value.toLowerCase().trim();
           const gridItems = document.querySelectorAll('.flex-item');
 
-          gridItems.forEach(item => {
-              const title = item.querySelector('p').textContent.toLowerCase();
-              const description = imagesData.find(img => img.url === item.querySelector('img').src).description.toLowerCase(); // Obtener descripción desde JSON
-              const tags = item.dataset.tags.split(','); // Obtener los tags desde el dataset
+          // Filtrar imágenes según búsqueda
+          const filteredItems = imagesData.filter(item => {
+              const titleMatch = item.title.toLowerCase().includes(searchTerm);
+              const descriptionMatch = item.description?.toLowerCase().includes(searchTerm);
+              const tagsMatch = item.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+              return titleMatch || descriptionMatch || tagsMatch;
+          });
 
-              // Dividir el término de búsqueda en palabras y filtrar palabras menores a tres letras
-              const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 3);
-
-              // Verificar si alguna palabra está presente en el título, descripción o los tags
-              const matchesTitle = searchWords.some(word => title.includes(word));
-              const matchesDescription = searchWords.some(word => description.includes(word));
-              const matchesTags = tags.some(tag =>
-                  searchWords.some(word => tag.toLowerCase().includes(word))
-              );
-
-              if (matchesTitle || matchesDescription || matchesTags) {
-                  item.style.display = ''; // Muestra el item si hay coincidencia
-              } else {
-                  item.style.display = 'none'; // Oculta el item si no hay coincidencia
-              }
+          // Limpiar la cuadrícula y mostrar resultados filtrados
+          imageGrid.innerHTML = '';
+          filteredItems.forEach(item => {
+              const imageItem = document.createElement('div');
+              imageItem.className = 'flex-item';
+              imageItem.dataset.tags = item.tags.join(','); // Agregar tags como atributo data
+              imageItem.innerHTML = `
+                    <a href="${item.redirectUrl}"> <!-- Usa redirectUrl para el enlace -->
+                        <img src="${item.url}" alt="${item.title}">
+                    </a>
+                    <p>${item.title}</p> <!-- Mostrar solo el título -->
+               `;
+              imageGrid.appendChild(imageItem); // Agregar el elemento a la cuadrícula
           });
 
           // Si no hay texto en la búsqueda, mostrar todas las imágenes nuevamente
           if (searchTerm === '') {
-              gridItems.forEach(item => item.style.display = '');
+              renderImages(currentPage);
           }
       });
 

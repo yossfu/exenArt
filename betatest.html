@@ -3,223 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bello Sweater</title>
+    <title>Galería de Imágenes</title>
     <style>
         * {
             box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho y alto */
         }
 
-        body { 
-            font-family: Arial, sans-serif; 
-            background-color: #121212; 
-            color: #e0e0e0; 
-            margin: 0; 
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212; /* Fondo oscuro */
+            color: #e0e0e0; /* Texto claro */
+            margin: 0; /* Eliminar márgenes por defecto */
+            padding: 0; /* Eliminar padding por defecto */
+            overflow-x: hidden; /* Evitar desplazamiento horizontal */
+        }
+
+        header {
+            background-color: #1f1f1f; /* Color de fondo del header */
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Sombra en el header */
+        }
+
+        .top-bar {
             display: flex;
-            flex-direction: column;
-            align-items: center; /* Centrar horizontalmente */
-        } 
+            align-items: center;
+        }
 
-        header { 
-            background-color: #1f1f1f; 
-            padding: 10px; 
-            width: 100%; /* Asegurar que el header ocupe todo el ancho */
-        } 
+        .header-icon {
+            width: 40px; /* Ajustar tamaño del icono */
+            height: auto; /* Mantener proporción */
+            border-radius: 50%; /* Hacer el icono redondo */
+        }
 
-        .top-bar { 
-            display: flex; 
-            align-items: center; 
-        } 
+        .menu {
+            display: flex;
+            margin-left: 20px; /* Espacio entre icono y menú */
+        }
 
-        .header-icon { 
-            width: 30px; 
-            height: auto; 
-            border-radius: 50%; /* Hacer icono redondo */  
-        } 
+        .tab-button {
+            color: white;
+            padding: 10px;
+            text-decoration: none; /* Sin subrayado */
+            transition: background-color 0.3s; /* Transición suave para el hover */
+        }
 
-        .menu { 
-            display: flex; 
-            margin-left: 20px; 
-        } 
+        .tab-button:hover {
+            background-color: rgba(255, 255, 255, 0.1); /* Efecto hover */
+        }
 
-        .tab-button { 
-            color: white; 
-            padding: 10px; 
-            text-decoration: none; 
-        } 
+        .social-icons {
+            margin-left: auto; /* Empujar los íconos a la derecha */
+        }
 
-        .image-title-container { 
-            text-align: center; 
-            margin-top: 20px; 
-        } 
+        .social-icon {
+            width: 30px; /* Ajustar tamaño del ícono */
+            height: auto; /* Mantener proporción */
+            margin-left: 10px; /* Espacio entre íconos */
+            transition: transform 0.3s; /* Efecto de transición suave */
+        }
 
-        .full-image { 
-            max-width: 100%; /* Asegura que la imagen ocupe todo el ancho disponible */
-            height: auto;  
-        } 
+        .social-icon:hover {
+            transform: scale(1.1); /* Efecto zoom al pasar el mouse sobre el ícono */
+        }
 
-        .description-container { 
-            text-align: center; 
-            margin-top: 10px;  
-        } 
-
-        .comments-container { 
-            margin-top: 20px;  
+        .search-container {
             text-align: center;
-            width: 100%; /* Asegura que ocupe todo el ancho */
-        } 
-
-        .comments-container h3 {
-            margin-bottom: 10px;
+            margin: 20px auto;
         }
 
-        /* Estilo para la caja de comentarios */
-        .utterances {
-            max-width: 800px; /* Ancho máximo para la caja de comentarios */
-            margin-left: auto;
-            margin-right: auto;
+        .search-container input {
+            padding: 10px;
+            width: calc(100% - 22px); /* Ancho del buscador */
+            max-width: 300px; /* Ancho máximo */
+            border-radius: 5px; /* Bordes redondeados */
+            border: none; /* Sin borde */
+            background-color: #333; /* Fondo del buscador */
+            color: white; /* Color del texto */
         }
 
-        .similar-images-container { 
-            margin-top: 20px;  
-            text-align: center;  
-        } 
+        .banner-container {
+            text-align: center;
+            margin-top: 20px;
+            background-image: linear-gradient(to right, #ff5722, #e64a19); /* Degradado de fondo */
+            padding: 40px; /* Espaciado interno aumentado */
+            border-radius: 10px; /* Bordes redondeados */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Sombra para el banner */
+        }
 
-        #similar-images-grid { 
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Tres columnas como mínimo, adaptando a más según el espacio */
-            gap: 10px; /* Espacio entre las miniaturas */
-        } 
+        .banner h2 {
+            color: white;
+        }
 
-        .similar-image-item { 
-             text-align: center;
-             border-radius: 5px; /* Bordes redondeados para las imágenes similares */
-             overflow: hidden;
-             background-color: #222;
-             padding: 5px;
-             transition: transform 0.3s ease-in-out;
-         } 
+        .banner p {
+            color: #fff3e0; /* Color más claro para el texto del párrafo */
+        }
 
-         .similar-image-item:hover {
-             transform: scale(1.05); /* Efecto de zoom al pasar el mouse sobre la miniatura */
-         }
+        .grid-container {
+           max-width :1200px ;/* Limitar el ancho máximo del contenedor */ 
+           margin :auto ;/* Centrar contenedor */ 
+           padding :20px ;/* Espaciado interno */ 
+       } 
 
-         .similar-image-item img { 
-             width: 100%;
-             height: auto;
-         } 
+       .flex-container { 
+           display:flex ; 
+           flex-wrap :wrap ;/* Permitir que los elementos se ajusten a la siguiente línea */ 
+           justify-content :space-between ;/* Espacio entre los elementos */ 
+       } 
 
-         footer { 
-             text-align: center;  
-             padding: 20px;
-             background-color: #1f1f1f;
-             position: relative;
-             bottom: 0;
-             width: 100%;
-         } 
+       .flex-item { 
+           flex :0 1 calc(33.33% - 10px);/* Cada imagen ocupa un tercio del ancho menos el espacio */ 
+           background-color:#222 ;/* Fondo gris oscuro para cada item */ 
+           border-radius :5px ;/* Bordes redondeados */ 
+           overflow:hidden ;/* Ocultar desbordamiento */ 
+           margin-bottom :10px; /* Espacio entre filas */ 
+           transition :transform 0.3s ease-in-out ;/* Efecto de transformación suave al hacer hover */ 
+       } 
 
-    </style>  
-</head>  
-<body>  
+       .flex-item:hover { 
+           transform :scale(1.05) ;/* Efecto zoom al pasar el mouse sobre el item */ 
+       } 
 
-<header>  
-   <div class='top-bar'>  
-       <img src='https://i.ibb.co/Fnt08ty/Exen-Profil-E.jpg' alt='Icono' class='header-icon'>  
-       <nav class='menu'>  
-           <a href='index.html' class='tab-button'>Home</a>  
-           <a href='chat.html' class='tab-button'>Chat</a>  
-           <a href='yo.html' class='tab-button'>Sobre mí</a>  
-       </nav>  
-   </div>  
-   <hr class='divider'>  
-</header>  
+       .flex-item img { 
+           width :100% ;/* Asegura que la imagen ocupe todo el espacio del contenedor */ 
+           height :auto ;/* Mantiene la proporción de la imagen */ 
+       } 
 
-<div class='image-title-container'>  
-   <h2 id='image-title'></h2>  
-   <img id='full-image' src='' alt='' class='full-image'>  
-</div>  
+       footer { 
+           text-align:center ; 
+           padding :20px ; 
+           background-color:#1f1f1f ; 
+           position :relative ; 
+           bottom :0 ; 
+           width :100%; 
+       }
+       
+       .pagination {
+           text-align:center ;
+           margin-top :20px ;
+       }
 
-<hr class='divider'>  
+       .pagination button {
+           background-color:#ff5722 ;
+           color:white ;
+           border:none ;
+           padding :10px ;
+           margin :5px ;
+           border-radius :5px ;
+           cursor:pointer ;
+       }
+       
+       .pagination button:hover {
+           background-color:#e64a19 ;
+       }
+    </style>
+</head>
+<body>
 
-<div class='description-container'>  
-   <p id='image-description'></p>  
-</div>  
+<header>
+    <div class="top-bar">
+        <img src="https://i.ibb.co/Fnt08ty/Exen-Profil-E.jpg" alt="Icono" class="header-icon"> <!-- Icono -->
+        <nav class="menu">
+            <a href="index.html" class="tab-button">Home</a>
+            <a href="chat.html" class="tab-button">Chat</a>
+            <a href="yo.html" class="tab-button">Sobre mí</a>
+        </nav>
+        
+        <!-- Íconos de redes sociales en el header -->
+        <div class="social-icons">
+            <a href="https://www.facebook.com/exenie?mibextid=ZbWKwL" target="_blank">
+                <img src="https://img.icons8.com/?size=512&id=118497&format=png" alt="Facebook" class="social-icon">
+            </a>
+            <a href="https://www.twitter.com/exeneqiel" target="_blank">
+                <img src="https://img.icons8.com/?size=512&id=5MQ0gPAYYx7a&format=png" alt="Twitter" class="social-icon">
+            </a>
+        </div>
+    </div>
+    <hr class="divider"> <!-- Divisor -->
+</header>
 
-<hr class='divider'>  
+<div class="search-container">
+    <input type="text" id="search" placeholder="Buscar por etiqueta..." />
+</div>
 
-<div class='comments-container'>  
-   <h3>Comentarios:</h3>  
-   <div class="utterances">
-       <script src='https://utteranc.es/client.js' repo='yossfu/Gesti-n-de-comentarios' issue-term='pathname' theme='dark-blue' crossorigin='anonymous' async></script>
-   </div>
-</div>  
+<hr class="divider"> <!-- Divisor -->
 
-<hr class='divider'>  
+<!-- Banner Promocional -->
+<div class="banner-container">
+    <div class="banner">
+        <h2>¡BIENVENIDOS!</h2>
+        <p>Recuerda dejarme tus suegerencias en los comentarios🖤. Si nos encontramos por el chat no olvides saludarme 😃.</p>
+    </div>
+</div>
 
-<div class='similar-images-container'>  
-   <h3>Imágenes Similares:</h3>  
-   <div id='similar-images-grid'></div> <!-- Aquí se cargarán las imágenes similares -->   
-</div>  
+<hr class="divider"> <!-- Divisor -->
 
-<hr class='divider'>  
+<main id="gallery" class="grid-container">
+    <div class="flex-container" id="image-grid"></div> <!-- Contenedor para el grid -->
+</main>
 
-<footer>   
-   <p>&copy; 2024 exenE. Todos los derechos reservados.</p>   
-</footer>   
+<!-- Paginación -->
+<div class="pagination" id="pagination"></div>
+
+<hr class="divider"> <!-- Divisor -->
+
+<footer>
+    <p>&copy; 2024 ExenE. Todos los derechos reservados.</p>
+</footer>
 
 <script>
-// Define el ID de la imagen que quieres cargar
-const imageId = 🔴; // Cambia este número al ID correspondiente
-
+// Cargar datos JSON desde un archivo externo
 fetch('imagenes.json')
    .then(response => response.json())
-   .then(data => {
-       const currentItem = data.find(img => img.id == imageId);
-       if (currentItem) {
-           // Mostrar título e imagen
-           document.getElementById('image-title').textContent = currentItem.title;
-           document.getElementById('full-image').src = currentItem.url;
+   .then(imagesData => {
+       const imageGrid = document.getElementById('image-grid');
+       
+       const itemsPerPage = 15; // Número de imágenes por página
+       let currentPage = 1;
 
-           // Mostrar descripción
-           document.getElementById('image-description').textContent = currentItem.description;
+       function renderImages(page) {
+           // Limpiar la cuadrícula
+           imageGrid.innerHTML = '';
 
-           // Cargar imágenes similares
-           loadSimilarImages(currentItem.tags, data);
-       } else {
-           console.error("Imagen no encontrada");
+           // Calcular los índices de inicio y fin
+           const startIndex = (page - 1) * itemsPerPage;
+           const endIndex = startIndex + itemsPerPage;
+
+           // Generar elementos para cada imagen en la página actual
+           imagesData.slice(startIndex, endIndex).forEach(item => {
+               const imageItem = document.createElement('div');
+               imageItem.className = 'flex-item';
+               imageItem.dataset.tags = item.tags.join(','); // Agregar tags como atributo data
+               imageItem.innerHTML = `
+                    <a href="${item.redirectUrl}"> <!-- Usa redirectUrl para el enlace -->
+                        <img src="${item.url}" alt="${item.title}">
+                    </a>
+                    <p>${item.title}</p> <!-- Mostrar solo el título -->
+               `;
+               imageGrid.appendChild(imageItem); // Agregar el elemento a la cuadrícula
+           });
+           
+           renderPagination(imagesData.length); // Renderizar la paginación después de mostrar las imágenes
        }
+
+       function renderPagination(totalItems) {
+           const pagination = document.getElementById('pagination');
+           pagination.innerHTML = ''; // Limpiar la paginación existente
+           const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+           for (let i = 1; i <= totalPages; i++) {
+               const button = document.createElement('button');
+               button.textContent = i;
+               button.onclick = () => {
+                   currentPage = i;
+                   renderImages(currentPage);
+               };
+               pagination.appendChild(button);
+           }
+       }
+
+       // Renderizar las imágenes al cargar
+       renderImages(currentPage);
+
+       // Manejar búsqueda dinámica
+       document.getElementById('search').addEventListener('input', function() {
+          const searchTerm = this.value.toLowerCase().trim();
+          const gridItems = document.querySelectorAll('.flex-item');
+
+          // Filtrar imágenes según búsqueda
+          const filteredItems = imagesData.filter(item => {
+              const titleMatch = item.title.toLowerCase().includes(searchTerm);
+              const descriptionMatch = item.description?.toLowerCase().includes(searchTerm);
+              const tagsMatch = item.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+              return titleMatch || descriptionMatch || tagsMatch;
+          });
+
+          // Limpiar la cuadrícula y mostrar resultados filtrados
+          imageGrid.innerHTML = '';
+          filteredItems.forEach(item => {
+              const imageItem = document.createElement('div');
+              imageItem.className = 'flex-item';
+              imageItem.dataset.tags = item.tags.join(','); // Agregar tags como atributo data
+              imageItem.innerHTML = `
+                    <a href="${item.redirectUrl}"> <!-- Usa redirectUrl para el enlace -->
+                        <img src="${item.url}" alt="${item.title}">
+                    </a>
+                    <p>${item.title}</p> <!-- Mostrar solo el título -->
+               `;
+              imageGrid.appendChild(imageItem); // Agregar el elemento a la cuadrícula
+          });
+
+          // Si no hay texto en la búsqueda, mostrar todas las imágenes nuevamente
+          if (searchTerm === '') {
+              renderImages(currentPage);
+          }
+      });
+
    })
-   .catch(err => console.error(`Fetch problem:${err.message}`));
+   .catch(error => console.error('Error cargando el JSON:', error));
 
-function loadSimilarImages(tags, allImages) {
-   const similarImagesGrid = document.getElementById('similar-images-grid');
-   let similarImages = []; // Array para almacenar imágenes similares
-
-   allImages.forEach(item => {
-       if (item.id !== imageId && item.tags.some(tag => tags.includes(tag))) { // Filtrar imágenes similares
-           similarImages.push(item); // Agregar a la lista de imágenes similares
-       }
-   });
-
-   // Ordenar las imágenes similares según la cantidad de coincidencias
-   similarImages.sort((a, b) => {
-       const aMatches = a.tags.filter(tag => tags.includes(tag)).length;
-       const bMatches = b.tags.filter(tag => tags.includes(tag)).length;
-       return bMatches - aMatches; // Ordenar de mayor a menor coincidencia
-   });
-
-   // Limitar a un máximo de 8 imágenes similares
-   for (let i = 0; i < Math.min(8, similarImages.length); i++) {
-       const item = similarImages[i];
-       const imageElement = document.createElement('div');
-       imageElement.className = 'similar-image-item';
-       imageElement.innerHTML = `
-           <a href="${item.redirectUrl}">
-               <img src="${item.url}" alt="${item.title}">
-           </a>
-           <p>${item.title}</p>`;
-       similarImagesGrid.appendChild(imageElement);
-   }
-}
 </script>
 
 </body>
