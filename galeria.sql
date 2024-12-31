@@ -1,0 +1,11 @@
+CREATE DATABASE galeria;
+
+USE galeria;
+
+CREATE TABLE comentarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    comentario TEXT NOT NULL,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
