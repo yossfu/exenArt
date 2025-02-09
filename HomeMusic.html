@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selector de Canciones</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <style>
+        /* Estilos generales */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #2a2a2a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-size: cover;
+            background-blend-mode: multiply;
+            transition: background-image 0.3s ease;
+            /* Smooth transition */
+        }
+
+        /* Header */
+        header {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 40px;
+            height: auto;
+            border-radius: 50%;
+        }
+
+        .menu {
+            display: flex;
+            margin-left: 20px;
+        }
+
+        .tab-button {
+            color: #ffffff;
+            padding: 10px;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .tab-button:hover {
+            color: #ff5722;
+            /* Highlight color on hover */
+        }
+
+        .social-icons {
+            margin-left: auto;
+        }
+
+        .social-icon {
+            width: 30px;
+            height: auto;
+            margin-left: 10px;
+            transition: transform 0.3s;
+        }
+
+        .social-icon:hover {
+            transform: scale(1.1);
+        }
+
+        /* Search Container */
+        .search-container {
+            text-align: center;
+            margin: 20px auto;
+        }
+
+        .search-container input {
+            padding: 10px;
+            width: calc(100% - 22px);
+            max-width: 300px;
+            border-radius: 5px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            /* Semi-transparent input */
+            color: white;
+        }
+
+        /* Song Grid */
+        .grid-container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .flex-item {
+            flex: 0 1 calc(33.33% - 10px);
+            background-color: rgba(0, 0, 0, 0.5);
+            /* Semi-transparent item background */
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            cursor: pointer;
+            position: relative;
+            width: 100%;
+            height: auto;
+            transition: transform 0.2s ease-in-out;
+            /* Subtle animation */
+        }
+
+        .flex-item:hover {
+            transform: scale(1.03);
+        }
+
+        .flex-item img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            display: block;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        /* Estilos para la información de la canción en las carátulas */
+        .song-info {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px;
+            font-size: 0.8em;
+            text-align: center;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .song-info p {
+            margin: 2px 0;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            position: relative;
+        }
+
+        /* Estilos para el botón de reproducción */
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #ff5722;
+            /* Orange play button */
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            transition: opacity 0.3s ease;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 2;
+        }
+
+        .play-button i {
+            margin-left: 5px;
+        }
+
+        /* Estilos para el texto "Reproduciendo" */
+        .playing-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.2em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 3;
+        }
+
+        /* Estilos para el reproductor de audio */
+        .audio-player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            /* More transparent audio player */
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            flex-direction: column;
+            /* Stack items vertically */
+        }
+
+        #audio-cover {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        #audio-title {
+            color: white;
+            margin-bottom: 5px;
+            /* Spacing between title and controls */
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            /* Center buttons horizontally */
+        }
+
+        .control-buttons button {
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .control-buttons button:hover {
+            background-color: #e64a19;
+        }
+
+        audio {
+            flex-grow: 1;
+        }
+
+        .audio-player.hidden {
+            display: none;
+        }
+
+        /* Personalización de la barra de tiempo */
+        audio::-webkit-media-controls-timeline {
+            background-color: #444;
+            border-radius: 5px;
+        }
+
+        audio::-webkit-media-controls-current-time-display,
+        audio::-webkit-media-controls-time-remaining-display {
+            color: #ff5722;
+        }
+
+        audio::-webkit-media-controls-play-button,
+        audio::-webkit-media-controls-pause-button {
+            color: #ff5722;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            /* Semi-transparent footer */
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .pagination button:hover {
+            background-color: #e64a19;
+        }
+
+        /*Media Queries para distintos dispositivos*/
+        @media (max-width: 768px) {
+            .flex-item {
+                flex: 0 1 calc(50% - 10px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .flex-item {
+                flex: 0 1 calc(100% - 10px);
+            }
+
+            .song-info {
+                font-size: 0.7em;
+            }
+        }
+
+        /*Estilos para el texto que aparece sobre las caratulas*/
+        .song-info p {
+            position: relative;
+            /*para que no giren con la caratula*/
+        }
+
+        /* Divider */
+        hr.divider {
+            border-color: #444;
+            /* A subtle color for the divider */
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="top-bar">
+            <img src="https://i.ibb.co/Fnt08ty/Exen-Profil-E.jpg" alt="Icono" class="header-icon">
+            <nav class="menu">
+                <a href="index.html" class="tab-button">Home</a>
+                <a href="https://html5-chat.com/chat/51441/67647612ece05" class="tab-button">Chat</a>
+                <a href="yo.html" class="tab-button">Sobre mí</a>
+            </nav>
+            <div class="social-icons">
+                <a href="https://www.facebook.com/exenie?mibextid=ZbWKwL" target="_blank">
+                    <img src="https://img.icons8.com/?size=512&id=118497&format=png" alt="Facebook"
+                        class="social-icon">
+                </a>
+                <a href="https://www.twitter.com/exeneqiel" target="_blank">
+                    <img src="https://img.icons8.com/?size=512&id=5MQ0gPAYYx7a&format=png" alt="Twitter"
+                        class="social-icon">
+                </a>
+            </div>
+        </div>
+        <hr class="divider">
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="search" placeholder="Buscar por canción..." />
+    </div>
+
+    <hr class="divider">
+
+    <main id="song-selector" class="grid-container">
+        <div class="flex-container" id="song-grid"></div>
+    </main>
+
+    <!-- Paginación -->
+    <div class="pagination" id="pagination"></div>
+
+    <hr class="divider">
+
+    <!-- Reproductor de Audio -->
+    <div class="audio-player hidden">
+        <span id="audio-title"></span>
+        <img id="audio-cover" src="" alt="Carátula">
+        <div class="control-buttons">
+            <button id="pause-button"><i class="fas fa-pause"></i> Pausa</button>
+            <button id="stop-button"><i class="fas fa-stop"></i> Stop</button>
+            <button id="next-button"><i class="fas fa-forward"></i> Siguiente</button>
+        </div>
+        <audio id="audio-player" controls></audio>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 ExenE. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Cargar datos JSON desde un archivo externo
+        fetch('canciones.json')
+            .then(response => response.json())
+            .then(songsData => {
+                const body = document.querySelector('body');
+                const songGrid = document.getElementById('song-grid');
+                const audioPlayer = document.getElementById('audio-player');
+                const audioCover = document.getElementById('audio-cover');
+                const audioTitle = document.getElementById('audio-title');
+                const audioPlayerContainer = document.querySelector('.audio-player');
+                const pauseButton = document.getElementById('pause-button');
+                const stopButton = document.getElementById('stop-button');
+                const nextButton = document.getElementById('next-button');
+                const itemsPerPage = 15; // Número de imágenes por página
+                let currentPage = 1;
+                let currentSongItem = null;
+                let sound; // Howler sound object
+                let currentSongIndex = 0; // Track the index of the currently playing song
+
+                // Function to update the audio player's information
+                function updateAudioPlayerInfo(song) {
+                    audioTitle.textContent = `${song.title} - ${song.artist}`;
+                    audioCover.src = song.coverUrl;
+                }
+
+                function renderImages(page) {
+                    songGrid.innerHTML = '';
+                    const startIndex = (page - 1) * itemsPerPage;
+                    const endIndex = startIndex + itemsPerPage;
+
+                    songsData.slice(startIndex, endIndex).forEach((song, index) => {
+                        const songItem = document.createElement('div');
+                        songItem.className = 'flex-item';
+                        songItem.innerHTML = `
+                            <img src="${song.coverUrl}" alt="${song.title}">
+                            <div class="song-info">
+                                <p>${song.title}</p>
+                                <p>${song.artist}</p>
+                            </div>
+                            <div class="play-button"><i class="fas fa-play"></i></div>
+                            <div class="playing-text" style="display:none;">Reproduciendo</div>
+                        `;
+
+                        songItem.addEventListener('click', () => {
+                            currentSongIndex = songsData.indexOf(song);
+                            playSong(song, songItem);
+                        });
+                        songGrid.appendChild(songItem);
+                    });
+                    renderPagination(songsData.length);
+                }
+
+                function playSong(song, songItem) {
+                    // Stop the currently playing sound, if any
+                    if (sound) {
+                        sound.stop();
+                    }
+
+                    // Reset the "Reproduciendo" text on the previous song item
+                    if (currentSongItem) {
+                        currentSongItem.querySelector('.playing-text').style.display = 'none';
+                    }
+
+                    // Set body background to the cover image
+                    body.style.backgroundImage = `url('${song.coverUrl}')`;
+
+                    //Update the audio player info
+                    updateAudioPlayerInfo(song)
+
+                    // Create and play the new sound using Howler
+                    sound = new Howl({
+                        src: [song.audioUrl],
+                        html5: true, // Force HTML5 Audio mode to stream from URL
+                        onload: function () {
+                            console.log('Audio loaded');
+                        },
+                        onplay: function () {
+                            console.log('Audio started playing');
+                            audioPlayerContainer.classList.remove('hidden');
+                            songItem.querySelector('.playing-text').style.display = 'block';
+                            currentSongItem = songItem;
+                        },
+                        onpause: function () {
+                            console.log('Audio paused');
+                            songItem.querySelector('.playing-text').style.display = 'none';
+                        },
+                        onend: function () {
+                            console.log('Audio ended');
+                            songItem.querySelector('.playing-text').style.display = 'none';
+                            audioPlayerContainer.classList.add('hidden');
+                            body.style.backgroundImage = "url('https://i.ibb.co/hXJgJ3K/bg.jpg')"; // Reset background after the song ends
+                        },
+                        onloaderror: function () {
+                            console.log('Error loading audio');
+                        }
+                    });
+                    sound.play();
+                }
+
+                function renderPagination(totalItems) {
+                    const pagination = document.getElementById('pagination');
+                    pagination.innerHTML = '';
+                    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+                    for (let i = 1; i <= totalPages; i++) {
+                        const button = document.createElement('button');
+                        button.textContent = i;
+                        button.onclick = () => {
+                            currentPage = i;
+                            renderImages(currentPage);
+                        };
+                        pagination.appendChild(button);
+                    }
+                }
+
+                // Pause functionality
+                pauseButton.addEventListener('click', () => {
+                    if (sound && sound.playing()) {
+                        sound.pause();
+                    }
+                });
+
+                // Stop functionality
+                stopButton.addEventListener('click', () => {
+                    if (sound) {
+                        sound.stop();
+                        audioPlayerContainer.classList.add('hidden');
+                        body.style.backgroundImage = "url('https://i.ibb.co/hXJgJ3K/bg.jpg')"; // Reset background
+                        if (currentSongItem) {
+                            currentSongItem.querySelector('.playing-text').style.display = 'none';
+                        }
+                    }
+                });
+
+                // Next track functionality
+                nextButton.addEventListener('click', () => {
+                    if (sound) {
+                        sound.stop();
+                    }
+
+                    // Reset the "Reproduciendo" text on the previous song item
+                    if (currentSongItem) {
+                        currentSongItem.querySelector('.playing-text').style.display = 'none';
+                    }
+
+                    currentSongIndex = (currentSongIndex + 1) % songsData.length;
+                    const nextSong = songsData[currentSongIndex];
+                    const nextSongItem = songGrid.children[currentSongIndex % itemsPerPage]; // Get the correct item in the grid
+
+                    playSong(nextSong, nextSongItem);
+                });
+
+                renderImages(currentPage);
+
+                // Manejar búsqueda dinámica
+                document.getElementById('search').addEventListener('input', function () {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    const filteredItems = songsData.filter(song => {
+                        const titleMatch = song.title.toLowerCase().includes(searchTerm);
+                        const artistMatch = song.artist?.toLowerCase().includes(searchTerm);
+                        return titleMatch || artistMatch;
+                    });
+
+                    songGrid.innerHTML = '';
+                    filteredItems.forEach(song => {
+                        const songItem = document.createElement('div');
+                        songItem.className = 'flex-item';
+                        songItem.innerHTML = `
+                            <img src="${song.coverUrl}" alt="${song.title}">
+                            <div class="song-info">
+                                <p>${song.title}</p>
+                                <p>${song.artist}</p>
+                            </div>
+                            <div class="play-button"><i class="fas fa-play"></i></div>
+                            <div class="playing-text" style="display:none;">Reproduciendo</div>
+                        `;
+
+                        songItem.addEventListener('click', () => {
+                            currentSongIndex = songsData.indexOf(song);
+                            playSong(song, songItem);
+                        });
+                        songGrid.appendChild(songItem);
+                    });
+
+                    if (searchTerm === '') {
+                        renderImages(currentPage);
+                    }
+                });
+            })
+            .catch(error => console.error('Error cargando el JSON:', error));
+    </script>
+</body>
+
+</html>
