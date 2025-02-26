@@ -1,43 +1,22 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galería de Música</title>
+    <title>Galería de Imágenes</title>
     <style>
-        /* Variables CSS para temas */
-        :root {
-            --bg-color: #121212;
-            --text-color: #e0e0e0;
-            --card-bg-color: #222;
-            --hover-bg-color: rgba(255, 255, 255, 0.1);
-            --primary-color: #ff5722;
-            --secondary-color: #e64a19;
-            --player-bg-color: rgba(51, 51, 51, 0.7);
-            --player-minimized-height: 40px;
-        }
-
-        body.light-theme {
-            --bg-color: #f5f5f5;
-            --text-color: #333;
-            --card-bg-color: #fff;
-            --hover-bg-color: rgba(0, 0, 0, 0.1);
-            --player-bg-color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* Estilos generales */
         * {
             box-sizing: border-box;
         }
 
         body {
             font-family: Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: #121212;
+            color: #e0e0e0;
             margin: 0;
             padding: 0;
             overflow-x: hidden;
-            transition: background-color 0.3s, color 0.3s;
         }
 
         header {
@@ -70,7 +49,7 @@
         }
 
         .tab-button:hover {
-            background-color: var(--hover-bg-color);
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
         .social-icons {
@@ -95,7 +74,7 @@
 
         .search-container input {
             padding: 10px;
-            width: calc(100% - 22px);
+            width: calc(100% • 22px);
             max-width: 300px;
             border-radius: 5px;
             border: none;
@@ -103,225 +82,95 @@
             color: white;
         }
 
-        /* Galería de canciones (cards) */
-        .grid-container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-        }
-
-        .song-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .song-card {
-            background-color: var(--card-bg-color);
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .song-card:hover {
-            transform: scale(1.03);
-        }
-
-        .song-card img {
-            width: 100%;
-            height: auto;
-            display: block;
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        .song-card img:hover {
-            opacity: 0.8;
-        }
-
-        .song-info {
-            padding: 15px;
-        }
-
-        .song-title {
-            font-size: 1.2em;
-            margin-bottom: 5px;
-        }
-
-        .song-artist {
-            font-style: italic;
-            color: #999;
-        }
-
-        /* Controles personalizados */
-        .custom-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 5px;
-        }
-
-        .custom-controls button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 5px 8px;
-            margin: 2px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            font-size: 0.8em;
-        }
-
-        .custom-controls button:hover {
-            background-color: var(--secondary-color);
-        }
-
-        /* Reproductor */
-        #audio-player {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            color: white;
-            padding: 5px;
-            display: flex;
-            flex-direction: column; /* Alineación vertical */
-            align-items: center;
-            justify-content: space-around;
-            z-index: 1000;
-            transition: transform 0.3s ease-in-out, opacity 0.3s;
-            transform: translateY(0);
-            opacity: 1;
-
-            /* Fondo con imagen */
-            background-image: url('');
-            background-size: cover;
-            background-position: center;
-
-            /* Efecto blur */
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px); /* Para navegadores Safari */
-        }
-
-        #audio-player.minimized {
-            transform: translateY(calc(100% - var(--player-minimized-height)));
-            opacity: 0.8;
-        }
-
-        #audio-player.hidden {
-            display: none;
-        }
-
-        #current-song-info {
-            text-align: center;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            width: 90%; /* Ancho para ocupar casi todo el reproductor */
-
-            /* Estilo para el texto */
-            color: white;
-            text-shadow: 1px 1px 2px black; /* Sombra para mejorar la legibilidad */
-        }
-
-        #current-audio {
-            width: 100%; /* Ancho completo */
-        }
-
-        /* Pestaña para minimizar el reproductor */
-        #minimize-tab {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px 5px 0 0;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        #minimize-tab:hover {
-            background-color: var(--secondary-color);
-        }
-
-        /* Paginación */
-        .pagination {
+        .banner-container {
             text-align: center;
             margin-top: 20px;
+            background-image: linear-gradient(to right, #ff5722, #e64a19);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         }
 
-        .pagination button {
-            background-color: var(--primary-color);
+        .banner h2 {
             color: white;
-            border: none;
-            padding: 10px;
-            margin: 5px;
-            border-radius: 5px;
-            cursor: pointer;
         }
 
-        .pagination button:hover {
-            background-color: var(--secondary-color);
+        .banner p {
+            color: #fff3e0;
         }
 
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #1f1f1f;
-            position: relative;
-            width: 100%;
-        }
+        .grid-container {
+           max-width :1200px ;
+           margin :auto ;
+           padding :20px ;
+       }
 
-        /* Botón de tema oscuro */
-        #theme-toggle {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px;
-            margin: 5px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
+       .flex-container {
+           display:flex ;
+           flex-wrap :wrap ;
+           justify-content :space-between ;
+       }
 
-        #theme-toggle:hover {
-            background-color: var(--secondary-color);
-        }
+       .flex-item {
+           flex :0 1 calc(33.33% • 10px);
+           background-color:#222 ;
+           border-radius :5px ;
+           overflow:hidden ;
+           margin-bottom :10px;
+           transition :transform 0.3s ease-in-out ;
+       }
 
-        /* Media queries para diseño responsivo */
-        @media (max-width: 768px) {
-            .song-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            }
+       .flex-item:hover {
+           transform :scale(1.05) ;
+       }
 
-            #audio-player {
-                flex-direction: column;
-                align-items: center;
-            }
+       .flex-item img {
+           width :100% ;
+           height :auto ;
+       }
 
-            #current-audio {
-                width: 100%;
-            }
-        }
+       footer {
+           text-align:center ;
+           padding :20px ;
+           background-color:#1f1f1f ;
+           position :relative ;
+           bottom :0 ;
+           width :100%;
+       }
+
+       .pagination {
+           text-align:center ;
+           margin-top :20px ;
+       }
+
+       .pagination button {
+           background-color:#ff5722 ;
+           color:white ;
+           border:none ;
+           padding :10px ;
+           margin :5px ;
+           border-radius :5px ;
+           cursor:pointer ;
+       }
+
+       .pagination button:hover {
+           background-color:#e64a19 ;
+       }
     </style>
 </head>
-<body class="dark-theme">
+<body>
 
 <header>
     <div class="top-bar">
         <img src="https://i.ibb.co/Fnt08ty/Exen-Profil-E.jpg" alt="Icono" class="header-icon">
         <nav class="menu">
             <a href="index.html" class="tab-button">Home</a>
+            <a href="HomeMusic.html" class="tab-button">Música</a>
             <a href="https://html5-chat.com/chat/51441/67647612ece05" class="tab-button">Chat</a>
             <a href="yo.html" class="tab-button">Sobre mí</a>
         </nav>
+
+        <!-• Íconos de redes sociales en el header -->
         <div class="social-icons">
             <a href="https://www.facebook.com/exenie?mibextid=ZbWKwL" target="_blank">
                 <img src="https://img.icons8.com/?size=512&id=118497&format=png" alt="Facebook" class="social-icon">
@@ -331,189 +180,139 @@
             </a>
         </div>
     </div>
-    <hr class="divider">
+    <hr class="divider"> <!-• Divisor -->
 </header>
 
 <div class="search-container">
-    <input type="text" id="search" placeholder="Buscar canción..." />
+    <input type="text" id="search" placeholder="Buscar por etiqueta..." />
 </div>
 
-<hr class="divider">
+<hr class="divider"> <!-• Divisor -->
+
+<!-• Banner Promocional -->
+<div class="banner-container">
+    <div class="banner">
+        <h2>¡BIENVENIDOS!</h2>
+        <p>Gracias por tus sugerencias.</p>
+    </div>
+</div>
+
+<!-• Anuncio de AdMob -->
+<div style="text-align: center; margin: 20px 0;">
+    <iframe 
+        src="https://your-ad-server.com/ad?unitId=ca-app-pub-8006989505662520/5926157360" 
+        width="320" 
+        height="50" 
+        style="border: none;">
+    </iframe>
+</div>
+
+<hr class="divider"> <!-• Divisor -->
 
 <main id="gallery" class="grid-container">
-    <div class="song-grid" id="song-grid"></div>
+    <div class="flex-container" id="image-grid"></div> <!-• Contenedor para el grid -->
 </main>
 
+<!-• Paginación -->
 <div class="pagination" id="pagination"></div>
 
-<hr class="divider">
+<hr class="divider"> <!-• Divisor -->
 
 <footer>
     <p>&copy; 2024 ExenE. Todos los derechos reservados.</p>
 </footer>
 
-<!-- Reproductor de audio fijo -->
-<div id="audio-player" class="hidden">
-    <div id="minimize-tab">Minimizar</div>
-    <div id="current-song-info"></div>
-    <audio id="current-audio" controls></audio>
-    <div class="custom-controls">
-        <button id="prev-song">Anterior</button>
-        <button id="play-pause">Play</button>
-        <button id="next-song">Siguiente</button>
-    </div>
-</div>
-
-<button id="theme-toggle">Cambiar tema</button>
-
 <script>
-    const body = document.body;
-    const themeToggle = document.getElementById('theme-toggle');
-    const songGrid = document.getElementById('song-grid');
-    const audioPlayer = document.getElementById('audio-player');
-    const currentAudio = document.getElementById('current-audio');
-    const playPauseButton = document.getElementById('play-pause');
-    const nextSongButton = document.getElementById('next-song');
-    const prevSongButton = document.getElementById('prev-song');
-    const searchInput = document.getElementById('search');
-    const pagination = document.getElementById('pagination');
-    const currentSongInfo = document.getElementById('current-song-info');
-    const minimizeTab = document.getElementById('minimize-tab');
+// Cargar datos JSON desde un archivo externo
+fetch('imagenes.json')
+   .then(response => response.json())
+   .then(imagesData => {
+       const imageGrid = document.getElementById('image-grid');
 
-    let songsData = [];
-    let currentSongIndex = 0;
-    const itemsPerPage = 15;
-    let currentPage = 1;
+       const itemsPerPage = 15; // Número de imágenes por página
+       let currentPage = 1;
 
-    // Función para cambiar el tema
-    themeToggle.addEventListener('click', () => {
-        body.classList.toggle('light-theme');
-    });
+       function renderImages(page) {
+           // Limpiar la cuadrícula
+           imageGrid.innerHTML = '';
 
-    // Función para minimizar/maximizar el reproductor
-    minimizeTab.addEventListener('click', () => {
-        toggleMinimize();
-    });
+           // Calcular los índices de inicio y fin
+           const startIndex = (page • 1) * itemsPerPage;
+           const endIndex = startIndex + itemsPerPage;
 
-    // Función para cargar y reproducir una canción
-    function loadAndPlaySong(index) {
-        const song = songsData[index];
-        currentAudio.src = song.audioUrl;
-        currentAudio.load();
-        currentAudio.play();
-        playPauseButton.textContent = 'Pausa';
-        currentSongIndex = index;
+           // Generar elementos para cada imagen en la página actual
+           imagesData.slice(startIndex, endIndex).forEach(item => {
+               const imageItem = document.createElement('div');
+               imageItem.className = 'flex-item';
+               imageItem.dataset.tags = item.tags.join(','); // Agregar tags como atributo data
+               imageItem.innerHTML = `
+                    <a href="${item.redirectUrl}"> <!-• Usa redirectUrl para el enlace -->
+                        <img src="${item.url}" alt="${item.title}">
+                    </a>
+                    <p>${item.title}</p> <!-• Mostrar solo el título -->
+               `;
+               imageGrid.appendChild(imageItem); // Agregar el elemento a la cuadrícula
+           });
 
-        // Actualizar la información de la canción y el cover
-        currentSongInfo.textContent = `${song.title} - ${song.artist}`;
+           renderPagination(imagesData.length); // Renderizar la paginación después de mostrar las imágenes
+       }
 
-        // Fondo del reproductor
-        audioPlayer.style.backgroundImage = `url('${song.coverUrl}')`;
+       function renderPagination(totalItems) {
+           const pagination = document.getElementById('pagination');
+           pagination.innerHTML = ''; // Limpiar la paginación existente
+           const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-        // Mostrar el reproductor
-        audioPlayer.classList.remove('hidden');
-    }
+           for (let i = 1; i <= totalPages; i++) {
+               const button = document.createElement('button');
+               button.textContent = i;
+               button.onclick = () => {
+                   currentPage = i;
+                   renderImages(currentPage);
+               };
+               pagination.appendChild(button);
+           }
+       }
 
-    // Función para renderizar las canciones en la cuadrícula
-    function renderSongs(page, songs) {
-        songGrid.innerHTML = '';
-        const startIndex = (page - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        const songsToRender = songs.slice(startIndex, endIndex);
+       // Renderizar las imágenes al cargar
+       renderImages(currentPage);
 
-        songsToRender.forEach((song, index) => {
-            const card = document.createElement('div');
-            card.className = 'song-card';
-            card.innerHTML = `
-                <img src="${song.coverUrl}" alt="${song.title}">
-                <div class="song-info">
-                    <h3 class="song-title">${song.title}</h3>
-                    <p class="song-artist">${song.artist}</p>
-                </div>
-            `;
-            card.addEventListener('click', () => {
-                loadAndPlaySong(startIndex + index);
-            });
-            songGrid.appendChild(card);
-        });
-    }
+       // Manejar búsqueda dinámica
+       document.getElementById('search').addEventListener('input', function() {
+          const searchTerm = this.value.toLowerCase().trim();
+          const gridItems = document.querySelectorAll('.flex-item');
 
-    // Función para renderizar la paginación
-    function renderPagination(totalItems) {
-        pagination.innerHTML = '';
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
+          // Filtrar imágenes según búsqueda
+          const filteredItems = imagesData.filter(item => {
+              const titleMatch = item.title.toLowerCase().includes(searchTerm);
+              const descriptionMatch = item.description?.toLowerCase().includes(searchTerm);
+              const tagsMatch = item.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+              return titleMatch || descriptionMatch || tagsMatch;
+          });
 
-        for (let i = 1; i <= totalPages; i++) {
-            const button = document.createElement('button');
-            button.textContent = i;
-            button.addEventListener('click', () => {
-                currentPage = i;
-                renderSongs(currentPage, songsData);
-            });
-            pagination.appendChild(button);
-        }
-    }
+          // Limpiar la cuadrícula y mostrar resultados filtrados
+          imageGrid.innerHTML = '';
+          filteredItems.forEach(item => {
+              const imageItem = document.createElement('div');
+              imageItem.className = 'flex-item';
+              imageItem.dataset.tags = item.tags.join(','); // Agregar tags como atributo data
+              imageItem.innerHTML = `
+                    <a href="${item.redirectUrl}"> <!-• Usa redirectUrl para el enlace -->
+                        <img src="${item.url}" alt="${item.title}">
+                    </a>
+                    <p>${item.title}</p> <!-• Mostrar solo el título -->
+               `;
+              imageGrid.appendChild(imageItem); // Agregar el elemento a la cuadrícula
+          });
 
-    // Función para manejar la búsqueda
-    searchInput.addEventListener('input', () => {
-        const searchTerm = searchInput.value.toLowerCase();
-        const filteredSongs = songsData.filter(song =>
-            song.title.toLowerCase().includes(searchTerm) ||
-            song.artist.toLowerCase().includes(searchTerm)
-        );
-        currentPage = 1;
-        renderSongs(currentPage, filteredSongs);
-        renderPagination(filteredSongs.length);
-    });
+          // Si no hay texto en la búsqueda, mostrar todas las imágenes nuevamente
+          if (searchTerm === '') {
+              renderImages(currentPage);
+          }
+      });
 
-    // Función para manejar el botón de play/pausa
-    playPauseButton.addEventListener('click', () => {
-        if (currentAudio.paused) {
-            currentAudio.play();
-            playPauseButton.textContent = 'Pausa';
-        } else {
-            currentAudio.pause();
-            playPauseButton.textContent = 'Play';
-        }
-    });
+   })
+   .catch(error => console.error('Error cargando el JSON:', error));
 
-    // Función para manejar el botón de siguiente canción
-    nextSongButton.addEventListener('click', () => {
-        currentSongIndex = (currentSongIndex + 1) % songsData.length;
-        loadAndPlaySong(currentSongIndex);
-    });
-
-    // Función para manejar el botón de canción anterior
-    prevSongButton.addEventListener('click', () => {
-        currentSongIndex = (currentSongIndex - 1 + songsData.length) % songsData.length;
-        loadAndPlaySong(currentSongIndex);
-    });
-
-    // Evento al finalizar la canción
-    currentAudio.addEventListener('ended', () => {
-        // Ocultar el reproductor cuando la canción termine
-        audioPlayer.classList.add('hidden');
-    });
-
-    // Función para minimizar/maximizar el reproductor
-    function toggleMinimize() {
-        audioPlayer.classList.toggle('minimized');
-    }
-
-    // Función para inicializar la galería
-    function init() {
-        fetch('canciones.json')
-            .then(response => response.json())
-            .then(data => {
-                songsData = data;
-                renderSongs(currentPage, songsData);
-                renderPagination(songsData.length);
-            })
-            .catch(error => console.error('Error al cargar las canciones:', error));
-    }
-
-    // Inicializar la galería al cargar la página
-    init();
 </script>
 
 </body>

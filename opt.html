@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sección de Videos</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        header {
+            background-color: #1f1f1f;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 40px;
+            height: auto;
+            border-radius: 50%;
+        }
+
+        .menu {
+            display: flex;
+            margin-left: 20px;
+        }
+
+        .tab-button {
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .tab-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .social-icons {
+            margin-left: auto;
+        }
+
+        .social-icon {
+            width: 30px;
+            height: auto;
+            margin-left: 10px;
+            transition: transform 0.3s;
+        }
+
+        .social-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .banner-container {
+            text-align: center;
+            margin-top: 20px;
+            background-image: linear-gradient(to right, #ff5722, #e64a19);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .banner h2 {
+            color: white;
+        }
+
+        .banner p {
+            color: #fff3e0;
+        }
+
+        .video-container {
+           max-width :1200px ;
+           margin :auto ;
+           padding :20px ;
+           display:flex ;
+           flex-wrap :wrap ;
+           justify-content :space-between ;
+       }
+
+       .video-item {
+           flex :0 1 calc(50% - 10px);
+           background-color:#222 ;
+           border-radius :5px ;
+           overflow:hidden ;
+           margin-bottom :15px ;
+           transition :transform 0.3s ease-in-out ;
+       }
+
+       .video-item:hover {
+           transform :scale(1.05) ;
+       }
+
+       iframe {
+           width :100% ;
+           height :250px ;
+           border:none ;
+           allowfullscreen; /* Permite pantalla completa */
+       }
+
+       footer {
+           text-align:center ;
+           padding :20px ;
+           background-color:#1f1f1f ;
+           position :relative ;
+           bottom :0 ;
+           width :100%;
+       }
+
+       .pagination {
+           text-align:center ;
+           margin-top :20px ;
+       }
+
+       .pagination button {
+           background-color:#ff5722 ;
+           color:white ;
+           border:none ;
+           padding :10px ;
+           margin :5px ;
+           border-radius :5px ;
+           cursor:pointer ;
+       }
+
+       .pagination button:hover {
+           background-color:#e64a19 ;
+       }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="top-bar">
+        <img src="https://i.ibb.co/Fnt08ty/Exen-Profil-E.jpg" alt="Icono" class="header-icon">
+        <nav class="menu">
+            <a href="index.html" class="tab-button">Home</a>
+            <a href="HomeMusic.html" class="tab-button">Música</a>
+            <a href="videos.html" class="tab-button">Videos</a>
+            <a href="yo.html" class="tab-button">Sobre mí</a>
+        </nav>
+
+        <!-- Íconos de redes sociales en el header -->
+        <div class="social-icons">
+            <a href="https://www.facebook.com/exenie?mibextid=ZbWKwL" target="_blank">
+                <img src="https://img.icons8.com/?size=512&id=118497&format=png" alt="Facebook" class="social-icon">
+            </a>
+            <a href="https://www.twitter.com/exeneqiel" target="_blank">
+                <img src="https://img.icons8.com/?size=512&id=5MQ0gPAYYx7a&format=png" alt="Twitter" class="social-icon">
+            </a>
+        </div>
+    </div>
+    <hr class="divider"> <!-- Divisor -->
+</header>
+
+<!-- Banner Promocional -->
+<div class="banner-container">
+    <div class="banner">
+        <h2>¡BIENVENIDOS A LA SECCIÓN DE VIDEOS!</h2>
+        <p>Explora nuestros videos más recientes.</p>
+    </div>
+</div>
+
+<!-- Contenedor de Videos -->
+<main id="video-gallery" class="video-container"></main>
+
+<!-- Paginación -->
+<div class="pagination" id="pagination"></div>
+
+<footer>
+    <p>&copy; 2024 ExenE. Todos los derechos reservados.</p>
+</footer>
+
+<script>
+// Lista de videos (URLs incrustadas)
+const videos = [
+    "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    "https://www.youtube.com/embed/3JZ_D3ELwOQ",
+    "https://player.vimeo.com/video/76979871",
+    "https://www.youtube.com/embed/tgbNymZ7vqY",
+    "https://www.youtube.com/embed/ScMzIvxBSi4",
+    "https://www.youtube.com/embed/9bZkp7q19f0",
+    "https://player.vimeo.com/video/22439234",
+    "https://www.youtube.com/embed/e-ORhEE9VVg",
+    "https://www.youtube.com/embed/L_jWHffIx5E",
+    "https://player.vimeo.com/video/148751763",
+    "https://www.youtube.com/embed/M7lc1UVf-VE",
+    "https://www.youtube.com/embed/sNPnbI1arSE",
+    "https://player.vimeo.com/video/76979871",
+    "https://www.youtube.com/embed/J---aiyznGQ",
+    "https://player.vimeo.com/video/1084537",
+];
+
+// Configuración de paginación
+const itemsPerPage = 15; // Videos por página
+let currentPage = 1;
+
+// Renderizar los videos en la página actual
+function renderVideos(page) {
+    const videoGallery = document.getElementById("video-gallery");
+    videoGallery.innerHTML = ""; // Limpiar el contenedor
+
+    // Calcular índices de inicio y fin
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, videos.length);
+
+    // Mostrar los videos correspondientes a la página actual
+    for (let i = startIndex; i < endIndex; i++) {
+        const videoItem = document.createElement("div");
+        videoItem.className = "video-item";
+        videoItem.innerHTML = `<iframe src="${videos[i]}" allowfullscreen></iframe>`;
+        videoGallery.appendChild(videoItem);
+    }
+}
+
+// Renderizar la paginación
+function renderPagination() {
+    const pagination = document.getElementById("pagination");
+    pagination.innerHTML = ""; // Limpiar la paginación existente
+
+    const totalPages = Math.ceil(videos.length / itemsPerPage);
+
+    for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement("button");
+        button.textContent = i;
+
+        if (i === currentPage) button.style.backgroundColor = "#e64a19"; // Resaltar página activa
+
+        button.onclick = () => {
+            currentPage = i; // Cambiar a la página seleccionada
+            renderVideos(currentPage); // Renderizar videos
+            renderPagination(); // Actualizar paginación
+        };
+
+        pagination.appendChild(button);
+    }
+}
+
+// Inicializar galería y paginación
+renderVideos(currentPage);
+renderPagination();
+</script>
+
+</body>
+</html>
