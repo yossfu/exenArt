@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nota</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
+    <!-- Plyr para el reproductor de audio -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+</head>
+<body>
+    <header id="header">
+        <div class="top-bar">
+            <a href="index.html" class="logo" aria-label="Inicio">
+                <img src="https://files.catbox.moe/kz2lot.png" alt="Logotipo de ExenE">
+            </a>
+            <button id="menu-toggle" class="menu-toggle">
+                <span class="hamburger"></span>
+            </button>
+            <nav class="menu" id="menu">
+                <button id="menu-close" class="menu-close">Cerrar</button>
+                <a href="index.html" class="tab-button">Home</a>
+                <a href="HomeMusic.html" class="tab-button">Música</a>
+                <a href="https://html5-chat.com/chat/51441/67647612ece05" class="tab-button">Chat</a>
+                <a href="yo.html" class="tab-button">Sobre mí</a>
+            </nav>
+            <button id="theme-toggle" class="theme-button">
+                <img src="https://cdn-icons-png.flaticon.com/128/6076/6076999.png" alt="Modo oscuro" class="theme-icon">
+            </button>
+        </div>
+    </header>
+
+    <main class="content" id="main-content">
+        <section class="note-section" id="note-section">
+            <h1 id="note-title" class="note-title"></h1>
+            <img id="note-image" src="" alt="" class="note-image" style="display: none;">
+            <hr class="divider">
+            <p id="note-content" class="note-content"></p>
+            <div id="note-audio" class="note-audio" style="display: none;">
+                <h3 class="audio-title">Audiolibro</h3>
+                <audio id="audio-player" controls>
+                    <source src="" type="audio/mp3">
+                    Tu navegador no soporta el elemento de audio.
+                </audio>
+            </div>
+            <hr class="divider">
+            <div class="comments-container" id="comments-container">
+                <h3>Comentarios:</h3>
+                <div id="utterances-container" class="utterances"></div>
+            </div>
+            <hr class="divider">
+            <section class="similar-notes" id="similar-notes">
+                <h2>Notas Similares</h2>
+                <div class="similar-notes-grid" id="similar-notes-grid"></div>
+            </section>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 ExenE. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const noteId = urlParams.get('id') || 1;
+
+            if (localStorage.getItem('darkTheme') === 'true') {
+                document.body.classList.add('dark-theme');
+            }
+            document.getElementById('theme-toggle').addEventListener('click', () => {
+                document.body.classList.toggle('dark-theme');
+                localStorage.setItem('darkTheme', document.body.classList.contains('dark-theme'));
+                updateUtterancesTheme();
+            });
+
+            document.getElementById('header').style.display = 'block';
+            document.getElementById('main-content').style.display = 'block';
+            document.querySelector('footer').style.display = 'block';
+
+            const menuToggle = document.getElementById('menu-toggle');
+            const menu = document.getElementById('menu');
+            const menuClose = document.getElementById('menu-close');
+
+            function toggleMenu() {
+                menu.classList.toggle('active');
+                menuToggle.classList.toggle('open');
+            }
+
+            function closeMenu() {
+                menu.classList.remove('active');
+                menuToggle.classList.remove('open');
+            }
+
+            menuToggle.addEventListener('click', toggleMenu);
+            menuClose.addEventListener('click', closeMenu);
+            document.addEventListener('click', (event) => {
+                if (!menu.contains(event.target) && !menuToggle.contains(event.target) && menu.classList.contains('active')) {
+                    closeMenu();
+                }
+            });
+            const menuLinks = menu.querySelectorAll('.tab-button');
+            menuLinks.forEach(link => {
+                link.addEventListener('click', closeMenu);
+            });
+
+            fetch('notes.json')
+                .then(response => response.json())
+                .then(data => {
+                    const currentNote = data.find(note => note.id == noteId);
+                    if (currentNote) {
+                        document.getElementById('note-title').textContent = currentNote.title;
+                        const noteImage = document.getElementById('note-image');
+                        if (currentNote.image) {
+                            noteImage.src = currentNote.image;
+                            noteImage.alt = currentNote.title;
+                            noteImage.style.display = 'block';
+                        }
+                        document.getElementById('note-content').textContent = currentNote.content;
+                        if (currentNote.audio) {
+                            const audioContainer = document.getElementById('note-audio');
+                            const audioPlayer = document.getElementById('audio-player');
+                            audioPlayer.querySelector('source').src = currentNote.audio;
+                            audioPlayer.load();
+                            audioContainer.style.display = 'block';
+                            const player = new Plyr('#audio-player', {
+                                controls: ['play', 'progress', 'current-time', 'mute', 'volume']
+                            });
+                        }
+                        loadSimilarNotes(data, noteId, currentNote.tags);
+                        loadUtterances(noteId);
+                    } else {
+                        console.error("Nota no encontrada");
+                        document.getElementById('note-title').textContent = "Nota no encontrada";
+                    }
+                })
+                .catch(err => console.error(`Fetch problem: ${err.message}`));
+
+            function loadSimilarNotes(allNotes, currentNoteId, currentTags) {
+                const similarNotesGrid = document.getElementById('similar-notes-grid');
+                let similarNotes = allNotes.filter(note => note.id != currentNoteId);
+
+                if (currentTags && currentTags.length > 0) {
+                    similarNotes = similarNotes.filter(note => 
+                        note.tags && note.tags.some(tag => currentTags.includes(tag))
+                    ).sort((a, b) => {
+                        const aMatches = a.tags ? a.tags.filter(tag => currentTags.includes(tag)).length : 0;
+                        const bMatches = b.tags ? b.tags.filter(tag => currentTags.includes(tag)).length : 0;
+                        return bMatches - aMatches;
+                    });
+                }
+
+                similarNotes.slice(0, 4).forEach(note => {
+                    const noteElement = document.createElement('div');
+                    noteElement.className = 'similar-note-item';
+                    noteElement.innerHTML = `
+                        <a href="note.html?id=${note.id}">
+                            <img src="${note.image || 'https://via.placeholder.com/150'}" alt="${note.title}">
+                            <h3>${note.title}</h3>
+                        </a>`;
+                    similarNotesGrid.appendChild(noteElement);
+                });
+            }
+
+            function loadUtterances(noteId) {
+                const container = document.getElementById('utterances-container');
+                container.innerHTML = '';
+
+                const script = document.createElement('script');
+                script.src = 'https://utteranc.es/client.js';
+                script.setAttribute('repo', 'yossfu/Gesti-n-de-comentarios');
+                script.setAttribute('issue-term', `note-${noteId}`);
+                script.setAttribute('theme', document.body.classList.contains('dark-theme') ? 'dark-blue' : 'github-light');
+                script.setAttribute('crossorigin', 'anonymous');
+                script.async = true;
+                container.appendChild(script);
+            }
+
+            function updateUtterancesTheme() {
+                const container = document.getElementById('utterances-container');
+                setTimeout(() => {
+                    const iframe = container.querySelector('iframe');
+                    if (iframe) {
+                        iframe.contentWindow.postMessage({
+                            type: 'set-theme',
+                            theme: document.body.classList.contains('dark-theme') ? 'dark-blue' : 'github-light'
+                        }, 'https://utteranc.es');
+                    }
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>
