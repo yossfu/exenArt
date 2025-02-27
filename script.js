@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const gallery = document.getElementById('gallery');
     const footer = document.querySelector('footer');
     const revokeAge = document.getElementById('revoke-age');
+    const loader = document.getElementById('loader');
+    const themeToggle = document.getElementById('theme-toggle');
+    const filterCount = document.getElementById('filter-count');
+    const scrollTopButton = document.getElementById('scroll-top');
     const itemsPerPage = 15;
     let currentPage = 1;
     let imagesData = [];
@@ -27,7 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
         '#ff8a65', '#ff7043', '#ff5722', '#f4511e', '#e64a19'
     ];
 
-    // Verificación de edad persistente
+    if (localStorage.getItem('darkTheme') === 'true') {
+        document.body.classList.add('dark-theme');
+    }
+
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+        localStorage.setItem('darkTheme', document.body.classList.contains('dark-theme'));
+    });
+
     if (localStorage.getItem('ageVerified') === 'true') {
         ageVerification.style.display = 'none';
         header.style.display = 'block';
@@ -53,10 +65,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Revocar verificación de edad
     revokeAge.addEventListener('click', () => {
         localStorage.removeItem('ageVerified');
-        location.reload(); // Recarga la página para mostrar el aviso nuevamente
+        localStorage.removeItem('lastFilter');
+        localStorage.removeItem('lastFilterType');
+        location.reload();
+    });
+
+    scrollTopButton.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 200) {
+            scrollTopButton.classList.add('visible');
+        } else {
+            scrollTopButton.classList.remove('visible');
+        }
     });
 
     function startPage() {
@@ -75,17 +100,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setInterval(nextSlide, slideInterval);
 
+        loader.style.display = 'flex';
+        const cachedData = localStorage.getItem('cachedImages');
+        if (cachedData) {
+            imagesData = JSON.parse(cachedData);
+            renderImages(currentPage);
+            generateRandomTags();
+            loader.style.display = 'none';
+            restoreFilter();
+        }
+
         fetch('imagenes.json')
             .then(response => response.json())
             .then(data => {
                 imagesData = data;
+                localStorage.setItem('cachedImages', JSON.stringify(data)); // Guardar para modo offline
                 renderImages(currentPage);
                 generateRandomTags();
+                loader.style.display = 'none';
+                restoreFilter();
             })
             .catch(error => {
                 console.error('Error cargando el JSON:', error);
-                imageGrid.innerHTML = '<p style="text-align:center;color:#ff5722;">Error al cargar las imágenes. Por favor, intenta de nuevo más tarde.</p>';
+                if (!cachedData) {
+                    imageGrid.innerHTML = '<p style="text-align:center;color:#ff5722;">Error al cargar las imágenes. Por favor, intenta de nuevo más tarde.</p>';
+                }
+                loader.style.display = 'none';
             });
+    }
+
+    function restoreFilter() {
+        const lastFilter = localStorage.getItem('lastFilter');
+        const lastFilterType = localStorage.getItem('lastFilterType');
+        if (lastFilter) {
+            if (lastFilterType === 'search') {
+                searchInput.value = lastFilter;
+                filterBySearch(lastFilter);
+            } else if (lastFilterType === 'tag') {
+                const tagButton = Array.from(tagsSection.querySelectorAll('.tag-button')).find(btn => btn.textContent === lastFilter);
+                if (tagButton) filterByTag(lastFilter, tagButton);
+            }
+        }
     }
 
     function generateRandomTags() {
@@ -129,49 +184,81 @@ document.addEventListener('DOMContentLoaded', () => {
             isFiltered = true;
             resetButton.classList.add('active');
             imageGrid.classList.remove('fade');
-        }, 250);
+            updateFilterCount();
+            localStorage.setItem('lastFilter', tag);
+            localStorage.setItem('lastFilterType', 'tag');
+            searchInput.value = '';
+        }, 100);
+    }
+
+    function filterBySearch(searchTerm) {
+        imageGrid.classList.add('fade');
+        setTimeout(() => {
+            imageGrid.innerHTML = '';
+            if (activeTagButton) activeTagButton.classList.remove('active');
+            activeTagButton = null;
+            filteredItems = imagesData.filter(item => {
+                const titleMatch = item.title.toLowerCase().includes(searchTerm);
+                const descriptionMatch = item.description?.toLowerCase().includes(searchTerm);
+                const tagsMatch = item.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                return titleMatch || descriptionMatch || tagsMatch;
+            });
+            loadedItems = 0;
+            loadMoreFilteredItems();
+            isFiltered = true;
+            resetButton.classList.add('active');
+            imageGrid.classList.remove('fade');
+            updateFilterCount();
+            localStorage.setItem('lastFilter', searchTerm);
+            localStorage.setItem('lastFilterType', 'search');
+        }, 100);
     }
 
     function loadMoreFilteredItems() {
-        const loadingText = document.createElement('div');
-        loadingText.className = 'loading-text active';
-        loadingText.textContent = 'Cargando...';
+        const loadMoreButton = pagination.querySelector('.load-more-button');
+        if (loadMoreButton) loadMoreButton.classList.add('loading');
+
+        const startIndex = loadedItems;
+        const endIndex = Math.min(startIndex + itemsPerPage, filteredItems.length);
+
+        filteredItems.slice(startIndex, endIndex).forEach((item, index) => {
+            const imageItem = document.createElement('div');
+            imageItem.className = 'flex-item';
+            imageItem.style.animationDelay = `${index * 0.1}s`; // Retraso escalonado
+            imageItem.innerHTML = `
+                <a href="${item.redirectUrl}" aria-label="${item.title}">
+                    <img src="${item.url}" alt="${item.title}">
+                </a>
+                <p>${item.title}</p>
+            `;
+            imageGrid.appendChild(imageItem);
+        });
+
+        loadedItems = endIndex;
+
         pagination.innerHTML = '';
-        pagination.appendChild(loadingText);
-
-        setTimeout(() => {
-            const startIndex = loadedItems;
-            const endIndex = Math.min(startIndex + itemsPerPage, filteredItems.length);
-
-            filteredItems.slice(startIndex, endIndex).forEach(item => {
-                const imageItem = document.createElement('div');
-                imageItem.className = 'flex-item';
-                imageItem.innerHTML = `
-                    <a href="${item.redirectUrl}" aria-label="${item.title}">
-                        <img src="${item.url}" alt="${item.title}">
-                    </a>
-                    <p>${item.title}</p>
-                `;
-                imageGrid.appendChild(imageItem);
-            });
-
-            loadedItems = endIndex;
-            loadingText.classList.remove('active');
-
-            const loadMoreButton = document.querySelector('.load-more-button');
-            if (loadMoreButton) loadMoreButton.remove();
-
-            if (loadedItems < filteredItems.length) {
-                const newLoadMoreButton = document.createElement('button');
-                newLoadMoreButton.className = 'load-more-button';
-                newLoadMoreButton.textContent = 'Cargar más';
-                newLoadMoreButton.addEventListener('click', loadMoreFilteredItems);
-                pagination.innerHTML = '';
+        if (loadedItems < filteredItems.length) {
+            const newLoadMoreButton = document.createElement('button');
+            newLoadMoreButton.className = 'load-more-button';
+            newLoadMoreButton.textContent = 'Cargar más';
+            newLoadMoreButton.addEventListener('click', loadMoreFilteredItems);
+            setTimeout(() => {
                 pagination.appendChild(newLoadMoreButton);
-            } else {
-                pagination.innerHTML = '';
-            }
-        }, 500);
+                updateFilterCount();
+            }, 500);
+        } else {
+            updateFilterCount();
+        }
+    }
+
+    function updateFilterCount() {
+        if (isFiltered) {
+            filterCount.style.display = 'block';
+            filterCount.textContent = `Mostrando ${loadedItems} de ${filteredItems.length} imágenes`;
+        } else {
+            filterCount.style.display = 'none';
+            filterCount.textContent = '';
+        }
     }
 
     function resetFilters() {
@@ -184,7 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
             imageGrid.classList.remove('fade');
             isFiltered = false;
             resetButton.classList.remove('active');
-        }, 250);
+            updateFilterCount();
+            localStorage.removeItem('lastFilter');
+            localStorage.removeItem('lastFilterType');
+            searchInput.value = '';
+        }, 100);
     }
 
     function renderImages(page) {
@@ -192,9 +283,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const startIndex = (page - 1) * itemsPerPage;
         const endIndex = Math.min(startIndex + itemsPerPage, imagesData.length);
 
-        imagesData.slice(startIndex, endIndex).forEach(item => {
+        imagesData.slice(startIndex, endIndex).forEach((item, index) => {
             const imageItem = document.createElement('div');
             imageItem.className = 'flex-item';
+            imageItem.style.animationDelay = `${index * 0.1}s`; // Retraso escalonado
             imageItem.innerHTML = `
                 <a href="${item.redirectUrl}" aria-label="${item.title}">
                     <img src="${item.url}" alt="${item.title}">
@@ -205,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         renderPagination(imagesData.length, filterByPage);
+        updateFilterCount();
 
         function filterByPage(newPage) {
             currentPage = newPage;
@@ -226,38 +319,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             pagination.appendChild(button);
         }
+        updateFilterCount();
     }
 
-    let debounceTimer;
     searchInput.addEventListener('input', function() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            const searchTerm = this.value.toLowerCase().trim();
-            imageGrid.classList.add('fade');
-            setTimeout(() => {
-                imageGrid.innerHTML = '';
-
-                if (!searchTerm) {
-                    renderImages(currentPage);
-                    isFiltered = false;
-                    resetButton.classList.remove('active');
-                } else {
-                    if (activeTagButton) activeTagButton.classList.remove('active');
-                    activeTagButton = null;
-                    filteredItems = imagesData.filter(item => {
-                        const titleMatch = item.title.toLowerCase().includes(searchTerm);
-                        const descriptionMatch = item.description?.toLowerCase().includes(searchTerm);
-                        const tagsMatch = item.tags.some(tag => tag.toLowerCase().includes(searchTerm));
-                        return titleMatch || descriptionMatch || tagsMatch;
-                    });
-                    loadedItems = 0;
-                    loadMoreFilteredItems();
-                    isFiltered = true;
-                    resetButton.classList.add('active');
-                }
-                imageGrid.classList.remove('fade');
-            }, 250);
-        }, 300);
+        const searchTerm = this.value.toLowerCase().trim();
+        filterBySearch(searchTerm);
     });
 
     resetButton.addEventListener('click', resetFilters);

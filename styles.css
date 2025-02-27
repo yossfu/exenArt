@@ -9,6 +9,12 @@ body {
     background-color: #fff;
     color: #d32f2f;
     line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-theme {
+    background-color: #212121;
+    color: #ef5350;
 }
 
 .age-verification {
@@ -17,7 +23,10 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
+    background: url('https://files.catbox.moe/p6lokn.jpg') no-repeat center center fixed;
+    background-size: cover;
     background-color: rgba(0, 0, 0, 0.8);
+    background-blend-mode: overlay;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -32,7 +41,7 @@ body {
 }
 
 .age-content {
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.9);
     padding: 30px;
     border-radius: 15px;
     text-align: center;
@@ -40,6 +49,11 @@ body {
     max-width: 400px;
     width: 90%;
     border: 2px solid #d32f2f;
+}
+
+.dark-theme .age-content {
+    background-color: rgba(66, 66, 66, 0.9);
+    color: #ef5350;
 }
 
 .age-logo {
@@ -56,10 +70,18 @@ body {
     margin-bottom: 15px;
 }
 
+.dark-theme .age-content h1 {
+    color: #ef5350;
+}
+
 .age-content p {
     font-size: 1.2rem;
     color: #333;
     margin-bottom: 20px;
+}
+
+.dark-theme .age-content p {
+    color: #bdbdbd;
 }
 
 .age-buttons {
@@ -96,6 +118,38 @@ body {
     transform: scale(1.05);
 }
 
+.loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #fff;
+    border-top: 5px solid #d32f2f;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.dark-theme .spinner {
+    border: 5px solid #424242;
+    border-top: 5px solid #ef5350;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 header {
     background-color: #d32f2f;
     padding: 5px;
@@ -103,6 +157,11 @@ header {
     z-index: 10;
     box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
     display: none;
+    position: relative;
+}
+
+.dark-theme header {
+    background-color: #b71c1c;
 }
 
 .top-bar {
@@ -112,6 +171,7 @@ header {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 10px;
+    position: relative;
 }
 
 .logo img {
@@ -140,11 +200,36 @@ header {
     color: #fff;
 }
 
+.theme-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    position: absolute;
+    top: 5px;
+    right: 10px;
+}
+
+.theme-icon {
+    width: 24px;
+    height: 24px;
+    transition: filter 0.3s ease;
+}
+
+.dark-theme .theme-icon {
+    filter: invert(1) brightness(1.5);
+}
+
 .content {
     max-width: 1200px;
     margin: 0 auto;
     padding: 15px;
     display: none;
+    position: relative;
+}
+
+.dark-theme .content {
+    background-color: #212121;
 }
 
 .welcome-slider {
@@ -173,6 +258,10 @@ header {
     padding: 20px;
     background: linear-gradient(135deg, #d32f2f 0%, #ef5350 100%);
     color: #fff;
+}
+
+.dark-theme .slide {
+    background: linear-gradient(135deg, #b71c1c 0%, #ef5350 100%);
 }
 
 .slide h1 {
@@ -216,7 +305,13 @@ header {
     border-radius: 25px;
     background-color: #f5f5f5;
     color: #d32f2f;
-    transition: border-color 0.3s ease;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.dark-theme .search-section input {
+    background-color: #424242;
+    color: #ef5350;
+    border-color: #ef5350;
 }
 
 .search-section input:focus {
@@ -233,6 +328,10 @@ header {
     gap: 10px;
     border-bottom: 1px solid #b71c1c;
     margin-bottom: 10px;
+}
+
+.dark-theme .tags-section {
+    border-bottom: 1px solid #ef5350;
 }
 
 .tag-button {
@@ -256,25 +355,32 @@ header {
 }
 
 .reset-button {
-    padding: 6px 12px;
-    font-size: 0.9rem;
+    padding: 8px 16px; /* Más grande */
+    font-size: 1rem; /* Texto más grande */
     color: #fff;
     background-color: #757575;
     border: none;
-    border-radius: 15px;
+    border-radius: 20px;
     cursor: pointer;
     transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease;
     display: none;
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Espacio entre ícono y texto */
 }
 
 .reset-button.active {
     background-color: #ef5350;
-    display: inline-block;
+    display: inline-flex; /* Más visible cuando activo */
 }
 
 .reset-button:hover {
     transform: scale(1.05);
     opacity: 0.9;
+}
+
+.reset-icon {
+    font-size: 1.2rem; /* Ícono más grande */
 }
 
 .load-more-button {
@@ -288,6 +394,25 @@ header {
     transition: background-color 0.3s ease, transform 0.3s ease;
     margin: 10px auto;
     display: block;
+    position: relative;
+}
+
+.load-more-button.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 3px solid #fff;
+    border-top: 3px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.dark-theme .load-more-button {
+    background-color: #b71c1c;
 }
 
 .load-more-button:hover {
@@ -305,6 +430,10 @@ header {
     font-size: 1rem;
     color: #d32f2f;
     display: none;
+}
+
+.dark-theme .loading-text {
+    color: #ef5350;
 }
 
 .loading-text.active {
@@ -328,6 +457,10 @@ header {
     margin-bottom: 10px;
 }
 
+.dark-theme .gallery-title {
+    color: #ef5350;
+}
+
 .image-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -347,11 +480,28 @@ header {
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
+    opacity: 0; /* Para la animación */
+    animation: fadeInItem 0.5s ease forwards;
+}
+
+@keyframes fadeInItem {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dark-theme .flex-item {
+    background-color: #424242;
+    border: 1px solid #ef5350;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .flex-item:hover {
     transform: scale(1.05);
     box-shadow: 0 8px 16px rgba(211, 47, 47, 0.5);
+}
+
+.dark-theme .flex-item:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
 }
 
 .flex-item img {
@@ -365,6 +515,10 @@ header {
     text-align: center;
     font-size: 0.85rem;
     color: #d32f2f;
+}
+
+.dark-theme .flex-item p {
+    color: #ef5350;
 }
 
 .pagination {
@@ -384,6 +538,10 @@ header {
     transition: background-color 0.3s ease;
 }
 
+.dark-theme .pagination button {
+    background-color: #b71c1c;
+}
+
 .pagination button:hover {
     background-color: #ef5350;
 }
@@ -391,6 +549,55 @@ header {
 .pagination button:disabled {
     background-color: #b71c1c;
     cursor: not-allowed;
+}
+
+.dark-theme .pagination button:disabled {
+    background-color: #757575;
+}
+
+.filter-count {
+    font-size: 0.9rem;
+    color: #d32f2f;
+    margin: 10px 0;
+    display: none;
+}
+
+.dark-theme .filter-count {
+    color: #ef5350;
+}
+
+.scroll-top-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background-color: #d32f2f;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 50;
+}
+
+.scroll-top-button.visible {
+    opacity: 0.8;
+}
+
+.scroll-top-button:hover {
+    opacity: 1;
+    background-color: #ef5350;
+}
+
+.dark-theme .scroll-top-button {
+    background-color: #b71c1c;
+}
+
+.dark-theme .scroll-top-button:hover {
+    background-color: #ef5350;
 }
 
 footer {
@@ -401,6 +608,10 @@ footer {
     font-size: 0.85rem;
     margin-top: 20px;
     display: none;
+}
+
+.dark-theme footer {
+    background-color: #b71c1c;
 }
 
 .revoke-button {
@@ -429,6 +640,12 @@ footer {
         margin: 5px 0;
     }
 
+    .theme-button {
+        top: 5px;
+        right: 10px;
+        margin-top: 0;
+    }
+
     .welcome-slider {
         height: 120px;
     }
@@ -450,9 +667,14 @@ footer {
         width: 90%;
     }
 
-    .tag-button, .reset-button {
-        font-size: 0.8rem;
+    .tag-button {
         padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+
+    .reset-button {
+        padding: 6px 12px;
+        font-size: 0.9rem;
     }
 
     .load-more-button {
@@ -488,5 +710,13 @@ footer {
     .age-buttons button {
         padding: 8px 16px;
         font-size: 0.9rem;
+    }
+
+    .scroll-top-button {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+        bottom: 15px;
+        right: 15px;
     }
 }
