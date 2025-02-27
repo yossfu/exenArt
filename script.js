@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainContent = document.getElementById('main-content');
     const gallery = document.getElementById('gallery');
     const footer = document.querySelector('footer');
+    const revokeAge = document.getElementById('revoke-age');
     const itemsPerPage = 15;
     let currentPage = 1;
     let imagesData = [];
@@ -51,6 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'https://m.kiddle.co/';
         });
     }
+
+    // Revocar verificación de edad
+    revokeAge.addEventListener('click', () => {
+        localStorage.removeItem('ageVerified');
+        location.reload(); // Recarga la página para mostrar el aviso nuevamente
+    });
 
     function startPage() {
         const slides = sliderContainer.children;
