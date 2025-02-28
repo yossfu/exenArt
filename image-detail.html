@@ -7,19 +7,105 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
     <link rel="preload" href="https://files.catbox.moe/kz2lot.png" as="image">
-    <!-- Metadatos Open Graph genéricos como placeholder -->
-    <meta property="og:title" content="">
-    <meta property="og:description" content="">
-    <meta property="og:image" content="https://via.placeholder.com/1200x630.png?text=ExenE"> <!-- Fallback válido -->
-    <meta property="og:url" content="">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="">
-    <meta name="twitter:description" content="">
-    <meta name="twitter:image" content="https://via.placeholder.com/1200x630.png?text=ExenE">
     <style>
         .lazy { opacity: 0; transition: opacity 0.3s; }
         .lazy[src] { opacity: 1; }
+        .watermark {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            z-index: 3; /* Aseguramos que esté por encima de la imagen */
+        }
+        .dark-theme .watermark {
+            color: rgba(239, 83, 80, 0.7);
+        }
+        .image-container {
+            position: relative;
+            margin: 20px 0;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        .image-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+            border-radius: 8px;
+            transition: opacity 0.3s ease;
+        }
+        .image-container:hover .image-background {
+            opacity: 0.7;
+        }
+        .note-image {
+            position: relative;
+            z-index: 2;
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+        .title-container {
+            position: relative;
+            margin-bottom: 10px;
+            z-index: 3;
+        }
+        .title-background {
+            position: relative;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 25px;
+            border-radius: 8px;
+            transition: opacity 0.3s ease;
+        }
+        .title-container:hover .title-background {
+            opacity: 0.8;
+        }
+        .note-title {
+            position: relative;
+            text-align: center;
+            font-size: 2.5rem;
+            margin: 0;
+            color: #fff;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #d32f2f, #ef5350);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            z-index: 4;
+            transition: transform 0.3s ease, text-shadow 0.3s ease;
+        }
+        .dark-theme .note-title {
+            background: linear-gradient(45deg, #b71c1c, #ef5350);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .note-title:hover {
+            transform: scale(1.05);
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+        }
+        @media (max-width: 600px) {
+            .note-title {
+                font-size: 2rem;
+                padding: 5px 15px;
+            }
+            .title-background {
+                padding: 10px 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -50,13 +136,15 @@
 
     <main class="content" id="main-content">
         <section class="note-section" id="note-section">
-            <h1 id="image-title" class="note-title"></h1>
-            <img id="full-image" data-src="" alt="" class="note-image lazy">
-            <hr class="divider">
-            <div class="share-section">
-                <h3>Comparte esta imagen</h3>
-                <div class="social-share" id="social-share">
-                    <!-- Botones se generarán dinámicamente -->
+            <div class="title-container">
+                <div class="title-background"></div>
+                <h1 id="image-title" class="note-title"></h1>
+            </div>
+            <div class="image-container">
+                <div class="image-background"></div>
+                <div style="position: relative;">
+                    <img id="full-image" data-src="" alt="" class="note-image lazy">
+                    <div class="watermark">@exeneqiel</div> <!-- Asegurada en la imagen principal -->
                 </div>
             </div>
             <hr class="divider">
@@ -92,7 +180,6 @@
                 imageTitle: document.getElementById('image-title'),
                 fullImage: document.getElementById('full-image'),
                 imageDescription: document.getElementById('image-description'),
-                socialShare: document.getElementById('social-share'),
                 similarImagesGrid: document.getElementById('similar-images-grid'),
                 utterancesContainer: document.getElementById('utterances-container')
             };
@@ -170,107 +257,6 @@
                 document.querySelectorAll('.lazy').forEach(img => observer.observe(img));
             }
 
-            function setSocialMetaTags(imageData) {
-                const baseUrl = window.location.origin;
-                const currentUrl = `${baseUrl}/image-detail.html?id=${imageId}`;
-                // Actualizamos o creamos metadatos, priorizando la imagen del ID
-                let ogTitle = document.querySelector('meta[property="og:title"]');
-                if (!ogTitle) {
-                    ogTitle = document.createElement('meta');
-                    ogTitle.setAttribute('property', 'og:title');
-                    document.head.appendChild(ogTitle);
-                }
-                ogTitle.setAttribute('content', ''); // Vaciamos el título para enfocarnos en la imagen
-
-                let ogDescription = document.querySelector('meta[property="og:description"]');
-                if (!ogDescription) {
-                    ogDescription = document.createElement('meta');
-                    ogDescription.setAttribute('property', 'og:description');
-                    document.head.appendChild(ogDescription);
-                }
-                ogDescription.setAttribute('content', ''); // Vaciamos la descripción
-
-                let ogImage = document.querySelector('meta[property="og:image"]');
-                if (!ogImage) {
-                    ogImage = document.createElement('meta');
-                    ogImage.setAttribute('property', 'og:image');
-                    document.head.appendChild(ogImage);
-                }
-                ogImage.setAttribute('content', imageData.url); // Solo la imagen del ID
-
-                let ogUrl = document.querySelector('meta[property="og:url"]');
-                if (!ogUrl) {
-                    ogUrl = document.createElement('meta');
-                    ogUrl.setAttribute('property', 'og:url');
-                    document.head.appendChild(ogUrl);
-                }
-                ogUrl.setAttribute('content', currentUrl);
-
-                let ogType = document.querySelector('meta[property="og:type"]');
-                if (!ogType) {
-                    ogType = document.createElement('meta');
-                    ogType.setAttribute('property', 'og:type');
-                    document.head.appendChild(ogType);
-                }
-                ogType.setAttribute('content', 'article');
-
-                let twitterCard = document.querySelector('meta[name="twitter:card"]');
-                if (!twitterCard) {
-                    twitterCard = document.createElement('meta');
-                    twitterCard.setAttribute('name', 'twitter:card');
-                    document.head.appendChild(twitterCard);
-                }
-                twitterCard.setAttribute('content', 'summary_large_image');
-
-                let twitterTitle = document.querySelector('meta[name="twitter:title"]');
-                if (!twitterTitle) {
-                    twitterTitle = document.createElement('meta');
-                    twitterTitle.setAttribute('name', 'twitter:title');
-                    document.head.appendChild(twitterTitle);
-                }
-                twitterTitle.setAttribute('content', ''); // Vaciamos el título
-
-                let twitterDescription = document.querySelector('meta[name="twitter:description"]');
-                if (!twitterDescription) {
-                    twitterDescription = document.createElement('meta');
-                    twitterDescription.setAttribute('name', 'twitter:description');
-                    document.head.appendChild(twitterDescription);
-                }
-                twitterDescription.setAttribute('content', ''); // Vaciamos la descripción
-
-                let twitterImage = document.querySelector('meta[name="twitter:image"]');
-                if (!twitterImage) {
-                    twitterImage = document.createElement('meta');
-                    twitterImage.setAttribute('name', 'twitter:image');
-                    document.head.appendChild(twitterImage);
-                }
-                twitterImage.setAttribute('content', imageData.url); // Solo la imagen del ID
-            }
-
-            function renderShareButtons(imageData) {
-                const currentUrl = encodeURIComponent(window.location.href);
-                const title = encodeURIComponent(imageData.title);
-                const description = encodeURIComponent(imageData.description || 'Mira esta increíble imagen en ExenE');
-                const imageUrl = encodeURIComponent(imageData.url);
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                const facebookUrl = isMobile ?
-                    `fb://facewebmodal/f?href=https://www.facebook.com/sharer/sharer.php?u=${currentUrl}` :
-                    `https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`;
-
-                const shareButtons = `
-                    <a href="${facebookUrl}" target="_blank" class="social-button" title="Compartir en Facebook">
-                        <img src="https://img.icons8.com/?size=512&id=118497&format=png" alt="Facebook" class="social-icon">
-                    </a>
-                    <a href="https://twitter.com/intent/tweet?url=${currentUrl}&text=${title}" target="_blank" class="social-button" title="Compartir en Twitter">
-                        <img src="https://img.icons8.com/?size=512&id=5MQ0gPAYYx7a&format=png" alt="Twitter" class="social-icon">
-                    </a>
-                    <a href="https://api.whatsapp.com/send?text=${title}%20${currentUrl}" target="_blank" class="social-button" title="Compartir en WhatsApp">
-                        <img src="https://img.icons8.com/?size=512&id=16713&format=png" alt="WhatsApp" class="social-icon">
-                    </a>
-                `;
-                elements.socialShare.innerHTML = shareButtons;
-            }
-
             elements.loader.style.display = 'flex';
             fetchWithCache('imagenes.json', 'cachedImages')
                 .then(data => {
@@ -280,8 +266,6 @@
                         elements.fullImage.dataset.src = currentItem.url;
                         elements.fullImage.alt = currentItem.title;
                         elements.imageDescription.textContent = currentItem.description || 'Sin descripción disponible';
-                        setSocialMetaTags(currentItem);
-                        renderShareButtons(currentItem);
                         loadSimilarImages(currentItem.tags, data);
                         loadUtterances(imageId);
                         lazyLoadImages();
@@ -303,7 +287,10 @@
                     imageElement.className = 'similar-note-item';
                     imageElement.innerHTML = `
                         <a href="image-detail.html?id=${item.id}">
-                            <img data-src="${item.url}" alt="${item.title}" class="lazy">
+                            <div style="position: relative;">
+                                <img data-src="${item.url}" alt="${item.title}" class="lazy">
+                                <div class="watermark">@exeneqiel</div>
+                            </div>
                             <h3>${item.title}</h3>
                         </a>`;
                     fragment.appendChild(imageElement);
