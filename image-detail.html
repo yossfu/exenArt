@@ -7,16 +7,16 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
     <link rel="preload" href="https://files.catbox.moe/kz2lot.png" as="image">
-    <!-- Metadatos Open Graph genéricos iniciales -->
+    <!-- Metadatos Open Graph genéricos como placeholder -->
     <meta property="og:title" content="Galería de Imágenes - ExenE">
     <meta property="og:description" content="Explora las mejores imágenes en ExenE">
-    <meta property="og:image" content="https://files.catbox.moe/kz2lot.png">
+    <meta property="og:image" content="https://via.placeholder.com/1200x630.png?text=ExenE"> <!-- Fallback válido -->
     <meta property="og:url" content="">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Galería de Imágenes - ExenE">
     <meta name="twitter:description" content="Explora las mejores imágenes en ExenE">
-    <meta name="twitter:image" content="https://files.catbox.moe/kz2lot.png">
+    <meta name="twitter:image" content="https://via.placeholder.com/1200x630.png?text=ExenE">
     <style>
         .lazy { opacity: 0; transition: opacity 0.3s; }
         .lazy[src] { opacity: 1; }
@@ -173,7 +173,7 @@
             function setSocialMetaTags(imageData) {
                 const baseUrl = window.location.origin;
                 const currentUrl = `${baseUrl}/image-detail.html?id=${imageId}`;
-                // Actualizamos los metadatos existentes si ya están presentes
+                // Actualizamos metadatos existentes o creamos nuevos
                 let ogTitle = document.querySelector('meta[property="og:title"]');
                 if (!ogTitle) {
                     ogTitle = document.createElement('meta');
@@ -196,7 +196,7 @@
                     ogImage.setAttribute('property', 'og:image');
                     document.head.appendChild(ogImage);
                 }
-                ogImage.setAttribute('content', imageData.url);
+                ogImage.setAttribute('content', imageData.url); // Usamos solo la imagen del ID
 
                 let ogUrl = document.querySelector('meta[property="og:url"]');
                 if (!ogUrl) {
@@ -244,7 +244,7 @@
                     twitterImage.setAttribute('name', 'twitter:image');
                     document.head.appendChild(twitterImage);
                 }
-                twitterImage.setAttribute('content', imageData.url);
+                twitterImage.setAttribute('content', imageData.url); // Usamos solo la imagen del ID
             }
 
             function renderShareButtons(imageData) {
