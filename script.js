@@ -28,8 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         menuClose: document.getElementById('menu-close'),
         chatToggle: document.getElementById('chat-toggle'),
         chatPopup: document.getElementById('chat-popup'),
-        chatClose: document.getElementById('chat-close'),
-        chatIframe: document.getElementById('chat-iframe')
+        chatClose: document.getElementById('chat-close')
     };
 
     const itemsPerPage = 15;
@@ -581,39 +580,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Lógica del chat flotante con iframe persistente
-    if (window.location.pathname.endsWith('index.html') && elements.chatToggle && elements.chatPopup && elements.chatClose && elements.chatIframe) {
+    // Lógica del chat flotante con Minnit Chat
+    if (window.location.pathname.endsWith('index.html') && elements.chatToggle && elements.chatPopup && elements.chatClose) {
         let chatLoaded = false;
 
         function initializeChat() {
-            if (!window.top.chatIframe) {
-                window.top.chatIframe = document.createElement('iframe');
-                window.top.chatIframe.id = 'persistent-chat-iframe';
-                window.top.chatIframe.src = 'https://html5-chat.com/chat/51441/67647612ece05';
-                window.top.chatIframe.style.width = '100%';
-                window.top.chatIframe.style.height = '100%';
-                window.top.chatIframe.style.border = 'none';
-                window.top.chatIframe.allow = 'microphone; camera';
-            }
-            if (!elements.chatContent.contains(window.top.chatIframe)) {
-                elements.chatContent.appendChild(window.top.chatIframe);
+            if (!chatLoaded) {
+                // Cargar el script de Minnit dinámicamente
+                const script = document.createElement('script');
+                script.src = 'https://minnit.chat/js/embed.js?c=1740011833';
+                script.defer = true;
+                script.onload = () => {
+                    // Crear el span para el chat después de que el script cargue
+                    const chatSpan = document.createElement('span');
+                    chatSpan.className = 'minnit-chat-sembed';
+                    chatSpan.style.display = 'block';
+                    chatSpan.dataset.chatname = 'https://organizations.minnit.chat/862394129979837/Chat?embed';
+                    chatSpan.dataset.style = 'width:100%; height:100%; max-height:100%;';
+                    chatSpan.textContent = 'Chat';
+
+                    const chatContent = elements.chatPopup.querySelector('.chat-content');
+                    chatContent.innerHTML = '';
+                    chatContent.appendChild(chatSpan);
+                };
+                document.head.appendChild(script);
+
+                chatLoaded = true;
             }
         }
 
-        function openChat() {
-            elements.chatPopup.style.display = 'flex';
-            if (!chatLoaded) {
+        function toggleChat() {
+            if (elements.chatPopup.style.display === 'flex') {
+                elements.chatPopup.style.display = 'none';
+            } else {
+                elements.chatPopup.style.display = 'flex';
                 initializeChat();
-                chatLoaded = true;
             }
         }
 
         function closeChat() {
             elements.chatPopup.style.display = 'none';
-            // No limpiamos el src para mantener la sesión
         }
 
-        elements.chatToggle.addEventListener('click', openChat);
+        elements.chatToggle.addEventListener('click', toggleChat);
         elements.chatClose.addEventListener('click', closeChat);
 
         document.addEventListener('click', (event) => {
