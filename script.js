@@ -95,24 +95,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleMenu() {
-        elements.menu.classList.toggle('active');
-        elements.menuToggle.classList.toggle('open');
+        if (elements.menu && elements.menuToggle) {
+            elements.menu.classList.toggle('active');
+            elements.menuToggle.classList.toggle('open');
+        }
     }
 
     function closeMenu() {
-        elements.menu.classList.remove('active');
-        elements.menuToggle.classList.remove('open');
+        if (elements.menu && elements.menuToggle) {
+            elements.menu.classList.remove('active');
+            elements.menuToggle.classList.remove('open');
+        }
     }
 
     if (elements.menuToggle && elements.menu && elements.menuClose) {
         elements.menuToggle.addEventListener('click', toggleMenu);
         elements.menuClose.addEventListener('click', closeMenu);
         document.addEventListener('click', (event) => {
-            if (!elements.menu.contains(event.target) && !elements.menuToggle.contains(event.target) && elements.menu.classList.contains('active')) {
+            if (elements.menu && elements.menuToggle && !elements.menu.contains(event.target) && !elements.menuToggle.contains(event.target) && elements.menu.classList.contains('active')) {
                 closeMenu();
             }
         });
-        elements.menu.querySelectorAll('.tab-button').forEach(link => link.addEventListener('click', closeMenu));
+        if (elements.menu) {
+            elements.menu.querySelectorAll('.tab-button').forEach(link => link.addEventListener('click', closeMenu));
+        }
     }
 
     function showMainContent() {
@@ -195,19 +201,23 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             fragment.appendChild(slideElement);
         });
-        elements.sliderContainer.innerHTML = '';
-        elements.sliderContainer.appendChild(fragment);
-        lazyLoadImages(elements.sliderContainer);
+        if (elements.sliderContainer) {
+            elements.sliderContainer.innerHTML = '';
+            elements.sliderContainer.appendChild(fragment);
+            lazyLoadImages(elements.sliderContainer);
+        }
     }
 
     function startSlider() {
-        const slides = elements.sliderContainer.children;
-        const totalSlides = slides.length;
-        elements.sliderContainer.style.setProperty('--total-slides', totalSlides);
-        setInterval(() => {
-            currentSlide = (currentSlide + 1) % totalSlides;
-            elements.sliderContainer.style.transform = `translateX(-${currentSlide * (100 / totalSlides)}%)`;
-        }, 5000);
+        if (elements.sliderContainer) {
+            const slides = elements.sliderContainer.children;
+            const totalSlides = slides.length;
+            elements.sliderContainer.style.setProperty('--total-slides', totalSlides);
+            setInterval(() => {
+                currentSlide = (currentSlide + 1) % totalSlides;
+                elements.sliderContainer.style.transform = `translateX(-${currentSlide * (100 / totalSlides)}%)`;
+            }, 5000);
+        }
     }
 
     function startPage() {
@@ -236,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const endIndex = Math.min(startIndex + itemsPerPage, isFiltered ? filteredItems.length : imagesData.length);
         const itemsToRender = isFiltered ? filteredItems : imagesData;
         const newItems = itemsToRender.slice(startIndex, endIndex);
-        const currentItems = Array.from(elements.imageGrid.children);
+        const currentItems = Array.from(elements.imageGrid?.children || []);
 
         if (currentItems.length === newItems.length && 
             currentItems.every((item, i) => item.querySelector('img').dataset.src === newItems[i].url)) {
@@ -257,101 +267,111 @@ document.addEventListener('DOMContentLoaded', () => {
             fragment.appendChild(imageItem);
         });
 
-        elements.imageGrid.innerHTML = '';
-        elements.imageGrid.appendChild(fragment);
-        lazyLoadImages(elements.imageGrid);
-        renderPagination(isFiltered ? filteredItems.length : imagesData.length, page => {
-            currentPage = page;
-            renderImages(currentPage);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-        updateFilterCount();
-        updateFilterIndicator();
+        if (elements.imageGrid) {
+            elements.imageGrid.innerHTML = '';
+            elements.imageGrid.appendChild(fragment);
+            lazyLoadImages(elements.imageGrid);
+            renderPagination(isFiltered ? filteredItems.length : imagesData.length, page => {
+                currentPage = page;
+                renderImages(currentPage);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            updateFilterCount();
+            updateFilterIndicator();
+        }
     }
 
     function renderPagination(totalItems, pageHandler) {
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
-        const fragment = document.createDocumentFragment();
+        if (elements.pagination) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const fragment = document.createDocumentFragment();
 
-        for (let i = 1; i <= totalPages; i++) {
-            const button = document.createElement('button');
-            button.textContent = i;
-            button.disabled = i === currentPage;
-            button.addEventListener('click', () => pageHandler(i));
-            fragment.appendChild(button);
+            for (let i = 1; i <= totalPages; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                button.disabled = i === currentPage;
+                button.addEventListener('click', () => pageHandler(i));
+                fragment.appendChild(button);
+            }
+            elements.pagination.innerHTML = '';
+            elements.pagination.appendChild(fragment);
+            updateFilterCount();
         }
-        elements.pagination.innerHTML = '';
-        elements.pagination.appendChild(fragment);
-        updateFilterCount();
     }
 
     function renderFeaturedNotes() {
-        const fragment = document.createDocumentFragment();
-        const shuffledNotes = [...notesData].sort(() => 0.5 - Math.random()).slice(0, 4);
+        if (elements.featuredNotes) {
+            const fragment = document.createDocumentFragment();
+            const shuffledNotes = [...notesData].sort(() => 0.5 - Math.random()).slice(0, 4);
 
-        shuffledNotes.forEach(note => {
-            const card = document.createElement('a');
-            card.className = 'featured-card';
-            card.href = `note.html?id=${note.id}`;
-            card.innerHTML = `
-                <img data-src="${note.image}" alt="${note.title}" class="lazy">
-                <h3>${note.title}</h3>
-                <p>${note.summary || note.content.substring(0, 100) + '...'}</p>
-            `;
-            fragment.appendChild(card);
-        });
-        elements.featuredNotes.innerHTML = '';
-        elements.featuredNotes.appendChild(fragment);
-        lazyLoadImages(elements.featuredNotes);
+            shuffledNotes.forEach(note => {
+                const card = document.createElement('a');
+                card.className = 'featured-card';
+                card.href = `note.html?id=${note.id}`;
+                card.innerHTML = `
+                    <img data-src="${note.image}" alt="${note.title}" class="lazy">
+                    <h3>${note.title}</h3>
+                    <p>${note.summary || note.content.substring(0, 100) + '...'}</p>
+                `;
+                fragment.appendChild(card);
+            });
+            elements.featuredNotes.innerHTML = '';
+            elements.featuredNotes.appendChild(fragment);
+            lazyLoadImages(elements.featuredNotes);
+        }
     }
 
     function generateRandomTags() {
-        const allTags = [...new Set(imagesData.flatMap(item => item.tags))];
-        const numTags = Math.min(5, allTags.length);
-        const randomTags = [];
-        const usedIndices = new Set();
+        if (elements.tagsSection && imagesData.length > 0) {
+            const allTags = [...new Set(imagesData.flatMap(item => item.tags))];
+            const numTags = Math.min(5, allTags.length);
+            const randomTags = [];
+            const usedIndices = new Set();
 
-        while (randomTags.length < numTags) {
-            const randomIndex = Math.floor(Math.random() * allTags.length);
-            if (!usedIndices.has(randomIndex)) {
-                usedIndices.add(randomIndex);
-                randomTags.push(allTags[randomIndex]);
+            while (randomTags.length < numTags) {
+                const randomIndex = Math.floor(Math.random() * allTags.length);
+                if (!usedIndices.has(randomIndex)) {
+                    usedIndices.add(randomIndex);
+                    randomTags.push(allTags[randomIndex]);
+                }
             }
+
+            elements.tagsSection.innerHTML = '';
+            elements.tagsSection.appendChild(elements.resetButton);
+            elements.tagsSection.appendChild(elements.resetTagButton);
+            elements.tagsSection.appendChild(elements.resetCategoryButton);
+
+            randomTags.forEach(tag => {
+                const tagButton = document.createElement('button');
+                tagButton.className = 'tag-button';
+                tagButton.textContent = tag;
+                tagButton.style.backgroundColor = tagColors[Math.floor(Math.random() * tagColors.length)];
+                elements.tagsSection.appendChild(tagButton);
+            });
         }
-
-        elements.tagsSection.innerHTML = '';
-        elements.tagsSection.appendChild(elements.resetButton);
-        elements.tagsSection.appendChild(elements.resetTagButton);
-        elements.tagsSection.appendChild(elements.resetCategoryButton);
-
-        randomTags.forEach(tag => {
-            const tagButton = document.createElement('button');
-            tagButton.className = 'tag-button';
-            tagButton.textContent = tag;
-            tagButton.style.backgroundColor = tagColors[Math.floor(Math.random() * tagColors.length)];
-            elements.tagsSection.appendChild(tagButton);
-        });
     }
 
     function generateCategories() {
-        elements.categories.innerHTML = '';
-        Object.keys(categoryIcons).forEach((category, index) => {
-            const categoryButton = document.createElement('button');
-            categoryButton.className = 'category-button';
-            categoryButton.dataset.category = category;
-            categoryButton.innerHTML = `
-                <img data-src="${categoryIcons[category]}" alt="${category}" class="lazy">
-                <span>${category.charAt(0).toUpperCase() + category.slice(1)}</span>
-            `;
-            categoryButton.style.animationDelay = `${index * 0.1}s`;
-            elements.categories.appendChild(categoryButton);
-        });
-        lazyLoadImages(elements.categories);
+        if (elements.categories) {
+            elements.categories.innerHTML = '';
+            Object.keys(categoryIcons).forEach((category, index) => {
+                const categoryButton = document.createElement('button');
+                categoryButton.className = 'category-button';
+                categoryButton.dataset.category = category;
+                categoryButton.innerHTML = `
+                    <img data-src="${categoryIcons[category]}" alt="${category}" class="lazy">
+                    <span>${category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                `;
+                categoryButton.style.animationDelay = `${index * 0.1}s`;
+                elements.categories.appendChild(categoryButton);
+            });
+            lazyLoadImages(elements.categories);
+        }
     }
 
     function filterByTag(tag, button) {
-        if (activeTagButton) activeTagButton.classList.remove('active');
-        button.classList.add('active');
+        if (activeTagButton && elements.tagsSection) activeTagButton.classList.remove('active');
+        if (button && elements.tagsSection) button.classList.add('active');
         activeTagButton = button;
         activeTag = tag;
         currentPage = 1;
@@ -360,8 +380,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function filterByCategory(category, button) {
-        if (activeCategoryButton) activeCategoryButton.classList.remove('active');
-        button.classList.add('active');
+        if (activeCategoryButton && elements.categories) activeCategoryButton.classList.remove('active');
+        if (button && elements.categories) button.classList.add('active');
         activeCategoryButton = button;
         activeCategory = category === 'all' ? null : category;
         currentPage = 1;
@@ -371,92 +391,98 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function applyCombinedFilter() {
         const cacheKey = `${activeTag || ''}_${activeCategory || ''}`;
-        if (filterCache.has(cacheKey)) {
+        if (filterCache.has(cacheKey) && elements.imageGrid) {
             filteredItems = filterCache.get(cacheKey);
             renderImages(currentPage);
             return;
         }
 
-        elements.loader.style.display = 'flex';
-        elements.imageGrid.classList.add('fade');
-        setTimeout(() => {
-            filteredItems = imagesData.filter(item => {
-                const tagMatch = !activeTag || item.tags.includes(activeTag);
-                const categoryMatch = !activeCategory || item.tags.includes(activeCategory);
-                return tagMatch && categoryMatch;
-            });
-            filterCache.set(cacheKey, filteredItems);
-            isFiltered = activeTag || activeCategory;
-            renderImages(currentPage);
-            elements.resetButton.classList.toggle('active', isFiltered);
-            elements.resetTagButton.classList.toggle('active', !!activeTag);
-            elements.resetCategoryButton.classList.toggle('active', !!activeCategory);
-            elements.imageGrid.classList.remove('fade');
-            elements.loader.style.display = 'none';
-            localStorage.setItem('lastFilter', activeTag || activeCategory || '');
-            localStorage.setItem('lastFilterType', activeTag ? 'tag' : activeCategory ? 'category' : '');
-            if (!activeTag) elements.searchInput.value = '';
-        }, 100);
+        if (elements.loader && elements.imageGrid) {
+            elements.loader.style.display = 'flex';
+            elements.imageGrid.classList.add('fade');
+            setTimeout(() => {
+                filteredItems = imagesData.filter(item => {
+                    const tagMatch = !activeTag || item.tags.includes(activeTag);
+                    const categoryMatch = !activeCategory || item.tags.includes(activeCategory);
+                    return tagMatch && categoryMatch;
+                });
+                filterCache.set(cacheKey, filteredItems);
+                isFiltered = activeTag || activeCategory;
+                renderImages(currentPage);
+                if (elements.resetButton) elements.resetButton.classList.toggle('active', isFiltered);
+                if (elements.resetTagButton) elements.resetTagButton.classList.toggle('active', !!activeTag);
+                if (elements.resetCategoryButton) elements.resetCategoryButton.classList.toggle('active', !!activeCategory);
+                elements.imageGrid.classList.remove('fade');
+                elements.loader.style.display = 'none';
+                localStorage.setItem('lastFilter', activeTag || activeCategory || '');
+                localStorage.setItem('lastFilterType', activeTag ? 'tag' : activeCategory ? 'category' : '');
+                if (!activeTag && elements.searchInput) elements.searchInput.value = '';
+            }, 100);
+        }
     }
 
     function filterBySearch(searchTerm) {
-        elements.loader.style.display = 'flex';
-        elements.imageGrid.classList.add('fade');
-        setTimeout(() => {
-            if (activeTagButton) activeTagButton.classList.remove('active');
-            if (activeCategoryButton) activeCategoryButton.classList.remove('active');
-            activeTagButton = null;
-            activeCategoryButton = null;
-            activeTag = null;
-            activeCategory = null;
-            filteredItems = imagesData.filter(item => {
-                const titleMatch = item.title.toLowerCase().includes(searchTerm);
-                const descriptionMatch = item.description?.toLowerCase().includes(searchTerm);
-                const tagsMatch = item.tags.some(tag => tag.toLowerCase().includes(searchTerm));
-                return titleMatch || descriptionMatch || tagsMatch;
-            });
-            isFiltered = true;
-            currentPage = 1;
-            renderImages(currentPage);
-            elements.resetButton.classList.add('active');
-            elements.resetTagButton.classList.remove('active');
-            elements.resetCategoryButton.classList.remove('active');
-            elements.imageGrid.classList.remove('fade');
-            elements.loader.style.display = 'none';
-            localStorage.setItem('lastFilter', searchTerm);
-            localStorage.setItem('lastFilterType', 'search');
-        }, 100);
+        if (elements.loader && elements.imageGrid) {
+            elements.loader.style.display = 'flex';
+            elements.imageGrid.classList.add('fade');
+            setTimeout(() => {
+                if (activeTagButton && elements.tagsSection) activeTagButton.classList.remove('active');
+                if (activeCategoryButton && elements.categories) activeCategoryButton.classList.remove('active');
+                activeTagButton = null;
+                activeCategoryButton = null;
+                activeTag = null;
+                activeCategory = null;
+                filteredItems = imagesData.filter(item => {
+                    const titleMatch = item.title.toLowerCase().includes(searchTerm);
+                    const descriptionMatch = item.description?.toLowerCase().includes(searchTerm);
+                    const tagsMatch = item.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                    return titleMatch || descriptionMatch || tagsMatch;
+                });
+                isFiltered = true;
+                currentPage = 1;
+                renderImages(currentPage);
+                if (elements.resetButton) elements.resetButton.classList.add('active');
+                if (elements.resetTagButton) elements.resetTagButton.classList.remove('active');
+                if (elements.resetCategoryButton) elements.resetCategoryButton.classList.remove('active');
+                elements.imageGrid.classList.remove('fade');
+                elements.loader.style.display = 'none';
+                localStorage.setItem('lastFilter', searchTerm);
+                localStorage.setItem('lastFilterType', 'search');
+            }, 100);
+        }
     }
 
     function resetFilters() {
-        elements.loader.style.display = 'flex';
-        elements.imageGrid.classList.add('fade');
-        setTimeout(() => {
-            if (activeTagButton) activeTagButton.classList.remove('active');
-            if (activeCategoryButton) activeCategoryButton.classList.remove('active');
-            activeTagButton = null;
-            activeCategoryButton = null;
-            activeTag = null;
-            activeCategory = null;
-            filteredItems = [];
-            isFiltered = false;
-            currentPage = 1;
-            renderImages(currentPage);
-            elements.imageGrid.classList.remove('fade');
-            elements.loader.style.display = 'none';
-            elements.resetButton.classList.remove('active');
-            elements.resetTagButton.classList.remove('active');
-            elements.resetCategoryButton.classList.remove('active');
-            updateFilterCount();
-            updateFilterIndicator();
-            localStorage.removeItem('lastFilter');
-            localStorage.removeItem('lastFilterType');
-            elements.searchInput.value = '';
-        }, 100);
+        if (elements.loader && elements.imageGrid) {
+            elements.loader.style.display = 'flex';
+            elements.imageGrid.classList.add('fade');
+            setTimeout(() => {
+                if (activeTagButton && elements.tagsSection) activeTagButton.classList.remove('active');
+                if (activeCategoryButton && elements.categories) activeCategoryButton.classList.remove('active');
+                activeTagButton = null;
+                activeCategoryButton = null;
+                activeTag = null;
+                activeCategory = null;
+                filteredItems = [];
+                isFiltered = false;
+                currentPage = 1;
+                renderImages(currentPage);
+                elements.imageGrid.classList.remove('fade');
+                elements.loader.style.display = 'none';
+                if (elements.resetButton) elements.resetButton.classList.remove('active');
+                if (elements.resetTagButton) elements.resetTagButton.classList.remove('active');
+                if (elements.resetCategoryButton) elements.resetCategoryButton.classList.remove('active');
+                updateFilterCount();
+                updateFilterIndicator();
+                localStorage.removeItem('lastFilter');
+                localStorage.removeItem('lastFilterType');
+                if (elements.searchInput) elements.searchInput.value = '';
+            }, 100);
+        }
     }
 
     function resetTagFilter() {
-        if (activeTagButton) activeTagButton.classList.remove('active');
+        if (activeTagButton && elements.tagsSection) activeTagButton.classList.remove('active');
         activeTagButton = null;
         activeTag = null;
         currentPage = 1;
@@ -464,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetCategoryFilter() {
-        if (activeCategoryButton) activeCategoryButton.classList.remove('active');
+        if (activeCategoryButton && elements.categories) activeCategoryButton.classList.remove('active');
         activeCategoryButton = null;
         activeCategory = null;
         currentPage = 1;
@@ -472,43 +498,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateFilterCount() {
-        if (isFiltered) {
+        if (elements.filterCount && isFiltered) {
             elements.filterCount.style.display = 'block';
             elements.filterCount.textContent = `Mostrando ${Math.min(itemsPerPage, filteredItems.length)} de ${filteredItems.length} imágenes`;
-        } else {
+        } else if (elements.filterCount) {
             elements.filterCount.style.display = 'none';
             elements.filterCount.textContent = '';
         }
     }
 
     function updateFilterIndicator() {
-        let indicatorText = '';
-        if (activeTag && activeCategory) {
-            indicatorText = `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} + ${activeTag}`;
-        } else if (activeTag) {
-            indicatorText = activeTag;
-        } else if (activeCategory) {
-            indicatorText = activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1);
+        if (elements.filterIndicator) {
+            let indicatorText = '';
+            if (activeTag && activeCategory) {
+                indicatorText = `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} + ${activeTag}`;
+            } else if (activeTag) {
+                indicatorText = activeTag;
+            } else if (activeCategory) {
+                indicatorText = activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1);
+            }
+            elements.filterIndicator.textContent = indicatorText ? `Filtro: ${indicatorText}` : '';
         }
-        elements.filterIndicator.textContent = indicatorText ? `Filtro: ${indicatorText}` : '';
     }
 
     function scrollToGallery() {
-        elements.gallery.scrollIntoView({ behavior: 'smooth' });
+        if (elements.gallery) {
+            elements.gallery.scrollIntoView({ behavior: 'smooth' });
+        }
     }
 
     function restoreFilter() {
         const lastFilter = localStorage.getItem('lastFilter');
         const lastFilterType = localStorage.getItem('lastFilterType');
-        if (lastFilter) {
+        if (lastFilter && elements.searchInput) {
             if (lastFilterType === 'search') {
                 elements.searchInput.value = lastFilter;
                 filterBySearch(lastFilter);
             } else if (lastFilterType === 'tag') {
-                const tagButton = Array.from(elements.tagsSection.querySelectorAll('.tag-button')).find(btn => btn.textContent === lastFilter);
+                const tagButton = Array.from(elements.tagsSection?.querySelectorAll('.tag-button') || []).find(btn => btn.textContent === lastFilter);
                 if (tagButton) filterByTag(lastFilter, tagButton);
             } else if (lastFilterType === 'category') {
-                const categoryButton = Array.from(elements.categories.querySelectorAll('.category-button')).find(btn => btn.dataset.category === lastFilter);
+                const categoryButton = Array.from(elements.categories?.querySelectorAll('.category-button') || []).find(btn => btn.dataset.category === lastFilter);
                 if (categoryButton) filterByCategory(lastFilter, categoryButton);
             }
         }
@@ -551,31 +581,47 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Lógica del chat flotante con iframe
-    let chatLoaded = false;
+    // Lógica del chat flotante con iframe persistente
+    if (window.location.pathname.endsWith('index.html') && elements.chatToggle && elements.chatPopup && elements.chatClose && elements.chatIframe) {
+        let chatLoaded = false;
 
-    function openChat() {
-        elements.chatPopup.style.display = 'flex';
-        if (!chatLoaded) {
-            elements.chatIframe.src = 'https://html5-chat.com/chat/51441/67647612ece05';
-            chatLoaded = true;
+        function initializeChat() {
+            if (!window.top.chatIframe) {
+                window.top.chatIframe = document.createElement('iframe');
+                window.top.chatIframe.id = 'persistent-chat-iframe';
+                window.top.chatIframe.src = 'https://html5-chat.com/chat/51441/67647612ece05';
+                window.top.chatIframe.style.width = '100%';
+                window.top.chatIframe.style.height = '100%';
+                window.top.chatIframe.style.border = 'none';
+                window.top.chatIframe.allow = 'microphone; camera';
+            }
+            if (!elements.chatContent.contains(window.top.chatIframe)) {
+                elements.chatContent.appendChild(window.top.chatIframe);
+            }
         }
-    }
 
-    function closeChat() {
-        elements.chatPopup.style.display = 'none';
-        elements.chatIframe.src = ''; // Limpiar el iframe al cerrar
-        chatLoaded = false; // Reiniciar para recargar al abrir de nuevo
-    }
-
-    elements.chatToggle.addEventListener('click', openChat);
-    elements.chatClose.addEventListener('click', closeChat);
-
-    document.addEventListener('click', (event) => {
-        if (!elements.chatPopup.contains(event.target) && !elements.chatToggle.contains(event.target) && elements.chatPopup.style.display === 'flex') {
-            closeChat();
+        function openChat() {
+            elements.chatPopup.style.display = 'flex';
+            if (!chatLoaded) {
+                initializeChat();
+                chatLoaded = true;
+            }
         }
-    });
+
+        function closeChat() {
+            elements.chatPopup.style.display = 'none';
+            // No limpiamos el src para mantener la sesión
+        }
+
+        elements.chatToggle.addEventListener('click', openChat);
+        elements.chatClose.addEventListener('click', closeChat);
+
+        document.addEventListener('click', (event) => {
+            if (!elements.chatPopup.contains(event.target) && !elements.chatToggle.contains(event.target) && elements.chatPopup.style.display === 'flex') {
+                closeChat();
+            }
+        });
+    }
 });
 
 document.head.insertAdjacentHTML('beforeend', `
