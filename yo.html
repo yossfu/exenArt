@@ -3,115 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sobre Mí - Arte Digital</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> <!-- Material Icons -->
+    <title>Sobre Mí - ExenE</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
+    <link rel="preload" href="https://files.catbox.moe/kz2lot.png" as="image">
+    <link rel="preload" href="https://files.catbox.moe/fldxee.jpg" as="image">
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReKIglHdpe9EU5zmhi2ZtBxu3pwCKLxuEPVCa4lihLukNBssJTBvpUwao&s=10'); /* Fondo proporcionado */
-            background-size: cover;
-            background-position: center;
-            color: #ffffff;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #00ffcc;
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
-        }
-        .card {
-            width: 90%;
-            max-width: 320px;
+        .lazy { opacity: 0; transition: opacity 0.3s; }
+        .lazy[src] { opacity: 1; }
+        .about-image {
+            display: block;
+            max-width: 200px; /* Tamaño máximo */
+            width: 100%; /* Responsivo */
             height: auto;
             margin: 20px auto;
-            background-color: rgba(30, 30, 30, 0.9);
-            border-radius: 10px; /* Bordes redondeados */
-            box-shadow: 0 4px 20px rgba(0,255,204,0.5);
-            padding: 20px; /* Espaciado interno */
-            text-align: center; /* Centrar texto */
+            border-radius: 50%; /* Hace la imagen redonda */
+            box-shadow: 0 6px 16px rgba(211, 47, 47, 0.4); /* Sombra más pronunciada */
+            border: 3px solid #d32f2f; /* Borde rojo */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .about-section {
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: rgba(30, 30, 30, 0.8);
-            padding: 20px;
-            border-radius: 10px; /* Bordes redondeados */
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        .dark-theme .about-image {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+            border-color: #ef5350;
         }
-        ul {
-            list-style-type: none; /* Sin viñetas */
-            padding-left: 0; /* Sin padding */
+        .about-image:hover {
+            transform: scale(1.05); /* Efecto al pasar el mouse */
+            box-shadow: 0 8px 20px rgba(211, 47, 47, 0.6);
         }
-        li {
-            margin-bottom: 10px; /* Espaciado entre elementos de la lista */
+        .dark-theme .about-image:hover {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
         }
-        a {
-            color: #00ffcc; /* Color de los enlaces */
-            text-decoration: none; /* Sin subrayado */
+        .about-section h2 {
+            color: #d32f2f;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Sombra sutil para destacar */
         }
-        .home-button {
-            display: inline-block;
-            width: 70px; /* Ancho del botón */
-            height: 70px; /* Alto del botón */
-            background-color: #00ffcc; /* Color de fondo */
-            color: white; /* Color del texto */
-            border-radius: 50%; /* Bordes redondeados para hacer un círculo */
-            font-size: 24px; /* Tamaño de la fuente */
-            line-height: 70px; /* Centrar el texto verticalmente */
-            text-align: center; /* Centrar el texto horizontalmente */
-            text-decoration: none; /* Sin subrayado en el enlace */
-            box-shadow: 0 4px 10px rgba(0,255,204,0.5); /* Sombra del botón */
-            transition: background-color 0.3s; /* Transición suave para el color de fondo */
+        .dark-theme .about-section h2 {
+            color: #ef5350;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
         }
-        .home-button:hover {
-            background-color: #009e99; /* Color al pasar el mouse (si aplica) */
+        .about-section ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .about-section li {
+            margin-bottom: 10px;
+        }
+        .social-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px; /* Espacio entre botones */
+            margin-top: 10px;
+        }
+        .social-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #d32f2f;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 25px; /* Bordes redondeados */
+            text-decoration: none;
+            font-size: 1rem;
+            transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+        }
+        .dark-theme .social-button {
+            background-color: #b71c1c;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        .social-button:hover {
+            background-color: #ef5350;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(211, 47, 47, 0.5);
+        }
+        .dark-theme .social-button:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+        }
+        .about-section p {
+            line-height: 1.8; /* Mejor legibilidad */
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-
-    <h1>Sobre Mí</h1>
-
-    <div class="card">
-        <h2>¡Hola!</h2>
-        <p>Soy un artista digital que crea obras de arte mediante inteligencia artificial, enfocándome en hentai y yaoi gay.</p>
-        
-        <h3>Contacto</h3>
-        <p><a href="/chat.html">Chat</a></p>
-        <p><a href="https://www.facebook.com/exenie?mibextid=ZbWKwL">Facebook</a></p>
-        <p><a href="https://twitter.com/exeneqiel">Twitter</a></p>
-
-        <!-- Botón Home con icono mejorado -->
-        <a href="https://yossfu.github.io/exenArt/" class="home-button">
-          <span class="material-icons">home</span> <!-- Icono de casa -->
-        </a>
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
     </div>
 
-    <div class="about-section">
-        <h2>Acerca de Mí</h2>
-        <p>Como artista digital, utilizo inteligencia artificial para crear obras que exploran temas de hentai y yaoi gay. Mi objetivo es desafiar las normas y celebrar la diversidad a través del arte.</p>
-        
-        <h3>Habilidades</h3>
-        <ul>
-            <li>Dibujo Digital</li>
-            <li>Ilustración de Personajes</li>
-            <li>Generación de Arte mediante IA</li>
-        </ul>
+    <header id="header">
+        <div class="top-bar">
+            <a href="index.html" class="logo" aria-label="Inicio">
+                <img src="https://files.catbox.moe/kz2lot.png" alt="Logotipo de ExenE">
+            </a>
+            <button id="menu-toggle" class="menu-toggle">
+                <span class="hamburger"></span>
+            </button>
+            <nav class="menu" id="menu">
+                <button id="menu-close" class="menu-close">Cerrar</button>
+                <a href="index.html" class="tab-button">Home</a>
+                <a href="HomeMusic.html" class="tab-button">Música</a>
+                <a href="https://html5-chat.com/chat/51441/67647612ece05" class="tab-button">Chat</a>
+                <a href="yo.html" class="tab-button">Sobre mí</a>
+            </nav>
+            <button id="theme-toggle" class="theme-button">
+                <img src="https://cdn-icons-png.flaticon.com/128/6076/6076999.png" alt="Modo oscuro" class="theme-icon">
+            </button>
+        </div>
+    </header>
 
-        <h3>Aficiones</h3>
-        <p>En mi tiempo libre disfruto experimentar con nuevas técnicas artísticas y participar en comunidades creativas centradas en el arte digital.</p>
+    <main class="content" id="main-content">
+        <section class="note-section" id="about-section">
+            <h1 class="note-title">Sobre Mí</h1>
+            <img id="about-image" data-src="https://files.catbox.moe/fldxee.jpg" alt="Foto de ExenE" class="about-image lazy">
+            <hr class="divider">
 
-        <h3>Mis Obras Favoritas</h3>
-        <ul>
-            <li>Ilustraciones Eróticas Generadas por IA</li>
-            <li>Cómics Yaoi Digitales</li>
-            <li>Arte Conceptual Inspirado en Hentai</li>
-        </ul>
-    </div>
+            <div class="about-section">
+                <h2>¡Hola!</h2>
+                <p>Soy un artista digital que crea obras de arte mediante inteligencia artificial, enfocándome en hentai y yaoi gay.</p>
+                <h3>Contacto</h3>
+                <div class="social-buttons">
+                    <a href="https://html5-chat.com/chat/51441/67647612ece05" class="social-button">Chat</a>
+                    <a href="https://www.facebook.com/exenie?mibextid=ZbWKwL" class="social-button">Facebook</a>
+                    <a href="https://twitter.com/exeneqiel" class="social-button">Twitter</a>
+                </div>
+            </div>
+            <hr class="divider">
 
+            <div class="about-section">
+                <h2>Acerca de Mí</h2>
+                <p>Como artista digital, utilizo inteligencia artificial para crear obras que exploran temas de hentai y yaoi gay. Mi objetivo es desafiar las normas y celebrar la diversidad a través del arte.</p>
+                <h3>Habilidades</h3>
+                <ul>
+                    <li>Dibujo Digital</li>
+                    <li>Ilustración de Personajes</li>
+                    <li>Generación de Arte mediante IA</li>
+                </ul>
+                <h3>Aficiones</h3>
+                <p>En mi tiempo libre disfruto experimentar con nuevas técnicas artísticas y participar en comunidades creativas centradas en el arte digital.</p>
+                <h3>Mis Obras Favoritas</h3>
+                <ul>
+                    <li>Ilustraciones Eróticas Generadas por IA</li>
+                    <li>Cómics Yaoi Digitales</li>
+                    <li>Arte Conceptual Inspirado en Hentai</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 ExenE. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const elements = {
+                loader: document.getElementById('loader'),
+                header: document.getElementById('header'),
+                mainContent: document.getElementById('main-content'),
+                footer: document.querySelector('footer'),
+                themeToggle: document.getElementById('theme-toggle'),
+                menuToggle: document.getElementById('menu-toggle'),
+                menu: document.getElementById('menu'),
+                menuClose: document.getElementById('menu-close'),
+                aboutImage: document.getElementById('about-image')
+            };
+
+            elements.header.style.display = 'block';
+            elements.mainContent.style.display = 'block';
+            elements.footer.style.display = 'block';
+
+            if (localStorage.getItem('darkTheme') === 'true') {
+                document.body.classList.add('dark-theme');
+            }
+            elements.themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-theme');
+                localStorage.setItem('darkTheme', document.body.classList.contains('dark-theme'));
+            });
+
+            function toggleMenu() {
+                elements.menu.classList.toggle('active');
+                elements.menuToggle.classList.toggle('open');
+            }
+
+            function closeMenu() {
+                elements.menu.classList.remove('active');
+                elements.menuToggle.classList.remove('open');
+            }
+
+            elements.menuToggle.addEventListener('click', toggleMenu);
+            elements.menuClose.addEventListener('click', closeMenu);
+            document.addEventListener('click', (event) => {
+                if (!elements.menu.contains(event.target) && !elements.menuToggle.contains(event.target) && elements.menu.classList.contains('active')) {
+                    closeMenu();
+                }
+            });
+            elements.menu.querySelectorAll('.tab-button').forEach(link => link.addEventListener('click', closeMenu));
+
+            function lazyLoadImages() {
+                const observer = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src;
+                            img.classList.remove('lazy');
+                            observer.unobserve(img);
+                        }
+                    });
+                }, { rootMargin: '0px 0px 200px 0px' });
+                document.querySelectorAll('.lazy').forEach(img => observer.observe(img));
+            }
+
+            elements.loader.style.display = 'flex';
+            setTimeout(() => {
+                lazyLoadImages();
+                elements.loader.style.display = 'none';
+            }, 500); // Simula carga para mostrar el loader
+        });
+    </script>
 </body>
 </html>

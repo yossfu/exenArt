@@ -6,8 +6,18 @@
     <title>Detalle de Imagen</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
+    <link rel="preload" href="https://files.catbox.moe/kz2lot.png" as="image">
+    <!-- Metadatos Open Graph y Twitter Cards dinámicos se insertarán aquí -->
+    <style>
+        .lazy { opacity: 0; transition: opacity 0.3s; }
+        .lazy[src] { opacity: 1; }
+    </style>
 </head>
 <body>
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+    </div>
+
     <header id="header">
         <div class="top-bar">
             <a href="index.html" class="logo" aria-label="Inicio">
@@ -32,7 +42,14 @@
     <main class="content" id="main-content">
         <section class="note-section" id="note-section">
             <h1 id="image-title" class="note-title"></h1>
-            <img id="full-image" src="" alt="" class="note-image">
+            <img id="full-image" data-src="" alt="" class="note-image lazy">
+            <hr class="divider">
+            <div class="share-section">
+                <h3>Comparte esta imagen</h3>
+                <div class="social-share" id="social-share">
+                    <!-- Botones se generarán dinámicamente -->
+                </div>
+            </div>
             <hr class="divider">
             <p id="image-description" class="note-content"></p>
             <hr class="divider">
@@ -54,99 +71,183 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const imageId = urlParams.get('id') || 30;
+            const elements = {
+                loader: document.getElementById('loader'),
+                header: document.getElementById('header'),
+                mainContent: document.getElementById('main-content'),
+                footer: document.querySelector('footer'),
+                themeToggle: document.getElementById('theme-toggle'),
+                menuToggle: document.getElementById('menu-toggle'),
+                menu: document.getElementById('menu'),
+                menuClose: document.getElementById('menu-close'),
+                imageTitle: document.getElementById('image-title'),
+                fullImage: document.getElementById('full-image'),
+                imageDescription: document.getElementById('image-description'),
+                socialShare: document.getElementById('social-share'),
+                similarImagesGrid: document.getElementById('similar-images-grid'),
+                utterancesContainer: document.getElementById('utterances-container')
+            };
+
+            elements.header.style.display = 'block';
+            elements.mainContent.style.display = 'block';
+            elements.footer.style.display = 'block';
 
             if (localStorage.getItem('darkTheme') === 'true') {
                 document.body.classList.add('dark-theme');
             }
-            document.getElementById('theme-toggle').addEventListener('click', () => {
+            elements.themeToggle.addEventListener('click', () => {
                 document.body.classList.toggle('dark-theme');
                 localStorage.setItem('darkTheme', document.body.classList.contains('dark-theme'));
                 updateUtterancesTheme();
             });
 
-            document.getElementById('header').style.display = 'block';
-            document.getElementById('main-content').style.display = 'block';
-            document.querySelector('footer').style.display = 'block';
-
-            const menuToggle = document.getElementById('menu-toggle');
-            const menu = document.getElementById('menu');
-            const menuClose = document.getElementById('menu-close');
-
             function toggleMenu() {
-                menu.classList.toggle('active');
-                menuToggle.classList.toggle('open');
+                elements.menu.classList.toggle('active');
+                elements.menuToggle.classList.toggle('open');
             }
 
             function closeMenu() {
-                menu.classList.remove('active');
-                menuToggle.classList.remove('open');
+                elements.menu.classList.remove('active');
+                elements.menuToggle.classList.remove('open');
             }
 
-            menuToggle.addEventListener('click', toggleMenu);
-            menuClose.addEventListener('click', closeMenu);
+            elements.menuToggle.addEventListener('click', toggleMenu);
+            elements.menuClose.addEventListener('click', closeMenu);
             document.addEventListener('click', (event) => {
-                if (!menu.contains(event.target) && !menuToggle.contains(event.target) && menu.classList.contains('active')) {
+                if (!elements.menu.contains(event.target) && !elements.menuToggle.contains(event.target) && elements.menu.classList.contains('active')) {
                     closeMenu();
                 }
             });
-            const menuLinks = menu.querySelectorAll('.tab-button');
-            menuLinks.forEach(link => {
-                link.addEventListener('click', closeMenu);
-            });
+            elements.menu.querySelectorAll('.tab-button').forEach(link => link.addEventListener('click', closeMenu));
 
-            fetch('imagenes.json')
-                .then(response => response.json())
+            const urlParams = new URLSearchParams(window.location.search);
+            const imageId = urlParams.get('id') || 30;
+
+            function fetchWithCache(url, cacheKey) {
+                const version = 'v1';
+                const cacheKeyWithVersion = `${cacheKey}_${version}`;
+                const cachedData = localStorage.getItem(cacheKeyWithVersion);
+                
+                if (cachedData) {
+                    return Promise.resolve(JSON.parse(cachedData));
+                }
+
+                elements.loader.style.display = 'flex';
+                return fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        localStorage.setItem(cacheKeyWithVersion, JSON.stringify(data));
+                        return data;
+                    })
+                    .catch(err => {
+                        console.error(`Fetch problem: ${err.message}`);
+                        elements.imageTitle.textContent = "Error al cargar la imagen";
+                        throw err;
+                    })
+                    .finally(() => elements.loader.style.display = 'none');
+            }
+
+            function lazyLoadImages() {
+                const observer = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src;
+                            img.classList.remove('lazy');
+                            observer.unobserve(img);
+                        }
+                    });
+                }, { rootMargin: '0px 0px 200px 0px' });
+                document.querySelectorAll('.lazy').forEach(img => observer.observe(img));
+            }
+
+            function setSocialMetaTags(imageData) {
+                const baseUrl = window.location.origin;
+                const currentUrl = `${baseUrl}/image-detail.html?id=${imageId}`;
+                const metaTags = `
+                    <!-- Open Graph Meta Tags -->
+                    <meta property="og:title" content="${imageData.title}">
+                    <meta property="og:description" content="${imageData.description || 'Mira esta increíble imagen en ExenE'}">
+                    <meta property="og:image" content="${imageData.url}">
+                    <meta property="og:url" content="${currentUrl}">
+                    <meta property="og:type" content="article">
+                    <!-- Twitter Card Meta Tags -->
+                    <meta name="twitter:card" content="summary_large_image">
+                    <meta name="twitter:title" content="${imageData.title}">
+                    <meta name="twitter:description" content="${imageData.description || 'Mira esta increíble imagen en ExenE'}">
+                    <meta name="twitter:image" content="${imageData.url}">
+                `;
+                document.head.insertAdjacentHTML('beforeend', metaTags);
+            }
+
+            function renderShareButtons(imageData) {
+                const currentUrl = encodeURIComponent(window.location.href);
+                const title = encodeURIComponent(imageData.title);
+                const description = encodeURIComponent(imageData.description || 'Mira esta increíble imagen en ExenE');
+                const imageUrl = encodeURIComponent(imageData.url);
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const facebookUrl = isMobile ?
+                    `fb://facewebmodal/f?href=https://www.facebook.com/sharer/sharer.php?u=${currentUrl}` :
+                    `https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`;
+
+                const shareButtons = `
+                    <a href="${facebookUrl}" target="_blank" class="social-button" title="Compartir en Facebook">
+                        <img src="https://img.icons8.com/?size=512&id=118497&format=png" alt="Facebook" class="social-icon">
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?url=${currentUrl}&text=${title}" target="_blank" class="social-button" title="Compartir en Twitter">
+                        <img src="https://img.icons8.com/?size=512&id=5MQ0gPAYYx7a&format=png" alt="Twitter" class="social-icon">
+                    </a>
+                    <a href="https://api.whatsapp.com/send?text=${title}%20${currentUrl}" target="_blank" class="social-button" title="Compartir en WhatsApp">
+                        <img src="https://img.icons8.com/?size=512&id=16713&format=png" alt="WhatsApp" class="social-icon">
+                    </a>
+                `;
+                elements.socialShare.innerHTML = shareButtons;
+            }
+
+            elements.loader.style.display = 'flex';
+            fetchWithCache('imagenes.json', 'cachedImages')
                 .then(data => {
                     const currentItem = data.find(img => img.id == imageId);
                     if (currentItem) {
-                        document.getElementById('image-title').textContent = currentItem.title;
-                        document.getElementById('full-image').src = currentItem.url;
-                        document.getElementById('full-image').alt = currentItem.title;
-                        document.getElementById('image-description').textContent = currentItem.description;
+                        elements.imageTitle.textContent = currentItem.title;
+                        elements.fullImage.dataset.src = currentItem.url;
+                        elements.fullImage.alt = currentItem.title;
+                        elements.imageDescription.textContent = currentItem.description || 'Sin descripción disponible';
+                        setSocialMetaTags(currentItem);
+                        renderShareButtons(currentItem);
                         loadSimilarImages(currentItem.tags, data);
                         loadUtterances(imageId);
+                        lazyLoadImages();
                     } else {
                         console.error("Imagen no encontrada");
-                        document.getElementById('image-title').textContent = "Imagen no encontrada";
+                        elements.imageTitle.textContent = "Imagen no encontrada";
                     }
                 })
-                .catch(err => console.error(`Fetch problem: ${err.message}`));
+                .finally(() => elements.loader.style.display = 'none');
 
             function loadSimilarImages(tags, allImages) {
-                const similarImagesGrid = document.getElementById('similar-images-grid');
-                let similarImages = [];
+                const fragment = document.createDocumentFragment();
+                let similarImages = allImages.filter(item => item.id != imageId && item.tags.some(tag => tags.includes(tag)))
+                    .sort((a, b) => b.tags.filter(tag => tags.includes(tag)).length - a.tags.filter(tag => tags.includes(tag)).length)
+                    .slice(0, 8);
 
-                allImages.forEach(item => {
-                    if (item.id != imageId && item.tags.some(tag => tags.includes(tag))) {
-                        similarImages.push(item);
-                    }
-                });
-
-                similarImages.sort((a, b) => {
-                    const aMatches = a.tags.filter(tag => tags.includes(tag)).length;
-                    const bMatches = b.tags.filter(tag => tags.includes(tag)).length;
-                    return bMatches - aMatches;
-                });
-
-                for (let i = 0; i < Math.min(8, similarImages.length); i++) {
-                    const item = similarImages[i];
+                similarImages.forEach(item => {
                     const imageElement = document.createElement('div');
                     imageElement.className = 'similar-note-item';
                     imageElement.innerHTML = `
                         <a href="image-detail.html?id=${item.id}">
-                            <img src="${item.url}" alt="${item.title}">
+                            <img data-src="${item.url}" alt="${item.title}" class="lazy">
                             <h3>${item.title}</h3>
                         </a>`;
-                    similarImagesGrid.appendChild(imageElement);
-                }
+                    fragment.appendChild(imageElement);
+                });
+
+                elements.similarImagesGrid.innerHTML = '';
+                elements.similarImagesGrid.appendChild(fragment);
             }
 
             function loadUtterances(imageId) {
-                const container = document.getElementById('utterances-container');
-                container.innerHTML = '';
-
+                elements.utterancesContainer.innerHTML = '';
                 const script = document.createElement('script');
                 script.src = 'https://utteranc.es/client.js';
                 script.setAttribute('repo', 'yossfu/Gesti-n-de-comentarios');
@@ -154,13 +255,13 @@
                 script.setAttribute('theme', document.body.classList.contains('dark-theme') ? 'dark-blue' : 'github-light');
                 script.setAttribute('crossorigin', 'anonymous');
                 script.async = true;
-                container.appendChild(script);
+                script.onload = () => elements.loader.style.display = 'none';
+                elements.utterancesContainer.appendChild(script);
             }
 
             function updateUtterancesTheme() {
-                const container = document.getElementById('utterances-container');
                 setTimeout(() => {
-                    const iframe = container.querySelector('iframe');
+                    const iframe = elements.utterancesContainer.querySelector('iframe');
                     if (iframe) {
                         iframe.contentWindow.postMessage({
                             type: 'set-theme',

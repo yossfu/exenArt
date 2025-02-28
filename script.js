@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPage = 1;
     let imagesData = [];
     let notesData = [];
+    let sliderData = [];
     let currentSlide = 0;
     let isFiltered = false;
     let filteredItems = [];
@@ -40,12 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeCategoryButton = null;
     let activeTag = null;
     let activeCategory = null;
+    let filterCache = new Map();
 
-    const tagColors = [
-        '#ef5350', '#f06292', '#e57373', '#ff8a80', '#ffab91',
-        '#ff8a65', '#ff7043', '#ff5722', '#f4511e', '#e64a19'
-    ];
-
+    const tagColors = ['#ef5350', '#f06292', '#e57373', '#ff8a80', '#ffab91', '#ff8a65', '#ff7043', '#ff5722', '#f4511e', '#e64a19'];
     const categoryIcons = {
         'all': 'https://cdn-icons-png.flaticon.com/512/1665/1665731.png',
         'furry': 'https://cdn-icons-png.flaticon.com/512/16781/16781787.png',
@@ -55,36 +53,43 @@ document.addEventListener('DOMContentLoaded', () => {
         'evil': 'https://cdn-icons-png.flaticon.com/512/2855/2855658.png'
     };
 
-    // Configuración inicial
     if (localStorage.getItem('darkTheme') === 'true') document.body.classList.add('dark-theme');
-    elements.themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-theme');
-        localStorage.setItem('darkTheme', document.body.classList.contains('dark-theme'));
-    });
-
-    if (localStorage.getItem('ageVerified') === 'true') {
-        showMainContent();
-        startPage();
-    } else {
-        elements.ageYes.addEventListener('click', () => {
-            localStorage.setItem('ageVerified', 'true');
-            showMainContent();
-            startPage();
+    if (elements.themeToggle) {
+        elements.themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('darkTheme', document.body.classList.contains('dark-theme'));
+            if (typeof updateUtterancesTheme === 'function') updateUtterancesTheme();
         });
-        elements.ageNo.addEventListener('click', () => window.location.href = 'https://m.kiddle.co/');
     }
 
-    elements.revokeAge.addEventListener('click', () => {
-        localStorage.clear();
-        location.reload();
-    });
+    if (elements.ageVerification) {
+        if (localStorage.getItem('ageVerified') === 'true') {
+            showMainContent();
+            startPage();
+        } else {
+            elements.ageYes.addEventListener('click', () => {
+                localStorage.setItem('ageVerified', 'true');
+                showMainContent();
+                startPage();
+            });
+            elements.ageNo.addEventListener('click', () => window.location.href = 'https://m.kiddle.co/');
+        }
+    }
 
-    elements.scrollTopButton.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-    window.addEventListener('scroll', () => {
-        elements.scrollTopButton.classList.toggle('visible', window.scrollY > 200);
-    });
+    if (elements.revokeAge) {
+        elements.revokeAge.addEventListener('click', () => {
+            localStorage.clear();
+            location.reload();
+        });
+    }
 
-    // Manejo del menú
+    if (elements.scrollTopButton) {
+        elements.scrollTopButton.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        window.addEventListener('scroll', () => {
+            elements.scrollTopButton.classList.toggle('visible', window.scrollY > 200);
+        });
+    }
+
     function toggleMenu() {
         elements.menu.classList.toggle('active');
         elements.menuToggle.classList.toggle('open');
@@ -95,23 +100,24 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.menuToggle.classList.remove('open');
     }
 
-    elements.menuToggle.addEventListener('click', toggleMenu);
-    elements.menuClose.addEventListener('click', closeMenu);
-    document.addEventListener('click', (event) => {
-        if (!elements.menu.contains(event.target) && !elements.menuToggle.contains(event.target) && elements.menu.classList.contains('active')) {
-            closeMenu();
-        }
-    });
-    elements.menu.querySelectorAll('.tab-button').forEach(link => link.addEventListener('click', closeMenu));
+    if (elements.menuToggle && elements.menu && elements.menuClose) {
+        elements.menuToggle.addEventListener('click', toggleMenu);
+        elements.menuClose.addEventListener('click', closeMenu);
+        document.addEventListener('click', (event) => {
+            if (!elements.menu.contains(event.target) && !elements.menuToggle.contains(event.target) && elements.menu.classList.contains('active')) {
+                closeMenu();
+            }
+        });
+        elements.menu.querySelectorAll('.tab-button').forEach(link => link.addEventListener('click', closeMenu));
+    }
 
-    // Funciones utilitarias
     function showMainContent() {
-        elements.ageVerification.style.display = 'none';
-        elements.header.style.display = 'block';
-        elements.mainContent.style.display = 'block';
-        elements.gallery.style.display = 'block';
-        elements.pagination.style.display = 'block';
-        elements.footer.style.display = 'block';
+        if (elements.ageVerification) elements.ageVerification.style.display = 'none';
+        if (elements.header) elements.header.style.display = 'block';
+        if (elements.mainContent) elements.mainContent.style.display = 'block';
+        if (elements.gallery) elements.gallery.style.display = 'block';
+        if (elements.pagination) elements.pagination.style.display = 'block';
+        if (elements.footer) elements.footer.style.display = 'block';
     }
 
     function fetchWithCache(url, cacheKey, fallbackElement, renderFn) {
@@ -125,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return Promise.resolve(data);
         }
 
-        elements.loader.style.display = 'flex';
+        if (elements.loader) elements.loader.style.display = 'flex';
         return fetch(url)
             .then(response => response.json())
             .then(data => {
@@ -135,29 +141,83 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(error => {
                 console.error(`Error cargando ${url}:`, error);
-                if (!cachedData) {
-                    fallbackElement.innerHTML = '<p style="text-align:center;color:#ff5722;">Error al cargar datos. <button onclick="startPage()">Reintentar</button></p>';
+                if (!cachedData && fallbackElement) {
+                    fallbackElement.innerHTML = '<p style="text-align:center;color:#ff5722;">Error al cargar datos. <button onclick="location.reload()">Reintentar</button></p>';
                 }
             })
-            .finally(() => elements.loader.style.display = 'none');
+            .finally(() => { if (elements.loader) elements.loader.style.display = 'none'; });
     }
 
-    // Funciones principales
-    function startPage() {
+    function lazyLoadImages(container = document) {
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                    }
+                    observer.unobserve(img);
+                }
+            });
+        }, { rootMargin: '0px 0px 200px 0px' });
+        container.querySelectorAll('.lazy').forEach(img => observer.observe(img));
+    }
+
+    function renderSlider(slides) {
+        const fragment = document.createDocumentFragment();
+        slides.forEach((slide, index) => {
+            const slideElement = document.createElement('div');
+            slideElement.className = 'slide' + (index === 0 ? ' active' : '');
+            if (slide.backgroundImage) {
+                slideElement.style.backgroundImage = `url('${slide.backgroundImage}')`;
+                slideElement.style.backgroundSize = 'cover';
+                slideElement.style.backgroundPosition = 'center';
+            }
+            slideElement.innerHTML = `
+                <div class="slide-content">
+                    <h1>${slide.title}</h1>
+                    ${slide.text ? `<p>${slide.text}</p>` : ''}
+                    ${slide.socialLinks ? `
+                        <div class="social-bar">
+                            ${slide.socialLinks.map(link => `
+                                <a href="${link.url}" target="_blank" aria-label="${link.alt}">
+                                    <img data-src="${link.image}" alt="${link.alt}" class="lazy social-icon">
+                                </a>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            fragment.appendChild(slideElement);
+        });
+        elements.sliderContainer.innerHTML = '';
+        elements.sliderContainer.appendChild(fragment);
+        lazyLoadImages(elements.sliderContainer);
+    }
+
+    function startSlider() {
         const slides = elements.sliderContainer.children;
         const totalSlides = slides.length;
+        elements.sliderContainer.style.setProperty('--total-slides', totalSlides);
         setInterval(() => {
             currentSlide = (currentSlide + 1) % totalSlides;
-            elements.sliderContainer.style.transform = `translateX(-${currentSlide * 50}%)`;
+            elements.sliderContainer.style.transform = `translateX(-${currentSlide * (100 / totalSlides)}%)`;
         }, 5000);
+    }
 
+    function startPage() {
         Promise.all([
+            fetchWithCache('slider.json', 'cachedSlider', elements.sliderContainer, data => {
+                sliderData = data;
+                renderSlider(sliderData);
+                startSlider();
+            }),
             fetchWithCache('imagenes.json', 'cachedImages', elements.imageGrid, data => {
                 imagesData = data;
                 renderImages(currentPage);
                 generateRandomTags();
                 generateCategories();
-                addCategoryListeners();
                 restoreFilter();
             }),
             fetchWithCache('notes.json', 'cachedNotes', elements.featuredNotes, data => {
@@ -168,17 +228,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderImages(page) {
-        const fragment = document.createDocumentFragment();
         const startIndex = (page - 1) * itemsPerPage;
-        const endIndex = Math.min(startIndex + itemsPerPage, imagesData.length);
+        const endIndex = Math.min(startIndex + itemsPerPage, isFiltered ? filteredItems.length : imagesData.length);
+        const itemsToRender = isFiltered ? filteredItems : imagesData;
+        const newItems = itemsToRender.slice(startIndex, endIndex);
+        const currentItems = Array.from(elements.imageGrid.children);
 
-        imagesData.slice(startIndex, endIndex).forEach((item, index) => {
+        if (currentItems.length === newItems.length && 
+            currentItems.every((item, i) => item.querySelector('img').dataset.src === newItems[i].url)) {
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        newItems.forEach((item, index) => {
             const imageItem = document.createElement('div');
             imageItem.className = 'flex-item';
             imageItem.style.animationDelay = `${index * 0.1}s`;
             imageItem.innerHTML = `
                 <a href="image-detail.html?id=${item.id}" aria-label="${item.title}">
-                    <img src="${item.url}" alt="${item.title}" loading="lazy">
+                    <img data-src="${item.url}" alt="${item.title}" class="lazy">
                 </a>
                 <p>${item.title}</p>
             `;
@@ -187,7 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.imageGrid.innerHTML = '';
         elements.imageGrid.appendChild(fragment);
-        renderPagination(imagesData.length, page => {
+        lazyLoadImages(elements.imageGrid);
+        renderPagination(isFiltered ? filteredItems.length : imagesData.length, page => {
             currentPage = page;
             renderImages(currentPage);
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -221,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = 'featured-card';
             card.href = `note.html?id=${note.id}`;
             card.innerHTML = `
-                <img src="${note.image}" alt="${note.title}" loading="lazy">
+                <img data-src="${note.image}" alt="${note.title}" class="lazy">
                 <h3>${note.title}</h3>
                 <p>${note.summary || note.content.substring(0, 100) + '...'}</p>
             `;
@@ -229,6 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         elements.featuredNotes.innerHTML = '';
         elements.featuredNotes.appendChild(fragment);
+        lazyLoadImages(elements.featuredNotes);
     }
 
     function generateRandomTags() {
@@ -255,10 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
             tagButton.className = 'tag-button';
             tagButton.textContent = tag;
             tagButton.style.backgroundColor = tagColors[Math.floor(Math.random() * tagColors.length)];
-            tagButton.addEventListener('click', () => {
-                filterByTag(tag, tagButton);
-                scrollToGallery();
-            });
             elements.tagsSection.appendChild(tagButton);
         });
     }
@@ -270,21 +336,13 @@ document.addEventListener('DOMContentLoaded', () => {
             categoryButton.className = 'category-button';
             categoryButton.dataset.category = category;
             categoryButton.innerHTML = `
-                <img src="${categoryIcons[category]}" alt="${category}" loading="lazy">
+                <img data-src="${categoryIcons[category]}" alt="${category}" class="lazy">
                 <span>${category.charAt(0).toUpperCase() + category.slice(1)}</span>
             `;
             categoryButton.style.animationDelay = `${index * 0.1}s`;
             elements.categories.appendChild(categoryButton);
         });
-    }
-
-    function addCategoryListeners() {
-        elements.categories.querySelectorAll('.category-button').forEach(button => {
-            button.addEventListener('click', () => {
-                const category = button.dataset.category;
-                filterByCategory(category, button);
-            });
-        });
+        lazyLoadImages(elements.categories);
     }
 
     function filterByTag(tag, button) {
@@ -292,6 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
         button.classList.add('active');
         activeTagButton = button;
         activeTag = tag;
+        currentPage = 1;
         applyCombinedFilter();
         scrollToGallery();
     }
@@ -300,45 +359,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeCategoryButton) activeCategoryButton.classList.remove('active');
         button.classList.add('active');
         activeCategoryButton = button;
-        activeCategory = category;
+        activeCategory = category === 'all' ? null : category;
+        currentPage = 1;
         applyCombinedFilter();
+        scrollToGallery();
     }
 
     function applyCombinedFilter() {
+        const cacheKey = `${activeTag || ''}_${activeCategory || ''}`;
+        if (filterCache.has(cacheKey)) {
+            filteredItems = filterCache.get(cacheKey);
+            renderImages(currentPage);
+            return;
+        }
+
         elements.loader.style.display = 'flex';
         elements.imageGrid.classList.add('fade');
         setTimeout(() => {
-            const fragment = document.createDocumentFragment();
             filteredItems = imagesData.filter(item => {
                 const tagMatch = !activeTag || item.tags.includes(activeTag);
-                const categoryMatch = !activeCategory || activeCategory === 'all' || item.tags.includes(activeCategory);
+                const categoryMatch = !activeCategory || item.tags.includes(activeCategory);
                 return tagMatch && categoryMatch;
             });
-            loadedItems = 0;
-            filteredItems.slice(0, itemsPerPage).forEach((item, index) => {
-                const imageItem = document.createElement('div');
-                imageItem.className = 'flex-item';
-                imageItem.style.animationDelay = `${index * 0.1}s`;
-                imageItem.innerHTML = `
-                    <a href="image-detail.html?id=${item.id}" aria-label="${item.title}">
-                        <img src="${item.url}" alt="${item.title}" loading="lazy">
-                    </a>
-                    <p>${item.title}</p>
-                `;
-                fragment.appendChild(imageItem);
-            });
-            elements.imageGrid.innerHTML = '';
-            elements.imageGrid.appendChild(fragment);
+            filterCache.set(cacheKey, filteredItems);
             isFiltered = activeTag || activeCategory;
+            renderImages(currentPage);
             elements.resetButton.classList.toggle('active', isFiltered);
             elements.resetTagButton.classList.toggle('active', !!activeTag);
             elements.resetCategoryButton.classList.toggle('active', !!activeCategory);
             elements.imageGrid.classList.remove('fade');
             elements.loader.style.display = 'none';
-            updateFilterCount();
-            updateFilterIndicator();
             localStorage.setItem('lastFilter', activeTag || activeCategory || '');
-            localStorage.setItem('lastFilterType', activeTag ? 'tag' : 'category');
+            localStorage.setItem('lastFilterType', activeTag ? 'tag' : activeCategory ? 'category' : '');
             if (!activeTag) elements.searchInput.value = '';
         }, 100);
     }
@@ -347,7 +399,6 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.loader.style.display = 'flex';
         elements.imageGrid.classList.add('fade');
         setTimeout(() => {
-            const fragment = document.createDocumentFragment();
             if (activeTagButton) activeTagButton.classList.remove('active');
             if (activeCategoryButton) activeCategoryButton.classList.remove('active');
             activeTagButton = null;
@@ -360,29 +411,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tagsMatch = item.tags.some(tag => tag.toLowerCase().includes(searchTerm));
                 return titleMatch || descriptionMatch || tagsMatch;
             });
-            loadedItems = 0;
-            filteredItems.slice(0, itemsPerPage).forEach((item, index) => {
-                const imageItem = document.createElement('div');
-                imageItem.className = 'flex-item';
-                imageItem.style.animationDelay = `${index * 0.1}s`;
-                imageItem.innerHTML = `
-                    <a href="image-detail.html?id=${item.id}" aria-label="${item.title}">
-                        <img src="${item.url}" alt="${item.title}" loading="lazy">
-                    </a>
-                    <p>${item.title}</p>
-                `;
-                fragment.appendChild(imageItem);
-            });
-            elements.imageGrid.innerHTML = '';
-            elements.imageGrid.appendChild(fragment);
             isFiltered = true;
+            currentPage = 1;
+            renderImages(currentPage);
             elements.resetButton.classList.add('active');
             elements.resetTagButton.classList.remove('active');
             elements.resetCategoryButton.classList.remove('active');
             elements.imageGrid.classList.remove('fade');
             elements.loader.style.display = 'none';
-            updateFilterCount();
-            updateFilterIndicator();
             localStorage.setItem('lastFilter', searchTerm);
             localStorage.setItem('lastFilterType', 'search');
         }, 100);
@@ -398,11 +434,12 @@ document.addEventListener('DOMContentLoaded', () => {
             activeCategoryButton = null;
             activeTag = null;
             activeCategory = null;
-            elements.imageGrid.innerHTML = '';
+            filteredItems = [];
+            isFiltered = false;
+            currentPage = 1;
             renderImages(currentPage);
             elements.imageGrid.classList.remove('fade');
             elements.loader.style.display = 'none';
-            isFiltered = false;
             elements.resetButton.classList.remove('active');
             elements.resetTagButton.classList.remove('active');
             elements.resetCategoryButton.classList.remove('active');
@@ -418,6 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeTagButton) activeTagButton.classList.remove('active');
         activeTagButton = null;
         activeTag = null;
+        currentPage = 1;
         applyCombinedFilter();
     }
 
@@ -425,13 +463,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeCategoryButton) activeCategoryButton.classList.remove('active');
         activeCategoryButton = null;
         activeCategory = null;
+        currentPage = 1;
         applyCombinedFilter();
     }
 
     function updateFilterCount() {
         if (isFiltered) {
             elements.filterCount.style.display = 'block';
-            elements.filterCount.textContent = `Mostrando ${loadedItems || itemsPerPage} de ${filteredItems.length} imágenes`;
+            elements.filterCount.textContent = `Mostrando ${Math.min(itemsPerPage, filteredItems.length)} de ${filteredItems.length} imágenes`;
         } else {
             elements.filterCount.style.display = 'none';
             elements.filterCount.textContent = '';
@@ -444,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
             indicatorText = `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} + ${activeTag}`;
         } else if (activeTag) {
             indicatorText = activeTag;
-        } else if (activeCategory && activeCategory !== 'all') {
+        } else if (activeCategory) {
             indicatorText = activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1);
         }
         elements.filterIndicator.textContent = indicatorText ? `Filtro: ${indicatorText}` : '';
@@ -454,7 +493,6 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.gallery.scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Restaurar filtro
     function restoreFilter() {
         const lastFilter = localStorage.getItem('lastFilter');
         const lastFilterType = localStorage.getItem('lastFilterType');
@@ -472,14 +510,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Eventos
     let searchTimeout;
-    elements.searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => filterBySearch(this.value.toLowerCase().trim()), 300);
-    });
+    if (elements.searchInput) {
+        elements.searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => filterBySearch(this.value.toLowerCase().trim()), 300);
+        });
+    }
 
-    elements.resetButton.addEventListener('click', resetFilters);
-    elements.resetTagButton.addEventListener('click', resetTagFilter);
-    elements.resetCategoryButton.addEventListener('click', resetCategoryFilter);
+    if (elements.resetButton) elements.resetButton.addEventListener('click', resetFilters);
+    if (elements.resetTagButton) elements.resetTagButton.addEventListener('click', resetTagFilter);
+    if (elements.resetCategoryButton) elements.resetCategoryButton.addEventListener('click', resetCategoryFilter);
+
+    if (elements.tagsSection) {
+        elements.tagsSection.addEventListener('click', (e) => {
+            const tagButton = e.target.closest('.tag-button');
+            if (tagButton) {
+                const tag = tagButton.textContent;
+                filterByTag(tag, tagButton);
+                scrollToGallery();
+            }
+        });
+    }
+
+    if (elements.categories) {
+        elements.categories.addEventListener('click', (e) => {
+            const categoryButton = e.target.closest('.category-button');
+            if (categoryButton) {
+                const category = categoryButton.dataset.category;
+                if (category === 'all') {
+                    resetFilters();
+                } else {
+                    filterByCategory(category, categoryButton);
+                }
+            }
+        });
+    }
 });
+
+document.head.insertAdjacentHTML('beforeend', `
+    <style>
+        .lazy { opacity: 0; transition: opacity 0.3s; }
+        .lazy[src] { opacity: 1; }
+        .social-icon { width: 30px; height: 30px; transition: transform 0.3s ease; }
+        .social-icon:hover { transform: scale(1.1); }
+    </style>
+`);

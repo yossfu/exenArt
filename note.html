@@ -6,11 +6,43 @@
     <title>Nota</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
-    <!-- Plyr para el reproductor de audio -->
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
-    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js" async></script>
+    <style>
+        .lazy { opacity: 0; transition: opacity 0.3s; }
+        .lazy[src] { opacity: 1; }
+        .note-embed {
+            position: relative;
+            padding-bottom: 56.25%; /* Proporción 16:9 */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            margin: 20px auto; /* Margen arriba y abajo, centrado */
+            border: 1px solid #d32f2f; /* Borde sutil */
+            border-radius: 8px; /* Bordes redondeados */
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3); /* Sombra suave */
+        }
+        .dark-theme .note-embed {
+            border-color: #ef5350;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        .note-embed iframe,
+        .note-embed img,
+        .note-embed video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
 </head>
 <body>
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+    </div>
+
     <header id="header">
         <div class="top-bar">
             <a href="index.html" class="logo" aria-label="Inicio">
@@ -35,12 +67,22 @@
     <main class="content" id="main-content">
         <section class="note-section" id="note-section">
             <h1 id="note-title" class="note-title"></h1>
-            <img id="note-image" src="" alt="" class="note-image" style="display: none;">
+            <img id="note-image" data-src="" alt="" class="note-image lazy" style="display: none;">
             <hr class="divider">
             <p id="note-content" class="note-content"></p>
+            <div id="note-embed" class="note-embed" style="display: none;"></div>
             <div id="note-audio" class="note-audio" style="display: none;">
-                <h3 class="audio-title">Audiolibro</h3>
-                <audio id="audio-player" controls>
+                <h3 class="audio-title"></h3>
+                <button class="custom-play-button">
+                    <svg class="play-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <svg class="pause-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                        <rect x="6" y="4" width="4" height="16"/>
+                        <rect x="14" y="4" width="4" height="16"/>
+                    </svg>
+                </button>
+                <audio id="plyr-audio" preload="auto">
                     <source src="" type="audio/mp3">
                     Tu navegador no soporta el elemento de audio.
                 </audio>
@@ -64,110 +106,187 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const noteId = urlParams.get('id') || 1;
+            const elements = {
+                loader: document.getElementById('loader'),
+                header: document.getElementById('header'),
+                mainContent: document.getElementById('main-content'),
+                footer: document.querySelector('footer'),
+                themeToggle: document.getElementById('theme-toggle'),
+                menuToggle: document.getElementById('menu-toggle'),
+                menu: document.getElementById('menu'),
+                menuClose: document.getElementById('menu-close'),
+                noteTitle: document.getElementById('note-title'),
+                noteImage: document.getElementById('note-image'),
+                noteContent: document.getElementById('note-content'),
+                noteEmbed: document.getElementById('note-embed'),
+                noteAudio: document.getElementById('note-audio'),
+                audioTitle: document.querySelector('.audio-title'),
+                playButton: document.querySelector('.custom-play-button'),
+                audioPlayer: document.getElementById('plyr-audio'),
+                similarNotesGrid: document.getElementById('similar-notes-grid'),
+                utterancesContainer: document.getElementById('utterances-container')
+            };
+
+            elements.header.style.display = 'block';
+            elements.mainContent.style.display = 'block';
+            elements.footer.style.display = 'block';
 
             if (localStorage.getItem('darkTheme') === 'true') {
                 document.body.classList.add('dark-theme');
             }
-            document.getElementById('theme-toggle').addEventListener('click', () => {
+            elements.themeToggle.addEventListener('click', () => {
                 document.body.classList.toggle('dark-theme');
                 localStorage.setItem('darkTheme', document.body.classList.contains('dark-theme'));
                 updateUtterancesTheme();
+                updatePlyrTheme();
             });
 
-            document.getElementById('header').style.display = 'block';
-            document.getElementById('main-content').style.display = 'block';
-            document.querySelector('footer').style.display = 'block';
-
-            const menuToggle = document.getElementById('menu-toggle');
-            const menu = document.getElementById('menu');
-            const menuClose = document.getElementById('menu-close');
-
             function toggleMenu() {
-                menu.classList.toggle('active');
-                menuToggle.classList.toggle('open');
+                elements.menu.classList.toggle('active');
+                elements.menuToggle.classList.toggle('open');
             }
 
             function closeMenu() {
-                menu.classList.remove('active');
-                menuToggle.classList.remove('open');
+                elements.menu.classList.remove('active');
+                elements.menuToggle.classList.remove('open');
             }
 
-            menuToggle.addEventListener('click', toggleMenu);
-            menuClose.addEventListener('click', closeMenu);
+            elements.menuToggle.addEventListener('click', toggleMenu);
+            elements.menuClose.addEventListener('click', closeMenu);
             document.addEventListener('click', (event) => {
-                if (!menu.contains(event.target) && !menuToggle.contains(event.target) && menu.classList.contains('active')) {
+                if (!elements.menu.contains(event.target) && !elements.menuToggle.contains(event.target) && elements.menu.classList.contains('active')) {
                     closeMenu();
                 }
             });
-            const menuLinks = menu.querySelectorAll('.tab-button');
-            menuLinks.forEach(link => {
-                link.addEventListener('click', closeMenu);
-            });
+            elements.menu.querySelectorAll('.tab-button').forEach(link => link.addEventListener('click', closeMenu));
 
-            fetch('notes.json')
-                .then(response => response.json())
+            const urlParams = new URLSearchParams(window.location.search);
+            const noteId = urlParams.get('id') || 1;
+
+            function fetchWithCache(url, cacheKey) {
+                const version = 'v1';
+                const cacheKeyWithVersion = `${cacheKey}_${version}`;
+                const cachedData = localStorage.getItem(cacheKeyWithVersion);
+                
+                if (cachedData) {
+                    return Promise.resolve(JSON.parse(cachedData));
+                }
+
+                elements.loader.style.display = 'flex';
+                return fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        localStorage.setItem(cacheKeyWithVersion, JSON.stringify(data));
+                        return data;
+                    })
+                    .catch(err => {
+                        console.error(`Fetch problem: ${err.message}`);
+                        elements.noteTitle.textContent = "Error al cargar la nota";
+                        throw err;
+                    })
+                    .finally(() => elements.loader.style.display = 'none');
+            }
+
+            function lazyLoadImages() {
+                const observer = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src;
+                            img.classList.remove('lazy');
+                            observer.unobserve(img);
+                        }
+                    });
+                }, { rootMargin: '0px 0px 200px 0px' });
+                document.querySelectorAll('.lazy').forEach(img => observer.observe(img));
+            }
+
+            elements.loader.style.display = 'flex';
+            fetchWithCache('notes.json', 'cachedNotes')
                 .then(data => {
                     const currentNote = data.find(note => note.id == noteId);
                     if (currentNote) {
-                        document.getElementById('note-title').textContent = currentNote.title;
-                        const noteImage = document.getElementById('note-image');
+                        elements.noteTitle.textContent = currentNote.title;
                         if (currentNote.image) {
-                            noteImage.src = currentNote.image;
-                            noteImage.alt = currentNote.title;
-                            noteImage.style.display = 'block';
+                            elements.noteImage.dataset.src = currentNote.image;
+                            elements.noteImage.alt = currentNote.title;
+                            elements.noteImage.style.display = 'block';
                         }
-                        document.getElementById('note-content').textContent = currentNote.content;
+                        elements.noteContent.textContent = currentNote.content;
+                        if (currentNote.embed) {
+                            elements.noteEmbed.innerHTML = currentNote.embed;
+                            elements.noteEmbed.style.display = 'block';
+                        }
                         if (currentNote.audio) {
-                            const audioContainer = document.getElementById('note-audio');
-                            const audioPlayer = document.getElementById('audio-player');
-                            audioPlayer.querySelector('source').src = currentNote.audio;
-                            audioPlayer.load();
-                            audioContainer.style.display = 'block';
-                            const player = new Plyr('#audio-player', {
-                                controls: ['play', 'progress', 'current-time', 'mute', 'volume']
+                            elements.noteAudio.style.display = 'block';
+                            elements.audioPlayer.querySelector('source').src = currentNote.audio;
+                            elements.audioPlayer.load();
+
+                            const player = new Plyr('#plyr-audio', {
+                                controls: ['play', 'progress', 'current-time', 'mute', 'volume'],
+                                invertTime: false,
+                                volume: 0.5
                             });
+
+                            elements.audioPlayer.addEventListener('loadedmetadata', () => {
+                                elements.audioTitle.textContent = `Audiolibro (${formatTime(elements.audioPlayer.duration)})`;
+                            });
+
+                            elements.playButton.addEventListener('click', () => {
+                                player.play();
+                            });
+
+                            player.on('playing', () => {
+                                elements.playButton.classList.add('playing');
+                                elements.playButton.querySelector('.play-icon').style.display = 'none';
+                                elements.playButton.querySelector('.pause-icon').style.display = 'block';
+                            });
+                            player.on('pause', () => {
+                                elements.playButton.classList.remove('playing');
+                                elements.playButton.querySelector('.play-icon').style.display = 'block';
+                                elements.playButton.querySelector('.pause-icon').style.display = 'none';
+                            });
+
+                            updatePlyrTheme();
                         }
                         loadSimilarNotes(data, noteId, currentNote.tags);
                         loadUtterances(noteId);
+                        lazyLoadImages();
                     } else {
                         console.error("Nota no encontrada");
-                        document.getElementById('note-title').textContent = "Nota no encontrada";
+                        elements.noteTitle.textContent = "Nota no encontrada";
                     }
                 })
-                .catch(err => console.error(`Fetch problem: ${err.message}`));
+                .finally(() => elements.loader.style.display = 'none');
 
             function loadSimilarNotes(allNotes, currentNoteId, currentTags) {
-                const similarNotesGrid = document.getElementById('similar-notes-grid');
-                let similarNotes = allNotes.filter(note => note.id != currentNoteId);
-
-                if (currentTags && currentTags.length > 0) {
-                    similarNotes = similarNotes.filter(note => 
-                        note.tags && note.tags.some(tag => currentTags.includes(tag))
-                    ).sort((a, b) => {
+                const fragment = document.createDocumentFragment();
+                let similarNotes = allNotes.filter(note => note.id != currentNoteId)
+                    .filter(note => note.tags && note.tags.some(tag => currentTags.includes(tag)))
+                    .sort((a, b) => {
                         const aMatches = a.tags ? a.tags.filter(tag => currentTags.includes(tag)).length : 0;
                         const bMatches = b.tags ? b.tags.filter(tag => currentTags.includes(tag)).length : 0;
                         return bMatches - aMatches;
-                    });
-                }
+                    })
+                    .slice(0, 4);
 
-                similarNotes.slice(0, 4).forEach(note => {
+                similarNotes.forEach(note => {
                     const noteElement = document.createElement('div');
                     noteElement.className = 'similar-note-item';
                     noteElement.innerHTML = `
                         <a href="note.html?id=${note.id}">
-                            <img src="${note.image || 'https://via.placeholder.com/150'}" alt="${note.title}">
+                            <img data-src="${note.image || 'https://via.placeholder.com/150'}" alt="${note.title}" class="lazy">
                             <h3>${note.title}</h3>
                         </a>`;
-                    similarNotesGrid.appendChild(noteElement);
+                    fragment.appendChild(noteElement);
                 });
+
+                elements.similarNotesGrid.innerHTML = '';
+                elements.similarNotesGrid.appendChild(fragment);
             }
 
             function loadUtterances(noteId) {
-                const container = document.getElementById('utterances-container');
-                container.innerHTML = '';
-
+                elements.utterancesContainer.innerHTML = '';
                 const script = document.createElement('script');
                 script.src = 'https://utteranc.es/client.js';
                 script.setAttribute('repo', 'yossfu/Gesti-n-de-comentarios');
@@ -175,13 +294,13 @@
                 script.setAttribute('theme', document.body.classList.contains('dark-theme') ? 'dark-blue' : 'github-light');
                 script.setAttribute('crossorigin', 'anonymous');
                 script.async = true;
-                container.appendChild(script);
+                script.onload = () => elements.loader.style.display = 'none';
+                elements.utterancesContainer.appendChild(script);
             }
 
             function updateUtterancesTheme() {
-                const container = document.getElementById('utterances-container');
                 setTimeout(() => {
-                    const iframe = container.querySelector('iframe');
+                    const iframe = elements.utterancesContainer.querySelector('iframe');
                     if (iframe) {
                         iframe.contentWindow.postMessage({
                             type: 'set-theme',
@@ -189,6 +308,19 @@
                         }, 'https://utteranc.es');
                     }
                 }, 100);
+            }
+
+            function updatePlyrTheme() {
+                const plyrControls = document.querySelector('.plyr__controls');
+                if (plyrControls) {
+                    plyrControls.style.background = document.body.classList.contains('dark-theme') ? '#b71c1c' : '#d32f2f';
+                }
+            }
+
+            function formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
             }
         });
     </script>
