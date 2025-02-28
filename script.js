@@ -580,18 +580,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Lógica del chat flotante con Minnit Chat
     if (window.location.pathname.endsWith('index.html') && elements.chatToggle && elements.chatPopup && elements.chatClose) {
         let chatLoaded = false;
 
         function initializeChat() {
             if (!chatLoaded) {
-                // Cargar el script de Minnit dinámicamente
                 const script = document.createElement('script');
                 script.src = 'https://minnit.chat/js/embed.js?c=1740011833';
                 script.defer = true;
                 script.onload = () => {
-                    // Crear el span para el chat después de que el script cargue
                     const chatSpan = document.createElement('span');
                     chatSpan.className = 'minnit-chat-sembed';
                     chatSpan.style.display = 'block';
