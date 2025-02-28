@@ -7,7 +7,16 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
     <link rel="preload" href="https://files.catbox.moe/kz2lot.png" as="image">
-    <!-- Metadatos Open Graph y Twitter Cards dinámicos se insertarán aquí -->
+    <!-- Metadatos Open Graph genéricos iniciales -->
+    <meta property="og:title" content="Galería de Imágenes - ExenE">
+    <meta property="og:description" content="Explora las mejores imágenes en ExenE">
+    <meta property="og:image" content="https://files.catbox.moe/kz2lot.png">
+    <meta property="og:url" content="">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Galería de Imágenes - ExenE">
+    <meta name="twitter:description" content="Explora las mejores imágenes en ExenE">
+    <meta name="twitter:image" content="https://files.catbox.moe/kz2lot.png">
     <style>
         .lazy { opacity: 0; transition: opacity 0.3s; }
         .lazy[src] { opacity: 1; }
@@ -164,20 +173,78 @@
             function setSocialMetaTags(imageData) {
                 const baseUrl = window.location.origin;
                 const currentUrl = `${baseUrl}/image-detail.html?id=${imageId}`;
-                const metaTags = `
-                    <!-- Open Graph Meta Tags -->
-                    <meta property="og:title" content="${imageData.title}">
-                    <meta property="og:description" content="${imageData.description || 'Mira esta increíble imagen en ExenE'}">
-                    <meta property="og:image" content="${imageData.url}">
-                    <meta property="og:url" content="${currentUrl}">
-                    <meta property="og:type" content="article">
-                    <!-- Twitter Card Meta Tags -->
-                    <meta name="twitter:card" content="summary_large_image">
-                    <meta name="twitter:title" content="${imageData.title}">
-                    <meta name="twitter:description" content="${imageData.description || 'Mira esta increíble imagen en ExenE'}">
-                    <meta name="twitter:image" content="${imageData.url}">
-                `;
-                document.head.insertAdjacentHTML('beforeend', metaTags);
+                // Actualizamos los metadatos existentes si ya están presentes
+                let ogTitle = document.querySelector('meta[property="og:title"]');
+                if (!ogTitle) {
+                    ogTitle = document.createElement('meta');
+                    ogTitle.setAttribute('property', 'og:title');
+                    document.head.appendChild(ogTitle);
+                }
+                ogTitle.setAttribute('content', imageData.title);
+
+                let ogDescription = document.querySelector('meta[property="og:description"]');
+                if (!ogDescription) {
+                    ogDescription = document.createElement('meta');
+                    ogDescription.setAttribute('property', 'og:description');
+                    document.head.appendChild(ogDescription);
+                }
+                ogDescription.setAttribute('content', imageData.description || 'Mira esta increíble imagen en ExenE');
+
+                let ogImage = document.querySelector('meta[property="og:image"]');
+                if (!ogImage) {
+                    ogImage = document.createElement('meta');
+                    ogImage.setAttribute('property', 'og:image');
+                    document.head.appendChild(ogImage);
+                }
+                ogImage.setAttribute('content', imageData.url);
+
+                let ogUrl = document.querySelector('meta[property="og:url"]');
+                if (!ogUrl) {
+                    ogUrl = document.createElement('meta');
+                    ogUrl.setAttribute('property', 'og:url');
+                    document.head.appendChild(ogUrl);
+                }
+                ogUrl.setAttribute('content', currentUrl);
+
+                let ogType = document.querySelector('meta[property="og:type"]');
+                if (!ogType) {
+                    ogType = document.createElement('meta');
+                    ogType.setAttribute('property', 'og:type');
+                    document.head.appendChild(ogType);
+                }
+                ogType.setAttribute('content', 'article');
+
+                let twitterCard = document.querySelector('meta[name="twitter:card"]');
+                if (!twitterCard) {
+                    twitterCard = document.createElement('meta');
+                    twitterCard.setAttribute('name', 'twitter:card');
+                    document.head.appendChild(twitterCard);
+                }
+                twitterCard.setAttribute('content', 'summary_large_image');
+
+                let twitterTitle = document.querySelector('meta[name="twitter:title"]');
+                if (!twitterTitle) {
+                    twitterTitle = document.createElement('meta');
+                    twitterTitle.setAttribute('name', 'twitter:title');
+                    document.head.appendChild(twitterTitle);
+                }
+                twitterTitle.setAttribute('content', imageData.title);
+
+                let twitterDescription = document.querySelector('meta[name="twitter:description"]');
+                if (!twitterDescription) {
+                    twitterDescription = document.createElement('meta');
+                    twitterDescription.setAttribute('name', 'twitter:description');
+                    document.head.appendChild(twitterDescription);
+                }
+                twitterDescription.setAttribute('content', imageData.description || 'Mira esta increíble imagen en ExenE');
+
+                let twitterImage = document.querySelector('meta[name="twitter:image"]');
+                if (!twitterImage) {
+                    twitterImage = document.createElement('meta');
+                    twitterImage.setAttribute('name', 'twitter:image');
+                    document.head.appendChild(twitterImage);
+                }
+                twitterImage.setAttribute('content', imageData.url);
             }
 
             function renderShareButtons(imageData) {
