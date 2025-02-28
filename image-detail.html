@@ -8,14 +8,14 @@
     <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
     <link rel="preload" href="https://files.catbox.moe/kz2lot.png" as="image">
     <!-- Metadatos Open Graph genéricos como placeholder -->
-    <meta property="og:title" content="Galería de Imágenes - ExenE">
-    <meta property="og:description" content="Explora las mejores imágenes en ExenE">
+    <meta property="og:title" content="">
+    <meta property="og:description" content="">
     <meta property="og:image" content="https://via.placeholder.com/1200x630.png?text=ExenE"> <!-- Fallback válido -->
     <meta property="og:url" content="">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Galería de Imágenes - ExenE">
-    <meta name="twitter:description" content="Explora las mejores imágenes en ExenE">
+    <meta name="twitter:title" content="">
+    <meta name="twitter:description" content="">
     <meta name="twitter:image" content="https://via.placeholder.com/1200x630.png?text=ExenE">
     <style>
         .lazy { opacity: 0; transition: opacity 0.3s; }
@@ -173,14 +173,14 @@
             function setSocialMetaTags(imageData) {
                 const baseUrl = window.location.origin;
                 const currentUrl = `${baseUrl}/image-detail.html?id=${imageId}`;
-                // Actualizamos metadatos existentes o creamos nuevos
+                // Actualizamos o creamos metadatos, priorizando la imagen del ID
                 let ogTitle = document.querySelector('meta[property="og:title"]');
                 if (!ogTitle) {
                     ogTitle = document.createElement('meta');
                     ogTitle.setAttribute('property', 'og:title');
                     document.head.appendChild(ogTitle);
                 }
-                ogTitle.setAttribute('content', imageData.title);
+                ogTitle.setAttribute('content', ''); // Vaciamos el título para enfocarnos en la imagen
 
                 let ogDescription = document.querySelector('meta[property="og:description"]');
                 if (!ogDescription) {
@@ -188,7 +188,7 @@
                     ogDescription.setAttribute('property', 'og:description');
                     document.head.appendChild(ogDescription);
                 }
-                ogDescription.setAttribute('content', imageData.description || 'Mira esta increíble imagen en ExenE');
+                ogDescription.setAttribute('content', ''); // Vaciamos la descripción
 
                 let ogImage = document.querySelector('meta[property="og:image"]');
                 if (!ogImage) {
@@ -196,7 +196,7 @@
                     ogImage.setAttribute('property', 'og:image');
                     document.head.appendChild(ogImage);
                 }
-                ogImage.setAttribute('content', imageData.url); // Usamos solo la imagen del ID
+                ogImage.setAttribute('content', imageData.url); // Solo la imagen del ID
 
                 let ogUrl = document.querySelector('meta[property="og:url"]');
                 if (!ogUrl) {
@@ -228,7 +228,7 @@
                     twitterTitle.setAttribute('name', 'twitter:title');
                     document.head.appendChild(twitterTitle);
                 }
-                twitterTitle.setAttribute('content', imageData.title);
+                twitterTitle.setAttribute('content', ''); // Vaciamos el título
 
                 let twitterDescription = document.querySelector('meta[name="twitter:description"]');
                 if (!twitterDescription) {
@@ -236,7 +236,7 @@
                     twitterDescription.setAttribute('name', 'twitter:description');
                     document.head.appendChild(twitterDescription);
                 }
-                twitterDescription.setAttribute('content', imageData.description || 'Mira esta increíble imagen en ExenE');
+                twitterDescription.setAttribute('content', ''); // Vaciamos la descripción
 
                 let twitterImage = document.querySelector('meta[name="twitter:image"]');
                 if (!twitterImage) {
@@ -244,7 +244,7 @@
                     twitterImage.setAttribute('name', 'twitter:image');
                     document.head.appendChild(twitterImage);
                 }
-                twitterImage.setAttribute('content', imageData.url); // Usamos solo la imagen del ID
+                twitterImage.setAttribute('content', imageData.url); // Solo la imagen del ID
             }
 
             function renderShareButtons(imageData) {
