@@ -7,106 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
     <link rel="preload" href="https://files.catbox.moe/kz2lot.png" as="image">
-    <style>
-        .lazy { opacity: 0; transition: opacity 0.3s; }
-        .lazy[src] { opacity: 1; }
-        .watermark {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 12px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-            pointer-events: none;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 6px;
-            border-radius: 3px;
-            z-index: 3; /* Aseguramos que esté por encima de la imagen */
-        }
-        .dark-theme .watermark {
-            color: rgba(239, 83, 80, 0.7);
-        }
-        .image-container {
-            position: relative;
-            margin: 20px 0;
-            overflow: hidden;
-            border-radius: 8px;
-        }
-        .image-background {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1;
-            border-radius: 8px;
-            transition: opacity 0.3s ease;
-        }
-        .image-container:hover .image-background {
-            opacity: 0.7;
-        }
-        .note-image {
-            position: relative;
-            z-index: 2;
-            display: block;
-            max-width: 100%;
-            height: auto;
-            margin: 0 auto;
-            border-radius: 8px;
-        }
-        .title-container {
-            position: relative;
-            margin-bottom: 10px;
-            z-index: 3;
-        }
-        .title-background {
-            position: relative;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 15px 25px;
-            border-radius: 8px;
-            transition: opacity 0.3s ease;
-        }
-        .title-container:hover .title-background {
-            opacity: 0.8;
-        }
-        .note-title {
-            position: relative;
-            text-align: center;
-            font-size: 2.5rem;
-            margin: 0;
-            color: #fff;
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            background: linear-gradient(45deg, #d32f2f, #ef5350);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            z-index: 4;
-            transition: transform 0.3s ease, text-shadow 0.3s ease;
-        }
-        .dark-theme .note-title {
-            background: linear-gradient(45deg, #b71c1c, #ef5350);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .note-title:hover {
-            transform: scale(1.05);
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
-        }
-        @media (max-width: 600px) {
-            .note-title {
-                font-size: 2rem;
-                padding: 5px 15px;
-            }
-            .title-background {
-                padding: 10px 15px;
-            }
-        }
-    </style>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8006989505662520" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="loader" id="loader">
@@ -141,10 +42,9 @@
                 <h1 id="image-title" class="note-title"></h1>
             </div>
             <div class="image-container">
-                <div class="image-background"></div>
                 <div style="position: relative;">
                     <img id="full-image" data-src="" alt="" class="note-image lazy">
-                    <div class="watermark">@exeneqiel</div> <!-- Asegurada en la imagen principal -->
+                    <div class="watermark">@exeneqiel</div>
                 </div>
             </div>
             <hr class="divider">
@@ -157,174 +57,36 @@
             <hr class="divider">
             <section class="similar-notes" id="similar-images">
                 <h2>Imágenes Similares</h2>
-                <div class="similar-notes-grid" id="similar-images-grid"></div>
+                <div class="similar-images-grid" id="similar-images-grid"></div>
             </section>
         </section>
     </main>
 
     <footer>
         <p>© 2024 ExenE. Todos los derechos reservados.</p>
+        <div class="ad-container" style="text-align: center; margin-top: 10px;">
+            <ins class="adsbygoogle"
+                 style="display:inline-block;width:320px;height:50px"
+                 data-ad-client="ca-pub-8006989505662520"
+                 data-ad-slot="7151856549"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
     </footer>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const elements = {
-                loader: document.getElementById('loader'),
-                header: document.getElementById('header'),
-                mainContent: document.getElementById('main-content'),
-                footer: document.querySelector('footer'),
-                themeToggle: document.getElementById('theme-toggle'),
-                menuToggle: document.getElementById('menu-toggle'),
-                menu: document.getElementById('menu'),
-                menuClose: document.getElementById('menu-close'),
-                imageTitle: document.getElementById('image-title'),
-                fullImage: document.getElementById('full-image'),
-                imageDescription: document.getElementById('image-description'),
-                similarImagesGrid: document.getElementById('similar-images-grid'),
-                utterancesContainer: document.getElementById('utterances-container')
-            };
+    <!-- Botón flotante para el chat -->
+    <button id="chat-toggle" class="chat-button">💬</button>
+    
+    <!-- Contenedor del chat flotante -->
+    <div id="chat-popup" class="chat-popup">
+        <div class="chat-header">
+            <span>Chat</span>
+            <button id="chat-close" class="chat-close">✕</button>
+        </div>
+        <div id="chat-content" class="chat-content"></div>
+    </div>
 
-            elements.header.style.display = 'block';
-            elements.mainContent.style.display = 'block';
-            elements.footer.style.display = 'block';
-
-            if (localStorage.getItem('darkTheme') === 'true') {
-                document.body.classList.add('dark-theme');
-            }
-            elements.themeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark-theme');
-                localStorage.setItem('darkTheme', document.body.classList.contains('dark-theme'));
-                updateUtterancesTheme();
-            });
-
-            function toggleMenu() {
-                elements.menu.classList.toggle('active');
-                elements.menuToggle.classList.toggle('open');
-            }
-
-            function closeMenu() {
-                elements.menu.classList.remove('active');
-                elements.menuToggle.classList.remove('open');
-            }
-
-            elements.menuToggle.addEventListener('click', toggleMenu);
-            elements.menuClose.addEventListener('click', closeMenu);
-            document.addEventListener('click', (event) => {
-                if (!elements.menu.contains(event.target) && !elements.menuToggle.contains(event.target) && elements.menu.classList.contains('active')) {
-                    closeMenu();
-                }
-            });
-            elements.menu.querySelectorAll('.tab-button').forEach(link => link.addEventListener('click', closeMenu));
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const imageId = urlParams.get('id') || 30;
-
-            function fetchWithCache(url, cacheKey) {
-                const version = 'v1';
-                const cacheKeyWithVersion = `${cacheKey}_${version}`;
-                const cachedData = localStorage.getItem(cacheKeyWithVersion);
-                
-                if (cachedData) {
-                    return Promise.resolve(JSON.parse(cachedData));
-                }
-
-                elements.loader.style.display = 'flex';
-                return fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        localStorage.setItem(cacheKeyWithVersion, JSON.stringify(data));
-                        return data;
-                    })
-                    .catch(err => {
-                        console.error(`Fetch problem: ${err.message}`);
-                        elements.imageTitle.textContent = "Error al cargar la imagen";
-                        throw err;
-                    })
-                    .finally(() => elements.loader.style.display = 'none');
-            }
-
-            function lazyLoadImages() {
-                const observer = new IntersectionObserver((entries, observer) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const img = entry.target;
-                            img.src = img.dataset.src;
-                            img.classList.remove('lazy');
-                            observer.unobserve(img);
-                        }
-                    });
-                }, { rootMargin: '0px 0px 200px 0px' });
-                document.querySelectorAll('.lazy').forEach(img => observer.observe(img));
-            }
-
-            elements.loader.style.display = 'flex';
-            fetchWithCache('imagenes.json', 'cachedImages')
-                .then(data => {
-                    const currentItem = data.find(img => img.id == imageId);
-                    if (currentItem) {
-                        elements.imageTitle.textContent = currentItem.title;
-                        elements.fullImage.dataset.src = currentItem.url;
-                        elements.fullImage.alt = currentItem.title;
-                        elements.imageDescription.textContent = currentItem.description || 'Sin descripción disponible';
-                        loadSimilarImages(currentItem.tags, data);
-                        loadUtterances(imageId);
-                        lazyLoadImages();
-                    } else {
-                        console.error("Imagen no encontrada");
-                        elements.imageTitle.textContent = "Imagen no encontrada";
-                    }
-                })
-                .finally(() => elements.loader.style.display = 'none');
-
-            function loadSimilarImages(tags, allImages) {
-                const fragment = document.createDocumentFragment();
-                let similarImages = allImages.filter(item => item.id != imageId && item.tags.some(tag => tags.includes(tag)))
-                    .sort((a, b) => b.tags.filter(tag => tags.includes(tag)).length - a.tags.filter(tag => tags.includes(tag)).length)
-                    .slice(0, 8);
-
-                similarImages.forEach(item => {
-                    const imageElement = document.createElement('div');
-                    imageElement.className = 'similar-note-item';
-                    imageElement.innerHTML = `
-                        <a href="image-detail.html?id=${item.id}">
-                            <div style="position: relative;">
-                                <img data-src="${item.url}" alt="${item.title}" class="lazy">
-                                <div class="watermark">@exeneqiel</div>
-                            </div>
-                            <h3>${item.title}</h3>
-                        </a>`;
-                    fragment.appendChild(imageElement);
-                });
-
-                elements.similarImagesGrid.innerHTML = '';
-                elements.similarImagesGrid.appendChild(fragment);
-            }
-
-            function loadUtterances(imageId) {
-                elements.utterancesContainer.innerHTML = '';
-                const script = document.createElement('script');
-                script.src = 'https://utteranc.es/client.js';
-                script.setAttribute('repo', 'yossfu/Gesti-n-de-comentarios');
-                script.setAttribute('issue-term', `image-${imageId}`);
-                script.setAttribute('theme', document.body.classList.contains('dark-theme') ? 'dark-blue' : 'github-light');
-                script.setAttribute('crossorigin', 'anonymous');
-                script.async = true;
-                script.onload = () => elements.loader.style.display = 'none';
-                elements.utterancesContainer.appendChild(script);
-            }
-
-            function updateUtterancesTheme() {
-                setTimeout(() => {
-                    const iframe = elements.utterancesContainer.querySelector('iframe');
-                    if (iframe) {
-                        iframe.contentWindow.postMessage({
-                            type: 'set-theme',
-                            theme: document.body.classList.contains('dark-theme') ? 'dark-blue' : 'github-light'
-                        }, 'https://utteranc.es');
-                    }
-                }, 100);
-            }
-        });
-    </script>
+    <script src="image-detail.js"></script>
 </body>
 </html>

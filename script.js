@@ -25,7 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
         categories: document.getElementById('categories'),
         menuToggle: document.getElementById('menu-toggle'),
         menu: document.getElementById('menu'),
-        menuClose: document.getElementById('menu-close')
+        menuClose: document.getElementById('menu-close'),
+        chatToggle: document.getElementById('chat-toggle'),
+        chatPopup: document.getElementById('chat-popup'),
+        chatClose: document.getElementById('chat-close'),
+        chatIframe: document.getElementById('chat-iframe')
     };
 
     const itemsPerPage = 15;
@@ -546,6 +550,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Lógica del chat flotante con iframe
+    let chatLoaded = false;
+
+    function openChat() {
+        elements.chatPopup.style.display = 'flex';
+        if (!chatLoaded) {
+            elements.chatIframe.src = 'https://html5-chat.com/chat/51441/67647612ece05';
+            chatLoaded = true;
+        }
+    }
+
+    function closeChat() {
+        elements.chatPopup.style.display = 'none';
+        elements.chatIframe.src = ''; // Limpiar el iframe al cerrar
+        chatLoaded = false; // Reiniciar para recargar al abrir de nuevo
+    }
+
+    elements.chatToggle.addEventListener('click', openChat);
+    elements.chatClose.addEventListener('click', closeChat);
+
+    document.addEventListener('click', (event) => {
+        if (!elements.chatPopup.contains(event.target) && !elements.chatToggle.contains(event.target) && elements.chatPopup.style.display === 'flex') {
+            closeChat();
+        }
+    });
 });
 
 document.head.insertAdjacentHTML('beforeend', `
