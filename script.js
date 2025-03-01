@@ -1,13 +1,5 @@
-// Configuración de Firebase (usar secreto de GitHub o valor temporal local)
-const firebaseConfig = JSON.parse(process.env.FIREBASE_API_KEY || '{}');
-    authDomain: "likesparati-2af8a.firebaseapp.com",
-    databaseURL: "https://likesparati-2af8a-default-rtdb.firebaseio.com", // Corrección del URL
-    projectId: "likesparati-2af8a",
-    storageBucket: "likesparati-2af8a.firebasestorage.app",
-    messagingSenderId: "97227020218",
-    appId: "1:97227020218:web:8e64d8a325405ea85faf83",
-    measurementId: "G-T4KWYCP8QH"
-};
+// Configuración de Firebase usando secreto de GitHub o valor temporal local
+const firebaseConfig = JSON.parse(process.env.FIREBASE_API_KEY || '{"apiKey":"AIzaSyDlfzg7BsGPKvqi7XLICoWSFU02tfzATew","authDomain":"likesparati-2af8a.firebaseapp.com","databaseURL":"https://likesparati-2af8a-default-rtdb.firebaseio.com","projectId":"likesparati-2af8a","storageBucket":"likesparati-2af8a.firebasestorage.app","messagingSenderId":"97227020218","appId":"1:97227020218:web:8e64d8a325405ea85faf83","measurementId":"G-T4KWYCP8QH"}');
 
 // Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
@@ -81,16 +73,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (elements.ageVerification) {
+        console.log('Verificación de edad detectada');
         if (localStorage.getItem('ageVerified') === 'true') {
+            console.log('Edad verificada previamente, mostrando contenido');
             showMainContent();
             startPage();
         } else {
+            console.log('Esperando verificación de edad');
             elements.ageYes.addEventListener('click', () => {
+                console.log('Clic en "Sí" detectado');
                 localStorage.setItem('ageVerified', 'true');
                 showMainContent();
                 startPage();
             });
-            elements.ageNo.addEventListener('click', () => window.location.href = 'https://m.kiddle.co/');
+            elements.ageNo.addEventListener('click', () => {
+                console.log('Clic en "No" detectado');
+                window.location.href = 'https://m.kiddle.co/';
+            });
         }
     }
 
@@ -136,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showMainContent() {
+        console.log('Mostrando contenido principal');
         if (elements.ageVerification) elements.ageVerification.style.display = 'none';
         if (elements.header) elements.header.style.display = 'block';
         if (elements.mainContent) elements.mainContent.style.display = 'block';
