@@ -41,8 +41,18 @@ firebaseAppScript.onload = () => {
                 }
 
                 imageItems.forEach(item => {
-                    const photoId = item.querySelector('a')?.getAttribute('href')?.split('id=')[1];
-                    if (photoId && !item.querySelector('.like-container')) {
+                    const link = item.querySelector('a');
+                    if (!link) {
+                        console.warn('Elemento <a> no encontrado en .flex-item', item);
+                        return;
+                    }
+                    const photoId = link.getAttribute('href')?.split('id=')[1];
+                    if (!photoId) {
+                        console.warn('ID no encontrado en href', link.getAttribute('href'));
+                        return;
+                    }
+
+                    if (!item.querySelector('.like-container')) {
                         const likeContainer = document.createElement('div');
                         likeContainer.className = 'like-container';
                         likeContainer.innerHTML = `
@@ -57,6 +67,7 @@ firebaseAppScript.onload = () => {
                             const likes = snapshot.val() || 0;
                             const likeCount = item.querySelector(`.like-count[data-id="${photoId}"]`);
                             if (likeCount) likeCount.textContent = likes;
+                            else console.error('like-count no encontrado para photoId:', photoId);
                         });
 
                         // Añadir evento de clic
@@ -68,6 +79,8 @@ firebaseAppScript.onload = () => {
                                     return (currentLikes || 0) + 1;
                                 });
                             });
+                        } else {
+                            console.error('like-button no encontrado para photoId:', photoId);
                         }
                     }
                 });
@@ -86,12 +99,10 @@ firebaseAppScript.onload = () => {
 
             observer.observe(imageGrid, { childList: true, subtree: true });
 
-            // Inicializar al cargar y como respaldo después de un retraso
+            // Inicializar al cargar y como respaldo
             addLikeFunctionality();
-            setTimeout(addLikeFunctionality, 1000); // Reintento después de 1 segundo por si las imágenes tardan
-
-            // Escuchar eventos personalizados de tu script.js (opcional)
-            document.addEventListener('imagesRendered', addLikeFunctionality);
+            setTimeout(addLikeFunctionality, 1000); // Reintento después de 1 segundo
+            document.addEventListener('imagesRendered', addLikeFunctionality); // Escuchar evento de script.js
         });
     };
 };

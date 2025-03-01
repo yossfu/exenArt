@@ -56,6 +56,21 @@ document.addEventListener('DOMContentLoaded', () => {
         'evil': 'https://cdn-icons-png.flaticon.com/512/2855/2855658.png'
     };
 
+    // Inyectar el secreto de GitHub Actions (debes configurarlo primero)
+    const firebaseConfig = {
+        apiKey: process.env.FIREBASE_API_KEY || "TU_NUEVA_API_KEY_TEMPORAL", // Usa el secreto o una clave temporal mientras configuras
+        authDomain: "exengallerylikes.firebaseapp.com",
+        databaseURL: "https://exengallerylikes-default-rtdb.firebaseio.com",
+        projectId: "exengallerylikes",
+        storageBucket: "exengallerylikes.firebasestorage.app",
+        messagingSenderId: "865334459581",
+        appId: "1:865334459581:web:5a770f57f12ef6a7aa4bd4"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     if (localStorage.getItem('darkTheme') === 'true') document.body.classList.add('dark-theme');
     if (elements.themeToggle) {
         elements.themeToggle.addEventListener('click', () => {
@@ -237,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 notesData = data;
                 renderFeaturedNotes();
             })
-        ]);
+        ]).catch(error => console.error('Error en startPage:', error));
     }
 
     function renderImages(page) {
@@ -262,8 +277,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     <img data-src="${item.url}" alt="${item.title}" class="lazy">
                 </a>
                 <p>${item.title}</p>
+                <div class="like-container">
+                    <button class="like-button" data-id="${item.id}">❤️</button>
+                    <span class="like-count" data-id="${item.id}">0</span>
+                </div>
             `;
             fragment.appendChild(imageItem);
+
+            // Cargar likes desde Firebase
+            const likeRef = db.ref(`likes/${item.id}`);
+            likeRef.on('value', (snapshot) => {
+                const likes = snapshot.val() || 0;
+                const likeCount = imageItem.querySelector(`.like-count[data-id="${item.id}"]`);
+                if (likeCount) likeCount.textContent = likes;
+                else console.error('like-count no encontrado para photoId:', item.id);
+            });
         });
 
         if (elements.imageGrid) {
@@ -277,7 +305,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             updateFilterCount();
             updateFilterIndicator();
+            addLikeListeners();
         }
+    }
+
+    function addLikeListeners() {
+        document.querySelectorAll('.like-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const photoId = button.dataset.id;
+                const likeRef = db.ref(`likes/${photoId}`);
+                likeRef.transaction((currentLikes) => {
+                    return (currentLikes || 0) + 1;
+                });
+            });
+        });
     }
 
     function renderPagination(totalItems, pageHandler) {
@@ -636,5 +677,9 @@ document.head.insertAdjacentHTML('beforeend', `
         .lazy[src] { opacity: 1; }
         .social-icon { width: 30px; height: 30px; transition: transform 0.3s ease; }
         .social-icon:hover { transform: scale(1.1); }
+        .like-container { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 5px; }
+        .like-button { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0; }
+        .like-count { font-size: 0.85rem; color: #d32f2f; }
+        .dark-theme .like-count { color: #ef5350; }
     </style>
 `);
