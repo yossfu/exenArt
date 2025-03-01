@@ -1,3 +1,18 @@
+// Configuración de Firebase (usar secreto de GitHub o valor temporal local)
+const firebaseConfig = JSON.parse(process.env.FIREBASE_API_KEY || '{}');
+    authDomain: "likesparati-2af8a.firebaseapp.com",
+    databaseURL: "https://likesparati-2af8a-default-rtdb.firebaseio.com", // Corrección del URL
+    projectId: "likesparati-2af8a",
+    storageBucket: "likesparati-2af8a.firebasestorage.app",
+    messagingSenderId: "97227020218",
+    appId: "1:97227020218:web:8e64d8a325405ea85faf83",
+    measurementId: "G-T4KWYCP8QH"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 document.addEventListener('DOMContentLoaded', () => {
     const elements = {
         imageGrid: document.getElementById('image-grid'),
@@ -55,21 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'angelical': 'https://cdn-icons-png.flaticon.com/512/10291/10291922.png',
         'evil': 'https://cdn-icons-png.flaticon.com/512/2855/2855658.png'
     };
-
-    // Inyectar el secreto de GitHub Actions (debes configurarlo primero)
-    const firebaseConfig = {
-        apiKey: process.env.FIREBASE_API_KEY || "TU_NUEVA_API_KEY_TEMPORAL", // Usa el secreto o una clave temporal mientras configuras
-        authDomain: "exengallerylikes.firebaseapp.com",
-        databaseURL: "https://exengallerylikes-default-rtdb.firebaseio.com",
-        projectId: "exengallerylikes",
-        storageBucket: "exengallerylikes.firebasestorage.app",
-        messagingSenderId: "865334459581",
-        appId: "1:865334459581:web:5a770f57f12ef6a7aa4bd4"
-    };
-
-    // Inicializar Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
     if (localStorage.getItem('darkTheme') === 'true') document.body.classList.add('dark-theme');
     if (elements.themeToggle) {
@@ -316,6 +316,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const likeRef = db.ref(`likes/${photoId}`);
                 likeRef.transaction((currentLikes) => {
                     return (currentLikes || 0) + 1;
+                }, (error, committed, snapshot) => {
+                    if (error) console.error('Error en transacción:', error);
+                    else if (committed) {
+                        const newLikes = snapshot.val();
+                        button.nextElementSibling.textContent = newLikes;
+                    }
                 });
             });
         });
@@ -682,4 +688,6 @@ document.head.insertAdjacentHTML('beforeend', `
         .like-count { font-size: 0.85rem; color: #d32f2f; }
         .dark-theme .like-count { color: #ef5350; }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 `);
