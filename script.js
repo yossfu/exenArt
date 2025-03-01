@@ -1,19 +1,3 @@
-// Configuración de Firebase (usar esta configuración directamente para pruebas locales; cambiar a process.env.FIREBASE_API_KEY en GitHub Actions)
-const firebaseConfig = {
-    apiKey: "AIzaSyDlfzg7BsGPKvqi7XLICoWSFU02tfzATew",
-    authDomain: "likesparati-2af8a.firebaseapp.com",
-    databaseURL: "https://likesparati-2af8a-default-rtdb.firebaseio.com",
-    projectId: "likesparati-2af8a",
-    storageBucket: "likesparati-2af8a.firebasestorage.app",
-    messagingSenderId: "97227020218",
-    appId: "1:97227020218:web:8e64d8a325405ea85faf83",
-    measurementId: "G-T4KWYCP8QH"
-};
-
-// Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
 document.addEventListener('DOMContentLoaded', () => {
     const elements = {
         imageGrid: document.getElementById('image-grid'),
@@ -82,30 +66,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (elements.ageVerification) {
-        console.log('Verificación de edad detectada');
         if (localStorage.getItem('ageVerified') === 'true') {
-            console.log('Edad verificada previamente, mostrando contenido');
             showMainContent();
             startPage();
         } else {
-            console.log('Esperando verificación de edad');
+            showAgeVerification();
             elements.ageYes.addEventListener('click', () => {
-                console.log('Clic en "Sí" detectado');
                 localStorage.setItem('ageVerified', 'true');
                 showMainContent();
                 startPage();
             });
-            elements.ageNo.addEventListener('click', () => {
-                console.log('Clic en "No" detectado');
-                window.location.href = 'https://m.kiddle.co/';
-            });
+            elements.ageNo.addEventListener('click', () => window.location.href = 'https://m.kiddle.co/');
         }
     }
 
     if (elements.revokeAge) {
         elements.revokeAge.addEventListener('click', () => {
-            localStorage.clear();
-            location.reload();
+            localStorage.removeItem('ageVerified');
+            hideMainContent();
+            showAgeVerification();
         });
     }
 
@@ -133,24 +112,44 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.menuToggle && elements.menu && elements.menuClose) {
         elements.menuToggle.addEventListener('click', toggleMenu);
         elements.menuClose.addEventListener('click', closeMenu);
+
         document.addEventListener('click', (event) => {
-            if (elements.menu && elements.menuToggle && !elements.menu.contains(event.target) && !elements.menuToggle.contains(event.target) && elements.menu.classList.contains('active')) {
+            const isClickInsideMenu = elements.menu.contains(event.target);
+            const isClickOnToggle = elements.menuToggle.contains(event.target);
+            if (!isClickInsideMenu && !isClickOnToggle && elements.menu.classList.contains('active')) {
                 closeMenu();
             }
         });
+
         if (elements.menu) {
-            elements.menu.querySelectorAll('.tab-button').forEach(link => link.addEventListener('click', closeMenu));
+            elements.menu.querySelectorAll('.tab-button').forEach(link => {
+                link.addEventListener('click', closeMenu);
+            });
         }
     }
 
     function showMainContent() {
-        console.log('Mostrando contenido principal');
         if (elements.ageVerification) elements.ageVerification.style.display = 'none';
         if (elements.header) elements.header.style.display = 'block';
         if (elements.mainContent) elements.mainContent.style.display = 'block';
         if (elements.gallery) elements.gallery.style.display = 'block';
         if (elements.pagination) elements.pagination.style.display = 'block';
         if (elements.footer) elements.footer.style.display = 'block';
+    }
+
+    function hideMainContent() {
+        if (elements.header) elements.header.style.display = 'none';
+        if (elements.mainContent) elements.mainContent.style.display = 'none';
+        if (elements.gallery) elements.gallery.style.display = 'none';
+        if (elements.pagination) elements.pagination.style.display = 'none';
+        if (elements.footer) elements.footer.style.display = 'none';
+    }
+
+    function showAgeVerification() {
+        if (elements.ageVerification) {
+            elements.ageVerification.style.display = 'flex';
+            elements.ageVerification.classList.add('active');
+        }
     }
 
     function fetchWithCache(url, cacheKey, fallbackElement, renderFn) {
@@ -261,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 notesData = data;
                 renderFeaturedNotes();
             })
-        ]).catch(error => console.error('Error en startPage:', error));
+        ]);
     }
 
     function renderImages(page) {
@@ -280,27 +279,14 @@ document.addEventListener('DOMContentLoaded', () => {
         newItems.forEach((item, index) => {
             const imageItem = document.createElement('div');
             imageItem.className = 'flex-item';
-            imageItem.style.animationDelay = `${index * 0.1}s`;
+            imageItem.style.animationDelay = `${index * 0.05}s`;
             imageItem.innerHTML = `
                 <a href="image-detail.html?id=${item.id}" aria-label="${item.title}">
                     <img data-src="${item.url}" alt="${item.title}" class="lazy">
                 </a>
                 <p>${item.title}</p>
-                <div class="like-container">
-                    <button class="like-button" data-id="${item.id}">❤️</button>
-                    <span class="like-count" data-id="${item.id}">0</span>
-                </div>
             `;
             fragment.appendChild(imageItem);
-
-            // Cargar likes desde Firebase
-            const likeRef = db.ref(`likes/${item.id}`);
-            likeRef.on('value', (snapshot) => {
-                const likes = snapshot.val() || 0;
-                const likeCount = imageItem.querySelector(`.like-count[data-id="${item.id}"]`);
-                if (likeCount) likeCount.textContent = likes;
-                else console.error('like-count no encontrado para photoId:', item.id);
-            });
         });
 
         if (elements.imageGrid) {
@@ -314,26 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             updateFilterCount();
             updateFilterIndicator();
-            addLikeListeners();
         }
-    }
-
-    function addLikeListeners() {
-        document.querySelectorAll('.like-button').forEach(button => {
-            button.addEventListener('click', () => {
-                const photoId = button.dataset.id;
-                const likeRef = db.ref(`likes/${photoId}`);
-                likeRef.transaction((currentLikes) => {
-                    return (currentLikes || 0) + 1;
-                }, (error, committed, snapshot) => {
-                    if (error) console.error('Error en transacción:', error);
-                    else if (committed) {
-                        const newLikes = snapshot.val();
-                        button.nextElementSibling.textContent = newLikes;
-                    }
-                });
-            });
-        });
     }
 
     function renderPagination(totalItems, pageHandler) {
@@ -477,6 +444,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function filterBySearch(searchTerm) {
+        if (!searchTerm) {
+            resetFilters();
+            return;
+        }
+
         if (elements.loader && elements.imageGrid) {
             elements.loader.style.display = 'flex';
             elements.imageGrid.classList.add('fade');
@@ -487,12 +459,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeCategoryButton = null;
                 activeTag = null;
                 activeCategory = null;
-                filteredItems = imagesData.filter(item => {
-                    const titleMatch = item.title.toLowerCase().includes(searchTerm);
-                    const descriptionMatch = item.description?.toLowerCase().includes(searchTerm);
-                    const tagsMatch = item.tags.some(tag => tag.toLowerCase().includes(searchTerm));
-                    return titleMatch || descriptionMatch || tagsMatch;
-                });
+
+                const searchWords = searchTerm.toLowerCase().trim().split(/\s+/);
+
+                filteredItems = imagesData
+                    .map(item => {
+                        const title = item.title.toLowerCase();
+                        const description = item.description?.toLowerCase() || '';
+                        const tags = item.tags.map(tag => tag.toLowerCase());
+                        const matches = searchWords.reduce((count, word) => {
+                            return count + (title.includes(word) ? 1 : 0) +
+                                   (description.includes(word) ? 1 : 0) +
+                                   (tags.some(tag => tag.includes(word)) ? 1 : 0);
+                        }, 0);
+                        return { item, matches };
+                    })
+                    .filter(entry => entry.matches > 0)
+                    .sort((a, b) => b.matches - a.matches) // Ordenar por relevancia
+                    .map(entry => entry.item);
+
                 isFiltered = true;
                 currentPage = 1;
                 renderImages(currentPage);
@@ -532,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem('lastFilter');
                 localStorage.removeItem('lastFilterType');
                 if (elements.searchInput) elements.searchInput.value = '';
+                hideAutocomplete(); // Ocultar autocompletado al restablecer
             }, 100);
         }
     }
@@ -571,6 +557,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 indicatorText = activeTag;
             } else if (activeCategory) {
                 indicatorText = activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1);
+            } else if (isFiltered && elements.searchInput.value) {
+                indicatorText = `Búsqueda: ${elements.searchInput.value}`;
             }
             elements.filterIndicator.textContent = indicatorText ? `Filtro: ${indicatorText}` : '';
         }
@@ -599,11 +587,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Autocompletado
+    function showAutocomplete suggestions) {
+        let autocomplete = document.getElementById('autocomplete');
+        if (!autocomplete) {
+            autocomplete = document.createElement('div');
+            autocomplete.id = 'autocomplete';
+            autocomplete.className = 'autocomplete';
+            elements.searchInput.parentNode.appendChild(autocomplete);
+        }
+
+        autocomplete.innerHTML = '';
+        suggestions.slice(0, 5).forEach(suggestion => { // Mostrar hasta 5 sugerencias
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.textContent = suggestion;
+            item.addEventListener('click', () => {
+                elements.searchInput.value = suggestion;
+                filterBySearch(suggestion);
+                hideAutocomplete();
+            });
+            autocomplete.appendChild(item);
+        });
+
+        autocomplete.style.display = suggestions.length ? 'block' : 'none';
+    }
+
+    function hideAutocomplete() {
+        const autocomplete = document.getElementById('autocomplete');
+        if (autocomplete) autocomplete.style.display = 'none';
+    }
+
+    function getAutocompleteSuggestions(input) {
+        if (!input || !imagesData.length) return [];
+        const allTags = [...new Set(imagesData.flatMap(item => item.tags))];
+        return allTags.filter(tag => tag.toLowerCase().includes(input.toLowerCase().trim()));
+    }
+
     let searchTimeout;
     if (elements.searchInput) {
         elements.searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => filterBySearch(this.value.toLowerCase().trim()), 300);
+            const value = this.value;
+            searchTimeout = setTimeout(() => {
+                filterBySearch(value);
+                showAutocomplete(getAutocompleteSuggestions(value));
+            }, 150);
+        });
+
+        // Ocultar autocompletado al hacer clic fuera
+        document.addEventListener('click', (event) => {
+            if (!elements.searchInput.contains(event.target) && !document.getElementById('autocomplete')?.contains(event.target)) {
+                hideAutocomplete();
+            }
         });
     }
 
@@ -692,11 +728,37 @@ document.head.insertAdjacentHTML('beforeend', `
         .lazy[src] { opacity: 1; }
         .social-icon { width: 30px; height: 30px; transition: transform 0.3s ease; }
         .social-icon:hover { transform: scale(1.1); }
-        .like-container { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 5px; }
-        .like-button { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0; }
-        .like-count { font-size: 0.85rem; color: #d32f2f; }
-        .dark-theme .like-count { color: #ef5350; }
+        .autocomplete {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border: 1px solid #d32f2f;
+            border-radius: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
+            display: none;
+        }
+        .dark-theme .autocomplete {
+            background-color: #424242;
+            border-color: #ef5350;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            color: #d32f2f;
+            transition: background-color 0.3s ease;
+        }
+        .dark-theme .autocomplete-item {
+            color: #ef5350;
+        }
+        .autocomplete-item:hover {
+            background-color: #ef5350;
+            color: #fff;
+        }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 `);
