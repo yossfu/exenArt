@@ -1,5 +1,14 @@
-// Configuración de Firebase usando secreto de GitHub o valor temporal local
-const firebaseConfig = JSON.parse(process.env.FIREBASE_API_KEY || '{"apiKey":"AIzaSyDlfzg7BsGPKvqi7XLICoWSFU02tfzATew","authDomain":"likesparati-2af8a.firebaseapp.com","databaseURL":"https://likesparati-2af8a-default-rtdb.firebaseio.com","projectId":"likesparati-2af8a","storageBucket":"likesparati-2af8a.firebasestorage.app","messagingSenderId":"97227020218","appId":"1:97227020218:web:8e64d8a325405ea85faf83","measurementId":"G-T4KWYCP8QH"}');
+// Configuración de Firebase (usar esta configuración directamente para pruebas locales; cambiar a process.env.FIREBASE_API_KEY en GitHub Actions)
+const firebaseConfig = {
+    apiKey: "AIzaSyDlfzg7BsGPKvqi7XLICoWSFU02tfzATew",
+    authDomain: "likesparati-2af8a.firebaseapp.com",
+    databaseURL: "https://likesparati-2af8a-default-rtdb.firebaseio.com",
+    projectId: "likesparati-2af8a",
+    storageBucket: "likesparati-2af8a.firebasestorage.app",
+    messagingSenderId: "97227020218",
+    appId: "1:97227020218:web:8e64d8a325405ea85faf83",
+    measurementId: "G-T4KWYCP8QH"
+};
 
 // Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
