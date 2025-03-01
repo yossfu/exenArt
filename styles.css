@@ -228,7 +228,7 @@ header {
     top: 0;
     left: -200px;
     z-index: 20;
-    transition: transform 0.3s ease;
+    transition: left 0.3s ease; /* Cambiado a left para mantener tu diseño */
 }
 
 .dark-theme .menu {
@@ -237,7 +237,7 @@ header {
 
 .menu.active {
     display: flex;
-    transform: translateX(200px);
+    left: 0; /* Desliza desde la izquierda */
 }
 
 .menu-close {
@@ -388,7 +388,15 @@ header {
     padding: 10px 0;
 }
 
-.search-section input {
+.search-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    position: relative; /* Para posicionar el botón de limpiar */
+}
+
+#search {
     width: 100%;
     max-width: 400px;
     padding: 12px;
@@ -400,13 +408,82 @@ header {
     transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
-.dark-theme .search-section input {
+.dark-theme #search {
     background-color: #424242;
     color: #ef5350;
     border-color: #ef5350;
 }
 
-.search-section input:focus {
+#search:focus {
+    border-color: #ef5350;
+    outline: none;
+}
+
+#search-button {
+    padding: 12px 20px; /* Ajustado para coincidir con tu diseño */
+    font-size: 1rem;
+    color: #fff;
+    background-color: #d32f2f;
+    border: none;
+    border-radius: 25px; /* Redondeado para coincidir con el input */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+#search-button:hover {
+    background-color: #ef5350;
+    transform: scale(1.05);
+}
+
+.clear-search {
+    position: absolute;
+    right: 70px; /* Ajustado para estar dentro del input y antes del botón de búsqueda */
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #d32f2f;
+    cursor: pointer;
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+.dark-theme .clear-search {
+    color: #ef5350;
+}
+
+.clear-search:hover {
+    color: #ef5350;
+}
+
+.search-results {
+    margin-top: 5px;
+    font-size: 0.9rem;
+    color: #d32f2f;
+}
+
+.dark-theme .search-results {
+    color: #ef5350;
+}
+
+.sort-order {
+    padding: 5px;
+    border: 2px solid #d32f2f;
+    border-radius: 25px; /* Redondeado para coincidir con el diseño */
+    background-color: #f5f5f5;
+    color: #d32f2f;
+    margin-top: 5px;
+    font-size: 0.9rem;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.dark-theme .sort-order {
+    background-color: #424242;
+    color: #ef5350;
+    border-color: #ef5350;
+}
+
+.sort-order:focus {
     border-color: #ef5350;
     outline: none;
 }
@@ -703,6 +780,7 @@ header {
     box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
     opacity: 0;
     animation: fadeInItem 0.5s ease forwards;
+    position: relative; /* Necesario para la animación de carga */
 }
 
 @keyframes fadeInItem {
@@ -725,10 +803,35 @@ header {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
 }
 
+.flex-item a {
+    display: block;
+    overflow: hidden; /* Para el efecto hover en la imagen */
+}
+
 .flex-item img {
     width: 100%;
     height: auto;
     display: block;
+    transition: transform 0.3s ease, filter 0.3s ease; /* Efecto hover */
+}
+
+.flex-item:hover img {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+}
+
+.lazy.loading {
+    background-image: url('https://files.catbox.moe/7hox60.gif');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.lazy[src] {
+    background-image: none; /* Quita el GIF cuando la imagen carga */
+    opacity: 1;
 }
 
 .flex-item p {

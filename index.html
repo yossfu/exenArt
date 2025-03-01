@@ -8,6 +8,8 @@
     <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
     <link rel="preload" href="https://files.catbox.moe/kz2lot.png" as="image">
     <link rel="preload" href="https://files.catbox.moe/p6lokn.jpg" as="image">
+    <link rel="preload" href="imagenes.json" as="fetch" crossorigin="anonymous">
+    <link rel="preload" href="slider.json" as="fetch" crossorigin="anonymous">
 </head>
 <body>
     <div class="age-verification" id="age-verification">
@@ -31,7 +33,7 @@
             <a href="index.html" class="logo" aria-label="Inicio">
                 <img src="https://files.catbox.moe/kz2lot.png" alt="Logotipo de ExenE">
             </a>
-            <button id="menu-toggle" class="menu-toggle">
+            <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú" aria-expanded="false">
                 <img src="https://files.catbox.moe/p0ztcg.png" alt="Abrir menú" class="menu-icon">
             </button>
             <nav class="menu" id="menu">
@@ -54,7 +56,16 @@
         </section>
 
         <section class="search-section">
-            <input type="text" id="search" placeholder="Buscar por etiqueta..." aria-label="Buscar imágenes">
+            <div class="search-container">
+                <input type="text" id="search" placeholder="Buscar por etiqueta..." aria-label="Buscar imágenes">
+                <button id="clear-search" class="clear-search">✕</button>
+                <button id="search-button" aria-label="Buscar imágenes">Buscar</button>
+            </div>
+            <p id="search-results" class="search-results"></p>
+            <select id="sort-order" class="sort-order">
+                <option value="relevance">Relevancia</option>
+                <option value="title">Título (A-Z)</option>
+            </select>
         </section>
 
         <section class="tags-section" id="tags-section">
@@ -114,6 +125,5 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="core.js"></script>
-    <script src="search.js"></script>
 </body>
 </html>

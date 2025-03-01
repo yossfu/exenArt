@@ -1,26 +1,25 @@
-// Definimos funciones de búsqueda en un archivo separado
-const app = window.app || {}; // Accedemos al objeto global
-
+// search.js
 function filterBySearch(searchTerm) {
     if (!searchTerm) {
-        app.resetFilters();
+        window.app.resetFilters();
+        document.getElementById('search-results').textContent = '';
         return;
     }
 
-    if (app.elements.loader && app.elements.imageGrid) {
-        app.elements.loader.style.display = 'flex';
-        app.elements.imageGrid.classList.add('fade');
+    if (window.app.elements.loader && window.app.elements.imageGrid) {
+        window.app.elements.loader.style.display = 'flex';
+        window.app.elements.imageGrid.classList.add('fade');
         setTimeout(() => {
-            if (app.activeTagButton && app.elements.tagsSection) app.activeTagButton.classList.remove('active');
-            if (app.activeCategoryButton && app.elements.categories) app.activeCategoryButton.classList.remove('active');
-            app.activeTagButton = null;
-            app.activeCategoryButton = null;
-            app.activeTag = null;
-            app.activeCategory = null;
+            if (window.app.activeTagButton && window.app.elements.tagsSection) window.app.activeTagButton.classList.remove('active');
+            if (window.app.activeCategoryButton && window.app.elements.categories) window.app.activeCategoryButton.classList.remove('active');
+            window.app.activeTagButton = null;
+            window.app.activeCategoryButton = null;
+            window.app.activeTag = null;
+            window.app.activeCategory = null;
 
             const searchWords = searchTerm.toLowerCase().trim().split(/\s+/);
 
-            app.filteredItems = app.imagesData
+            window.app.filteredItems = window.app.imagesData
                 .map(item => {
                     const title = item.title.toLowerCase();
                     const description = item.description?.toLowerCase() || '';
@@ -36,18 +35,19 @@ function filterBySearch(searchTerm) {
                 .sort((a, b) => b.matches - a.matches)
                 .map(entry => entry.item);
 
-            app.isFiltered = true;
-            app.currentPage = 1;
-            app.renderImages(app.currentPage);
-            if (app.elements.resetButton) app.elements.resetButton.classList.add('active');
-            if (app.elements.resetTagButton) app.elements.resetTagButton.classList.remove('active');
-            if (app.elements.resetCategoryButton) app.elements.resetCategoryButton.classList.remove('active');
-            app.elements.imageGrid.classList.remove('fade');
-            app.elements.loader.style.display = 'none';
+            window.app.isFiltered = true;
+            window.app.currentPage = 1;
+            window.app.renderImages(window.app.currentPage);
+            if (window.app.elements.resetButton) window.app.elements.resetButton.classList.add('active');
+            if (window.app.elements.resetTagButton) window.app.elements.resetTagButton.classList.remove('active');
+            if (window.app.elements.resetCategoryButton) window.app.elements.resetCategoryButton.classList.remove('active');
+            window.app.elements.imageGrid.classList.remove('fade');
+            window.app.elements.loader.style.display = 'none';
             localStorage.setItem('lastFilter', searchTerm);
             localStorage.setItem('lastFilterType', 'search');
-            app.updateFilterIndicator();
-        }, 100);
+            window.app.updateFilterIndicator();
+            document.getElementById('search-results').textContent = `Resultados: ${window.app.filteredItems.length}`;
+        }, 200); // Aumentamos a 200ms para que el loader sea más visible
     }
 }
 
@@ -57,7 +57,7 @@ function showAutocomplete(suggestions) {
         autocomplete = document.createElement('div');
         autocomplete.id = 'autocomplete';
         autocomplete.className = 'autocomplete';
-        app.elements.searchInput.parentNode.appendChild(autocomplete);
+        window.app.elements.searchInput.parentNode.appendChild(autocomplete);
     }
 
     autocomplete.innerHTML = '';
@@ -66,7 +66,7 @@ function showAutocomplete(suggestions) {
         item.className = 'autocomplete-item';
         item.textContent = suggestion;
         item.addEventListener('click', () => {
-            app.elements.searchInput.value = suggestion;
+            window.app.elements.searchInput.value = suggestion;
             filterBySearch(suggestion);
             hideAutocomplete();
         });
@@ -82,13 +82,42 @@ function hideAutocomplete() {
 }
 
 function getAutocompleteSuggestions(input) {
-    if (!input || !app.imagesData.length) return [];
-    const allTags = [...new Set(app.imagesData.flatMap(item => item.tags))];
+    if (!input || !window.app.imagesData.length) return [];
+    const allTags = [...new Set(window.app.imagesData.flatMap(item => item.tags))];
     return allTags.filter(tag => tag.toLowerCase().includes(input.toLowerCase().trim()));
 }
 
+// Esperamos a que app.elements esté listo
+function initializeSearch() {
+    if (window.app && window.app.elements && window.app.elements.searchInput) {
+        const searchButton = document.getElementById('search-button');
+        if (searchButton) {
+            searchButton.addEventListener('click', () => {
+                const value = window.app.elements.searchInput.value;
+                filterBySearch(value);
+                showAutocomplete(getAutocompleteSuggestions(value));
+            });
+        }
+
+        document.addEventListener('click', (event) => {
+            if (!window.app.elements.searchInput.contains(event.target) && !document.getElementById('autocomplete')?.contains(event.target)) {
+                hideAutocomplete();
+            }
+        });
+    } else {
+        console.error("Esperando a que core.js inicialice app.elements...");
+        setTimeout(initializeSearch, 100); // Reintenta cada 100ms hasta que esté listo
+    }
+}
+
+// Iniciamos la búsqueda cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSearch();
+});
+
 // Exportamos al objeto global
-app.filterBySearch = filterBySearch;
-app.showAutocomplete = showAutocomplete;
-app.hideAutocomplete = hideAutocomplete;
-app.getAutocompleteSuggestions = getAutocompleteSuggestions;
+window.app = window.app || {};
+window.app.filterBySearch = filterBySearch;
+window.app.showAutocomplete = showAutocomplete;
+window.app.hideAutocomplete = hideAutocomplete;
+window.app.getAutocompleteSuggestions = getAutocompleteSuggestions;

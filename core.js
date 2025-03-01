@@ -1,3 +1,4 @@
+// core.js
 document.addEventListener('DOMContentLoaded', () => {
     const app = window.app = window.app || {}; // Creamos objeto global
 
@@ -5,6 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
     app.elements = {
         imageGrid: document.getElementById('image-grid'),
         searchInput: document.getElementById('search'),
+        searchButton: document.getElementById('search-button'),
+        clearSearch: document.getElementById('clear-search'),
+        searchResults: document.getElementById('search-results'),
+        sortOrder: document.getElementById('sort-order'),
         pagination: document.getElementById('pagination'),
         sliderContainer: document.getElementById('slider-container'),
         tagsSection: document.getElementById('tags-section'),
@@ -60,6 +65,31 @@ document.addEventListener('DOMContentLoaded', () => {
         'evil': 'https://cdn-icons-png.flaticon.com/512/2855/2855658.png'
     };
 
+    // Funciones para manejar cookies
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+
+    function setCookie(name, value, days) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+    }
+
+    function getSeenImageIds() {
+        const seenIds = getCookie('seenImageIds');
+        return seenIds ? JSON.parse(seenIds) : [];
+    }
+
+    function updateSeenImageIds(newIds) {
+        const seenIds = getSeenImageIds();
+        const updatedIds = [...new Set([...seenIds, ...newIds])]; // Evita duplicados
+        setCookie('seenImageIds', JSON.stringify(updatedIds), 30); // Expira en 30 días
+    }
+
     // Inicialización del tema
     if (localStorage.getItem('darkTheme') === 'true') document.body.classList.add('dark-theme');
     if (app.elements.themeToggle) {
@@ -100,40 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('scroll', () => {
             app.elements.scrollTopButton.classList.toggle('visible', window.scrollY > 200);
         });
-    }
-
-    // Funciones del menú
-    function toggleMenu() {
-        if (app.elements.menu && app.elements.menuToggle) {
-            app.elements.menu.classList.toggle('active');
-            app.elements.menuToggle.classList.toggle('open');
-        }
-    }
-
-    function closeMenu() {
-        if (app.elements.menu && app.elements.menuToggle) {
-            app.elements.menu.classList.remove('active');
-            app.elements.menuToggle.classList.remove('open');
-        }
-    }
-
-    if (app.elements.menuToggle && app.elements.menu && app.elements.menuClose) {
-        app.elements.menuToggle.addEventListener('click', toggleMenu);
-        app.elements.menuClose.addEventListener('click', closeMenu);
-
-        document.addEventListener('click', (event) => {
-            const isClickInsideMenu = app.elements.menu.contains(event.target);
-            const isClickOnToggle = app.elements.menuToggle.contains(event.target);
-            if (!isClickInsideMenu && !isClickOnToggle && app.elements.menu.classList.contains('active')) {
-                closeMenu();
-            }
-        });
-
-        if (app.elements.menu) {
-            app.elements.menu.querySelectorAll('.tab-button').forEach(link => {
-                link.addEventListener('click', closeMenu);
-            });
-        }
     }
 
     // Funciones de visibilidad
@@ -190,6 +186,14 @@ document.addEventListener('DOMContentLoaded', () => {
             .finally(() => { if (app.elements.loader) app.elements.loader.style.display = 'none'; });
     }
 
+    function debounce(fn, wait) {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => fn(...args), wait);
+        };
+    }
+
     function lazyLoadImages(container = document) {
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
@@ -198,12 +202,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (img.dataset.src) {
                         img.src = img.dataset.src;
                         img.classList.remove('lazy');
+                        img.classList.remove('loading');
                     }
                     observer.unobserve(img);
                 }
             });
         }, { rootMargin: '0px 0px 200px 0px' });
-        container.querySelectorAll('.lazy').forEach(img => observer.observe(img));
+        const debouncedObserve = debounce(() => {
+            container.querySelectorAll('.lazy').forEach(img => observer.observe(img));
+        }, 100);
+        debouncedObserve();
     }
 
     // Funciones del slider
@@ -255,6 +263,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicio de la página
     function startPage() {
+        const savedPage = localStorage.getItem('currentPage') || 1;
+        app.currentPage = parseInt(savedPage, 10);
         Promise.all([
             fetchWithCache('slider.json', 'cachedSlider', app.elements.sliderContainer, data => {
                 app.sliderData = data;
@@ -277,10 +287,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Funciones de la galería
     function renderImages(page) {
+        let itemsToRender;
+        let newItems;
+
         const startIndex = (page - 1) * app.itemsPerPage;
         const endIndex = Math.min(startIndex + app.itemsPerPage, app.isFiltered ? app.filteredItems.length : app.imagesData.length);
-        const itemsToRender = app.isFiltered ? app.filteredItems : app.imagesData;
-        const newItems = itemsToRender.slice(startIndex, endIndex);
+
+        if (app.isFiltered) {
+            itemsToRender = app.filteredItems;
+            newItems = itemsToRender.slice(startIndex, endIndex);
+        } else if (page === 1) {
+            // Página 1: Imágenes aleatorias no vistas
+            const seenIds = getSeenImageIds();
+            const unseenImages = app.imagesData.filter(item => !seenIds.includes(item.id));
+            if (unseenImages.length < app.itemsPerPage) {
+                // Si no hay suficientes imágenes no vistas, reseteamos la cookie y usamos todas
+                setCookie('seenImageIds', JSON.stringify([]), 30);
+                itemsToRender = [...app.imagesData];
+            } else {
+                itemsToRender = unseenImages;
+            }
+            // Mezclamos aleatoriamente y tomamos las primeras app.itemsPerPage
+            newItems = itemsToRender.sort(() => 0.5 - Math.random()).slice(0, app.itemsPerPage);
+            // Actualizamos la cookie con los IDs de las imágenes mostradas
+            const newIds = newItems.map(item => item.id);
+            updateSeenImageIds(newIds);
+        } else {
+            // Otras páginas: Usamos el orden normal
+            itemsToRender = app.imagesData;
+            newItems = itemsToRender.slice(startIndex, endIndex);
+        }
+
         const currentItems = Array.from(app.elements.imageGrid?.children || []);
 
         if (currentItems.length === newItems.length && 
@@ -295,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
             imageItem.style.animationDelay = `${index * 0.05}s`;
             imageItem.innerHTML = `
                 <a href="image-detail.html?id=${item.id}" aria-label="${item.title}">
-                    <img data-src="${item.url}" alt="${item.title}" class="lazy">
+                    <img data-src="${item.url}" alt="${item.title}" class="lazy loading">
                 </a>
                 <p>${item.title}</p>
             `;
@@ -313,6 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             updateFilterCount();
             updateFilterIndicator();
+            localStorage.setItem('currentPage', page);
         }
     }
 
@@ -454,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('lastFilter', app.activeTag || app.activeCategory || '');
                 localStorage.setItem('lastFilterType', app.activeTag ? 'tag' : app.activeCategory ? 'category' : '');
                 if (!app.activeTag && app.elements.searchInput) app.elements.searchInput.value = '';
-            }, 100);
+            }, 200);
         }
     }
 
@@ -483,8 +521,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem('lastFilter');
                 localStorage.removeItem('lastFilterType');
                 if (app.elements.searchInput) app.elements.searchInput.value = '';
-                app.hideAutocomplete();
-            }, 100);
+                if (app.elements.searchResults) app.elements.searchResults.textContent = '';
+                hideAutocomplete();
+            }, 200);
         }
     }
 
@@ -542,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lastFilter && app.elements.searchInput) {
             if (lastFilterType === 'search') {
                 app.elements.searchInput.value = lastFilter;
-                app.filterBySearch(lastFilter);
+                filterBySearch(lastFilter);
             } else if (lastFilterType === 'tag') {
                 const tagButton = Array.from(app.elements.tagsSection?.querySelectorAll('.tag-button') || []).find(btn => btn.textContent === lastFilter);
                 if (tagButton) filterByTag(lastFilter, tagButton);
@@ -553,26 +592,138 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Eventos de búsqueda (conectados a search.js)
-    let searchTimeout;
-    if (app.elements.searchInput) {
-        app.elements.searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const value = this.value;
-            searchTimeout = setTimeout(() => {
-                app.filterBySearch(value);
-                app.showAutocomplete(app.getAutocompleteSuggestions(value));
-            }, 150);
+    // Funciones de búsqueda
+    function filterBySearch(searchTerm) {
+        if (!searchTerm) {
+            resetFilters();
+            return;
+        }
+
+        if (app.elements.loader && app.elements.imageGrid) {
+            app.elements.loader.style.display = 'flex';
+            app.elements.imageGrid.classList.add('fade');
+            setTimeout(() => {
+                if (app.activeTagButton && app.elements.tagsSection) app.activeTagButton.classList.remove('active');
+                if (app.activeCategoryButton && app.elements.categories) app.activeCategoryButton.classList.remove('active');
+                app.activeTagButton = null;
+                app.activeCategoryButton = null;
+                app.activeTag = null;
+                app.activeCategory = null;
+
+                const searchWords = searchTerm.toLowerCase().trim().split(/\s+/);
+
+                app.filteredItems = app.imagesData
+                    .map(item => {
+                        const title = item.title.toLowerCase();
+                        const description = item.description?.toLowerCase() || '';
+                        const tags = item.tags.map(tag => tag.toLowerCase());
+                        const matches = searchWords.reduce((count, word) => {
+                            return count + (title.includes(word) ? 1 : 0) +
+                                   (description.includes(word) ? 1 : 0) +
+                                   (tags.some(tag => tag.includes(word)) ? 1 : 0);
+                        }, 0);
+                        return { item, matches };
+                    })
+                    .filter(entry => entry.matches > 0)
+                    .sort((a, b) => {
+                        if (app.elements.sortOrder.value === 'title') {
+                            return a.item.title.localeCompare(b.item.title);
+                        }
+                        return b.matches - a.matches; // Por relevancia
+                    })
+                    .map(entry => entry.item);
+
+                app.isFiltered = true;
+                app.currentPage = 1;
+                renderImages(app.currentPage);
+                if (app.elements.resetButton) app.elements.resetButton.classList.add('active');
+                if (app.elements.resetTagButton) app.elements.resetTagButton.classList.remove('active');
+                if (app.elements.resetCategoryButton) app.elements.resetCategoryButton.classList.remove('active');
+                app.elements.imageGrid.classList.remove('fade');
+                app.elements.loader.style.display = 'none';
+                localStorage.setItem('lastFilter', searchTerm);
+                localStorage.setItem('lastFilterType', 'search');
+                updateFilterIndicator();
+                if (app.filteredItems.length === 0) {
+                    app.elements.searchResults.textContent = 'No se encontraron imágenes';
+                    app.elements.imageGrid.innerHTML = '<p style="text-align:center;color:#d32f2f;">Sin resultados</p>';
+                } else {
+                    app.elements.searchResults.textContent = `Resultados: ${app.filteredItems.length}`;
+                }
+            }, 200);
+        }
+    }
+
+    function showAutocomplete(suggestions) {
+        let autocomplete = document.getElementById('autocomplete');
+        if (!autocomplete) {
+            autocomplete = document.createElement('div');
+            autocomplete.id = 'autocomplete';
+            autocomplete.className = 'autocomplete';
+            app.elements.searchInput.parentNode.appendChild(autocomplete);
+        }
+
+        autocomplete.innerHTML = '';
+        suggestions.slice(0, 5).forEach(suggestion => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.textContent = suggestion;
+            item.addEventListener('click', () => {
+                app.elements.searchInput.value = suggestion;
+                filterBySearch(suggestion);
+                hideAutocomplete();
+            });
+            autocomplete.appendChild(item);
         });
 
+        autocomplete.style.display = suggestions.length ? 'block' : 'none';
+    }
+
+    function hideAutocomplete() {
+        const autocomplete = document.getElementById('autocomplete');
+        if (autocomplete) autocomplete.style.display = 'none';
+    }
+
+    function getAutocompleteSuggestions(input) {
+        if (!input || !app.imagesData.length) return [];
+        const allTags = [...new Set(app.imagesData.flatMap(item => item.tags))];
+        return allTags.filter(tag => tag.toLowerCase().includes(input.toLowerCase().trim()));
+    }
+
+    // Funciones del menú
+    function toggleMenu() {
+        if (app.elements.menu && app.elements.menuToggle) {
+            app.elements.menu.classList.toggle('active');
+            app.elements.menuToggle.classList.toggle('open');
+            const isOpen = app.elements.menu.classList.contains('active');
+            app.elements.menuToggle.setAttribute('aria-expanded', isOpen);
+        }
+    }
+
+    function closeMenu() {
+        if (app.elements.menu && app.elements.menuToggle) {
+            app.elements.menu.classList.remove('active');
+            app.elements.menuToggle.classList.remove('open');
+            app.elements.menuToggle.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    // Eventos
+    if (app.elements.menuToggle) app.elements.menuToggle.addEventListener('click', toggleMenu);
+    if (app.elements.menuClose) app.elements.menuClose.addEventListener('click', closeMenu);
+    if (app.elements.menu) {
         document.addEventListener('click', (event) => {
-            if (!app.elements.searchInput.contains(event.target) && !document.getElementById('autocomplete')?.contains(event.target)) {
-                app.hideAutocomplete();
+            const isClickInsideMenu = app.elements.menu.contains(event.target);
+            const isClickOnToggle = app.elements.menuToggle.contains(event.target);
+            if (!isClickInsideMenu && !isClickOnToggle && app.elements.menu.classList.contains('active')) {
+                closeMenu();
             }
+        });
+        app.elements.menu.querySelectorAll('.tab-button').forEach(link => {
+            link.addEventListener('click', closeMenu);
         });
     }
 
-    // Eventos de filtros
     if (app.elements.resetButton) app.elements.resetButton.addEventListener('click', resetFilters);
     if (app.elements.resetTagButton) app.elements.resetTagButton.addEventListener('click', resetTagFilter);
     if (app.elements.resetCategoryButton) app.elements.resetCategoryButton.addEventListener('click', resetCategoryFilter);
@@ -602,6 +753,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (app.elements.searchButton) {
+        app.elements.searchButton.addEventListener('click', () => {
+            const value = app.elements.searchInput.value;
+            filterBySearch(value);
+            showAutocomplete(getAutocompleteSuggestions(value));
+        });
+    }
+
+    if (app.elements.searchInput) {
+        app.elements.searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const value = app.elements.searchInput.value;
+                filterBySearch(value);
+                showAutocomplete(getAutocompleteSuggestions(value));
+            }
+        });
+        document.addEventListener('click', (event) => {
+            if (!app.elements.searchInput.contains(event.target) && !document.getElementById('autocomplete')?.contains(event.target)) {
+                hideAutocomplete();
+            }
+        });
+    }
+
+    if (app.elements.clearSearch) {
+        app.elements.clearSearch.addEventListener('click', () => {
+            app.elements.searchInput.value = '';
+            resetFilters();
+        });
+    }
+
+    if (app.elements.sortOrder) {
+        app.elements.sortOrder.addEventListener('change', () => {
+            const value = app.elements.searchInput.value;
+            if (value) filterBySearch(value);
+        });
+    }
+
     // Lógica del chat flotante
     if (window.location.pathname.endsWith('index.html') && app.elements.chatToggle && app.elements.chatPopup && app.elements.chatClose) {
         let chatLoaded = false;
@@ -624,7 +812,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     chatContent.appendChild(chatSpan);
                 };
                 document.head.appendChild(script);
-
                 chatLoaded = true;
             }
         }
@@ -651,31 +838,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // Exportamos funciones al objeto global
-    app.showMainContent = showMainContent;
-    app.hideMainContent = hideMainContent;
-    app.showAgeVerification = showAgeVerification;
-    app.fetchWithCache = fetchWithCache;
-    app.lazyLoadImages = lazyLoadImages;
-    app.renderSlider = renderSlider;
-    app.startSlider = startSlider;
-    app.startPage = startPage;
-    app.renderImages = renderImages;
-    app.renderPagination = renderPagination;
-    app.renderFeaturedNotes = renderFeaturedNotes;
-    app.generateRandomTags = generateRandomTags;
-    app.generateCategories = generateCategories;
-    app.filterByTag = filterByTag;
-    app.filterByCategory = filterByCategory;
-    app.applyCombinedFilter = applyCombinedFilter;
-    app.resetFilters = resetFilters;
-    app.resetTagFilter = resetTagFilter;
-    app.resetCategoryFilter = resetCategoryFilter;
-    app.updateFilterCount = updateFilterCount;
-    app.updateFilterIndicator = updateFilterIndicator;
-    app.scrollToGallery = scrollToGallery;
-    app.restoreFilter = restoreFilter;
 });
 
 document.head.insertAdjacentHTML('beforeend', `
