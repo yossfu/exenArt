@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         featuredNotes: document.getElementById('featured-notes'),
         notesSlider: document.getElementById('notes-slider'),
         forYouGrid: document.getElementById('for-you-grid'),
-        topLikedGrid: document.getElementById('top-liked-grid'), // Nuevo elemento
+        topLikedGrid: document.getElementById('top-liked-grid'),
         categories: document.getElementById('categories'),
         menuToggle: document.getElementById('menu-toggle'),
         menu: document.getElementById('menu'),
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Módulo de Likes (Limitado a un "like" por usuario)
+    // Módulo de Likes
     app.likes = {
         init: () => {
             let userId = localStorage.getItem('userId');
@@ -418,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         app.tags.generate();
                         app.categories.generate();
                         app.forYou.render();
-                        app.topLiked.render(); // Renderizar "Lo más gustado"
+                        app.topLiked.render();
                         app.filter.restore();
                         app.autocomplete.updateSuggestions();
                     }),
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Módulo "Para ti" (Limitado a 3 imágenes)
+    // Módulo "Para ti"
     app.forYou = {
         render: () => {
             if (!app.elements.forYouGrid || !app.state.imagesData.length) return;
@@ -625,7 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Módulo "Lo más gustado" (Nuevas 3 imágenes con más likes)
+    // Módulo "Lo más gustado"
     app.topLiked = {
         render: () => {
             if (!app.elements.topLikedGrid || !app.state.imagesData.length) return;
@@ -640,7 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const likeData = likesData[item.id] || { count: 0 };
                         return { item, count: likeData.count || 0 };
                     })
-                    .sort((a, b) => b.count - a.count || 0.5 - Math.random()) // Ordenar por likes, desempatar aleatoriamente
+                    .sort((a, b) => b.count - a.count || 0.5 - Math.random())
                     .slice(0, 3);
 
                 imagesWithLikes.forEach((entry, index) => {
@@ -1158,12 +1158,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!window.location.pathname.includes('note.html')) return;
             app.ui.showMainContent();
             const urlParams = new URLSearchParams(window.location.search);
-            const noteId = urlParams.get('id') || '1';
+            const noteId = urlParams.get('id') || '1'; // ID por defecto
 
             app.elements.loader.style.display = 'flex';
             app.utils.fetchWithCache('notes.json', 'cachedNotes', app.elements.noteTitle, (data) => {
                 app.state.notesData = data;
-                const currentNote = data.find(note => note.id == noteId);
+                // Convertir noteId a número para coincidir con los IDs en notes.json
+                const currentNote = data.find(note => note.id === parseInt(noteId));
                 if (currentNote) {
                     app.elements.noteTitle.textContent = currentNote.title;
                     if (currentNote.image) {
@@ -1183,11 +1184,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     app.note.loadUtterances(noteId);
                     app.utils.lazyLoadImages();
                 } else {
-                    console.error("Nota no encontrada");
+                    console.error(`Nota no encontrada para el ID: ${noteId}`);
                     app.elements.noteTitle.textContent = "Nota no encontrada";
-                    app.elements.noteContent.textContent = "No se encontró la nota solicitada.";
+                    app.elements.noteContent.innerHTML = `
+                        <p>No se encontró la nota con ID ${noteId}. Puede que no exista o haya un error en la URL.</p>
+                        <button onclick="window.location.href='index.html'">Volver al inicio</button>
+                    `;
                 }
-            }).finally(() => app.elements.loader.style.display = 'none');
+            }).catch(error => {
+                console.error("Error al cargar notes.json:", error);
+                app.elements.noteTitle.textContent = "Error al cargar la nota";
+                app.elements.noteContent.innerHTML = `
+                    <p>Hubo un problema al cargar los datos de la nota. Verifica tu conexión o la ubicación de notes.json.</p>
+                    <button onclick="location.reload()">Reintentar</button>
+                `;
+            }).finally(() => {
+                app.elements.loader.style.display = 'none';
+            });
         },
         setupAudio: (audioUrl, title) => {
             app.elements.noteAudio.style.display = 'block';
