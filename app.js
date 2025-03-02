@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filterIndicator: document.getElementById('filter-indicator'),
         scrollTopButton: document.getElementById('scroll-top'),
         featuredNotes: document.getElementById('featured-notes'),
-        notesSlider: document.getElementById('notes-slider'),
+        noteBanner: document.getElementById('note-banner'),
         forYouGrid: document.getElementById('for-you-grid'),
         topLikedGrid: document.getElementById('top-liked-grid'),
         categories: document.getElementById('categories'),
@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filterCache: new Map(),
         currentTheme: 'dark',
         likedImages: new Set(),
+        likedNotes: new Set(), // Nuevo estado para likes de notas
         userId: null
     };
 
@@ -283,11 +284,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const likedImages = app.utils.getLocalStorage('likedImages') || [];
             app.state.likedImages = new Set(likedImages);
+            const likedNotes = app.utils.getLocalStorage('likedNotes') || [];
+            app.state.likedNotes = new Set(likedNotes);
         },
-        toggleLike: (imageId) => {
-            const ref = db.ref(`likes/${imageId}`);
+        toggleLike: (itemId, type = 'image') => {
+            const ref = db.ref(`${type === 'note' ? 'noteLikes' : 'likes'}/${itemId}`);
             const userId = app.state.userId;
-            const userLiked = app.state.likedImages.has(imageId);
+            const userLiked = (type === 'note' ? app.state.likedNotes : app.state.likedImages).has(itemId);
+            const likedSet = type === 'note' ? app.state.likedNotes : app.state.likedImages;
 
             ref.once('value', (snapshot) => {
                 const data = snapshot.val() || { users: {}, count: 0 };
@@ -301,9 +305,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (currentData.count < 0) currentData.count = 0;
                         return currentData;
                     }).then(() => {
-                        app.state.likedImages.delete(imageId);
-                        app.utils.setLocalStorage('likedImages', Array.from(app.state.likedImages));
-                    }).catch(error => console.error("Error al quitar like:", error));
+                        likedSet.delete(itemId);
+                        app.utils.setLocalStorage(type === 'note' ? 'likedNotes' : 'likedImages', Array.from(likedSet));
+                    }).catch(error => console.error(`Error al quitar like ${type}:`, error));
                 } else if (!userLiked && !users[userId]) {
                     ref.transaction((currentData) => {
                         if (!currentData) return { users: { [userId]: true }, count: 1 };
@@ -311,14 +315,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         currentData.count = (currentData.count || 0) + 1;
                         return currentData;
                     }).then(() => {
-                        app.state.likedImages.add(imageId);
-                        app.utils.setLocalStorage('likedImages', Array.from(app.state.likedImages));
-                    }).catch(error => console.error("Error al dar like:", error));
+                        likedSet.add(itemId);
+                        app.utils.setLocalStorage(type === 'note' ? 'likedNotes' : 'likedImages', Array.from(likedSet));
+                    }).catch(error => console.error(`Error al dar like ${type}:`, error));
                 }
             });
         },
-        updateLikeUI: (imageId, button, counter) => {
-            const ref = db.ref(`likes/${imageId}`);
+        updateLikeUI: (itemId, button, counter, type = 'image') => {
+            const ref = db.ref(`${type === 'note' ? 'noteLikes' : 'likes'}/${itemId}`);
             ref.on('value', (snapshot) => {
                 const data = snapshot.val() || { users: {}, count: 0 };
                 const count = data.count || 0;
@@ -327,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.classList.toggle('liked', users[app.state.userId] === true);
                 button.disabled = users[app.state.userId] === true;
             }, (error) => {
-                console.error("Error al escuchar cambios en Firebase:", error);
+                console.error(`Error al escuchar cambios en Firebase para ${type}:`, error);
             });
         }
     };
@@ -422,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         app.filter.restore();
                         app.autocomplete.updateSuggestions();
                     }),
-                    app.utils.fetchWithCache('notes.json', 'cachedNotes', app.elements.notesSlider, data => {
+                    app.utils.fetchWithCache('notes.json', 'cachedNotes', app.elements.noteBanner, data => {
                         app.state.notesData = data;
                         app.notes.render();
                     }, true),
@@ -512,23 +516,62 @@ document.addEventListener('DOMContentLoaded', () => {
     // Módulo de Notas
     app.notes = {
         render: () => {
-            if (!app.elements.notesSlider) return;
-            const fragment = document.createDocumentFragment();
-            const shuffledNotes = [...app.state.notesData].sort(() => 0.5 - Math.random());
-            shuffledNotes.forEach(note => {
-                const card = document.createElement('a');
-                card.className = 'featured-card';
-                card.href = `note.html?id=${note.id}`;
-                card.innerHTML = `
-                    <img data-src="${note.image}" alt="${note.title}" class="lazy">
-                    <h3>${note.title}</h3>
-                    <p>${note.summary || note.content.substring(0, 100) + '...'}</p>
-                `;
-                fragment.appendChild(card);
+            if (!app.elements.noteBanner) return;
+
+            // Calcular puntajes basados en preferencias de tags
+            const notesWithScores = app.state.notesData.map(note => {
+                const score = note.tags.reduce((sum, tag) => {
+                    const tagData = app.state.tagMap.get(tag) || { weight: 0, isFavorite: false };
+                    return sum + (tagData.weight || 0) + (tagData.isFavorite ? 10 : 0);
+                }, 0);
+                return { note, score };
             });
-            app.elements.notesSlider.innerHTML = '';
-            app.elements.notesSlider.appendChild(fragment);
-            app.utils.lazyLoadImages(app.elements.notesSlider);
+
+            // Seleccionar una nota aleatoriamente con peso basado en el puntaje
+            const totalScore = notesWithScores.reduce((sum, item) => sum + item.score, 0);
+            let random = Math.random() * totalScore;
+            let selectedNote = null;
+
+            for (let item of notesWithScores) {
+                random -= item.score;
+                if (random <= 0) {
+                    selectedNote = item.note;
+                    break;
+                }
+            }
+            if (!selectedNote) selectedNote = notesWithScores[Math.floor(Math.random() * notesWithScores.length)].note;
+
+            // Establecer la imagen como fondo del banner
+            app.elements.noteBanner.style.backgroundImage = `url(${selectedNote.image})`;
+            app.elements.noteBanner.style.backgroundSize = 'cover';
+            app.elements.noteBanner.style.backgroundPosition = 'center';
+
+            // Hacer el banner clickeable
+            app.elements.noteBanner.innerHTML = `
+                <a href="note.html?id=${selectedNote.id}" style="display: block; width: 100%; height: 100%; text-decoration: none;">
+                    <div class="banner-content">
+                        <h3>${selectedNote.title}</h3>
+                        <p>${selectedNote.content.substring(0, 150) + (selectedNote.content.length > 150 ? '...' : '')}</p>
+                        <div class="like-container">
+                            <button class="heart-button" data-id="${selectedNote.id}" data-type="note">
+                                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            </button>
+                            <span class="heart-count" data-id="${selectedNote.id}" data-type="note">0</span>
+                        </div>
+                    </div>
+                </a>
+            `;
+
+            app.utils.lazyLoadImages(app.elements.noteBanner);
+
+            // Actualizar UI de likes
+            const button = app.elements.noteBanner.querySelector('.heart-button');
+            const counter = app.elements.noteBanner.querySelector('.heart-count');
+            app.likes.updateLikeUI(selectedNote.id, button, counter, 'note');
+            button.addEventListener('click', (e) => {
+                e.preventDefault(); // Evita que el clic en el botón navegue inmediatamente
+                app.likes.toggleLike(selectedNote.id, 'note');
+            });
         }
     };
 
@@ -685,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Módulo de Tags
     app.tags = {
         initTagMap: () => {
-            const allTags = [...new Set(app.state.imagesData.flatMap(item => item.tags))];
+            const allTags = [...new Set([...app.state.imagesData.flatMap(item => item.tags), ...app.state.notesData.flatMap(note => note.tags)])];
             const storedTagMap = app.utils.getLocalStorage('tagMap');
             if (storedTagMap) {
                 app.state.tagMap = new Map(storedTagMap);
@@ -701,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
         generate: () => {
             if (!app.elements.tagsSection) return;
 
-            const allTags = [...new Set(app.state.imagesData.flatMap(item => item.tags))];
+            const allTags = [...new Set([...app.state.imagesData.flatMap(item => item.tags), ...app.state.notesData.flatMap(note => note.tags)])];
             let topTags = [];
 
             if (app.state.isFiltered && app.elements.searchInput.value) {
@@ -782,7 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSuggestions: () => {
             if (!app.elements.tagSuggestions || !app.state.imagesData.length) return;
 
-            const allTags = [...new Set(app.state.imagesData.flatMap(item => item.tags))];
+            const allTags = [...new Set([...app.state.imagesData.flatMap(item => item.tags), ...app.state.notesData.flatMap(note => note.tags)])];
             const fragment = document.createDocumentFragment();
 
             allTags.forEach(tag => {
@@ -1182,6 +1225,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     app.note.loadSimilarNotes(currentNote.tags, data, noteId);
                     app.note.loadUtterances(noteId);
                     app.utils.lazyLoadImages();
+
+                    // Añadir likes a la nota en detail
+                    app.elements.noteContent.insertAdjacentHTML('afterend', `
+                        <div class="like-container">
+                            <button class="heart-button" data-id="${currentNote.id}" data-type="note">
+                                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            </button>
+                            <span class="heart-count" data-id="${currentNote.id}" data-type="note">0</span>
+                        </div>
+                    `);
+                    const button = app.elements.noteContent.nextElementSibling.querySelector('.heart-button');
+                    const counter = app.elements.noteContent.nextElementSibling.querySelector('.heart-count');
+                    app.likes.updateLikeUI(currentNote.id, button, counter, 'note');
+                    button.addEventListener('click', () => app.likes.toggleLike(currentNote.id, 'note'));
                 } else {
                     console.error(`Nota no encontrada para el ID: ${noteId}`);
                     app.elements.noteTitle.textContent = "Nota no encontrada";
@@ -1259,13 +1316,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     <a href="note.html?id=${note.id}" aria-label="${note.title}">
                         <img data-src="${note.image || 'https://via.placeholder.com/150'}" alt="${note.title}" class="lazy">
                         <h3>${note.title}</h3>
-                    </a>`;
+                    </a>
+                    <div class="like-container">
+                        <button class="heart-button" data-id="${note.id}" data-type="note">
+                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        </button>
+                        <span class="heart-count" data-id="${note.id}" data-type="note">0</span>
+                    </div>
+                `;
                 fragment.appendChild(noteElement);
             });
 
             app.elements.similarNotesGrid.innerHTML = '';
             app.elements.similarNotesGrid.appendChild(fragment);
             app.utils.lazyLoadImages(app.elements.similarNotesGrid);
+
+            similarNotes.forEach(note => {
+                const button = noteElement.querySelector('.heart-button');
+                const counter = noteElement.querySelector('.heart-count');
+                app.likes.updateLikeUI(note.id, button, counter, 'note');
+                button.addEventListener('click', () => app.likes.toggleLike(note.id, 'note'));
+            });
         },
         loadUtterances: (noteId) => {
             if (!app.elements.utterancesContainer) {
