@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filterCache: new Map(),
         currentTheme: 'dark',
         likedImages: new Set(),
-        likedNotes: new Set(), // Nuevo estado para likes de notas
+        likedNotes: new Set(),
         userId: null
     };
 
@@ -546,18 +546,18 @@ document.addEventListener('DOMContentLoaded', () => {
             app.elements.noteBanner.style.backgroundSize = 'cover';
             app.elements.noteBanner.style.backgroundPosition = 'center';
 
-            // Hacer el banner clickeable
+            // Hacer el banner clickeable y mover los likes a la esquina inferior derecha
             app.elements.noteBanner.innerHTML = `
-                <a href="note.html?id=${selectedNote.id}" style="display: block; width: 100%; height: 100%; text-decoration: none;">
+                <a href="note.html?id=${selectedNote.id}" style="display: block; width: 100%; height: 100%; text-decoration: none; position: relative;">
                     <div class="banner-content">
                         <h3>${selectedNote.title}</h3>
                         <p>${selectedNote.content.substring(0, 150) + (selectedNote.content.length > 150 ? '...' : '')}</p>
-                        <div class="like-container">
-                            <button class="heart-button" data-id="${selectedNote.id}" data-type="note">
-                                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                            </button>
-                            <span class="heart-count" data-id="${selectedNote.id}" data-type="note">0</span>
-                        </div>
+                    </div>
+                    <div class="like-container-banner">
+                        <button class="heart-button" data-id="${selectedNote.id}" data-type="note">
+                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        </button>
+                        <span class="heart-count" data-id="${selectedNote.id}" data-type="note">0</span>
                     </div>
                 </a>
             `;
