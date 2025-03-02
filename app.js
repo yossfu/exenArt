@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearSearch: document.getElementById('clear-search'),
         searchResults: document.getElementById('search-results'),
         sortOrder: document.getElementById('sort-order'),
+        tagSuggestions: document.getElementById('tag-suggestions'),
         pagination: document.getElementById('pagination'),
         tagsSection: document.getElementById('tags-section'),
         resetButton: document.getElementById('reset-button'),
@@ -73,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPage: 1,
         imagesData: [],
         notesData: [],
+        tagMap: new Map(), // Mapa para tags con pesos, relaciones y favoritos
+        tagRelationships: {}, // Relaciones entre tags desde tags.json
         isFiltered: false,
         filteredItems: [],
         activeTagButton: null,
@@ -89,7 +92,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return value ? JSON.parse(value) : null;
         },
         setLocalStorage: (key, value) => {
-            localStorage.setItem(key, JSON.stringify(value));
+            if (value instanceof Map) {
+                localStorage.setItem(key, JSON.stringify(Array.from(value.entries())));
+            } else {
+                localStorage.setItem(key, JSON.stringify(value));
+            }
         },
         fetchWithCache: (url, cacheKey, fallbackElement, renderFn, forceRefresh = false) => {
             const cacheKeyWithVersion = `${cacheKey}_v1`;
@@ -239,16 +246,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 Promise.all([
                     app.utils.fetchWithCache('imagenes.json', 'cachedImages', app.elements.imageGrid, data => {
                         app.state.imagesData = data;
+                        app.tags.initTagMap(); // Inicializar tagMap con datos de imágenes
                         app.gallery.render();
                         app.tags.generate();
                         app.categories.generate();
                         app.forYou.render();
                         app.filter.restore();
+                        app.autocomplete.updateSuggestions();
                     }),
                     app.utils.fetchWithCache('notes.json', 'cachedNotes', app.elements.notesSlider, data => {
                         app.state.notesData = data;
                         app.notes.render();
-                    }, true)
+                    }, true),
+                    app.utils.fetchWithCache('tags.json', 'cachedTags', null, data => {
+                        app.state.tagRelationships = data.relationships;
+                    })
                 ]);
             } else if (path.includes('image-detail.html')) {
                 app.imageDetail.init();
@@ -338,36 +350,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Módulo "Para ti" (Recomendaciones personalizadas con peso de intereses y interacción avanzada)
+    // Módulo "Para ti" (Recomendaciones personalizadas con peso de intereses)
     app.forYou = {
         render: () => {
             if (!app.elements.forYouGrid || !app.state.imagesData.length) return;
 
             const viewedIds = app.utils.getLocalStorage('viewedIds') || [];
             const searchHistory = app.utils.getLocalStorage('searchHistory') || [];
-            const tagWeights = app.utils.getLocalStorage('tagWeights') || {};
             const fragment = document.createDocumentFragment();
             let recommendedItems = [];
 
-            // Calcular pesos de tags desde imágenes vistas
-            if (viewedIds.length) {
-                const viewedImages = app.state.imagesData.filter(item => viewedIds.includes(item.id.toString()));
-                viewedImages.forEach(item => {
-                    item.tags.forEach(tag => {
-                        tagWeights[tag] = (tagWeights[tag] || 0) + 1; // Incrementar peso por vista
-                    });
-                });
+            // Usar tagMap para calcular recomendaciones
+            if (app.state.tagMap.size > 0) {
                 recommendedItems = app.state.imagesData
                     .filter(item => !viewedIds.includes(item.id.toString()))
                     .map(item => {
-                        const score = item.tags.reduce((sum, tag) => sum + (tagWeights[tag] || 0), 0);
+                        const score = item.tags.reduce((sum, tag) => {
+                            const tagData = app.state.tagMap.get(tag) || { weight: 0, isFavorite: false };
+                            return sum + (tagData.weight || 0) + (tagData.isFavorite ? 10 : 0); // Bonus por favorito
+                        }, 0);
                         return { item, score };
                     })
                     .sort((a, b) => b.score - a.score)
                     .map(entry => entry.item);
             }
 
-            // Si hay búsquedas, añadir imágenes relacionadas con palabras buscadas
+            // Si hay búsquedas, añadir imágenes relacionadas
             if (searchHistory.length && recommendedItems.length < 6) {
                 const searchWords = [...new Set(searchHistory.flatMap(term => term.toLowerCase().split(/\s+/)))];
                 const searchBasedItems = app.state.imagesData
@@ -377,9 +385,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const description = item.description?.toLowerCase() || '';
                         const tags = item.tags.map(tag => tag.toLowerCase());
                         const matches = searchWords.reduce((count, word) => {
-                            return count + (title.includes(word) ? 2 : 0) + // Mayor peso por título
+                            return count + (title.includes(word) ? 2 : 0) +
                                    (description.includes(word) ? 1 : 0) +
-                                   (tags.some(tag => tag.includes(word)) ? 3 : 0); // Mayor peso por tags
+                                   (tags.some(tag => tag.includes(word)) ? 3 : 0);
                         }, 0);
                         return { item, score: matches };
                     })
@@ -389,15 +397,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 recommendedItems = [...recommendedItems, ...searchBasedItems];
             }
 
-            // Si hay menos de 6 items, añadir aleatorios no vistos con peso básico
+            // Completar con aleatorios si es necesario
             if (recommendedItems.length < 6) {
                 const remainingItems = app.state.imagesData
                     .filter(item => !viewedIds.includes(item.id.toString()) && !recommendedItems.some(r => r.id === item.id))
                     .map(item => {
-                        const score = item.tags.reduce((sum, tag) => sum + (tagWeights[tag] || 0), 0);
+                        const score = item.tags.reduce((sum, tag) => {
+                            const tagData = app.state.tagMap.get(tag) || { weight: 0, isFavorite: false };
+                            return sum + (tagData.weight || 0) + (tagData.isFavorite ? 10 : 0);
+                        }, 0);
                         return { item, score };
                     })
-                    .sort((a, b) => b.score - a.score || 0.5 - Math.random()) // Ordenar por peso, desempatar aleatoriamente
+                    .sort((a, b) => b.score - a.score || 0.5 - Math.random())
                     .map(entry => entry.item);
                 recommendedItems = [...recommendedItems, ...remainingItems];
             }
@@ -418,25 +429,64 @@ document.addEventListener('DOMContentLoaded', () => {
             app.elements.forYouGrid.innerHTML = '';
             app.elements.forYouGrid.appendChild(fragment);
             app.utils.lazyLoadImages(app.elements.forYouGrid);
-
-            // Guardar pesos actualizados
-            app.utils.setLocalStorage('tagWeights', tagWeights);
         }
     };
 
     // Módulo de Tags
     app.tags = {
+        initTagMap: () => {
+            const allTags = [...new Set(app.state.imagesData.flatMap(item => item.tags))];
+            const storedTagMap = app.utils.getLocalStorage('tagMap');
+            if (storedTagMap) {
+                app.state.tagMap = new Map(storedTagMap);
+            } else {
+                allTags.forEach(tag => {
+                    if (!app.state.tagMap.has(tag)) {
+                        app.state.tagMap.set(tag, { weight: 0, related: app.state.tagRelationships[tag] || [], isFavorite: false });
+                    }
+                });
+                app.utils.setLocalStorage('tagMap', app.state.tagMap);
+            }
+        },
         generate: () => {
             if (!app.elements.tagsSection) return;
+
             const allTags = [...new Set(app.state.imagesData.flatMap(item => item.tags))];
-            const randomTags = [];
-            const usedIndices = new Set();
-            while (randomTags.length < Math.min(5, allTags.length)) {
-                const randomIndex = Math.floor(Math.random() * allTags.length);
-                if (!usedIndices.has(randomIndex)) {
-                    usedIndices.add(randomIndex);
-                    randomTags.push(allTags[randomIndex]);
-                }
+            let topTags = [];
+
+            if (app.state.isFiltered && app.elements.searchInput.value) {
+                // Priorizar tags relacionados con el filtro de búsqueda
+                const searchWords = app.elements.searchInput.value.toLowerCase().split(/\s+/);
+                topTags = allTags
+                    .filter(tag => searchWords.some(word => tag.toLowerCase().includes(word)))
+                    .concat(
+                        allTags.filter(tag => 
+                            searchWords.some(word => 
+                                app.state.tagRelationships[word]?.includes(tag.toLowerCase())
+                            )
+                        )
+                    )
+                    .slice(0, 5);
+            } else if (app.state.activeTag || app.state.activeCategory) {
+                // Priorizar tags relacionados con el filtro activo
+                const activeFilter = app.state.activeTag || app.state.activeCategory;
+                topTags = allTags
+                    .filter(tag => tag === activeFilter || app.state.tagRelationships[activeFilter]?.includes(tag.toLowerCase()))
+                    .slice(0, 5);
+            } else {
+                // Mostrar tags con mayor peso o más frecuentes
+                topTags = [...app.state.tagMap.entries()]
+                    .sort((a, b) => (b[1].isFavorite ? 1000 : 0) + b[1].weight - (a[1].isFavorite ? 1000 : 0) - a[1].weight)
+                    .slice(0, 5)
+                    .map(entry => entry[0]);
+            }
+
+            if (topTags.length < 5) {
+                const additionalTags = allTags
+                    .filter(tag => !topTags.includes(tag))
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, 5 - topTags.length);
+                topTags = [...topTags, ...additionalTags];
             }
 
             app.elements.tagsSection.innerHTML = '';
@@ -444,13 +494,69 @@ document.addEventListener('DOMContentLoaded', () => {
             app.elements.tagsSection.appendChild(app.elements.resetTagButton);
             app.elements.tagsSection.appendChild(app.elements.resetCategoryButton);
 
-            randomTags.forEach(tag => {
+            topTags.forEach(tag => {
                 const tagButton = document.createElement('button');
                 tagButton.className = 'tag-button';
                 tagButton.textContent = tag;
                 tagButton.style.backgroundColor = app.config.tagColors[Math.floor(Math.random() * app.config.tagColors.length)];
+
+                const star = document.createElement('span');
+                star.className = 'favorite-star';
+                star.textContent = '★';
+                const tagData = app.state.tagMap.get(tag);
+                if (tagData && tagData.isFavorite) star.classList.add('favorited');
+                star.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    app.favorites.toggle(tag);
+                    star.classList.toggle('favorited');
+                });
+
+                tagButton.appendChild(star);
                 app.elements.tagsSection.appendChild(tagButton);
             });
+        }
+    };
+
+    // Módulo de Favoritos
+    app.favorites = {
+        toggle: (tag) => {
+            const tagData = app.state.tagMap.get(tag) || { weight: 0, related: app.state.tagRelationships[tag] || [], isFavorite: false };
+            tagData.isFavorite = !tagData.isFavorite;
+            tagData.weight += tagData.isFavorite ? 10 : -10; // Bonus o penalización por favorito
+            app.state.tagMap.set(tag, tagData);
+            app.utils.setLocalStorage('tagMap', app.state.tagMap);
+            app.forYou.render(); // Actualizar recomendaciones
+            app.tags.generate(); // Actualizar tags mostrados
+        }
+    };
+
+    // Módulo de Autocompletado
+    app.autocomplete = {
+        updateSuggestions: () => {
+            if (!app.elements.tagSuggestions || !app.state.imagesData.length) return;
+
+            const allTags = [...new Set(app.state.imagesData.flatMap(item => item.tags))];
+            const fragment = document.createDocumentFragment();
+
+            allTags.forEach(tag => {
+                const option = document.createElement('option');
+                option.value = tag;
+                fragment.appendChild(option);
+
+                // Añadir tags relacionados
+                if (app.state.tagRelationships[tag]) {
+                    app.state.tagRelationships[tag].forEach(relatedTag => {
+                        if (!allTags.includes(relatedTag)) {
+                            const relatedOption = document.createElement('option');
+                            relatedOption.value = relatedTag;
+                            fragment.appendChild(relatedOption);
+                        }
+                    });
+                }
+            });
+
+            app.elements.tagSuggestions.innerHTML = '';
+            app.elements.tagSuggestions.appendChild(fragment);
         }
     };
 
@@ -483,6 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
             app.state.activeTag = tag;
             app.state.currentPage = 1;
             app.filter.applyCombined();
+            app.tags.generate(); // Actualizar tags dinámicamente
         },
         byCategory: (category, button) => {
             if (app.state.activeCategoryButton) app.state.activeCategoryButton.classList.remove('active');
@@ -491,6 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
             app.state.activeCategory = category === 'all' ? null : category;
             app.state.currentPage = 1;
             app.filter.applyCombined();
+            app.tags.generate(); // Actualizar tags dinámicamente
         },
         applyCombined: () => {
             if (!app.elements.imageGrid) return;
@@ -544,9 +652,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const description = item.description?.toLowerCase() || '';
                         const tags = item.tags.map(tag => tag.toLowerCase());
                         const matches = searchWords.reduce((count, word) => {
-                            return count + (title.includes(word) ? 2 : 0) + // Mayor peso por título
+                            return count + (title.includes(word) ? 2 : 0) +
                                    (description.includes(word) ? 1 : 0) +
-                                   (tags.some(tag => tag.includes(word)) ? 3 : 0); // Mayor peso por tags
+                                   (tags.some(tag => tag.includes(word)) ? 3 : 0);
                         }, 0);
                         return { item, matches };
                     })
@@ -567,24 +675,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 app.ui.updateFilterIndicator();
                 app.elements.searchResults.textContent = app.state.filteredItems.length ? `Resultados: ${app.state.filteredItems.length}` : 'No se encontraron imágenes';
 
-                // Guardar historial de búsqueda en localStorage
+                // Guardar historial de búsqueda y actualizar pesos
                 const searchHistory = app.utils.getLocalStorage('searchHistory') || [];
                 if (!searchHistory.includes(searchTerm)) {
                     searchHistory.unshift(searchTerm);
-                    if (searchHistory.length > 10) searchHistory.pop(); // Limitar a 10 búsquedas
+                    if (searchHistory.length > 10) searchHistory.pop();
                     app.utils.setLocalStorage('searchHistory', searchHistory);
                 }
-
-                // Actualizar pesos de tags desde la búsqueda
-                const tagWeights = app.utils.getLocalStorage('tagWeights') || {};
                 searchWords.forEach(word => {
-                    tagWeights[word] = (tagWeights[word] || 0) + 3; // Peso por búsqueda
+                    const tagData = app.state.tagMap.get(word) || { weight: 0, related: app.state.tagRelationships[word] || [], isFavorite: false };
+                    tagData.weight += 3;
+                    app.state.tagMap.set(word, tagData);
                 });
-                app.utils.setLocalStorage('tagWeights', tagWeights);
+                app.utils.setLocalStorage('tagMap', app.state.tagMap);
 
                 app.forYou.render();
+                app.tags.generate(); // Actualizar tags dinámicamente
+                app.autocomplete.updateSuggestions();
 
-                // Desplazar al área de imágenes
                 if (app.elements.gallery) {
                     app.elements.gallery.scrollIntoView({ behavior: 'smooth' });
                 }
@@ -614,6 +722,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem('lastFilterType');
                 if (app.elements.searchInput) app.elements.searchInput.value = '';
                 if (app.elements.searchResults) app.elements.searchResults.textContent = '';
+                app.tags.generate(); // Regenerar tags al resetear
             }, 200);
         },
         resetTag: () => {
@@ -670,31 +779,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     app.imageDetail.loadUtterances(imageId);
                     app.utils.lazyLoadImages();
 
-                    // Guardar ID de imagen vista en localStorage con interacción avanzada
+                    // Guardar ID de imagen vista y actualizar tagMap
                     const viewedIds = app.utils.getLocalStorage('viewedIds') || [];
-                    const tagWeights = app.utils.getLocalStorage('tagWeights') || {};
                     if (!viewedIds.includes(imageId)) {
                         viewedIds.unshift(imageId);
                         if (viewedIds.length > 10) viewedIds.pop();
                         app.utils.setLocalStorage('viewedIds', viewedIds);
 
-                        // Incrementar peso de tags por vista
                         currentItem.tags.forEach(tag => {
-                            tagWeights[tag] = (tagWeights[tag] || 0) + 1;
+                            const tagData = app.state.tagMap.get(tag) || { weight: 0, related: app.state.tagRelationships[tag] || [], isFavorite: false };
+                            tagData.weight += 1;
+                            app.state.tagMap.set(tag, tagData);
                         });
-                        app.utils.setLocalStorage('tagWeights', tagWeights);
+                        app.utils.setLocalStorage('tagMap', app.state.tagMap);
                     }
 
-                    // Registrar tiempo en página como interacción avanzada
+                    // Registrar tiempo en página
                     let timeSpent = 0;
                     const startTime = Date.now();
                     window.addEventListener('beforeunload', () => {
-                        timeSpent = Math.floor((Date.now() - startTime) / 1000); // Tiempo en segundos
-                        if (timeSpent > 5) { // Solo si pasa más de 5 segundos
+                        timeSpent = Math.floor((Date.now() - startTime) / 1000);
+                        if (timeSpent > 5) {
                             currentItem.tags.forEach(tag => {
-                                tagWeights[tag] = (tagWeights[tag] || 0) + Math.min(timeSpent / 60, 5); // Máximo 5 puntos por minuto
+                                const tagData = app.state.tagMap.get(tag);
+                                tagData.weight += Math.min(timeSpent / 60, 5);
+                                app.state.tagMap.set(tag, tagData);
                             });
-                            app.utils.setLocalStorage('tagWeights', tagWeights);
+                            app.utils.setLocalStorage('tagMap', app.state.tagMap);
                         }
                     });
                 } else {
@@ -934,8 +1045,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (app.elements.tagsSection) {
                 app.elements.tagsSection.addEventListener('click', (e) => {
                     const tagButton = e.target.closest('.tag-button');
-                    if (tagButton) {
-                        app.filter.byTag(tagButton.textContent, tagButton);
+                    if (tagButton && !e.target.classList.contains('favorite-star')) {
+                        app.filter.byTag(tagButton.textContent.split('★')[0].trim(), tagButton);
                         if (app.elements.gallery) app.elements.gallery.scrollIntoView({ behavior: 'smooth' });
                     }
                 });
@@ -965,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (app.elements.searchInput.value) app.filter.bySearch(app.elements.searchInput.value);
             });
 
-            // Evento para registrar imágenes vistas en la galería o "Para ti" con interacción avanzada
+            // Evento para registrar imágenes vistas
             ['imageGrid', 'forYouGrid', 'similarImagesGrid'].forEach(gridId => {
                 const grid = app.elements[gridId];
                 if (grid) {
@@ -974,19 +1085,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (link) {
                             const imageId = link.dataset.id;
                             const viewedIds = app.utils.getLocalStorage('viewedIds') || [];
-                            const tagWeights = app.utils.getLocalStorage('tagWeights') || {};
                             if (!viewedIds.includes(imageId)) {
                                 viewedIds.unshift(imageId);
                                 if (viewedIds.length > 10) viewedIds.pop();
                                 app.utils.setLocalStorage('viewedIds', viewedIds);
 
-                                // Incrementar peso de tags por clic
                                 const item = app.state.imagesData.find(i => i.id.toString() === imageId);
                                 if (item) {
                                     item.tags.forEach(tag => {
-                                        tagWeights[tag] = (tagWeights[tag] || 0) + 2; // Peso por clic
+                                        const tagData = app.state.tagMap.get(tag) || { weight: 0, related: app.state.tagRelationships[tag] || [], isFavorite: false };
+                                        tagData.weight += 2;
+                                        app.state.tagMap.set(tag, tagData);
                                     });
-                                    app.utils.setLocalStorage('tagWeights', tagWeights);
+                                    app.utils.setLocalStorage('tagMap', app.state.tagMap);
                                 }
                             }
                         }
