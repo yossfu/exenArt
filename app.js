@@ -52,7 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
         audioTitle: document.querySelector('.audio-title'),
         playButton: document.querySelector('.custom-play-button'),
         audioPlayer: document.getElementById('plyr-audio'),
-        similarNotesGrid: document.getElementById('similar-notes-grid')
+        similarNotesGrid: document.getElementById('similar-notes-grid'),
+        themesToggle: document.getElementById('themes-toggle'), // Nuevo elemento
+        themesMenu: document.getElementById('themes-menu') // Nuevo elemento
     };
 
     // Configuración global
@@ -74,15 +76,16 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPage: 1,
         imagesData: [],
         notesData: [],
-        tagMap: new Map(), // Mapa para tags con pesos, relaciones y favoritos
-        tagRelationships: {}, // Relaciones entre tags desde tags.json
+        tagMap: new Map(),
+        tagRelationships: {},
         isFiltered: false,
         filteredItems: [],
         activeTagButton: null,
         activeCategoryButton: null,
         activeTag: null,
         activeCategory: null,
-        filterCache: new Map()
+        filterCache: new Map(),
+        currentTheme: 'dark' // Tema por defecto
     };
 
     // Utilidades
@@ -148,20 +151,100 @@ document.addEventListener('DOMContentLoaded', () => {
             const minutes = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        },
+        loadExternalCSS: (url, callback) => {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = url;
+            link.onload = callback;
+            document.head.appendChild(link);
         }
     };
 
-    // Módulo de Tema
+    // Módulo de Tema (Extendido)
     app.theme = {
         init: () => {
-            if (localStorage.getItem('darkTheme') === 'true') document.body.classList.add('dark-theme');
+            const savedTheme = localStorage.getItem('currentTheme') || 'dark';
+            app.state.currentTheme = savedTheme;
+            app.theme.applyTheme(savedTheme);
+
+            // Botón de alternar tema oscuro (existente)
             app.elements.themeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark-theme');
-                localStorage.setItem('darkTheme', document.body.classList.contains('dark-theme'));
-                if (app.imageDetail.updateUtterancesTheme) app.imageDetail.updateUtterancesTheme();
-                if (app.note.updateUtterancesTheme) app.note.updateUtterancesTheme();
-                if (app.note.updatePlyrTheme) app.note.updatePlyrTheme();
+                const newTheme = app.state.currentTheme === 'dark' ? 'light' : 'dark';
+                app.theme.applyTheme(newTheme);
             });
+
+            // Botón de Temas en el menú
+            if (app.elements.themesToggle && app.elements.themesMenu) {
+                app.elements.themesToggle.addEventListener('click', () => {
+                    const isVisible = app.elements.themesMenu.style.display === 'block';
+                    app.elements.themesMenu.style.display = isVisible ? 'none' : 'block';
+                });
+
+                app.elements.themesMenu.addEventListener('click', (e) => {
+                    const themeOption = e.target.closest('.theme-option');
+                    if (themeOption) {
+                        const theme = themeOption.dataset.theme;
+                        app.theme.applyTheme(theme);
+                        app.elements.themesMenu.style.display = 'none';
+                    }
+                });
+
+                // Cerrar submenú si se hace clic fuera
+                document.addEventListener('click', (e) => {
+                    if (!app.elements.menu.contains(e.target) && app.elements.themesMenu.style.display === 'block') {
+                        app.elements.themesMenu.style.display = 'none';
+                    }
+                });
+            }
+        },
+        applyTheme: (theme) => {
+            document.body.classList.remove('dark-theme', 'materialize-theme', 'bootstrap-theme');
+            app.state.currentTheme = theme;
+            localStorage.setItem('currentTheme', theme);
+
+            switch (theme) {
+                case 'dark':
+                    document.body.classList.add('dark-theme');
+                    app.theme.removeExternalStyles();
+                    break;
+                case 'materialize':
+                    app.theme.loadMaterialize();
+                    document.body.classList.add('materialize-theme');
+                    break;
+                case 'bootstrap':
+                    app.theme.loadBootstrap();
+                    document.body.classList.add('bootstrap-theme');
+                    break;
+                default:
+                    app.theme.removeExternalStyles();
+                    break;
+            }
+
+            // Actualizar componentes que dependen del tema
+            if (app.imageDetail.updateUtterancesTheme) app.imageDetail.updateUtterancesTheme();
+            if (app.note.updateUtterancesTheme) app.note.updateUtterancesTheme();
+            if (app.note.updatePlyrTheme) app.note.updatePlyrTheme();
+        },
+        loadMaterialize: () => {
+            const existing = document.querySelector('link[href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"]');
+            if (!existing) {
+                app.utils.loadExternalCSS('https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css', () => {
+                    console.log('Materialize CSS cargado');
+                });
+            }
+        },
+        loadBootstrap: () => {
+            const existing = document.querySelector('link[href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"]');
+            if (!existing) {
+                app.utils.loadExternalCSS('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css', () => {
+                    console.log('Bootstrap CSS cargado');
+                });
+            }
+        },
+        removeExternalStyles: () => {
+            const links = document.querySelectorAll('link[href^="https://cdnjs.cloudflare.com"], link[href^="https://cdn.jsdelivr.net"]');
+            links.forEach(link => link.remove());
         }
     };
 
@@ -246,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 Promise.all([
                     app.utils.fetchWithCache('imagenes.json', 'cachedImages', app.elements.imageGrid, data => {
                         app.state.imagesData = data;
-                        app.tags.initTagMap(); // Inicializar tagMap con datos de imágenes
+                        app.tags.initTagMap();
                         app.gallery.render();
                         app.tags.generate();
                         app.categories.generate();
@@ -350,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Módulo "Para ti" (Recomendaciones personalizadas con peso de intereses)
+    // Módulo "Para ti"
     app.forYou = {
         render: () => {
             if (!app.elements.forYouGrid || !app.state.imagesData.length) return;
@@ -360,14 +443,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const fragment = document.createDocumentFragment();
             let recommendedItems = [];
 
-            // Usar tagMap para calcular recomendaciones
             if (app.state.tagMap.size > 0) {
                 recommendedItems = app.state.imagesData
                     .filter(item => !viewedIds.includes(item.id.toString()))
                     .map(item => {
                         const score = item.tags.reduce((sum, tag) => {
                             const tagData = app.state.tagMap.get(tag) || { weight: 0, isFavorite: false };
-                            return sum + (tagData.weight || 0) + (tagData.isFavorite ? 10 : 0); // Bonus por favorito
+                            return sum + (tagData.weight || 0) + (tagData.isFavorite ? 10 : 0);
                         }, 0);
                         return { item, score };
                     })
@@ -375,7 +457,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     .map(entry => entry.item);
             }
 
-            // Si hay búsquedas, añadir imágenes relacionadas
             if (searchHistory.length && recommendedItems.length < 6) {
                 const searchWords = [...new Set(searchHistory.flatMap(term => term.toLowerCase().split(/\s+/)))];
                 const searchBasedItems = app.state.imagesData
@@ -397,7 +478,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 recommendedItems = [...recommendedItems, ...searchBasedItems];
             }
 
-            // Completar con aleatorios si es necesario
             if (recommendedItems.length < 6) {
                 const remainingItems = app.state.imagesData
                     .filter(item => !viewedIds.includes(item.id.toString()) && !recommendedItems.some(r => r.id === item.id))
@@ -455,7 +535,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let topTags = [];
 
             if (app.state.isFiltered && app.elements.searchInput.value) {
-                // Priorizar tags relacionados con el filtro de búsqueda
                 const searchWords = app.elements.searchInput.value.toLowerCase().split(/\s+/);
                 topTags = allTags
                     .filter(tag => searchWords.some(word => tag.toLowerCase().includes(word)))
@@ -468,13 +547,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     )
                     .slice(0, 5);
             } else if (app.state.activeTag || app.state.activeCategory) {
-                // Priorizar tags relacionados con el filtro activo
                 const activeFilter = app.state.activeTag || app.state.activeCategory;
                 topTags = allTags
                     .filter(tag => tag === activeFilter || app.state.tagRelationships[activeFilter]?.includes(tag.toLowerCase()))
                     .slice(0, 5);
             } else {
-                // Mostrar tags con mayor peso o más frecuentes
                 topTags = [...app.state.tagMap.entries()]
                     .sort((a, b) => (b[1].isFavorite ? 1000 : 0) + b[1].weight - (a[1].isFavorite ? 1000 : 0) - a[1].weight)
                     .slice(0, 5)
@@ -522,11 +599,11 @@ document.addEventListener('DOMContentLoaded', () => {
         toggle: (tag) => {
             const tagData = app.state.tagMap.get(tag) || { weight: 0, related: app.state.tagRelationships[tag] || [], isFavorite: false };
             tagData.isFavorite = !tagData.isFavorite;
-            tagData.weight += tagData.isFavorite ? 10 : -10; // Bonus o penalización por favorito
+            tagData.weight += tagData.isFavorite ? 10 : -10;
             app.state.tagMap.set(tag, tagData);
             app.utils.setLocalStorage('tagMap', app.state.tagMap);
-            app.forYou.render(); // Actualizar recomendaciones
-            app.tags.generate(); // Actualizar tags mostrados
+            app.forYou.render();
+            app.tags.generate();
         }
     };
 
@@ -543,7 +620,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 option.value = tag;
                 fragment.appendChild(option);
 
-                // Añadir tags relacionados
                 if (app.state.tagRelationships[tag]) {
                     app.state.tagRelationships[tag].forEach(relatedTag => {
                         if (!allTags.includes(relatedTag)) {
@@ -589,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
             app.state.activeTag = tag;
             app.state.currentPage = 1;
             app.filter.applyCombined();
-            app.tags.generate(); // Actualizar tags dinámicamente
+            app.tags.generate();
         },
         byCategory: (category, button) => {
             if (app.state.activeCategoryButton) app.state.activeCategoryButton.classList.remove('active');
@@ -598,7 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
             app.state.activeCategory = category === 'all' ? null : category;
             app.state.currentPage = 1;
             app.filter.applyCombined();
-            app.tags.generate(); // Actualizar tags dinámicamente
+            app.tags.generate();
         },
         applyCombined: () => {
             if (!app.elements.imageGrid) return;
@@ -675,7 +751,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 app.ui.updateFilterIndicator();
                 app.elements.searchResults.textContent = app.state.filteredItems.length ? `Resultados: ${app.state.filteredItems.length}` : 'No se encontraron imágenes';
 
-                // Guardar historial de búsqueda y actualizar pesos
                 const searchHistory = app.utils.getLocalStorage('searchHistory') || [];
                 if (!searchHistory.includes(searchTerm)) {
                     searchHistory.unshift(searchTerm);
@@ -690,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 app.utils.setLocalStorage('tagMap', app.state.tagMap);
 
                 app.forYou.render();
-                app.tags.generate(); // Actualizar tags dinámicamente
+                app.tags.generate();
                 app.autocomplete.updateSuggestions();
 
                 if (app.elements.gallery) {
@@ -722,7 +797,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem('lastFilterType');
                 if (app.elements.searchInput) app.elements.searchInput.value = '';
                 if (app.elements.searchResults) app.elements.searchResults.textContent = '';
-                app.tags.generate(); // Regenerar tags al resetear
+                app.tags.generate();
             }, 200);
         },
         resetTag: () => {
@@ -779,7 +854,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     app.imageDetail.loadUtterances(imageId);
                     app.utils.lazyLoadImages();
 
-                    // Guardar ID de imagen vista y actualizar tagMap
                     const viewedIds = app.utils.getLocalStorage('viewedIds') || [];
                     if (!viewedIds.includes(imageId)) {
                         viewedIds.unshift(imageId);
@@ -794,7 +868,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         app.utils.setLocalStorage('tagMap', app.state.tagMap);
                     }
 
-                    // Registrar tiempo en página
                     let timeSpent = 0;
                     const startTime = Date.now();
                     window.addEventListener('beforeunload', () => {
@@ -809,10 +882,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 } else {
-                    console.error("Imagen no encontrada");
+                    console.error("Imagen no encontrada para el ID:", imageId);
                     app.elements.imageTitle.textContent = "Imagen no encontrada";
+                    app.elements.imageDescription.textContent = "No se encontró la imagen solicitada.";
+                    app.elements.fullImage.style.display = 'none';
                 }
-            }).finally(() => app.elements.loader.style.display = 'none');
+            })
+            .catch(error => {
+                console.error("Error al cargar imagenes.json:", error);
+                app.elements.imageTitle.textContent = "Error al cargar";
+                app.elements.imageDescription.textContent = "Hubo un problema al cargar los datos. Intenta de nuevo más tarde.";
+                app.elements.fullImage.style.display = 'none';
+            })
+            .finally(() => {
+                app.elements.loader.style.display = 'none';
+            });
         },
         loadSimilarImages: (tags, allImages) => {
             const fragment = document.createDocumentFragment();
@@ -1031,7 +1115,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         app.elements.menuToggle.setAttribute('aria-expanded', 'false');
                     }
                 });
-                app.elements.menu.querySelectorAll('.tab-button').forEach(link => link.addEventListener('click', () => {
+                app.elements.menu.querySelectorAll('.tab-button:not(.themes-button)').forEach(link => link.addEventListener('click', () => {
                     app.elements.menu.classList.remove('active');
                     app.elements.menuToggle.classList.remove('open');
                     app.elements.menuToggle.setAttribute('aria-expanded', 'false');
@@ -1076,7 +1160,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (app.elements.searchInput.value) app.filter.bySearch(app.elements.searchInput.value);
             });
 
-            // Evento para registrar imágenes vistas
             ['imageGrid', 'forYouGrid', 'similarImagesGrid'].forEach(gridId => {
                 const grid = app.elements[gridId];
                 if (grid) {
