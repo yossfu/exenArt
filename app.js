@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         featuredNotes: document.getElementById('featured-notes'),
         notesSlider: document.getElementById('notes-slider'),
         forYouGrid: document.getElementById('for-you-grid'),
+        topLikedGrid: document.getElementById('top-liked-grid'), // Nuevo elemento
         categories: document.getElementById('categories'),
         menuToggle: document.getElementById('menu-toggle'),
         menu: document.getElementById('menu'),
@@ -102,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filterCache: new Map(),
         currentTheme: 'dark',
         likedImages: new Set(),
-        userId: null // Nuevo campo para el ID del usuario
+        userId: null
     };
 
     // Utilidades
@@ -270,10 +271,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Módulo de Likes (Actualizado para limitar a un "like" por usuario)
+    // Módulo de Likes (Limitado a un "like" por usuario)
     app.likes = {
         init: () => {
-            // Generar o recuperar el ID del usuario
             let userId = localStorage.getItem('userId');
             if (!userId) {
                 userId = app.utils.generateUUID();
@@ -294,7 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const users = data.users || {};
 
                 if (userLiked && users[userId]) {
-                    // Quitar "like"
                     ref.transaction((currentData) => {
                         if (!currentData) return { users: {}, count: 0 };
                         delete currentData.users[userId];
@@ -306,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         app.utils.setLocalStorage('likedImages', Array.from(app.state.likedImages));
                     }).catch(error => console.error("Error al quitar like:", error));
                 } else if (!userLiked && !users[userId]) {
-                    // Dar "like"
                     ref.transaction((currentData) => {
                         if (!currentData) return { users: { [userId]: true }, count: 1 };
                         currentData.users[userId] = true;
@@ -327,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const users = data.users || {};
                 counter.textContent = count;
                 button.classList.toggle('liked', users[app.state.userId] === true);
-                button.disabled = users[app.state.userId] === true; // Deshabilitar si ya dio like
+                button.disabled = users[app.state.userId] === true;
             }, (error) => {
                 console.error("Error al escuchar cambios en Firebase:", error);
             });
@@ -420,6 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         app.tags.generate();
                         app.categories.generate();
                         app.forYou.render();
+                        app.topLiked.render(); // Renderizar "Lo más gustado"
                         app.filter.restore();
                         app.autocomplete.updateSuggestions();
                     }),
@@ -533,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Módulo "Para ti"
+    // Módulo "Para ti" (Limitado a 3 imágenes)
     app.forYou = {
         render: () => {
             if (!app.elements.forYouGrid || !app.state.imagesData.length) return;
@@ -557,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .map(entry => entry.item);
             }
 
-            if (searchHistory.length && recommendedItems.length < 6) {
+            if (searchHistory.length && recommendedItems.length < 3) {
                 const searchWords = [...new Set(searchHistory.flatMap(term => term.toLowerCase().split(/\s+/)))];
                 const searchBasedItems = app.state.imagesData
                     .filter(item => !viewedIds.includes(item.id.toString()) && !recommendedItems.some(r => r.id === item.id))
@@ -578,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 recommendedItems = [...recommendedItems, ...searchBasedItems];
             }
 
-            if (recommendedItems.length < 6) {
+            if (recommendedItems.length < 3) {
                 const remainingItems = app.state.imagesData
                     .filter(item => !viewedIds.includes(item.id.toString()) && !recommendedItems.some(r => r.id === item.id))
                     .map(item => {
@@ -593,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 recommendedItems = [...recommendedItems, ...remainingItems];
             }
 
-            recommendedItems.slice(0, 6).forEach((item, index) => {
+            recommendedItems.slice(0, 3).forEach((item, index) => {
                 const recommendedItem = document.createElement('div');
                 recommendedItem.className = 'image-wrapper';
                 recommendedItem.innerHTML = `
@@ -617,11 +616,68 @@ document.addEventListener('DOMContentLoaded', () => {
             app.elements.forYouGrid.appendChild(fragment);
             app.utils.lazyLoadImages(app.elements.forYouGrid);
 
-            recommendedItems.slice(0, 6).forEach(item => {
+            recommendedItems.slice(0, 3).forEach(item => {
                 const button = app.elements.forYouGrid.querySelector(`.like-button[data-id="${item.id}"]`);
                 const counter = app.elements.forYouGrid.querySelector(`.like-count[data-id="${item.id}"]`);
                 app.likes.updateLikeUI(item.id, button, counter);
                 button.addEventListener('click', () => app.likes.toggleLike(item.id));
+            });
+        }
+    };
+
+    // Módulo "Lo más gustado" (Nuevas 3 imágenes con más likes)
+    app.topLiked = {
+        render: () => {
+            if (!app.elements.topLikedGrid || !app.state.imagesData.length) return;
+
+            const fragment = document.createDocumentFragment();
+            const likesRef = db.ref('likes');
+
+            likesRef.once('value', (snapshot) => {
+                const likesData = snapshot.val() || {};
+                const imagesWithLikes = app.state.imagesData
+                    .map(item => {
+                        const likeData = likesData[item.id] || { count: 0 };
+                        return { item, count: likeData.count || 0 };
+                    })
+                    .sort((a, b) => b.count - a.count || 0.5 - Math.random()) // Ordenar por likes, desempatar aleatoriamente
+                    .slice(0, 3);
+
+                imagesWithLikes.forEach((entry, index) => {
+                    const item = entry.item;
+                    const topLikedItem = document.createElement('div');
+                    topLikedItem.className = 'image-wrapper';
+                    topLikedItem.innerHTML = `
+                        <div class="flex-item" style="animation-delay: ${index * 0.05}s;">
+                            <a href="image-detail.html?id=${item.id}" aria-label="${item.title}" data-id="${item.id}">
+                                <img data-src="${item.url}" alt="${item.title}" class="lazy loading">
+                            </a>
+                            <p>${item.title}</p>
+                        </div>
+                        <div class="like-container">
+                            <button class="like-button" data-id="${item.id}">
+                                <img src="https://files.catbox.moe/1aiu77.png" alt="Like" class="like-icon">
+                            </button>
+                            <span class="like-count" data-id="${item.id}">0</span>
+                        </div>
+                    `;
+                    fragment.appendChild(topLikedItem);
+                });
+
+                app.elements.topLikedGrid.innerHTML = '';
+                app.elements.topLikedGrid.appendChild(fragment);
+                app.utils.lazyLoadImages(app.elements.topLikedGrid);
+
+                imagesWithLikes.forEach(entry => {
+                    const item = entry.item;
+                    const button = app.elements.topLikedGrid.querySelector(`.like-button[data-id="${item.id}"]`);
+                    const counter = app.elements.topLikedGrid.querySelector(`.like-count[data-id="${item.id}"]`);
+                    app.likes.updateLikeUI(item.id, button, counter);
+                    button.addEventListener('click', () => app.likes.toggleLike(item.id));
+                });
+            }).catch(error => {
+                console.error("Error al cargar datos de likes desde Firebase:", error);
+                app.elements.topLikedGrid.innerHTML = '<p style="text-align:center;color:#ff5722;">Error al cargar lo más gustado.</p>';
             });
         }
     };
@@ -879,6 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 app.utils.setLocalStorage('tagMap', app.state.tagMap);
 
                 app.forYou.render();
+                app.topLiked.render();
                 app.tags.generate();
                 app.autocomplete.updateSuggestions();
 
@@ -1308,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (app.elements.searchInput.value) app.filter.bySearch(app.elements.searchInput.value);
             });
 
-            ['imageGrid', 'forYouGrid', 'similarImagesGrid'].forEach(gridId => {
+            ['imageGrid', 'forYouGrid', 'topLikedGrid', 'similarImagesGrid'].forEach(gridId => {
                 const grid = app.elements[gridId];
                 if (grid) {
                     grid.addEventListener('click', (e) => {

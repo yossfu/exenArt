@@ -880,23 +880,37 @@ header {
     padding: 10px 0;
 }
 
-.for-you-title {
+.for-you-title,
+.top-liked-title {
+    position: relative;
     font-size: 1.5rem;
-    color: #d32f2f;
+    color: #fff;
     text-align: center;
-    margin-bottom: 10px;
+    margin: 0;
+    padding: 10px 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+    transition: transform 0.3s ease;
 }
 
-.dark-theme .for-you-title {
-    color: #ef5350;
+.for-you-title:hover,
+.top-liked-title:hover {
+    transform: scale(1.05);
 }
 
-.materialize-theme .for-you-title {
-    color: #d81b60;
+.dark-theme .for-you-title,
+.dark-theme .top-liked-title {
+    color: #fff;
 }
 
-.bootstrap-theme .for-you-title {
-    color: #007bff;
+.materialize-theme .for-you-title,
+.materialize-theme .top-liked-title {
+    color: #fff;
+}
+
+.bootstrap-theme .for-you-title,
+.bootstrap-theme .top-liked-title {
+    color: #fff;
 }
 
 .for-you-grid {
@@ -904,6 +918,46 @@ header {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 8px;
     padding: 0 5px;
+}
+
+/* Nueva sección "Lo más gustado" */
+.top-liked {
+    padding: 10px 0;
+}
+
+.top-liked-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+    padding: 0 5px;
+}
+
+/* Estilos para el contenedor de títulos con fondo personalizado */
+.title-container {
+    position: relative;
+    margin-bottom: 10px;
+    z-index: 1;
+}
+
+.title-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://files.catbox.moe/ks62ck.png'); /* Nueva imagen */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 8px;
+    opacity: 0.9;
+    z-index: 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.3s ease;
+}
+
+.title-container:hover .title-background {
+    opacity: 1;
 }
 
 .gallery {
@@ -1093,6 +1147,11 @@ header {
 
 .like-button.liked .like-icon {
     filter: brightness(1.5);
+}
+
+.like-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .like-icon {
@@ -1296,9 +1355,47 @@ footer {
 }
 
 .note-title {
+    position: relative;
     text-align: center;
-    font-size: 2rem;
-    margin-bottom: 20px;
+    font-size: 2.5rem;
+    margin: 0;
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(45deg, #d32f2f, #ef5350);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    z-index: 4;
+    transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
+
+.dark-theme .note-title {
+    background: linear-gradient(45deg, #b71c1c, #ef5350);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.materialize-theme .note-title {
+    background: linear-gradient(45deg, #d81b60, #e91e63);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.bootstrap-theme .note-title {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.note-title:hover {
+    transform: scale(1.05);
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
 }
 
 .note-image {
@@ -1817,68 +1914,6 @@ footer {
     margin: 20px 0;
     overflow: hidden;
     border-radius: 8px;
-}
-
-.title-container {
-    position: relative;
-    margin-bottom: 10px;
-    z-index: 3;
-}
-
-.title-background {
-    position: relative;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 15px 25px;
-    border-radius: 8px;
-    transition: opacity 0.3s ease;
-}
-
-.title-container:hover .title-background {
-    opacity: 0.8;
-}
-
-.note-title {
-    position: relative;
-    text-align: center;
-    font-size: 2.5rem;
-    margin: 0;
-    color: #fff;
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    background: linear-gradient(45deg, #d32f2f, #ef5350);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    z-index: 4;
-    transition: transform 0.3s ease, text-shadow 0.3s ease;
-}
-
-.dark-theme .note-title {
-    background: linear-gradient(45deg, #b71c1c, #ef5350);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-}
-
-.materialize-theme .note-title {
-    background: linear-gradient(45deg, #d81b60, #e91e63);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-}
-
-.bootstrap-theme .note-title {
-    background: linear-gradient(45deg, #007bff, #0056b3);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-}
-
-.note-title:hover {
-    transform: scale(1.05);
-    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
 }
 
 .chat-button {
