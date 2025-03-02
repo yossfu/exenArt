@@ -459,10 +459,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p>${item.title}</p>
                     </div>
                     <div class="like-container">
-                        <button class="like-button" data-id="${item.id}">
-                            <img src="https://files.catbox.moe/1aiu77.png" alt="Like" class="like-icon">
+                        <button class="heart-button" data-id="${item.id}">
+                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                         </button>
-                        <span class="like-count" data-id="${item.id}">0</span>
+                        <span class="heart-count" data-id="${item.id}">0</span>
                     </div>
                 `;
                 fragment.appendChild(imageWrapper);
@@ -477,8 +477,8 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('currentPage', app.state.currentPage);
 
             newItems.forEach(item => {
-                const button = app.elements.imageGrid.querySelector(`.like-button[data-id="${item.id}"]`);
-                const counter = app.elements.imageGrid.querySelector(`.like-count[data-id="${item.id}"]`);
+                const button = app.elements.imageGrid.querySelector(`.heart-button[data-id="${item.id}"]`);
+                const counter = app.elements.imageGrid.querySelector(`.heart-count[data-id="${item.id}"]`);
                 app.likes.updateLikeUI(item.id, button, counter);
                 button.addEventListener('click', () => app.likes.toggleLike(item.id));
             });
@@ -603,10 +603,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p>${item.title}</p>
                     </div>
                     <div class="like-container">
-                        <button class="like-button" data-id="${item.id}">
-                            <img src="https://files.catbox.moe/1aiu77.png" alt="Like" class="like-icon">
+                        <button class="heart-button" data-id="${item.id}">
+                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                         </button>
-                        <span class="like-count" data-id="${item.id}">0</span>
+                        <span class="heart-count" data-id="${item.id}">0</span>
                     </div>
                 `;
                 fragment.appendChild(recommendedItem);
@@ -617,8 +617,8 @@ document.addEventListener('DOMContentLoaded', () => {
             app.utils.lazyLoadImages(app.elements.forYouGrid);
 
             recommendedItems.slice(0, 3).forEach(item => {
-                const button = app.elements.forYouGrid.querySelector(`.like-button[data-id="${item.id}"]`);
-                const counter = app.elements.forYouGrid.querySelector(`.like-count[data-id="${item.id}"]`);
+                const button = app.elements.forYouGrid.querySelector(`.heart-button[data-id="${item.id}"]`);
+                const counter = app.elements.forYouGrid.querySelector(`.heart-count[data-id="${item.id}"]`);
                 app.likes.updateLikeUI(item.id, button, counter);
                 button.addEventListener('click', () => app.likes.toggleLike(item.id));
             });
@@ -655,10 +655,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p>${item.title}</p>
                         </div>
                         <div class="like-container">
-                            <button class="like-button" data-id="${item.id}">
-                                <img src="https://files.catbox.moe/1aiu77.png" alt="Like" class="like-icon">
+                            <button class="heart-button" data-id="${item.id}">
+                                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                             </button>
-                            <span class="like-count" data-id="${item.id}">0</span>
+                            <span class="heart-count" data-id="${item.id}">0</span>
                         </div>
                     `;
                     fragment.appendChild(topLikedItem);
@@ -670,8 +670,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 imagesWithLikes.forEach(entry => {
                     const item = entry.item;
-                    const button = app.elements.topLikedGrid.querySelector(`.like-button[data-id="${item.id}"]`);
-                    const counter = app.elements.topLikedGrid.querySelector(`.like-count[data-id="${item.id}"]`);
+                    const button = app.elements.topLikedGrid.querySelector(`.heart-button[data-id="${item.id}"]`);
+                    const counter = app.elements.topLikedGrid.querySelector(`.heart-count[data-id="${item.id}"]`);
                     app.likes.updateLikeUI(item.id, button, counter);
                     button.addEventListener('click', () => app.likes.toggleLike(item.id));
                 });
@@ -1023,18 +1023,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     app.elements.imageDescription.innerHTML = `
                         <p>${currentItem.description || 'Sin descripción disponible'}</p>
                         <div class="like-container">
-                            <button class="like-button" data-id="${currentItem.id}">
-                                <img src="https://files.catbox.moe/1aiu77.png" alt="Like" class="like-icon">
+                            <button class="heart-button" data-id="${currentItem.id}">
+                                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                             </button>
-                            <span class="like-count" data-id="${currentItem.id}">0</span>
+                            <span class="heart-count" data-id="${currentItem.id}">0</span>
                         </div>
                     `;
                     app.imageDetail.loadSimilarImages(currentItem.tags, data);
                     app.imageDetail.loadUtterances(imageId);
                     app.utils.lazyLoadImages(document);
 
-                    const button = app.elements.imageDescription.querySelector(`.like-button[data-id="${currentItem.id}"]`);
-                    const counter = app.elements.imageDescription.querySelector(`.like-count[data-id="${currentItem.id}"]`);
+                    const button = app.elements.imageDescription.querySelector(`.heart-button[data-id="${currentItem.id}"]`);
+                    const counter = app.elements.imageDescription.querySelector(`.heart-count[data-id="${currentItem.id}"]`);
                     if (button && counter) {
                         app.likes.updateLikeUI(currentItem.id, button, counter);
                         button.addEventListener('click', () => app.likes.toggleLike(currentItem.id));
@@ -1107,10 +1107,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         </a>
                     </div>
                     <div class="like-container">
-                        <button class="like-button" data-id="${item.id}">
-                            <img src="https://files.catbox.moe/1aiu77.png" alt="Like" class="like-icon">
+                        <button class="heart-button" data-id="${item.id}">
+                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                         </button>
-                        <span class="like-count" data-id="${item.id}">0</span>
+                        <span class="heart-count" data-id="${item.id}">0</span>
                     </div>
                 `;
                 fragment.appendChild(imageElement);
@@ -1121,8 +1121,8 @@ document.addEventListener('DOMContentLoaded', () => {
             app.utils.lazyLoadImages(app.elements.similarImagesGrid);
 
             similarImages.forEach(item => {
-                const button = app.elements.similarImagesGrid.querySelector(`.like-button[data-id="${item.id}"]`);
-                const counter = app.elements.similarImagesGrid.querySelector(`.like-count[data-id="${item.id}"]`);
+                const button = app.elements.similarImagesGrid.querySelector(`.heart-button[data-id="${item.id}"]`);
+                const counter = app.elements.similarImagesGrid.querySelector(`.heart-count[data-id="${item.id}"]`);
                 app.likes.updateLikeUI(item.id, button, counter);
                 button.addEventListener('click', () => app.likes.toggleLike(item.id));
             });
@@ -1158,12 +1158,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!window.location.pathname.includes('note.html')) return;
             app.ui.showMainContent();
             const urlParams = new URLSearchParams(window.location.search);
-            const noteId = urlParams.get('id') || '1'; // ID por defecto
+            const noteId = urlParams.get('id') || '1';
 
             app.elements.loader.style.display = 'flex';
             app.utils.fetchWithCache('notes.json', 'cachedNotes', app.elements.noteTitle, (data) => {
                 app.state.notesData = data;
-                // Convertir noteId a número para coincidir con los IDs en notes.json
                 const currentNote = data.find(note => note.id === parseInt(noteId));
                 if (currentNote) {
                     app.elements.noteTitle.textContent = currentNote.title;
