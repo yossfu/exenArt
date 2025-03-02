@@ -2,6 +2,21 @@
 document.addEventListener('DOMContentLoaded', () => {
     const app = window.app = window.app || {};
 
+    // Configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyDlfzg7BsGPKvqi7XLICoWSFU02tfzATew",
+        authDomain: "likesparati-2af8a.firebaseapp.com",
+        projectId: "likesparati-2af8a",
+        storageBucket: "likesparati-2af8a.firebasestorage.app",
+        messagingSenderId: "97227020218",
+        appId: "1:97227020218:web:8e64d8a325405ea85faf83",
+        measurementId: "G-T4KWYCP8QH"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     // Elementos del DOM
     app.elements = {
         imageGrid: document.getElementById('image-grid'),
@@ -53,8 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
         playButton: document.querySelector('.custom-play-button'),
         audioPlayer: document.getElementById('plyr-audio'),
         similarNotesGrid: document.getElementById('similar-notes-grid'),
-        themesToggle: document.getElementById('themes-toggle'), // Nuevo elemento
-        themesMenu: document.getElementById('themes-menu') // Nuevo elemento
+        themesToggle: document.getElementById('themes-toggle'),
+        themesMenu: document.getElementById('themes-menu')
     };
 
     // Configuración global
@@ -85,7 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
         activeTag: null,
         activeCategory: null,
         filterCache: new Map(),
-        currentTheme: 'dark' // Tema por defecto
+        currentTheme: 'dark',
+        likedImages: new Set(),
+        userId: null // Nuevo campo para el ID del usuario
     };
 
     // Utilidades
@@ -95,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return value ? JSON.parse(value) : null;
         },
         setLocalStorage: (key, value) => {
-            if (value instanceof Map) {
+            if (value instanceof Map || value instanceof Set) {
                 localStorage.setItem(key, JSON.stringify(Array.from(value.entries())));
             } else {
                 localStorage.setItem(key, JSON.stringify(value));
@@ -111,7 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             app.elements.loader.style.display = 'flex';
             return fetch(url)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
                 .then(data => {
                     localStorage.setItem(cacheKeyWithVersion, JSON.stringify(data));
                     renderFn(data);
@@ -158,23 +178,27 @@ document.addEventListener('DOMContentLoaded', () => {
             link.href = url;
             link.onload = callback;
             document.head.appendChild(link);
+        },
+        generateUUID: () => {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
         }
     };
 
-    // Módulo de Tema (Extendido)
+    // Módulo de Tema
     app.theme = {
         init: () => {
             const savedTheme = localStorage.getItem('currentTheme') || 'dark';
             app.state.currentTheme = savedTheme;
             app.theme.applyTheme(savedTheme);
 
-            // Botón de alternar tema oscuro (existente)
             app.elements.themeToggle.addEventListener('click', () => {
                 const newTheme = app.state.currentTheme === 'dark' ? 'light' : 'dark';
                 app.theme.applyTheme(newTheme);
             });
 
-            // Botón de Temas en el menú
             if (app.elements.themesToggle && app.elements.themesMenu) {
                 app.elements.themesToggle.addEventListener('click', () => {
                     const isVisible = app.elements.themesMenu.style.display === 'block';
@@ -190,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // Cerrar submenú si se hace clic fuera
                 document.addEventListener('click', (e) => {
                     if (!app.elements.menu.contains(e.target) && app.elements.themesMenu.style.display === 'block') {
                         app.elements.themesMenu.style.display = 'none';
@@ -221,7 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
             }
 
-            // Actualizar componentes que dependen del tema
             if (app.imageDetail.updateUtterancesTheme) app.imageDetail.updateUtterancesTheme();
             if (app.note.updateUtterancesTheme) app.note.updateUtterancesTheme();
             if (app.note.updatePlyrTheme) app.note.updatePlyrTheme();
@@ -245,6 +267,70 @@ document.addEventListener('DOMContentLoaded', () => {
         removeExternalStyles: () => {
             const links = document.querySelectorAll('link[href^="https://cdnjs.cloudflare.com"], link[href^="https://cdn.jsdelivr.net"]');
             links.forEach(link => link.remove());
+        }
+    };
+
+    // Módulo de Likes (Actualizado para limitar a un "like" por usuario)
+    app.likes = {
+        init: () => {
+            // Generar o recuperar el ID del usuario
+            let userId = localStorage.getItem('userId');
+            if (!userId) {
+                userId = app.utils.generateUUID();
+                localStorage.setItem('userId', userId);
+            }
+            app.state.userId = userId;
+
+            const likedImages = app.utils.getLocalStorage('likedImages') || [];
+            app.state.likedImages = new Set(likedImages);
+        },
+        toggleLike: (imageId) => {
+            const ref = db.ref(`likes/${imageId}`);
+            const userId = app.state.userId;
+            const userLiked = app.state.likedImages.has(imageId);
+
+            ref.once('value', (snapshot) => {
+                const data = snapshot.val() || { users: {}, count: 0 };
+                const users = data.users || {};
+
+                if (userLiked && users[userId]) {
+                    // Quitar "like"
+                    ref.transaction((currentData) => {
+                        if (!currentData) return { users: {}, count: 0 };
+                        delete currentData.users[userId];
+                        currentData.count = (currentData.count || 1) - 1;
+                        if (currentData.count < 0) currentData.count = 0;
+                        return currentData;
+                    }).then(() => {
+                        app.state.likedImages.delete(imageId);
+                        app.utils.setLocalStorage('likedImages', Array.from(app.state.likedImages));
+                    }).catch(error => console.error("Error al quitar like:", error));
+                } else if (!userLiked && !users[userId]) {
+                    // Dar "like"
+                    ref.transaction((currentData) => {
+                        if (!currentData) return { users: { [userId]: true }, count: 1 };
+                        currentData.users[userId] = true;
+                        currentData.count = (currentData.count || 0) + 1;
+                        return currentData;
+                    }).then(() => {
+                        app.state.likedImages.add(imageId);
+                        app.utils.setLocalStorage('likedImages', Array.from(app.state.likedImages));
+                    }).catch(error => console.error("Error al dar like:", error));
+                }
+            });
+        },
+        updateLikeUI: (imageId, button, counter) => {
+            const ref = db.ref(`likes/${imageId}`);
+            ref.on('value', (snapshot) => {
+                const data = snapshot.val() || { users: {}, count: 0 };
+                const count = data.count || 0;
+                const users = data.users || {};
+                counter.textContent = count;
+                button.classList.toggle('liked', users[app.state.userId] === true);
+                button.disabled = users[app.state.userId] === true; // Deshabilitar si ya dio like
+            }, (error) => {
+                console.error("Error al escuchar cambios en Firebase:", error);
+            });
         }
     };
 
@@ -364,16 +450,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const fragment = document.createDocumentFragment();
             newItems.forEach((item, index) => {
-                const imageItem = document.createElement('div');
-                imageItem.className = 'flex-item';
-                imageItem.style.animationDelay = `${index * 0.05}s`;
-                imageItem.innerHTML = `
-                    <a href="image-detail.html?id=${item.id}" aria-label="${item.title}" data-id="${item.id}">
-                        <img data-src="${item.url}" alt="${item.title}" class="lazy loading">
-                    </a>
-                    <p>${item.title}</p>
+                const imageWrapper = document.createElement('div');
+                imageWrapper.className = 'image-wrapper';
+                imageWrapper.innerHTML = `
+                    <div class="flex-item" style="animation-delay: ${index * 0.05}s;">
+                        <a href="image-detail.html?id=${item.id}" aria-label="${item.title}" data-id="${item.id}">
+                            <img data-src="${item.url}" alt="${item.title}" class="lazy loading">
+                        </a>
+                        <p>${item.title}</p>
+                    </div>
+                    <div class="like-container">
+                        <button class="like-button" data-id="${item.id}">
+                            <img src="https://files.catbox.moe/1aiu77.png" alt="Like" class="like-icon">
+                        </button>
+                        <span class="like-count" data-id="${item.id}">0</span>
+                    </div>
                 `;
-                fragment.appendChild(imageItem);
+                fragment.appendChild(imageWrapper);
             });
 
             app.elements.imageGrid.innerHTML = '';
@@ -383,6 +476,13 @@ document.addEventListener('DOMContentLoaded', () => {
             app.ui.updateFilterCount();
             app.ui.updateFilterIndicator();
             localStorage.setItem('currentPage', app.state.currentPage);
+
+            newItems.forEach(item => {
+                const button = app.elements.imageGrid.querySelector(`.like-button[data-id="${item.id}"]`);
+                const counter = app.elements.imageGrid.querySelector(`.like-count[data-id="${item.id}"]`);
+                app.likes.updateLikeUI(item.id, button, counter);
+                button.addEventListener('click', () => app.likes.toggleLike(item.id));
+            });
         }
     };
 
@@ -495,13 +595,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             recommendedItems.slice(0, 6).forEach((item, index) => {
                 const recommendedItem = document.createElement('div');
-                recommendedItem.className = 'flex-item';
-                recommendedItem.style.animationDelay = `${index * 0.05}s`;
+                recommendedItem.className = 'image-wrapper';
                 recommendedItem.innerHTML = `
-                    <a href="image-detail.html?id=${item.id}" aria-label="${item.title}" data-id="${item.id}">
-                        <img data-src="${item.url}" alt="${item.title}" class="lazy loading">
-                    </a>
-                    <p>${item.title}</p>
+                    <div class="flex-item" style="animation-delay: ${index * 0.05}s;">
+                        <a href="image-detail.html?id=${item.id}" aria-label="${item.title}" data-id="${item.id}">
+                            <img data-src="${item.url}" alt="${item.title}" class="lazy loading">
+                        </a>
+                        <p>${item.title}</p>
+                    </div>
+                    <div class="like-container">
+                        <button class="like-button" data-id="${item.id}">
+                            <img src="https://files.catbox.moe/1aiu77.png" alt="Like" class="like-icon">
+                        </button>
+                        <span class="like-count" data-id="${item.id}">0</span>
+                    </div>
                 `;
                 fragment.appendChild(recommendedItem);
             });
@@ -509,6 +616,13 @@ document.addEventListener('DOMContentLoaded', () => {
             app.elements.forYouGrid.innerHTML = '';
             app.elements.forYouGrid.appendChild(fragment);
             app.utils.lazyLoadImages(app.elements.forYouGrid);
+
+            recommendedItems.slice(0, 6).forEach(item => {
+                const button = app.elements.forYouGrid.querySelector(`.like-button[data-id="${item.id}"]`);
+                const counter = app.elements.forYouGrid.querySelector(`.like-count[data-id="${item.id}"]`);
+                app.likes.updateLikeUI(item.id, button, counter);
+                button.addEventListener('click', () => app.likes.toggleLike(item.id));
+            });
         }
     };
 
@@ -839,20 +953,37 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!window.location.pathname.includes('image-detail.html')) return;
             app.ui.showMainContent();
             const urlParams = new URLSearchParams(window.location.search);
-            const imageId = urlParams.get('id') || '30';
+            const imageId = urlParams.get('id') || '62';
 
             app.elements.loader.style.display = 'flex';
             app.utils.fetchWithCache('imagenes.json', 'cachedImages', app.elements.imageTitle, (data) => {
                 app.state.imagesData = data;
-                const currentItem = data.find(img => img.id == imageId);
+                const currentItem = data.find(img => img.id.toString() === imageId.toString());
                 if (currentItem) {
                     app.elements.imageTitle.textContent = currentItem.title;
-                    app.elements.fullImage.dataset.src = currentItem.url;
+                    app.elements.fullImage.src = currentItem.url;
                     app.elements.fullImage.alt = currentItem.title;
-                    app.elements.imageDescription.textContent = currentItem.description || 'Sin descripción disponible';
+                    app.elements.imageDescription.innerHTML = `
+                        <p>${currentItem.description || 'Sin descripción disponible'}</p>
+                        <div class="like-container">
+                            <button class="like-button" data-id="${currentItem.id}">
+                                <img src="https://files.catbox.moe/1aiu77.png" alt="Like" class="like-icon">
+                            </button>
+                            <span class="like-count" data-id="${currentItem.id}">0</span>
+                        </div>
+                    `;
                     app.imageDetail.loadSimilarImages(currentItem.tags, data);
                     app.imageDetail.loadUtterances(imageId);
-                    app.utils.lazyLoadImages();
+                    app.utils.lazyLoadImages(document);
+
+                    const button = app.elements.imageDescription.querySelector(`.like-button[data-id="${currentItem.id}"]`);
+                    const counter = app.elements.imageDescription.querySelector(`.like-count[data-id="${currentItem.id}"]`);
+                    if (button && counter) {
+                        app.likes.updateLikeUI(currentItem.id, button, counter);
+                        button.addEventListener('click', () => app.likes.toggleLike(currentItem.id));
+                    } else {
+                        console.error("No se encontraron elementos de 'like' en el DOM");
+                    }
 
                     const viewedIds = app.utils.getLocalStorage('viewedIds') || [];
                     if (!viewedIds.includes(imageId)) {
@@ -901,26 +1032,43 @@ document.addEventListener('DOMContentLoaded', () => {
         loadSimilarImages: (tags, allImages) => {
             const fragment = document.createDocumentFragment();
             const similarImages = allImages
-                .filter(item => item.id != new URLSearchParams(window.location.search).get('id') && item.tags.some(tag => tags.includes(tag)))
+                .filter(item => item.id.toString() !== new URLSearchParams(window.location.search).get('id') && item.tags.some(tag => tags.includes(tag)))
                 .sort((a, b) => b.tags.filter(tag => tags.includes(tag)).length - a.tags.filter(tag => tags.includes(tag)).length)
                 .slice(0, 6);
 
             similarImages.forEach(item => {
                 const imageElement = document.createElement('div');
-                imageElement.className = 'similar-note-item';
+                imageElement.className = 'image-wrapper';
                 imageElement.innerHTML = `
-                    <a href="image-detail.html?id=${item.id}" aria-label="${item.title}" data-id="${item.id}">
-                        <div style="position: relative;">
-                            <img data-src="${item.url}" alt="${item.title}" class="lazy">
-                            <div class="watermark">@exeneqiel</div>
-                        </div>
-                        <h3>${item.title}</h3>
-                    </a>`;
+                    <div class="similar-note-item">
+                        <a href="image-detail.html?id=${item.id}" aria-label="${item.title}" data-id="${item.id}">
+                            <div style="position: relative;">
+                                <img data-src="${item.url}" alt="${item.title}" class="lazy">
+                                <div class="watermark">@exeneqiel</div>
+                            </div>
+                            <h3>${item.title}</h3>
+                        </a>
+                    </div>
+                    <div class="like-container">
+                        <button class="like-button" data-id="${item.id}">
+                            <img src="https://files.catbox.moe/1aiu77.png" alt="Like" class="like-icon">
+                        </button>
+                        <span class="like-count" data-id="${item.id}">0</span>
+                    </div>
+                `;
                 fragment.appendChild(imageElement);
             });
 
             app.elements.similarImagesGrid.innerHTML = '';
             app.elements.similarImagesGrid.appendChild(fragment);
+            app.utils.lazyLoadImages(app.elements.similarImagesGrid);
+
+            similarImages.forEach(item => {
+                const button = app.elements.similarImagesGrid.querySelector(`.like-button[data-id="${item.id}"]`);
+                const counter = app.elements.similarImagesGrid.querySelector(`.like-count[data-id="${item.id}"]`);
+                app.likes.updateLikeUI(item.id, button, counter);
+                button.addEventListener('click', () => app.likes.toggleLike(item.id));
+            });
         },
         loadUtterances: (imageId) => {
             app.elements.utterancesContainer.innerHTML = '';
@@ -1223,6 +1371,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicialización
     app.theme.init();
     app.ageVerification.init();
+    app.likes.init();
     app.events.init();
     app.core.startPage();
 
