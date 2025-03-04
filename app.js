@@ -121,8 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         fetchWithCache: (url, cacheKey, fallbackElement, renderFn, forceRefresh = false) => {
-            // Forzar recarga para imagenes.json para asegurar contenido actualizado
+            // Forzar recarga para imagenes.json y agregar timestamp para evitar caché
+            let fetchUrl = url;
             const alwaysRefresh = url === 'imagenes.json' || forceRefresh;
+            if (url === 'imagenes.json') {
+                fetchUrl = `${url}?t=${new Date().getTime()}`; // Añade un timestamp único
+            }
             const cacheKeyWithVersion = `${cacheKey}_v1`;
             const cachedData = alwaysRefresh ? null : localStorage.getItem(cacheKeyWithVersion);
 
@@ -133,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             app.elements.loader.style.display = 'flex';
-            return fetch(url)
+            return fetch(fetchUrl, { cache: 'no-store' }) // Evitar caché del navegador
                 .then(response => {
                     if (!response.ok) throw new Error('Network response was not ok');
                     return response.json();
@@ -147,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return data;
                 })
                 .catch(error => {
-                    console.error(`Error cargando ${url}:`, error);
+                    console.error(`Error cargando ${fetchUrl}:`, error);
                     if (!cachedData && fallbackElement) {
                         fallbackElement.innerHTML = '<p style="text-align:center;color:#ff5722;">Error al cargar datos. <button onclick="location.reload()">Reintentar</button></p>';
                     }
