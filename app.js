@@ -121,13 +121,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         fetchWithCache: (url, cacheKey, fallbackElement, renderFn, forceRefresh = false) => {
+            // Forzar recarga para imagenes.json para asegurar contenido actualizado
+            const alwaysRefresh = url === 'imagenes.json' || forceRefresh;
             const cacheKeyWithVersion = `${cacheKey}_v1`;
-            const cachedData = localStorage.getItem(cacheKeyWithVersion);
-            if (cachedData && !forceRefresh) {
+            const cachedData = alwaysRefresh ? null : localStorage.getItem(cacheKeyWithVersion);
+
+            if (cachedData && !alwaysRefresh) {
                 const data = JSON.parse(cachedData);
                 renderFn(data);
                 return Promise.resolve(data);
             }
+
             app.elements.loader.style.display = 'flex';
             return fetch(url)
                 .then(response => {
@@ -135,7 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     return response.json();
                 })
                 .then(data => {
-                    localStorage.setItem(cacheKeyWithVersion, JSON.stringify(data));
+                    // Solo almacenar en caché si no es imagenes.json o si no se fuerza recarga
+                    if (!alwaysRefresh) {
+                        localStorage.setItem(cacheKeyWithVersion, JSON.stringify(data));
+                    }
                     renderFn(data);
                     return data;
                 })
