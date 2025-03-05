@@ -144,43 +144,6 @@
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Tiempo máximo de espera (en milisegundos) para que el contenido se cargue
-        const maxWaitTime = 5000; // 5 segundos
-        let hasReloaded = localStorage.getItem('hasReloaded') === 'true';
-
-        // Función para verificar si el contenido se cargó
-        function checkContentLoaded() {
-            const imageGrid = document.getElementById('image-grid');
-            const forYouGrid = document.getElementById('for-you-grid');
-            const topLikedGrid = document.getElementById('top-liked-grid');
-            const noteBanner = document.getElementById('note-banner');
-
-            // Verifica si al menos uno de los elementos clave tiene contenido
-            return (
-                (imageGrid && imageGrid.children.length > 0) ||
-                (forYouGrid && forYouGrid.children.length > 0) ||
-                (topLikedGrid && topLikedGrid.children.length > 0) ||
-                (noteBanner && noteBanner.children.length > 0)
-            );
-        }
-
-        // Si no se ha recargado aún, espera y verifica
-        if (!hasReloaded) {
-            setTimeout(() => {
-                if (!checkContentLoaded()) {
-                    console.log('Contenido no cargado, recargando página...');
-                    localStorage.setItem('hasReloaded', 'true'); // Marca que ya se recargó
-                    window.location.reload(); // Recarga la página
-                }
-            }, maxWaitTime);
-        } else {
-            // Resetea el flag después de la recarga para la próxima visita
-            localStorage.setItem('hasReloaded', 'false');
-        }
-    });
-</script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="app.js"></script>
     <script>
