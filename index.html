@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galería de Imágenes</title>
+    <meta name="description" content="Explora una galería de imágenes y notas únicas en ExenE, con categorías, búsqueda y contenido personalizado.">
+    <meta name="keywords" content="galería, imágenes, notas, ExenE, arte, personalización">
+    <title>Galería de Imágenes - ExenE</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="https://files.catbox.moe/kz2lot.png" sizes="64x64">
     <link rel="preload" href="https://files.catbox.moe/kz2lot.png" as="image">
@@ -11,11 +13,12 @@
     <link rel="preload" href="imagenes.json" as="fetch" crossorigin="anonymous">
     <link rel="preload" href="notes.json" as="fetch" crossorigin="anonymous">
     <link rel="preload" href="tags.json" as="fetch" crossorigin="anonymous">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8006989505662520" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="age-verification" id="age-verification">
         <div class="age-content">
-            <img src="https://i.ibb.co/Fnt08ty/Exen-Profil-E.jpg" alt="Logotipo de ExenE" class="age-logo">
+            <img src="https://files.catbox.moe/kz2lot.png" alt="Logotipo de ExenE" class="age-logo">
             <h1>Verificación de Edad</h1>
             <p>Este sitio contiene contenido para mayores de 18 años. ¿Tienes 18 años o más?</p>
             <div class="age-buttons">
@@ -116,11 +119,21 @@
     </main>
 
     <footer>
-        <a href="https://info.flagcounter.com/N5Ma"><img src="https://s05.flagcounter.com/mini/N5Ma/bg_FFFFFF/txt_000000/border_CCCCCC/flags_0/" alt="Flag Counter" border="0"></a>
+        <div id="flag-counter"></div>
         <p>© 2024 Exen-E. Todos los derechos reservados. | <button id="revoke-age" class="revoke-button">Cambiar verificación de edad</button></p>
+        <div class="ad-container">
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8006989505662520"
+                 data-ad-slot="7151856549"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
     </footer>
 
-    <!-- Botón y contenedor del chat flotante -->
     <button id="chat-toggle" class="chat-button">💬</button>
     <div id="chat-popup" class="chat-popup">
         <div class="chat-header">
@@ -130,9 +143,51 @@
         <div class="chat-content"></div>
     </div>
 
-    <!-- Scripts de Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Tiempo máximo de espera (en milisegundos) para que el contenido se cargue
+        const maxWaitTime = 5000; // 5 segundos
+        let hasReloaded = localStorage.getItem('hasReloaded') === 'true';
+
+        // Función para verificar si el contenido se cargó
+        function checkContentLoaded() {
+            const imageGrid = document.getElementById('image-grid');
+            const forYouGrid = document.getElementById('for-you-grid');
+            const topLikedGrid = document.getElementById('top-liked-grid');
+            const noteBanner = document.getElementById('note-banner');
+
+            // Verifica si al menos uno de los elementos clave tiene contenido
+            return (
+                (imageGrid && imageGrid.children.length > 0) ||
+                (forYouGrid && forYouGrid.children.length > 0) ||
+                (topLikedGrid && topLikedGrid.children.length > 0) ||
+                (noteBanner && noteBanner.children.length > 0)
+            );
+        }
+
+        // Si no se ha recargado aún, espera y verifica
+        if (!hasReloaded) {
+            setTimeout(() => {
+                if (!checkContentLoaded()) {
+                    console.log('Contenido no cargado, recargando página...');
+                    localStorage.setItem('hasReloaded', 'true'); // Marca que ya se recargó
+                    window.location.reload(); // Recarga la página
+                }
+            }, maxWaitTime);
+        } else {
+            // Resetea el flag después de la recarga para la próxima visita
+            localStorage.setItem('hasReloaded', 'false');
+        }
+    });
+</script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="app.js"></script>
+    <script>
+        const flagScript = document.createElement('script');
+        flagScript.src = 'https://s05.flagcounter.com/mini/N5Ma/bg_FFFFFF/txt_000000/border_CCCCCC/flags_0/';
+        flagScript.async = true;
+        document.getElementById('flag-counter').appendChild(flagScript);
+    </script>
 </body>
 </html>

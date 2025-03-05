@@ -1,4 +1,52 @@
 // app.js
+fetchWithCache: (url, cacheKey, fallbackElement, renderFn, forceRefresh = false) => {
+    let fetchUrl = url;
+    const alwaysRefresh = url === 'imagenes.json' || forceRefresh;
+    if (url === 'imagenes.json') {
+        fetchUrl = `${url}?t=${new Date().getTime()}`; // Evitar caché
+    }
+    const cacheKeyWithVersion = `${cacheKey}_v1`;
+    const cachedData = alwaysRefresh ? null : localStorage.getItem(cacheKeyWithVersion);
+
+    if (cachedData && !alwaysRefresh) {
+        const data = JSON.parse(cachedData);
+        renderFn(data);
+        return Promise.resolve(data);
+    }
+
+    app.elements.loader.style.display = 'flex';
+    
+    // Función para intentar la carga con reintentos
+    const attemptFetch = (retries = 3, delay = 1000) => {
+        return fetch(fetchUrl, { cache: 'no-store' })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                if (!alwaysRefresh) {
+                    localStorage.setItem(cacheKeyWithVersion, JSON.stringify(data));
+                }
+                renderFn(data);
+                return data;
+            })
+            .catch(error => {
+                console.error(`Error cargando ${fetchUrl}:`, error);
+                if (retries > 0) {
+                    console.log(`Reintentando... (${retries} intentos restantes)`);
+                    return new Promise(resolve => setTimeout(resolve, delay))
+                        .then(() => attemptFetch(retries - 1, delay * 2)); // Reintenta con retraso exponencial
+                }
+                if (!cachedData && fallbackElement) {
+                    fallbackElement.innerHTML = '<p style="text-align:center;color:#ff5722;">Error al cargar datos. <button onclick="location.reload()">Reintentar</button></p>';
+                }
+                throw error;
+            })
+            .finally(() => app.elements.loader.style.display = 'none');
+    };
+
+    return attemptFetch();
+},
 document.addEventListener('DOMContentLoaded', () => {
     const app = window.app = window.app || {};
 
