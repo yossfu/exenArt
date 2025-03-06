@@ -13,9 +13,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     const db = firebase.database();
 
     let images = [];
+    let currentPage = 1;
+    const itemsPerPage = 15;
     let filteredImages = [];
-    let loadedImages = 0;
-    const itemsPerLoad = 15;
 
     let deviceId = localStorage.getItem('deviceId');
     if (!deviceId) {
@@ -36,9 +36,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const userData = snapshot.val();
             if (userData && userData.username) {
                 username = userData.username;
-                if (document.querySelector('.profile-section')) {
-                    userInfo.textContent = `Usuario: ${username}`;
-                }
+                userInfo.textContent = `Usuario: ${username}`;
                 console.log('Nombre de usuario cargado desde Firebase:', username);
                 if (authContainer) authContainer.style.display = 'none';
             } else {
@@ -61,9 +59,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 try {
                     await db.ref(`users/${deviceId}`).set({ username: newUsername });
                     username = newUsername;
-                    if (document.querySelector('.profile-section')) {
-                        userInfo.textContent = `Usuario: ${username}`;
-                    }
+                    userInfo.textContent = `Usuario: ${username}`;
                     if (authContainer) authContainer.style.display = 'none';
                     console.log('Nombre de usuario guardado:', username);
                     if (document.querySelector('.gallery')) loadGallery();
@@ -101,15 +97,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         const resetBtn = document.getElementById('reset-btn');
         const searchToggle = document.getElementById('search-toggle');
         const searchContainer = document.getElementById('search-container');
-        const body = document.body;
 
         if (searchToggle && searchContainer) {
             searchToggle.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log('Search toggle clicked');
-                const isVisible = searchContainer.style.display === 'none' || searchContainer.style.display === '';
-                searchContainer.style.display = isVisible ? 'flex' : 'none';
-                body.classList.toggle('search-active', isVisible);
+                searchContainer.style.display = searchContainer.style.display === 'none' || searchContainer.style.display === '' ? 'flex' : 'none';
             });
         }
 
@@ -123,7 +116,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                         window.location.href = `index.html?search=${encodeURIComponent(query)}`;
                     }
                     searchContainer.style.display = 'none';
-                    body.classList.remove('search-active');
                 }
             });
 
@@ -137,13 +129,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 searchInput.value = '';
                 if (document.querySelector('.gallery')) {
                     filteredImages = [...images];
-                    loadedImages = 0;
-                    renderGallery(true);
+                    currentPage = 1;
+                    renderGallery();
                 } else {
                     window.location.href = 'index.html';
                 }
                 searchContainer.style.display = 'none';
-                body.classList.remove('search-active');
             });
         }
     }
@@ -159,7 +150,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (likesList.style.display === 'block') {
                     db.ref('likes').once('value', snapshot => {
                         const likes = snapshot.val() || {};
-                        const likedImages = images.filter(img => likes[img.id]?.[deviceId]);
+                        const likedImages = images.filter(img => likes[img.id] > 0);
                         likesList.innerHTML = '';
                         likedImages.forEach(img => {
                             const div = document.createElement('div');
@@ -168,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             likesList.appendChild(div);
                         });
                         if (likedImages.length === 0) {
-                            likesList.innerHTML = '<p>No has dado like a ninguna imagen aún.</p>';
+                            likesList.innerHTML = '<p>No hay imágenes con likes aún.</p>';
                         }
                     });
                 }
@@ -182,26 +173,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const id = btn.dataset.id;
                 const isLiked = btn.classList.contains('liked');
 
-                const likeRef = db.ref(`likes/${id}/${deviceId}`);
-                if (isLiked) {
-                    likeRef.remove()
-                        .then(() => {
-                            btn.classList.remove('liked');
-                            updateLikeCount(id, btn);
-                            updateUserInteraction(id, { liked: false });
-                            console.log(`Like removido por ${deviceId} en imagen ${id}`);
-                        })
-                        .catch(error => console.error('Error al quitar like:', error));
-                } else {
-                    likeRef.set(true)
-                        .then(() => {
-                            btn.classList.add('liked');
-                            updateLikeCount(id, btn);
-                            updateUserInteraction(id, { liked: true });
-                            console.log(`Like añadido por ${deviceId} en imagen ${id}`);
-                        })
-                        .catch(error => console.error('Error al dar like:', error));
-                }
+                db.ref(`likes/${id}`).transaction(likes => {
+                    const currentLikes = likes || 0;
+                    const newLikes = isLiked ? currentLikes - 1 : currentLikes + 1;
+                    return newLikes >= 0 ? newLikes : 0;
+                }).then((result) => {
+                    const newCount = result.snapshot.val();
+                    btn.classList.toggle('liked');
+                    btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${newCount > 0 ? newCount : ''}</span>`;
+                }).catch(error => console.error('Error al actualizar like:', error));
             }
         });
     }
@@ -210,146 +190,31 @@ document.addEventListener('DOMContentLoaded', async function () {
         const notificationsToggle = document.getElementById('notifications-toggle');
         const notificationsList = document.getElementById('notifications-list');
 
-        if (!notificationsToggle || !notificationsList) {
-            console.error('Elementos de notificaciones no encontrados en el DOM');
-            return;
-        }
+        if (notificationsToggle && notificationsList) {
+            fetch('notificaciones.json')
+                .then(response => response.json())
+                .then(notifications => {
+                    if (notifications.length > 0) {
+                        notificationsToggle.classList.add('has-notifications');
+                    }
 
-        console.log('Configurando notificaciones para deviceId:', deviceId);
-
-        let allNotifications = {};
-
-        db.ref(`notifications/${deviceId}`).on('value', snapshot => {
-            allNotifications = { ...allNotifications, ...(snapshot.val() || {}) };
-            console.log('Notificaciones personales cargadas:', snapshot.val());
-            renderNotifications(allNotifications);
-        }, error => {
-            console.error('Error al cargar notificaciones personales:', error);
-        });
-
-        db.ref('system-notifications').once('value', snapshot => {
-            const systemNotifications = snapshot.val() || {};
-            console.log('Notificaciones del sistema cargadas:', systemNotifications);
-            const viewedSystemNotifs = JSON.parse(localStorage.getItem('viewedSystemNotifs')) || [];
-
-            Object.entries(systemNotifications).forEach(([key, notif]) => {
-                if (!viewedSystemNotifs.includes(key)) {
-                    db.ref(`notifications/${deviceId}`).push({
-                        message: notif.message,
-                        timestamp: notif.timestamp || new Date().toISOString(),
-                        read: false,
-                        type: "system"
-                    }).then(() => {
-                        viewedSystemNotifs.push(key);
-                        localStorage.setItem('viewedSystemNotifs', JSON.stringify(viewedSystemNotifs));
-                        console.log(`Notificación del sistema ${key} copiada a ${deviceId}`);
-                    });
-                }
-            });
-        }, error => {
-            console.error('Error al cargar notificaciones del sistema:', error);
-        });
-
-        function renderNotifications(notificationsObj) {
-            const notifications = Object.entries(notificationsObj).map(([key, notif]) => ({
-                id: key,
-                message: notif.message || 'Notificación sin mensaje',
-                timestamp: notif.timestamp || new Date().toISOString(),
-                read: notif.read || false,
-                type: notif.type || 'unknown'
-            }));
-            console.log('Notificaciones combinadas para renderizar:', notifications);
-
-            const unreadCount = notifications.filter(n => !n.read).length;
-            if (unreadCount > 0) {
-                notificationsToggle.classList.add('has-notifications');
-                console.log('Notificaciones no leídas detectadas:', unreadCount);
-            } else {
-                notificationsToggle.classList.remove('has-notifications');
-                console.log('No hay notificaciones no leídas');
-            }
-
-            notificationsToggle.onclick = (e) => {
-                e.preventDefault();
-                console.log('Botón de notificaciones clickeado');
-                const isVisible = notificationsList.style.display === 'block';
-                notificationsList.style.display = isVisible ? 'none' : 'block';
-
-                if (!isVisible) {
-                    notificationsList.innerHTML = notifications.length > 0 ? '' : '<p>No hay notificaciones.</p>';
-                    notifications.forEach(notif => {
-                        const div = document.createElement('div');
-                        div.classList.add('notification');
-                        const timeStr = new Date(notif.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                        div.innerHTML = `
-                            <span>${notif.message} (${timeStr})</span>
-                            <button class="close-btn" data-id="${notif.id}">✖</button>
-                        `;
-                        notificationsList.appendChild(div);
-                    });
-
-                    notifications.forEach(notif => {
-                        if (!notif.read && notif.type !== 'system') {
-                            db.ref(`notifications/${deviceId}/${notif.id}`).update({ read: true })
-                                .then(() => console.log(`Notificación ${notif.id} marcada como leída`))
-                                .catch(error => console.error('Error al marcar como leída:', error));
+                    notificationsToggle.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        notificationsList.style.display = notificationsList.style.display === 'none' ? 'block' : 'none';
+                        if (notificationsList.style.display === 'block') {
+                            notificationsList.innerHTML = '';
+                            notifications.forEach(notif => {
+                                const div = document.createElement('div');
+                                div.classList.add('notification');
+                                div.textContent = notif.message;
+                                notificationsList.appendChild(div);
+                            });
+                            notificationsToggle.classList.remove('has-notifications');
                         }
                     });
-                    notificationsToggle.classList.remove('has-notifications');
-                }
-            };
+                })
+                .catch(error => console.error('Error al cargar notificaciones.json:', error));
         }
-
-        notificationsList.addEventListener('click', (e) => {
-            if (e.target.classList.contains('close-btn')) {
-                const notifId = e.target.dataset.id;
-                console.log('Intentando eliminar notificación:', notifId);
-                db.ref(`notifications/${deviceId}/${notifId}`).remove()
-                    .then(() => {
-                        console.log(`Notificación ${notifId} eliminada`);
-                        e.target.parentElement.remove();
-                    })
-                    .catch(error => console.error('Error al eliminar notificación:', error));
-            }
-        });
-    }
-
-    function setupCommentNotifications() {
-        db.ref('comments').on('child_added', snapshot => {
-            const comment = snapshot.val();
-            const imageId = snapshot.ref.parent.key;
-            console.log('Nuevo comentario detectado:', comment, 'en imagen:', imageId);
-
-            if (comment.deviceId !== deviceId) {
-                db.ref(`likes/${imageId}`).once('value', likesSnapshot => {
-                    const likes = likesSnapshot.val() || {};
-                    console.log('Likes actuales para imagen', imageId, ':', likes);
-                    if (likes[deviceId]) {
-                        fetch('imagenes.json')
-                            .then(response => response.json())
-                            .then(data => {
-                                const image = data.find(img => img.id === Number(imageId));
-                                if (image) {
-                                    db.ref(`notifications/${deviceId}`).push({
-                                        message: `${comment.username} comentó en la imagen "${image.title}" que te gusta`,
-                                        timestamp: new Date().toISOString(),
-                                        read: false,
-                                        type: "comment",
-                                        imageId: imageId
-                                    }).then(() => console.log('Notificación de comentario enviada para:', deviceId));
-                                } else {
-                                    console.log('Imagen no encontrada en imagenes.json para ID:', imageId);
-                                }
-                            })
-                            .catch(error => console.error('Error al cargar imagenes.json:', error));
-                    } else {
-                        console.log('Usuario actual no dio like a la imagen:', imageId);
-                    }
-                });
-            } else {
-                console.log('Comentario propio, no se genera notificación');
-            }
-        });
     }
 
     function filterImages(query) {
@@ -358,103 +223,19 @@ document.addEventListener('DOMContentLoaded', async function () {
             img.description.toLowerCase().includes(query.toLowerCase()) || 
             img.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
         );
-        loadedImages = 0;
-        renderGallery(true);
+        currentPage = 1;
+        renderGallery();
     }
 
     function loadLikeState(id) {
         const btn = document.querySelector(`.like-btn[data-id="${id}"]`);
         if (btn) {
             db.ref(`likes/${id}`).once('value', snapshot => {
-                const likes = snapshot.val() || {};
-                const likeCount = Object.keys(likes).length;
-                btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${likeCount > 0 ? likeCount : ''}</span>`;
-                if (likes[deviceId]) btn.classList.add('liked');
+                const likes = snapshot.val() || 0;
+                btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${likes > 0 ? likes : ''}</span>`;
+                if (likes > 0) btn.classList.add('liked');
             });
         }
-    }
-
-    function updateLikeCount(id, btn) {
-        db.ref(`likes/${id}`).once('value', snapshot => {
-            const likes = snapshot.val() || {};
-            const likeCount = Object.keys(likes).length;
-            btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${likeCount > 0 ? likeCount : ''}</span>`;
-        });
-    }
-
-    function updateUserInteraction(imageId, interaction) {
-        let interactions = JSON.parse(localStorage.getItem('userInteractions')) || {};
-        const image = images.find(img => img.id === Number(imageId));
-        if (!image) return;
-
-        if (!interactions[imageId]) {
-            interactions[imageId] = { time: 0, likes: 0, visits: 0, tags: image.tags, lastInteraction: 0 };
-        }
-        if (interaction.time) interactions[imageId].time += interaction.time;
-        if (interaction.liked !== undefined) interactions[imageId].likes = interaction.liked ? 1 : 0;
-        interactions[imageId].visits += 1;
-        interactions[imageId].lastInteraction = Date.now();
-        localStorage.setItem('userInteractions', JSON.stringify(interactions));
-
-        updateTagScores(imageId);
-    }
-
-    function updateTagScores(imageId) {
-        const interactions = JSON.parse(localStorage.getItem('userInteractions')) || {};
-        const imageData = interactions[imageId];
-        if (!imageData) return;
-
-        let tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
-        const isRecent = (Date.now() - imageData.lastInteraction) < 24 * 60 * 60 * 1000;
-        const recencyMultiplier = isRecent ? 1.5 : 1;
-
-        imageData.tags.forEach((tag, index) => {
-            if (!tagScores[tag]) tagScores[tag] = { time: 0, likes: 0, visits: 0, score: 0 };
-            const timeScore = (imageData.time / 5) * 2;
-            const likeScore = imageData.likes * 10;
-            const visitScore = imageData.visits * 5;
-            const weight = index === 0 ? 1.5 : 1;
-            const baseScore = (timeScore + likeScore + visitScore) * weight * recencyMultiplier;
-
-            tagScores[tag].time += imageData.time;
-            tagScores[tag].likes += imageData.likes;
-            tagScores[tag].visits += imageData.visits;
-            tagScores[tag].score += baseScore;
-        });
-
-        const sortedTags = Object.entries(tagScores)
-            .sort(([, a], [, b]) => b.score - a.score)
-            .slice(0, 10);
-        tagScores = Object.fromEntries(sortedTags);
-
-        localStorage.setItem('tagScores', JSON.stringify(tagScores));
-    }
-
-    function calculateTagBasedScore(image, topTags) {
-        const tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
-        let totalScore = 0;
-        image.tags.forEach((tag, index) => {
-            const baseScore = tagScores[tag]?.score || 0;
-            const weight = index === 0 && topTags.includes(tag) ? 1.2 : 1;
-            totalScore += baseScore * weight;
-        });
-        return totalScore / image.tags.length;
-    }
-
-    function getTopTags(limit = 3) {
-        const tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
-        return Object.entries(tagScores)
-            .sort(([, a], [, b]) => b.score - a.score)
-            .slice(0, limit)
-            .map(([tag]) => tag);
-    }
-
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
     }
 
     if (document.querySelector('.gallery')) {
@@ -466,9 +247,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             fetch('imagenes.json')
                 .then(response => response.json())
                 .then(data => {
-                    images = data.map(({ redirectUrl, ...rest }) => rest);
+                    images = data;
                     filteredImages = [...images];
-                    console.log('Imágenes cargadas sin redirectUrl:', images);
+                    console.log('Imágenes cargadas en index:', images);
 
                     const urlParams = new URLSearchParams(window.location.search);
                     const searchQuery = urlParams.get('search');
@@ -476,7 +257,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         document.getElementById('search-input').value = searchQuery;
                         filterImages(searchQuery);
                     } else {
-                        renderGallery(true);
+                        renderGallery();
                     }
 
                     renderForYou();
@@ -484,21 +265,18 @@ document.addEventListener('DOMContentLoaded', async function () {
                     setupSearch();
                     setupLikes();
                     setupNotifications();
-                    setupCommentNotifications();
                 })
                 .catch(error => console.error('Error al cargar imagenes.json en index:', error));
         }
 
-        function renderGallery(reset = false) {
+        function renderGallery() {
             const gallery = document.querySelector('.gallery');
-            if (reset) {
-                gallery.innerHTML = '';
-                loadedImages = 0;
-            }
+            gallery.innerHTML = '';
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedImages = filteredImages.slice(start, end);
 
-            const nextImages = filteredImages.slice(loadedImages, loadedImages + itemsPerLoad);
-            console.log(`Cargando imágenes: ${loadedImages} a ${loadedImages + nextImages.length} de ${filteredImages.length}`);
-            nextImages.forEach(img => {
+            paginatedImages.forEach(img => {
                 const div = document.createElement('div');
                 div.classList.add('gallery-item');
                 div.innerHTML = `
@@ -518,65 +296,66 @@ document.addEventListener('DOMContentLoaded', async function () {
                 loadLikeState(img.id);
             });
 
-            loadedImages += nextImages.length;
+            renderPagination();
+        }
 
-            let sentinel = document.getElementById('sentinel');
-            if (!sentinel) {
-                sentinel = document.createElement('div');
-                sentinel.id = 'sentinel';
-                gallery.appendChild(sentinel);
-            } else {
-                gallery.appendChild(sentinel);
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            const totalPages = Math.ceil(filteredImages.length / itemsPerPage);
+            const maxVisiblePages = 10;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
             }
 
-            if (reset || !window.sentinelObserver) {
-                if (window.sentinelObserver) window.sentinelObserver.disconnect();
-                window.sentinelObserver = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting && loadedImages < filteredImages.length) {
-                        console.log('Centinela visible, cargando más imágenes...');
-                        renderGallery(false);
-                    }
-                }, { rootMargin: '200px' });
-                window.sentinelObserver.observe(sentinel);
+            if (startPage > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.textContent = '1';
+                firstBtn.addEventListener('click', () => {
+                    currentPage = 1;
+                    renderGallery();
+                });
+                pagination.appendChild(firstBtn);
+                if (startPage > 2) {
+                    pagination.appendChild(document.createTextNode(' ... '));
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                if (i === currentPage) btn.classList.add('active');
+                btn.addEventListener('click', () => {
+                    currentPage = i;
+                    renderGallery();
+                });
+                pagination.appendChild(btn);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    pagination.appendChild(document.createTextNode(' ... '));
+                }
+                const lastBtn = document.createElement('button');
+                lastBtn.textContent = totalPages;
+                lastBtn.addEventListener('click', () => {
+                    currentPage = totalPages;
+                    renderGallery();
+                });
+                pagination.appendChild(lastBtn);
             }
         }
 
         function renderForYou() {
             const forYou = document.querySelector('.for-you');
-            const interactions = JSON.parse(localStorage.getItem('userInteractions')) || {};
-            const interactedImageIds = Object.keys(interactions).map(id => Number(id));
-
-            const availableImages = images.filter(img => !interactedImageIds.includes(img.id));
-            if (availableImages.length === 0) {
-                forYou.innerHTML = '<p>No hay nuevas imágenes para recomendar.</p>';
-                return;
-            }
-
-            const topTags = getTopTags(3);
-            if (topTags.length === 0) {
-                const randomImages = shuffleArray([...availableImages]).slice(0, 3);
-                forYou.innerHTML = '';
-                randomImages.forEach(img => {
-                    const div = document.createElement('div');
-                    div.classList.add('gallery-item');
-                    div.innerHTML = `
-                        <img src="${img.url}" alt="${img.title}">
-                        <span class="title">${img.title}</span>
-                    `;
-                    div.addEventListener('click', () => window.location.href = `image-detail.html?id=${img.id}`);
-                    forYou.appendChild(div);
-                });
-                return;
-            }
-
-            const totalInteractions = Object.keys(interactions).length || 1;
-            const scoredImages = availableImages.map(img => ({
-                ...img,
-                score: calculateTagBasedScore(img, topTags) / totalInteractions + (Math.random() * 0.2)
-            })).sort((a, b) => b.score - a.score).slice(0, 3);
+            let viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || [];
+            const filteredImages = images.filter(img => viewedImages.includes(img.id)).slice(0, 3);
 
             forYou.innerHTML = '';
-            scoredImages.forEach(img => {
+            filteredImages.forEach(img => {
                 const div = document.createElement('div');
                 div.classList.add('gallery-item');
                 div.innerHTML = `
@@ -594,7 +373,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const likes = snapshot.val() || {};
                 const sortedImages = images.map(img => ({
                     ...img,
-                    likeCount: likes[img.id] ? Object.keys(likes[img.id]).length : 0
+                    likeCount: likes[img.id] || 0
                 })).sort((a, b) => b.likeCount - a.likeCount).slice(0, 3);
 
                 mostLiked.innerHTML = '';
@@ -623,11 +402,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
 
-        let startTime = Date.now();
-        window.addEventListener('beforeunload', () => {
-            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-            updateUserInteraction(imageId, { time: timeSpent });
-        });
+        const userInfoDetail = document.getElementById('user-info');
+        if (userInfoDetail) {
+            userInfoDetail.textContent = `Usuario: ${username}`;
+            console.log('Usuario mostrado en image-detail:', username);
+        }
 
         fetch('imagenes.json')
             .then(response => {
@@ -637,9 +416,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return response.json();
             })
             .then(data => {
-                images = data.map(({ redirectUrl, ...rest }) => rest);
-                console.log('Imágenes cargadas en image-detail:', images);
-                const image = images.find(img => img.id === Number(imageId));
+                images = data;
+                console.log('Imágenes cargadas en image-detail:', data);
+                const image = data.find(img => img.id === Number(imageId));
                 const imageContainer = document.querySelector('.image-container');
                 const details = document.querySelector('.details');
                 const similarGallery = document.querySelector('.similar-gallery');
@@ -658,7 +437,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 <span class="like-count"></span>
                             </button>
                         `;
-                        loadLikeState(image.id);
+                        loadLikeState(image.id); // Cargar estado del like para el botón en detalles
                     }
                     let viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || [];
                     if (!viewedImages.includes(image.id)) {
@@ -668,11 +447,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     console.log('Detalles de la imagen cargados:', image);
 
                     if (similarGallery) {
-                        const topTags = image.tags.slice(0, 3);
-                        let similarImages = images
-                            .filter(img => img.id !== image.id && img.tags.some(tag => topTags.includes(tag)));
-                        similarImages = shuffleArray(similarImages).slice(0, 6);
-
+                        const similarImages = images
+                            .filter(img => img.id !== image.id && img.tags.some(tag => image.tags.includes(tag)))
+                            .slice(0, 6);
                         similarGallery.innerHTML = '';
                         similarImages.forEach(img => {
                             const div = document.createElement('div');
@@ -707,7 +484,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 setupSearch();
                 setupLikes();
                 setupNotifications();
-                setupCommentNotifications();
             })
             .catch(error => {
                 console.error('Error al cargar imagenes.json en image-detail:', error);
@@ -761,105 +537,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                     console.log('No hay comentarios para esta imagen');
                 }
             });
-        }
-    }
-
-    if (document.querySelector('.profile-section')) {
-        if (!username) {
-            console.log('No hay nombre de usuario, redirigiendo a index.html');
-            window.location.href = 'index.html';
-            return;
-        }
-
-        const userInfoProfile = document.getElementById('user-info');
-        if (userInfoProfile) {
-            userInfoProfile.textContent = `Usuario: ${username}`;
-        }
-
-        loadProfile();
-
-        function loadProfile() {
-            fetch('imagenes.json')
-                .then(response => response.json())
-                .then(data => {
-                    images = data.map(({ redirectUrl, ...rest }) => rest);
-                    console.log('Imágenes cargadas para perfil:', images);
-
-                    const profileInfo = document.getElementById('profile-info');
-                    const stats = document.getElementById('stats');
-                    const favoriteTags = document.getElementById('favorite-tags');
-                    const recommendedImages = document.getElementById('recommended-images');
-                    const recentActivity = document.getElementById('recent-activity');
-
-                    profileInfo.innerHTML = `
-                        <h3>${username}</h3>
-                        <p>ID de Dispositivo: ${deviceId}</p>
-                    `;
-
-                    const interactions = JSON.parse(localStorage.getItem('userInteractions')) || {};
-                    const totalImagesViewed = Object.keys(interactions).length;
-                    const totalTimeSpent = Object.values(interactions).reduce((sum, img) => sum + (img.time || 0), 0);
-                    const totalLikes = Object.values(interactions).reduce((sum, img) => sum + (img.likes || 0), 0);
-                    stats.innerHTML = `
-                        <p><strong>Imágenes Vistas:</strong> ${totalImagesViewed}</p>
-                        <p><strong>Tiempo Total:</strong> ${Math.floor(totalTimeSpent / 60)} min ${totalTimeSpent % 60} seg</p>
-                        <p><strong>Likes Dados:</strong> ${totalLikes}</p>
-                    `;
-
-                    const topTags = getTopTags(5);
-                    favoriteTags.innerHTML = '<p><strong>Tus Tags Favoritos:</strong> ' + (topTags.length ? topTags.join(', ') : 'Aún no hay suficientes datos') + '</p>';
-
-                    const interactedImageIds = Object.keys(interactions).map(id => Number(id));
-                    const availableImages = images.filter(img => !interactedImageIds.includes(img.id));
-                    if (availableImages.length > 0 && topTags.length > 0) {
-                        const totalInteractions = Object.keys(interactions).length || 1;
-                        const scoredImages = availableImages.map(img => ({
-                            ...img,
-                            score: calculateTagBasedScore(img, topTags) / totalInteractions + (Math.random() * 0.2)
-                        })).sort((a, b) => b.score - a.score).slice(0, 3);
-
-                        recommendedImages.innerHTML = '';
-                        scoredImages.forEach(img => {
-                            const div = document.createElement('div');
-                            div.classList.add('gallery-item');
-                            div.innerHTML = `
-                                <img src="${img.url}" alt="${img.title}">
-                                <span class="title">${img.title}</span>
-                            `;
-                            div.addEventListener('click', () => window.location.href = `image-detail.html?id=${img.id}`);
-                            recommendedImages.appendChild(div);
-                        });
-                    } else {
-                        recommendedImages.innerHTML = '<p>No hay suficientes datos para recomendaciones.</p>';
-                    }
-
-                    const recentImages = Object.entries(interactions)
-                        .sort(([, a], [, b]) => b.lastInteraction - a.lastInteraction)
-                        .slice(0, 3)
-                        .map(([id]) => images.find(img => img.id === Number(id)));
-                    recentActivity.innerHTML = '';
-                    recentImages.forEach(img => {
-                        if (img) {
-                            const div = document.createElement('div');
-                            div.classList.add('gallery-item');
-                            div.innerHTML = `
-                                <img src="${img.url}" alt="${img.title}">
-                                <span class="title">${img.title}</span>
-                            `;
-                            div.addEventListener('click', () => window.location.href = `image-detail.html?id=${img.id}`);
-                            recentActivity.appendChild(div);
-                        }
-                    });
-                    if (recentImages.length === 0) {
-                        recentActivity.innerHTML = '<p>No hay actividad reciente.</p>';
-                    }
-
-                    setupSearch();
-                    setupLikes();
-                    setupNotifications();
-                    setupCommentNotifications();
-                })
-                .catch(error => console.error('Error al cargar imagenes.json en profile:', error));
         }
     }
 });
