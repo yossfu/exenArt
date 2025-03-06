@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (likesList.style.display === 'block') {
                     db.ref('likes').once('value', snapshot => {
                         const likes = snapshot.val() || {};
-                        const likedImages = images.filter(img => likes[img.id] > 0);
+                        const likedImages = images.filter(img => likes[img.id]?.[deviceId]);
                         likesList.innerHTML = '';
                         likedImages.forEach(img => {
                             const div = document.createElement('div');
@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             likesList.appendChild(div);
                         });
                         if (likedImages.length === 0) {
-                            likesList.innerHTML = '<p>No hay imágenes con likes aún.</p>';
+                            likesList.innerHTML = '<p>No has dado like a ninguna imagen aún.</p>';
                         }
                     });
                 }
@@ -182,16 +182,26 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const id = btn.dataset.id;
                 const isLiked = btn.classList.contains('liked');
 
-                db.ref(`likes/${id}`).transaction(likes => {
-                    const currentLikes = likes || 0;
-                    const newLikes = isLiked ? currentLikes - 1 : currentLikes + 1;
-                    return newLikes >= 0 ? newLikes : 0;
-                }).then((result) => {
-                    const newCount = result.snapshot.val();
-                    btn.classList.toggle('liked');
-                    btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${newCount > 0 ? newCount : ''}</span>`;
-                    updateUserInteraction(id, { liked: !isLiked });
-                }).catch(error => console.error('Error al actualizar like:', error));
+                const likeRef = db.ref(`likes/${id}/${deviceId}`);
+                if (isLiked) {
+                    likeRef.remove()
+                        .then(() => {
+                            btn.classList.remove('liked');
+                            updateLikeCount(id, btn);
+                            updateUserInteraction(id, { liked: false });
+                            console.log(`Like removido por ${deviceId} en imagen ${id}`);
+                        })
+                        .catch(error => console.error('Error al quitar like:', error));
+                } else {
+                    likeRef.set(true)
+                        .then(() => {
+                            btn.classList.add('liked');
+                            updateLikeCount(id, btn);
+                            updateUserInteraction(id, { liked: true });
+                            console.log(`Like añadido por ${deviceId} en imagen ${id}`);
+                        })
+                        .catch(error => console.error('Error al dar like:', error));
+                }
             }
         });
     }
@@ -207,10 +217,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         console.log('Configurando notificaciones para deviceId:', deviceId);
 
-        // Cargar y combinar notificaciones personales y del sistema
         let allNotifications = {};
 
-        // Escuchar notificaciones personales
         db.ref(`notifications/${deviceId}`).on('value', snapshot => {
             allNotifications = { ...allNotifications, ...(snapshot.val() || {}) };
             console.log('Notificaciones personales cargadas:', snapshot.val());
@@ -219,7 +227,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             console.error('Error al cargar notificaciones personales:', error);
         });
 
-        // Procesar notificaciones del sistema una sola vez
         db.ref('system-notifications').once('value', snapshot => {
             const systemNotifications = snapshot.val() || {};
             console.log('Notificaciones del sistema cargadas:', systemNotifications);
@@ -227,7 +234,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             Object.entries(systemNotifications).forEach(([key, notif]) => {
                 if (!viewedSystemNotifs.includes(key)) {
-                    // Copiar a notificaciones personales
                     db.ref(`notifications/${deviceId}`).push({
                         message: notif.message,
                         timestamp: notif.timestamp || new Date().toISOString(),
@@ -282,7 +288,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                         notificationsList.appendChild(div);
                     });
 
-                    // Marcar todas como leídas
                     notifications.forEach(notif => {
                         if (!notif.read && notif.type !== 'system') {
                             db.ref(`notifications/${deviceId}/${notif.id}`).update({ read: true })
@@ -316,10 +321,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             console.log('Nuevo comentario detectado:', comment, 'en imagen:', imageId);
 
             if (comment.deviceId !== deviceId) {
-                db.ref('likes').once('value', likesSnapshot => {
+                db.ref(`likes/${imageId}`).once('value', likesSnapshot => {
                     const likes = likesSnapshot.val() || {};
-                    console.log('Likes actuales:', likes);
-                    if (likes[imageId] > 0) {
+                    console.log('Likes actuales para imagen', imageId, ':', likes);
+                    if (likes[deviceId]) {
                         fetch('imagenes.json')
                             .then(response => response.json())
                             .then(data => {
@@ -338,7 +343,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             })
                             .catch(error => console.error('Error al cargar imagenes.json:', error));
                     } else {
-                        console.log('No hay likes en la imagen:', imageId);
+                        console.log('Usuario actual no dio like a la imagen:', imageId);
                     }
                 });
             } else {
@@ -361,11 +366,20 @@ document.addEventListener('DOMContentLoaded', async function () {
         const btn = document.querySelector(`.like-btn[data-id="${id}"]`);
         if (btn) {
             db.ref(`likes/${id}`).once('value', snapshot => {
-                const likes = snapshot.val() || 0;
-                btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${likes > 0 ? likes : ''}</span>`;
-                if (likes > 0) btn.classList.add('liked');
+                const likes = snapshot.val() || {};
+                const likeCount = Object.keys(likes).length;
+                btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${likeCount > 0 ? likeCount : ''}</span>`;
+                if (likes[deviceId]) btn.classList.add('liked');
             });
         }
+    }
+
+    function updateLikeCount(id, btn) {
+        db.ref(`likes/${id}`).once('value', snapshot => {
+            const likes = snapshot.val() || {};
+            const likeCount = Object.keys(likes).length;
+            btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${likeCount > 0 ? likeCount : ''}</span>`;
+        });
     }
 
     function updateUserInteraction(imageId, interaction) {
@@ -580,7 +594,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const likes = snapshot.val() || {};
                 const sortedImages = images.map(img => ({
                     ...img,
-                    likeCount: likes[img.id] || 0
+                    likeCount: likes[img.id] ? Object.keys(likes[img.id]).length : 0
                 })).sort((a, b) => b.likeCount - a.likeCount).slice(0, 3);
 
                 mostLiked.innerHTML = '';
