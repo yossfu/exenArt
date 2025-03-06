@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil - ExenG</title>
+    <title>Perfil de Usuario - ExenG</title>
+    <link rel="icon" type="image/png" href="ico.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -13,28 +14,24 @@
             <img src="ico.png" alt="Logo" class="logo">
             <h1>ExenG</h1>
         </div>
-        <div id="user-info">
-            <a href="profile.html" id="profile-link">Usuario: <span id="username-display"></span></a>
-        </div>
+        <div id="user-info"></div>
     </header>
     <div class="container">
         <div id="search-container" class="search-container" style="display: none;">
             <input type="text" id="search-input" placeholder="Buscar imágenes...">
             <button id="search-btn"><i class="fas fa-search"></i></button>
             <button id="reset-btn"><i class="fas fa-times"></i></button>
-            <div id="search-suggestions" class="search-suggestions"></div>
         </div>
-        <section>
-            <h2 class="section-title">Mis Favoritos</h2>
-            <div class="favorites"></div>
-        </section>
-        <section>
-            <h2 class="section-title">Imágenes Vistas</h2>
-            <div class="viewed"></div>
-        </section>
-        <section>
-            <h2 class="section-title">Mis Comentarios</h2>
-            <div id="user-comments"></div>
+        <section class="profile-section">
+            <h2 class="section-title">Tu Perfil</h2>
+            <div id="profile-info" class="profile-info"></div>
+            <div id="stats" class="stats"></div>
+            <h2 class="section-title">Tus Intereses</h2>
+            <div id="favorite-tags" class="favorite-tags"></div>
+            <h2 class="section-title">Recomendaciones para Ti</h2>
+            <div id="recommended-images" class="recommended-images"></div>
+            <h2 class="section-title">Actividad Reciente</h2>
+            <div id="recent-activity" class="recent-activity"></div>
         </section>
     </div>
 
@@ -48,21 +45,9 @@
 
     <div id="likes-list" class="likes-list" style="display: none;"></div>
     <div id="notifications-list" class="notifications-list" style="display: none;"></div>
-    <button class="scroll-top" id="scroll-top" style="display: none;"><i class="fas fa-arrow-up"></i></button>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (typeof firebase === 'undefined' || !firebase.app || !firebase.auth || !firebase.database) {
-                console.error('Firebase no está completamente cargado. Asegúrate de que todos los scripts se carguen correctamente.');
-                return;
-            }
-            const script = document.createElement('script');
-            script.src = 'script.js';
-            document.body.appendChild(script);
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

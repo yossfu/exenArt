@@ -36,7 +36,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             const userData = snapshot.val();
             if (userData && userData.username) {
                 username = userData.username;
-                userInfo.textContent = `Usuario: ${username}`;
+                if (document.querySelector('.profile-section')) {
+                    userInfo.textContent = `Usuario: ${username}`;
+                }
                 console.log('Nombre de usuario cargado desde Firebase:', username);
                 if (authContainer) authContainer.style.display = 'none';
             } else {
@@ -59,7 +61,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 try {
                     await db.ref(`users/${deviceId}`).set({ username: newUsername });
                     username = newUsername;
-                    userInfo.textContent = `Usuario: ${username}`;
+                    if (document.querySelector('.profile-section')) {
+                        userInfo.textContent = `Usuario: ${username}`;
+                    }
                     if (authContainer) authContainer.style.display = 'none';
                     console.log('Nombre de usuario guardado:', username);
                     if (document.querySelector('.gallery')) loadGallery();
@@ -197,30 +201,99 @@ document.addEventListener('DOMContentLoaded', async function () {
         const notificationsList = document.getElementById('notifications-list');
 
         if (notificationsToggle && notificationsList) {
-            fetch('notificaciones.json')
-                .then(response => response.json())
-                .then(notifications => {
-                    if (notifications.length > 0) {
-                        notificationsToggle.classList.add('has-notifications');
-                    }
+            // Escuchar notificaciones personales
+            db.ref(`notifications/${deviceId}`).on('value', snapshot => {
+                const personalNotifications = snapshot.val() || {};
+                renderNotifications({ ...personalNotifications });
+            });
 
-                    notificationsToggle.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        notificationsList.style.display = notificationsList.style.display === 'none' ? 'block' : 'none';
-                        if (notificationsList.style.display === 'block') {
-                            notificationsList.innerHTML = '';
-                            notifications.forEach(notif => {
-                                const div = document.createElement('div');
-                                div.classList.add('notification');
-                                div.textContent = notif.message;
-                                notificationsList.appendChild(div);
-                            });
-                            notificationsToggle.classList.remove('has-notifications');
-                        }
-                    });
-                })
-                .catch(error => console.error('Error al cargar notificaciones.json:', error));
+            // Escuchar notificaciones del sistema
+            db.ref('system-notifications').on('value', snapshot => {
+                const systemNotifications = snapshot.val() || {};
+                db.ref(`notifications/${deviceId}`).once('value', personalSnapshot => {
+                    const personalNotifications = personalSnapshot.val() || {};
+                    renderNotifications({ ...personalNotifications, ...systemNotifications });
+                });
+            });
+
+            function renderNotifications(notificationsObj) {
+                const notifications = Object.entries(notificationsObj).map(([key, notif]) => ({
+                    id: key,
+                    ...notif
+                }));
+
+                // Mostrar indicador si hay notificaciones no leídas
+                const unreadCount = notifications.filter(n => !n.read).length;
+                if (unreadCount > 0) {
+                    notificationsToggle.classList.add('has-notifications');
+                } else {
+                    notificationsToggle.classList.remove('has-notifications');
+                }
+
+                notificationsToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    notificationsList.style.display = notificationsList.style.display === 'none' ? 'block' : 'none';
+                    if (notificationsList.style.display === 'block') {
+                        notificationsList.innerHTML = '';
+                        notifications.forEach(notif => {
+                            const div = document.createElement('div');
+                            div.classList.add('notification');
+                            div.innerHTML = `
+                                <span>${notif.message} (${new Date(notif.timestamp).toLocaleTimeString()})</span>
+                                <button class="close-btn" data-id="${notif.id}">✖</button>
+                            `;
+                            notificationsList.appendChild(div);
+                        });
+
+                        // Marcar todas como leídas al abrir
+                        notifications.forEach(notif => {
+                            if (!notif.read && !notif.type !== 'system') {
+                                db.ref(`notifications/${deviceId}/${notif.id}`).update({ read: true });
+                            }
+                        });
+                        notificationsToggle.classList.remove('has-notifications');
+                    }
+                }, { once: true }); // Evitar múltiples listeners
+            }
+
+            // Manejar cierre de notificaciones individuales
+            notificationsList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('close-btn')) {
+                    const notifId = e.target.dataset.id;
+                    db.ref(`notifications/${deviceId}/${notifId}`).remove()
+                        .then(() => console.log(`Notificación ${notifId} eliminada`))
+                        .catch(error => console.error('Error al eliminar notificación:', error));
+                }
+            });
         }
+    }
+
+    // Generar notificación cuando alguien comenta una imagen que te gusta
+    function setupCommentNotifications() {
+        db.ref('comments').on('child_added', snapshot => {
+            const comment = snapshot.val();
+            const imageId = snapshot.ref.parent.key;
+
+            db.ref('likes').once('value', likesSnapshot => {
+                const likes = likesSnapshot.val() || {};
+                if (likes[imageId] > 0 && comment.deviceId !== deviceId) {
+                    fetch('imagenes.json')
+                        .then(response => response.json())
+                        .then(data => {
+                            const image = data.find(img => img.id === Number(imageId));
+                            if (image) {
+                                db.ref(`notifications/${deviceId}`).push({
+                                    message: `${comment.username} comentó en la imagen "${image.title}" que te gusta`,
+                                    timestamp: new Date().toISOString(),
+                                    read: false,
+                                    type: "comment",
+                                    imageId: imageId
+                                });
+                            }
+                        });
+                }
+            });
+        });
     }
 
     function filterImages(query) {
@@ -254,8 +327,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
         if (interaction.time) interactions[imageId].time += interaction.time;
         if (interaction.liked !== undefined) interactions[imageId].likes = interaction.liked ? 1 : 0;
-        interactions[imageId].visits += 1; // Incrementar visitas
-        interactions[imageId].lastInteraction = Date.now(); // Registrar timestamp
+        interactions[imageId].visits += 1;
+        interactions[imageId].lastInteraction = Date.now();
         localStorage.setItem('userInteractions', JSON.stringify(interactions));
 
         updateTagScores(imageId);
@@ -267,15 +340,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (!imageData) return;
 
         let tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
-        const isRecent = (Date.now() - imageData.lastInteraction) < 24 * 60 * 60 * 1000; // Últimas 24 horas
+        const isRecent = (Date.now() - imageData.lastInteraction) < 24 * 60 * 60 * 1000;
         const recencyMultiplier = isRecent ? 1.5 : 1;
 
         imageData.tags.forEach((tag, index) => {
             if (!tagScores[tag]) tagScores[tag] = { time: 0, likes: 0, visits: 0, score: 0 };
-            const timeScore = (imageData.time / 5) * 2; // 2 puntos por 5 segundos
-            const likeScore = imageData.likes * 10; // 10 puntos por like
-            const visitScore = imageData.visits * 5; // 5 puntos por visita
-            const weight = index === 0 ? 1.5 : 1; // 1.5x para el primer tag
+            const timeScore = (imageData.time / 5) * 2;
+            const likeScore = imageData.likes * 10;
+            const visitScore = imageData.visits * 5;
+            const weight = index === 0 ? 1.5 : 1;
             const baseScore = (timeScore + likeScore + visitScore) * weight * recencyMultiplier;
 
             tagScores[tag].time += imageData.time;
@@ -293,12 +366,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function calculateTagBasedScore(image, topTags) {
-        const tagScores = JSON.parse(localStorage.getItem('userInteractions')) || {};
+        const tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
         let totalScore = 0;
-        const topTag = topTags[0]; // Tag con más puntos
         image.tags.forEach((tag, index) => {
             const baseScore = tagScores[tag]?.score || 0;
-            const weight = index === 0 && topTags.includes(tag) ? 1.2 : 1; // 20% extra si el primer tag está en topTags
+            const weight = index === 0 && topTags.includes(tag) ? 1.2 : 1;
             totalScore += baseScore * weight;
         });
         return totalScore / image.tags.length;
@@ -329,9 +401,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             fetch('imagenes.json')
                 .then(response => response.json())
                 .then(data => {
-                    images = data;
+                    images = data.map(({ redirectUrl, ...rest }) => rest);
                     filteredImages = [...images];
-                    console.log('Imágenes cargadas en index:', images);
+                    console.log('Imágenes cargadas sin redirectUrl:', images);
 
                     const urlParams = new URLSearchParams(window.location.search);
                     const searchQuery = urlParams.get('search');
@@ -347,6 +419,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     setupSearch();
                     setupLikes();
                     setupNotifications();
+                    setupCommentNotifications();
                 })
                 .catch(error => console.error('Error al cargar imagenes.json en index:', error));
         }
@@ -431,10 +504,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             }
 
-            const totalInteractions = Object.keys(interactions).length || 1; // Evitar división por 0
+            const totalInteractions = Object.keys(interactions).length || 1;
             const scoredImages = availableImages.map(img => ({
                 ...img,
-                score: calculateTagBasedScore(img, topTags) / totalInteractions + (Math.random() * 0.2) // Normalización + aleatoriedad
+                score: calculateTagBasedScore(img, topTags) / totalInteractions + (Math.random() * 0.2)
             })).sort((a, b) => b.score - a.score).slice(0, 3);
 
             forYou.innerHTML = '';
@@ -485,12 +558,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
 
-        const userInfoDetail = document.getElementById('user-info');
-        if (userInfoDetail) {
-            userInfoDetail.textContent = `Usuario: ${username}`;
-            console.log('Usuario mostrado en image-detail:', username);
-        }
-
         let startTime = Date.now();
         window.addEventListener('beforeunload', () => {
             const timeSpent = Math.floor((Date.now() - startTime) / 1000);
@@ -505,9 +572,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return response.json();
             })
             .then(data => {
-                images = data;
-                console.log('Imágenes cargadas en image-detail:', data);
-                const image = data.find(img => img.id === Number(imageId));
+                images = data.map(({ redirectUrl, ...rest }) => rest);
+                console.log('Imágenes cargadas en image-detail:', images);
+                const image = images.find(img => img.id === Number(imageId));
                 const imageContainer = document.querySelector('.image-container');
                 const details = document.querySelector('.details');
                 const similarGallery = document.querySelector('.similar-gallery');
@@ -575,6 +642,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 setupSearch();
                 setupLikes();
                 setupNotifications();
+                setupCommentNotifications();
             })
             .catch(error => {
                 console.error('Error al cargar imagenes.json en image-detail:', error);
@@ -628,6 +696,105 @@ document.addEventListener('DOMContentLoaded', async function () {
                     console.log('No hay comentarios para esta imagen');
                 }
             });
+        }
+    }
+
+    if (document.querySelector('.profile-section')) {
+        if (!username) {
+            console.log('No hay nombre de usuario, redirigiendo a index.html');
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const userInfoProfile = document.getElementById('user-info');
+        if (userInfoProfile) {
+            userInfoProfile.textContent = `Usuario: ${username}`;
+        }
+
+        loadProfile();
+
+        function loadProfile() {
+            fetch('imagenes.json')
+                .then(response => response.json())
+                .then(data => {
+                    images = data.map(({ redirectUrl, ...rest }) => rest);
+                    console.log('Imágenes cargadas para perfil:', images);
+
+                    const profileInfo = document.getElementById('profile-info');
+                    const stats = document.getElementById('stats');
+                    const favoriteTags = document.getElementById('favorite-tags');
+                    const recommendedImages = document.getElementById('recommended-images');
+                    const recentActivity = document.getElementById('recent-activity');
+
+                    profileInfo.innerHTML = `
+                        <h3>${username}</h3>
+                        <p>ID de Dispositivo: ${deviceId}</p>
+                    `;
+
+                    const interactions = JSON.parse(localStorage.getItem('userInteractions')) || {};
+                    const totalImagesViewed = Object.keys(interactions).length;
+                    const totalTimeSpent = Object.values(interactions).reduce((sum, img) => sum + (img.time || 0), 0);
+                    const totalLikes = Object.values(interactions).reduce((sum, img) => sum + (img.likes || 0), 0);
+                    stats.innerHTML = `
+                        <p><strong>Imágenes Vistas:</strong> ${totalImagesViewed}</p>
+                        <p><strong>Tiempo Total:</strong> ${Math.floor(totalTimeSpent / 60)} min ${totalTimeSpent % 60} seg</p>
+                        <p><strong>Likes Dados:</strong> ${totalLikes}</p>
+                    `;
+
+                    const topTags = getTopTags(5);
+                    favoriteTags.innerHTML = '<p><strong>Tus Tags Favoritos:</strong> ' + (topTags.length ? topTags.join(', ') : 'Aún no hay suficientes datos') + '</p>';
+
+                    const interactedImageIds = Object.keys(interactions).map(id => Number(id));
+                    const availableImages = images.filter(img => !interactedImageIds.includes(img.id));
+                    if (availableImages.length > 0 && topTags.length > 0) {
+                        const totalInteractions = Object.keys(interactions).length || 1;
+                        const scoredImages = availableImages.map(img => ({
+                            ...img,
+                            score: calculateTagBasedScore(img, topTags) / totalInteractions + (Math.random() * 0.2)
+                        })).sort((a, b) => b.score - a.score).slice(0, 3);
+
+                        recommendedImages.innerHTML = '';
+                        scoredImages.forEach(img => {
+                            const div = document.createElement('div');
+                            div.classList.add('gallery-item');
+                            div.innerHTML = `
+                                <img src="${img.url}" alt="${img.title}">
+                                <span class="title">${img.title}</span>
+                            `;
+                            div.addEventListener('click', () => window.location.href = `image-detail.html?id=${img.id}`);
+                            recommendedImages.appendChild(div);
+                        });
+                    } else {
+                        recommendedImages.innerHTML = '<p>No hay suficientes datos para recomendaciones.</p>';
+                    }
+
+                    const recentImages = Object.entries(interactions)
+                        .sort(([, a], [, b]) => b.lastInteraction - a.lastInteraction)
+                        .slice(0, 3)
+                        .map(([id]) => images.find(img => img.id === Number(id)));
+                    recentActivity.innerHTML = '';
+                    recentImages.forEach(img => {
+                        if (img) {
+                            const div = document.createElement('div');
+                            div.classList.add('gallery-item');
+                            div.innerHTML = `
+                                <img src="${img.url}" alt="${img.title}">
+                                <span class="title">${img.title}</span>
+                            `;
+                            div.addEventListener('click', () => window.location.href = `image-detail.html?id=${img.id}`);
+                            recentActivity.appendChild(div);
+                        }
+                    });
+                    if (recentImages.length === 0) {
+                        recentActivity.innerHTML = '<p>No hay actividad reciente.</p>';
+                    }
+
+                    setupSearch();
+                    setupLikes();
+                    setupNotifications();
+                    setupCommentNotifications();
+                })
+                .catch(error => console.error('Error al cargar imagenes.json en profile:', error));
         }
     }
 });
