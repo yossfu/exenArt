@@ -154,8 +154,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 likesList.style.display = likesList.style.display === 'none' ? 'block' : 'none';
                 if (likesList.style.display === 'block') {
                     db.ref('likes').once('value', snapshot => {
-                        const likes = snapshot.val() || {};
-                        const likedImages = images.filter(img => likes[img.id] > 0);
+                        const likesData = snapshot.val() || {};
+                        const likedImages = images.filter(img => likesData[img.id] && Object.keys(likesData[img.id]).length > 0);
                         likesList.innerHTML = '';
                         likedImages.forEach(img => {
                             const div = document.createElement('div');
@@ -176,19 +176,29 @@ document.addEventListener('DOMContentLoaded', async function () {
                 e.stopPropagation();
                 const btn = e.target.closest('.like-btn');
                 const id = btn.dataset.id;
-                const isLiked = btn.classList.contains('liked');
 
-                db.ref(`likes/${id}`).transaction(likes => {
-                    const currentLikes = likes || 0;
-                    const newLikes = isLiked ? currentLikes - 1 : currentLikes + 1;
-                    return newLikes >= 0 ? newLikes : 0;
-                }).then((result) => {
-                    const newCount = result.snapshot.val();
-                    btn.classList.toggle('liked');
-                    btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${newCount > 0 ? newCount : ''}</span>`;
-                    updateUserInteraction(id, { liked: !isLiked });
-                }).catch(error => console.error('Error al actualizar like:', error));
+                // Verificar si este dispositivo ya dio like
+                db.ref(`likes/${id}/${deviceId}`).once('value', snapshot => {
+                    const isLiked = snapshot.val() === true;
+
+                    // Alternar el estado del like para este dispositivo
+                    db.ref(`likes/${id}/${deviceId}`).set(!isLiked)
+                        .then(() => {
+                            btn.classList.toggle('liked', !isLiked);
+                            updateLikeCount(id, btn);
+                            updateUserInteraction(id, { liked: !isLiked });
+                        })
+                        .catch(error => console.error('Error al actualizar like:', error));
+                });
             }
+        });
+    }
+
+    function updateLikeCount(imageId, btn) {
+        db.ref(`likes/${imageId}`).once('value', snapshot => {
+            const likesData = snapshot.val() || {};
+            const likeCount = Object.keys(likesData).length;
+            btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${likeCount > 0 ? likeCount : ''}</span>`;
         });
     }
 
@@ -236,10 +246,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     function loadLikeState(id) {
         const btn = document.querySelector(`.like-btn[data-id="${id}"]`);
         if (btn) {
-            db.ref(`likes/${id}`).once('value', snapshot => {
-                const likes = snapshot.val() || 0;
-                btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${likes > 0 ? likes : ''}</span>`;
-                if (likes > 0) btn.classList.add('liked');
+            db.ref(`likes/${id}/${deviceId}`).once('value', snapshot => {
+                const isLiked = snapshot.val() === true;
+                btn.classList.toggle('liked', isLiked);
+                updateLikeCount(id, btn);
             });
         }
     }
@@ -453,10 +463,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         function renderMostLiked() {
             const mostLiked = document.querySelector('.most-liked');
             db.ref('likes').once('value', snapshot => {
-                const likes = snapshot.val() || {};
+                const likesData = snapshot.val() || {};
                 const sortedImages = images.map(img => ({
                     ...img,
-                    likeCount: likes[img.id] || 0
+                    likeCount: likesData[img.id] ? Object.keys(likesData[img.id]).length : 0
                 })).sort((a, b) => b.likeCount - a.likeCount).slice(0, 3);
 
                 mostLiked.innerHTML = '';
