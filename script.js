@@ -185,20 +185,24 @@ document.addEventListener('DOMContentLoaded', async function () {
                     db.ref(`likes/${id}/${deviceId}`).set(!isLiked)
                         .then(() => {
                             btn.classList.toggle('liked', !isLiked);
-                            updateLikeCount(id, btn);
                             updateUserInteraction(id, { liked: !isLiked });
                         })
                         .catch(error => console.error('Error al actualizar like:', error));
                 });
             }
         });
-    }
 
-    function updateLikeCount(imageId, btn) {
-        db.ref(`likes/${imageId}`).once('value', snapshot => {
-            const likesData = snapshot.val() || {};
-            const likeCount = Object.keys(likesData).length;
-            btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${likeCount > 0 ? likeCount : ''}</span>`;
+        // Escuchar cambios en tiempo real para todos los botones de like
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            const id = btn.dataset.id;
+            db.ref(`likes/${id}`).on('value', snapshot => {
+                const likesData = snapshot.val() || {};
+                const likeCount = Object.keys(likesData).length;
+                btn.querySelector('.like-count').textContent = likeCount > 0 ? likeCount : '';
+                // Verificar si este dispositivo dio like
+                const isLiked = likesData[deviceId] === true;
+                btn.classList.toggle('liked', isLiked);
+            });
         });
     }
 
@@ -244,14 +248,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function loadLikeState(id) {
-        const btn = document.querySelector(`.like-btn[data-id="${id}"]`);
-        if (btn) {
-            db.ref(`likes/${id}/${deviceId}`).once('value', snapshot => {
-                const isLiked = snapshot.val() === true;
-                btn.classList.toggle('liked', isLiked);
-                updateLikeCount(id, btn);
-            });
-        }
+        // Esta función ya no es necesaria con la escucha en tiempo real en setupLikes
     }
 
     function updateUserInteraction(imageId, interaction) {
@@ -387,7 +384,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                 });
                 gallery.appendChild(div);
-                loadLikeState(img.id);
             });
 
             loadedImages += nextImages.length;
@@ -411,6 +407,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }, { rootMargin: '200px' });
                 window.sentinelObserver.observe(sentinel);
             }
+
+            // Configurar escucha de likes después de renderizar
+            setupLikes();
         }
 
         function renderForYou() {
@@ -536,7 +535,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 <span class="like-count"></span>
                             </button>
                         `;
-                        loadLikeState(image.id);
                     }
                     let viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || [];
                     if (!viewedImages.includes(image.id)) {
@@ -569,7 +567,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 }
                             });
                             similarGallery.appendChild(div);
-                            loadLikeState(img.id);
                         });
                         if (similarImages.length === 0) {
                             similarGallery.innerHTML = '<p>No se encontraron imágenes similares.</p>';
