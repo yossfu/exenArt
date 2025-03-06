@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalles de la Imagen - ExenG</title>
+    <title>Perfil - ExenG</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -13,25 +13,28 @@
             <img src="ico.png" alt="Logo" class="logo">
             <h1>ExenG</h1>
         </div>
-        <div id="user-info"></div>
+        <div id="user-info">
+            <a href="profile.html" id="profile-link">Usuario: <span id="username-display"></span></a>
+        </div>
     </header>
     <div class="container">
         <div id="search-container" class="search-container" style="display: none;">
             <input type="text" id="search-input" placeholder="Buscar imágenes...">
             <button id="search-btn"><i class="fas fa-search"></i></button>
             <button id="reset-btn"><i class="fas fa-times"></i></button>
+            <div id="search-suggestions" class="search-suggestions"></div>
         </div>
-        <section class="image-detail-card">
-            <div class="image-container"></div>
-            <div class="details"></div>
+        <section>
+            <h2 class="section-title">Mis Favoritos</h2>
+            <div class="favorites"></div>
         </section>
-        <section class="comments-section">
-            <h2 class="section-title">Comentarios</h2>
-            <form id="comment-form">
-                <textarea id="comment-text" placeholder="Escribe tu comentario..." required></textarea>
-                <button type="submit">Enviar</button>
-            </form>
-            <div id="comments-list"></div>
+        <section>
+            <h2 class="section-title">Imágenes Vistas</h2>
+            <div class="viewed"></div>
+        </section>
+        <section>
+            <h2 class="section-title">Mis Comentarios</h2>
+            <div id="user-comments"></div>
         </section>
     </div>
 
@@ -45,9 +48,21 @@
 
     <div id="likes-list" class="likes-list" style="display: none;"></div>
     <div id="notifications-list" class="notifications-list" style="display: none;"></div>
+    <button class="scroll-top" id="scroll-top" style="display: none;"><i class="fas fa-arrow-up"></i></button>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof firebase === 'undefined' || !firebase.app || !firebase.auth || !firebase.database) {
+                console.error('Firebase no está completamente cargado. Asegúrate de que todos los scripts se carguen correctamente.');
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'script.js';
+            document.body.appendChild(script);
+        });
+    </script>
 </body>
 </html>
