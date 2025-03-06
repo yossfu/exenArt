@@ -5,7 +5,7 @@ body {
     color: black;
     transition: background-color 0.3s, color 0.3s;
     overflow-x: hidden;
-    position: relative;
+    position: relative; /* Necesario para el pseudo-elemento */
 }
 
 body.night-mode {
@@ -13,6 +13,7 @@ body.night-mode {
     color: #e0e0e0;
 }
 
+/* Difuminado de fondo cuando el buscador está activo */
 body.search-active::before {
     content: '';
     position: fixed;
@@ -20,10 +21,10 @@ body.search-active::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(5px);
-    z-index: 1000;
-    pointer-events: none;
+    background: rgba(0, 0, 0, 0.5); /* Fondo gris semitransparente */
+    backdrop-filter: blur(5px); /* Difuminado */
+    z-index: 1000; /* Debajo del buscador, encima del contenido */
+    pointer-events: none; /* Permite clics a través del fondo */
 }
 
 header {
@@ -64,23 +65,6 @@ header h1 {
     color: white;
 }
 
-.profile-link {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-}
-
-.profile-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    transition: transform 0.3s ease;
-}
-
-.profile-link:hover .profile-icon {
-    transform: scale(1.1);
-}
-
 .container {
     padding: 10px;
     padding-bottom: 100px;
@@ -115,7 +99,7 @@ body.night-mode section {
     text-align: center;
 }
 
-.gallery, .for-you, .most-liked, .similar-gallery, .recommended-images, .recent-activity {
+.gallery, .for-you, .most-liked, .similar-gallery {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
@@ -441,7 +425,6 @@ body.night-mode #username {
     justify-content: center;
     align-items: center;
     transition: background-color 0.3s, transform 0.2s;
-    position: relative; /* Para el indicador */
 }
 
 .menu-item:hover {
@@ -480,7 +463,7 @@ body.night-mode #username {
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(5px);
-    z-index: 1001;
+    z-index: 1001; /* Encima del fondo difuminado */
     width: 90%;
     max-width: 300px;
     box-sizing: border-box;
@@ -560,70 +543,8 @@ body.night-mode .likes-list, body.night-mode .notifications-list {
 .notifications-list .notification {
     color: black;
     font-size: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px;
 }
 
 body.night-mode .notifications-list .notification {
     color: white;
-}
-
-.notifications-list .close-btn {
-    background: #ff0000;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.notifications-list .close-btn:hover {
-    background: #cc0000;
-}
-
-.menu-item.has-notifications::after {
-    content: '';
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 10px;
-    height: 10px;
-    background: #00f; /* Punto azul para notificaciones no leídas */
-    border-radius: 50%;
-    border: 2px solid #ff0000;
-}
-
-/* Estilos para la página de perfil */
-.profile-section {
-    text-align: center;
-}
-
-.profile-info h3 {
-    color: #ff0000;
-    font-size: 24px;
-    margin: 10px 0;
-}
-
-.profile-info p {
-    font-size: 14px;
-    color: #666;
-}
-
-body.night-mode .profile-info p {
-    color: #bbb;
-}
-
-.stats p {
-    font-size: 16px;
-    margin: 5px 0;
-}
-
-.favorite-tags p {
-    font-size: 16px;
-    margin: 10px 0;
 }

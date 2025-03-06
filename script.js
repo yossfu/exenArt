@@ -13,9 +13,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     const db = firebase.database();
 
     let images = [];
-    let currentPage = 1;
-    const itemsPerPage = 15;
     let filteredImages = [];
+    let loadedImages = 0;
+    const itemsPerLoad = 15;
 
     let deviceId = localStorage.getItem('deviceId');
     if (!deviceId) {
@@ -97,12 +97,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         const resetBtn = document.getElementById('reset-btn');
         const searchToggle = document.getElementById('search-toggle');
         const searchContainer = document.getElementById('search-container');
+        const body = document.body;
 
         if (searchToggle && searchContainer) {
             searchToggle.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log('Search toggle clicked');
-                searchContainer.style.display = searchContainer.style.display === 'none' || searchContainer.style.display === '' ? 'flex' : 'none';
+                const isVisible = searchContainer.style.display === 'none' || searchContainer.style.display === '';
+                searchContainer.style.display = isVisible ? 'flex' : 'none';
+                body.classList.toggle('search-active', isVisible);
             });
         }
 
@@ -116,6 +119,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         window.location.href = `index.html?search=${encodeURIComponent(query)}`;
                     }
                     searchContainer.style.display = 'none';
+                    body.classList.remove('search-active');
                 }
             });
 
@@ -129,12 +133,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                 searchInput.value = '';
                 if (document.querySelector('.gallery')) {
                     filteredImages = [...images];
-                    currentPage = 1;
-                    renderGallery();
+                    loadedImages = 0;
+                    renderGallery(true);
                 } else {
                     window.location.href = 'index.html';
                 }
                 searchContainer.style.display = 'none';
+                body.classList.remove('search-active');
             });
         }
     }
@@ -181,6 +186,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const newCount = result.snapshot.val();
                     btn.classList.toggle('liked');
                     btn.innerHTML = `<img src="like.png" alt="Like" class="like-icon"><span class="like-count">${newCount > 0 ? newCount : ''}</span>`;
+                    updateUserInteraction(id, { liked: !isLiked });
                 }).catch(error => console.error('Error al actualizar like:', error));
             }
         });
@@ -223,8 +229,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             img.description.toLowerCase().includes(query.toLowerCase()) || 
             img.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
         );
-        currentPage = 1;
-        renderGallery();
+        loadedImages = 0;
+        renderGallery(true);
     }
 
     function loadLikeState(id) {
@@ -236,6 +242,82 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (likes > 0) btn.classList.add('liked');
             });
         }
+    }
+
+    function updateUserInteraction(imageId, interaction) {
+        let interactions = JSON.parse(localStorage.getItem('userInteractions')) || {};
+        const image = images.find(img => img.id === Number(imageId));
+        if (!image) return;
+
+        if (!interactions[imageId]) {
+            interactions[imageId] = { time: 0, likes: 0, visits: 0, tags: image.tags, lastInteraction: 0 };
+        }
+        if (interaction.time) interactions[imageId].time += interaction.time;
+        if (interaction.liked !== undefined) interactions[imageId].likes = interaction.liked ? 1 : 0;
+        interactions[imageId].visits += 1; // Incrementar visitas
+        interactions[imageId].lastInteraction = Date.now(); // Registrar timestamp
+        localStorage.setItem('userInteractions', JSON.stringify(interactions));
+
+        updateTagScores(imageId);
+    }
+
+    function updateTagScores(imageId) {
+        const interactions = JSON.parse(localStorage.getItem('userInteractions')) || {};
+        const imageData = interactions[imageId];
+        if (!imageData) return;
+
+        let tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
+        const isRecent = (Date.now() - imageData.lastInteraction) < 24 * 60 * 60 * 1000; // Últimas 24 horas
+        const recencyMultiplier = isRecent ? 1.5 : 1;
+
+        imageData.tags.forEach((tag, index) => {
+            if (!tagScores[tag]) tagScores[tag] = { time: 0, likes: 0, visits: 0, score: 0 };
+            const timeScore = (imageData.time / 5) * 2; // 2 puntos por 5 segundos
+            const likeScore = imageData.likes * 10; // 10 puntos por like
+            const visitScore = imageData.visits * 5; // 5 puntos por visita
+            const weight = index === 0 ? 1.5 : 1; // 1.5x para el primer tag
+            const baseScore = (timeScore + likeScore + visitScore) * weight * recencyMultiplier;
+
+            tagScores[tag].time += imageData.time;
+            tagScores[tag].likes += imageData.likes;
+            tagScores[tag].visits += imageData.visits;
+            tagScores[tag].score += baseScore;
+        });
+
+        const sortedTags = Object.entries(tagScores)
+            .sort(([, a], [, b]) => b.score - a.score)
+            .slice(0, 10);
+        tagScores = Object.fromEntries(sortedTags);
+
+        localStorage.setItem('tagScores', JSON.stringify(tagScores));
+    }
+
+    function calculateTagBasedScore(image, topTags) {
+        const tagScores = JSON.parse(localStorage.getItem('userInteractions')) || {};
+        let totalScore = 0;
+        const topTag = topTags[0]; // Tag con más puntos
+        image.tags.forEach((tag, index) => {
+            const baseScore = tagScores[tag]?.score || 0;
+            const weight = index === 0 && topTags.includes(tag) ? 1.2 : 1; // 20% extra si el primer tag está en topTags
+            totalScore += baseScore * weight;
+        });
+        return totalScore / image.tags.length;
+    }
+
+    function getTopTags(limit = 3) {
+        const tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
+        return Object.entries(tagScores)
+            .sort(([, a], [, b]) => b.score - a.score)
+            .slice(0, limit)
+            .map(([tag]) => tag);
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
     }
 
     if (document.querySelector('.gallery')) {
@@ -257,7 +339,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         document.getElementById('search-input').value = searchQuery;
                         filterImages(searchQuery);
                     } else {
-                        renderGallery();
+                        renderGallery(true);
                     }
 
                     renderForYou();
@@ -269,14 +351,16 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .catch(error => console.error('Error al cargar imagenes.json en index:', error));
         }
 
-        function renderGallery() {
+        function renderGallery(reset = false) {
             const gallery = document.querySelector('.gallery');
-            gallery.innerHTML = '';
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const paginatedImages = filteredImages.slice(start, end);
+            if (reset) {
+                gallery.innerHTML = '';
+                loadedImages = 0;
+            }
 
-            paginatedImages.forEach(img => {
+            const nextImages = filteredImages.slice(loadedImages, loadedImages + itemsPerLoad);
+            console.log(`Cargando imágenes: ${loadedImages} a ${loadedImages + nextImages.length} de ${filteredImages.length}`);
+            nextImages.forEach(img => {
                 const div = document.createElement('div');
                 div.classList.add('gallery-item');
                 div.innerHTML = `
@@ -296,66 +380,65 @@ document.addEventListener('DOMContentLoaded', async function () {
                 loadLikeState(img.id);
             });
 
-            renderPagination();
-        }
+            loadedImages += nextImages.length;
 
-        function renderPagination() {
-            const pagination = document.getElementById('pagination');
-            pagination.innerHTML = '';
-            const totalPages = Math.ceil(filteredImages.length / itemsPerPage);
-            const maxVisiblePages = 10;
-            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-            if (endPage - startPage + 1 < maxVisiblePages) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            let sentinel = document.getElementById('sentinel');
+            if (!sentinel) {
+                sentinel = document.createElement('div');
+                sentinel.id = 'sentinel';
+                gallery.appendChild(sentinel);
+            } else {
+                gallery.appendChild(sentinel);
             }
 
-            if (startPage > 1) {
-                const firstBtn = document.createElement('button');
-                firstBtn.textContent = '1';
-                firstBtn.addEventListener('click', () => {
-                    currentPage = 1;
-                    renderGallery();
-                });
-                pagination.appendChild(firstBtn);
-                if (startPage > 2) {
-                    pagination.appendChild(document.createTextNode(' ... '));
-                }
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                const btn = document.createElement('button');
-                btn.textContent = i;
-                if (i === currentPage) btn.classList.add('active');
-                btn.addEventListener('click', () => {
-                    currentPage = i;
-                    renderGallery();
-                });
-                pagination.appendChild(btn);
-            }
-
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    pagination.appendChild(document.createTextNode(' ... '));
-                }
-                const lastBtn = document.createElement('button');
-                lastBtn.textContent = totalPages;
-                lastBtn.addEventListener('click', () => {
-                    currentPage = totalPages;
-                    renderGallery();
-                });
-                pagination.appendChild(lastBtn);
+            if (reset || !window.sentinelObserver) {
+                if (window.sentinelObserver) window.sentinelObserver.disconnect();
+                window.sentinelObserver = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting && loadedImages < filteredImages.length) {
+                        console.log('Centinela visible, cargando más imágenes...');
+                        renderGallery(false);
+                    }
+                }, { rootMargin: '200px' });
+                window.sentinelObserver.observe(sentinel);
             }
         }
 
         function renderForYou() {
             const forYou = document.querySelector('.for-you');
-            let viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || [];
-            const filteredImages = images.filter(img => viewedImages.includes(img.id)).slice(0, 3);
+            const interactions = JSON.parse(localStorage.getItem('userInteractions')) || {};
+            const interactedImageIds = Object.keys(interactions).map(id => Number(id));
+
+            const availableImages = images.filter(img => !interactedImageIds.includes(img.id));
+            if (availableImages.length === 0) {
+                forYou.innerHTML = '<p>No hay nuevas imágenes para recomendar.</p>';
+                return;
+            }
+
+            const topTags = getTopTags(3);
+            if (topTags.length === 0) {
+                const randomImages = shuffleArray([...availableImages]).slice(0, 3);
+                forYou.innerHTML = '';
+                randomImages.forEach(img => {
+                    const div = document.createElement('div');
+                    div.classList.add('gallery-item');
+                    div.innerHTML = `
+                        <img src="${img.url}" alt="${img.title}">
+                        <span class="title">${img.title}</span>
+                    `;
+                    div.addEventListener('click', () => window.location.href = `image-detail.html?id=${img.id}`);
+                    forYou.appendChild(div);
+                });
+                return;
+            }
+
+            const totalInteractions = Object.keys(interactions).length || 1; // Evitar división por 0
+            const scoredImages = availableImages.map(img => ({
+                ...img,
+                score: calculateTagBasedScore(img, topTags) / totalInteractions + (Math.random() * 0.2) // Normalización + aleatoriedad
+            })).sort((a, b) => b.score - a.score).slice(0, 3);
 
             forYou.innerHTML = '';
-            filteredImages.forEach(img => {
+            scoredImages.forEach(img => {
                 const div = document.createElement('div');
                 div.classList.add('gallery-item');
                 div.innerHTML = `
@@ -408,6 +491,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             console.log('Usuario mostrado en image-detail:', username);
         }
 
+        let startTime = Date.now();
+        window.addEventListener('beforeunload', () => {
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+            updateUserInteraction(imageId, { time: timeSpent });
+        });
+
         fetch('imagenes.json')
             .then(response => {
                 if (!response.ok) {
@@ -437,7 +526,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 <span class="like-count"></span>
                             </button>
                         `;
-                        loadLikeState(image.id); // Cargar estado del like para el botón en detalles
+                        loadLikeState(image.id);
                     }
                     let viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || [];
                     if (!viewedImages.includes(image.id)) {
@@ -447,9 +536,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                     console.log('Detalles de la imagen cargados:', image);
 
                     if (similarGallery) {
-                        const similarImages = images
-                            .filter(img => img.id !== image.id && img.tags.some(tag => image.tags.includes(tag)))
-                            .slice(0, 6);
+                        const topTags = image.tags.slice(0, 3);
+                        let similarImages = images
+                            .filter(img => img.id !== image.id && img.tags.some(tag => topTags.includes(tag)));
+                        similarImages = shuffleArray(similarImages).slice(0, 6);
+
                         similarGallery.innerHTML = '';
                         similarImages.forEach(img => {
                             const div = document.createElement('div');
