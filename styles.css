@@ -441,6 +441,7 @@ body.night-mode #username {
     justify-content: center;
     align-items: center;
     transition: background-color 0.3s, transform 0.2s;
+    position: relative; /* Para el indicador */
 }
 
 .menu-item:hover {
@@ -559,10 +560,42 @@ body.night-mode .likes-list, body.night-mode .notifications-list {
 .notifications-list .notification {
     color: black;
     font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
 }
 
 body.night-mode .notifications-list .notification {
     color: white;
+}
+
+.notifications-list .close-btn {
+    background: #ff0000;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.notifications-list .close-btn:hover {
+    background: #cc0000;
+}
+
+.menu-item.has-notifications::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 10px;
+    height: 10px;
+    background: #00f; /* Punto azul para notificaciones no leídas */
+    border-radius: 50%;
+    border: 2px solid #ff0000;
 }
 
 /* Estilos para la página de perfil */

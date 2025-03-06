@@ -200,99 +200,150 @@ document.addEventListener('DOMContentLoaded', async function () {
         const notificationsToggle = document.getElementById('notifications-toggle');
         const notificationsList = document.getElementById('notifications-list');
 
-        if (notificationsToggle && notificationsList) {
-            // Escuchar notificaciones personales
-            db.ref(`notifications/${deviceId}`).on('value', snapshot => {
-                const personalNotifications = snapshot.val() || {};
-                renderNotifications({ ...personalNotifications });
-            });
+        if (!notificationsToggle || !notificationsList) {
+            console.error('Elementos de notificaciones no encontrados en el DOM');
+            return;
+        }
 
-            // Escuchar notificaciones del sistema
-            db.ref('system-notifications').on('value', snapshot => {
-                const systemNotifications = snapshot.val() || {};
-                db.ref(`notifications/${deviceId}`).once('value', personalSnapshot => {
-                    const personalNotifications = personalSnapshot.val() || {};
-                    renderNotifications({ ...personalNotifications, ...systemNotifications });
-                });
-            });
+        console.log('Configurando notificaciones para deviceId:', deviceId);
 
-            function renderNotifications(notificationsObj) {
-                const notifications = Object.entries(notificationsObj).map(([key, notif]) => ({
-                    id: key,
-                    ...notif
-                }));
+        // Cargar y combinar notificaciones personales y del sistema
+        let allNotifications = {};
 
-                // Mostrar indicador si hay notificaciones no leídas
-                const unreadCount = notifications.filter(n => !n.read).length;
-                if (unreadCount > 0) {
-                    notificationsToggle.classList.add('has-notifications');
-                } else {
-                    notificationsToggle.classList.remove('has-notifications');
+        // Escuchar notificaciones personales
+        db.ref(`notifications/${deviceId}`).on('value', snapshot => {
+            allNotifications = { ...allNotifications, ...(snapshot.val() || {}) };
+            console.log('Notificaciones personales cargadas:', snapshot.val());
+            renderNotifications(allNotifications);
+        }, error => {
+            console.error('Error al cargar notificaciones personales:', error);
+        });
+
+        // Procesar notificaciones del sistema una sola vez
+        db.ref('system-notifications').once('value', snapshot => {
+            const systemNotifications = snapshot.val() || {};
+            console.log('Notificaciones del sistema cargadas:', systemNotifications);
+            const viewedSystemNotifs = JSON.parse(localStorage.getItem('viewedSystemNotifs')) || [];
+
+            Object.entries(systemNotifications).forEach(([key, notif]) => {
+                if (!viewedSystemNotifs.includes(key)) {
+                    // Copiar a notificaciones personales
+                    db.ref(`notifications/${deviceId}`).push({
+                        message: notif.message,
+                        timestamp: notif.timestamp || new Date().toISOString(),
+                        read: false,
+                        type: "system"
+                    }).then(() => {
+                        viewedSystemNotifs.push(key);
+                        localStorage.setItem('viewedSystemNotifs', JSON.stringify(viewedSystemNotifs));
+                        console.log(`Notificación del sistema ${key} copiada a ${deviceId}`);
+                    });
                 }
+            });
+        }, error => {
+            console.error('Error al cargar notificaciones del sistema:', error);
+        });
 
-                notificationsToggle.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    notificationsList.style.display = notificationsList.style.display === 'none' ? 'block' : 'none';
-                    if (notificationsList.style.display === 'block') {
-                        notificationsList.innerHTML = '';
-                        notifications.forEach(notif => {
-                            const div = document.createElement('div');
-                            div.classList.add('notification');
-                            div.innerHTML = `
-                                <span>${notif.message} (${new Date(notif.timestamp).toLocaleTimeString()})</span>
-                                <button class="close-btn" data-id="${notif.id}">✖</button>
-                            `;
-                            notificationsList.appendChild(div);
-                        });
+        function renderNotifications(notificationsObj) {
+            const notifications = Object.entries(notificationsObj).map(([key, notif]) => ({
+                id: key,
+                message: notif.message || 'Notificación sin mensaje',
+                timestamp: notif.timestamp || new Date().toISOString(),
+                read: notif.read || false,
+                type: notif.type || 'unknown'
+            }));
+            console.log('Notificaciones combinadas para renderizar:', notifications);
 
-                        // Marcar todas como leídas al abrir
-                        notifications.forEach(notif => {
-                            if (!notif.read && !notif.type !== 'system') {
-                                db.ref(`notifications/${deviceId}/${notif.id}`).update({ read: true });
-                            }
-                        });
-                        notificationsToggle.classList.remove('has-notifications');
-                    }
-                }, { once: true }); // Evitar múltiples listeners
+            const unreadCount = notifications.filter(n => !n.read).length;
+            if (unreadCount > 0) {
+                notificationsToggle.classList.add('has-notifications');
+                console.log('Notificaciones no leídas detectadas:', unreadCount);
+            } else {
+                notificationsToggle.classList.remove('has-notifications');
+                console.log('No hay notificaciones no leídas');
             }
 
-            // Manejar cierre de notificaciones individuales
-            notificationsList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('close-btn')) {
-                    const notifId = e.target.dataset.id;
-                    db.ref(`notifications/${deviceId}/${notifId}`).remove()
-                        .then(() => console.log(`Notificación ${notifId} eliminada`))
-                        .catch(error => console.error('Error al eliminar notificación:', error));
+            notificationsToggle.onclick = (e) => {
+                e.preventDefault();
+                console.log('Botón de notificaciones clickeado');
+                const isVisible = notificationsList.style.display === 'block';
+                notificationsList.style.display = isVisible ? 'none' : 'block';
+
+                if (!isVisible) {
+                    notificationsList.innerHTML = notifications.length > 0 ? '' : '<p>No hay notificaciones.</p>';
+                    notifications.forEach(notif => {
+                        const div = document.createElement('div');
+                        div.classList.add('notification');
+                        const timeStr = new Date(notif.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                        div.innerHTML = `
+                            <span>${notif.message} (${timeStr})</span>
+                            <button class="close-btn" data-id="${notif.id}">✖</button>
+                        `;
+                        notificationsList.appendChild(div);
+                    });
+
+                    // Marcar todas como leídas
+                    notifications.forEach(notif => {
+                        if (!notif.read && notif.type !== 'system') {
+                            db.ref(`notifications/${deviceId}/${notif.id}`).update({ read: true })
+                                .then(() => console.log(`Notificación ${notif.id} marcada como leída`))
+                                .catch(error => console.error('Error al marcar como leída:', error));
+                        }
+                    });
+                    notificationsToggle.classList.remove('has-notifications');
                 }
-            });
+            };
         }
+
+        notificationsList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('close-btn')) {
+                const notifId = e.target.dataset.id;
+                console.log('Intentando eliminar notificación:', notifId);
+                db.ref(`notifications/${deviceId}/${notifId}`).remove()
+                    .then(() => {
+                        console.log(`Notificación ${notifId} eliminada`);
+                        e.target.parentElement.remove();
+                    })
+                    .catch(error => console.error('Error al eliminar notificación:', error));
+            }
+        });
     }
 
-    // Generar notificación cuando alguien comenta una imagen que te gusta
     function setupCommentNotifications() {
         db.ref('comments').on('child_added', snapshot => {
             const comment = snapshot.val();
             const imageId = snapshot.ref.parent.key;
+            console.log('Nuevo comentario detectado:', comment, 'en imagen:', imageId);
 
-            db.ref('likes').once('value', likesSnapshot => {
-                const likes = likesSnapshot.val() || {};
-                if (likes[imageId] > 0 && comment.deviceId !== deviceId) {
-                    fetch('imagenes.json')
-                        .then(response => response.json())
-                        .then(data => {
-                            const image = data.find(img => img.id === Number(imageId));
-                            if (image) {
-                                db.ref(`notifications/${deviceId}`).push({
-                                    message: `${comment.username} comentó en la imagen "${image.title}" que te gusta`,
-                                    timestamp: new Date().toISOString(),
-                                    read: false,
-                                    type: "comment",
-                                    imageId: imageId
-                                });
-                            }
-                        });
-                }
-            });
+            if (comment.deviceId !== deviceId) {
+                db.ref('likes').once('value', likesSnapshot => {
+                    const likes = likesSnapshot.val() || {};
+                    console.log('Likes actuales:', likes);
+                    if (likes[imageId] > 0) {
+                        fetch('imagenes.json')
+                            .then(response => response.json())
+                            .then(data => {
+                                const image = data.find(img => img.id === Number(imageId));
+                                if (image) {
+                                    db.ref(`notifications/${deviceId}`).push({
+                                        message: `${comment.username} comentó en la imagen "${image.title}" que te gusta`,
+                                        timestamp: new Date().toISOString(),
+                                        read: false,
+                                        type: "comment",
+                                        imageId: imageId
+                                    }).then(() => console.log('Notificación de comentario enviada para:', deviceId));
+                                } else {
+                                    console.log('Imagen no encontrada en imagenes.json para ID:', imageId);
+                                }
+                            })
+                            .catch(error => console.error('Error al cargar imagenes.json:', error));
+                    } else {
+                        console.log('No hay likes en la imagen:', imageId);
+                    }
+                });
+            } else {
+                console.log('Comentario propio, no se genera notificación');
+            }
         });
     }
 
