@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         inline: false,
                         navbar: false,
                         toolbar: {
-                            zoomIn: 1,
+                            zoomIn: 0,
                             zoomOut: 1,
                             oneToOne: 1,
                             reset: 1,
