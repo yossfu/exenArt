@@ -3,73 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exene - Detalle de Imagen</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Exene</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
+    <header class="header">
         <div class="logo-container">
-            <img src="logo.png" alt="Logo" class="logo">
-            <h1>Exene</h1>
+            <img src="logo.png" alt="Exene" class="logo">
         </div>
-        <span id="user-info"></span>
+        <span id="user-info" class="user-info"></span>
     </header>
 
-    <div class="container">
-        <div class="image-container">
-            <!-- La imagen y el botón de like se cargan dinámicamente aquí -->
-        </div>
-        <div class="details">
-            <!-- Detalles de la imagen se cargan aquí -->
-        </div>
+    <main class="main-content">
+        <section class="image-section">
+            <div class="image-container">
+                <div id="image-viewer"></div>
+                <button class="like-btn" style="display: none;"></button>
+            </div>
+        </section>
 
-        <section>
-            <span class="section-title">Comentarios</span>
-            <div id="comments-list"></div>
-            <form id="comment-form">
-                <input type="text" id="comment-text" placeholder="Escribe un comentario...">
-                <button type="submit"><i class="fas fa-paper-plane"></i></button>
+        <section class="details-section">
+            <div class="details"></div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Comentarios</h2>
+            <div id="comments-list" class="comments-list"></div>
+            <form id="comment-form" class="comment-form">
+                <input type="text" id="comment-text" placeholder="Añade un comentario...">
+                <button type="submit" class="btn"><i class="fas fa-paper-plane"></i></button>
             </form>
         </section>
 
-        <section>
-            <span class="section-title">Imágenes Similares</span>
-            <div class="similar-gallery"></div>
+        <section class="section">
+            <h2 class="section-title">Imágenes Similares</h2>
+            <div class="grid similar-gallery"></div>
         </section>
+    </main>
+
+    <div id="search-container" class="search-container" style="display: none;">
+        <input type="text" id="search-input" placeholder="Buscar imágenes...">
+        <button id="search-btn" class="btn"><i class="fas fa-search"></i></button>
+        <button id="reset-btn" class="btn"><i class="fas fa-times"></i></button>
     </div>
 
-    <div id="search-container" style="display: none;">
-        <input type="text" id="search-input" placeholder="Buscar...">
-        <button id="search-btn"><i class="fas fa-search"></i></button>
-        <button id="reset-btn"><i class="fas fa-times"></i></button>
-    </div>
-
-    <div id="search-results" style="display: none;"></div>
+    <div id="search-results" class="search-results" style="display: none;"></div>
 
     <div id="likes-list" class="likes-list" style="display: none;"></div>
 
     <div id="chat-window" class="chat-window" style="display: none;">
         <div id="chat-messages" class="chat-messages"></div>
-        <form id="chat-form">
-            <input type="text" id="chat-input" placeholder="Escribe un mensaje...">
-            <button type="button" id="emoji-btn"><i class="fas fa-smile"></i></button>
-            <button type="submit"><i class="fas fa-paper-plane"></i></button>
+        <form id="chat-form" class="chat-form">
+            <input type="text" id="chat-input" placeholder="Escribe aquí...">
+            <button type="button" id="emoji-btn" class="btn"><i class="fas fa-smile"></i></button>
+            <button type="submit" class="btn"><i class="fas fa-paper-plane"></i></button>
         </form>
-        <div id="emoji-picker" style="display: none; position: absolute; bottom: 60px; right: 10px; background: white; border: 1px solid #ccc; padding: 10px; max-height: 200px; overflow-y: auto;"></div>
+        <div id="emoji-picker" class="emoji-picker" style="display: none;"></div>
     </div>
 
-    <div class="bottom-menu">
-        <a href="#" id="theme-toggle" class="menu-item"><i class="fas fa-moon"></i></a>
-        <a href="#" id="search-toggle" class="menu-item"><i class="fas fa-search"></i></a>
-        <a href="index.html" class="menu-item home-btn"><i class="fas fa-home"></i></a>
-        <a href="#" id="likes-toggle" class="menu-item"><i class="fas fa-heart"></i></a>
-        <a href="#" id="chat-toggle" class="menu-item"><i class="fas fa-comments"></i></a>
-    </div>
+    <nav class="bottom-nav">
+        <a href="#" id="theme-toggle" class="nav-item"><i class="fas fa-moon"></i></a>
+        <a href="#" id="search-toggle" class="nav-item"><i class="fas fa-search"></i></a>
+        <a href="index.html" class="nav-item home-btn"><i class="fas fa-home"></i></a>
+        <a href="#" id="likes-toggle" class="nav-item"><i class="fas fa-heart"></i></a>
+        <a href="#" id="chat-toggle" class="nav-item"><i class="fas fa-comments"></i></a>
+    </nav>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
