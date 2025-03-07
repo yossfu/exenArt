@@ -22,24 +22,34 @@ document.addEventListener('DOMContentLoaded', async function () {
     localStorage.setItem('deviceId', deviceId);
     let username = null;
 
-    // Función para gestionar los puntos de los tags en localStorage
+    let unreadMessages = 0;
+
+    function getColorFromUserId(userId) {
+        let hash = 0;
+        for (let i = 0; i < userId.length; i++) {
+            hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const hue = hash % 360;
+        return `hsl(${hue}, 70%, 50%)`;
+    }
+
     function updateTagScores(tags, action) {
         let tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
         
         if (action === 'view') {
             if (tags.length > 0) {
-                tagScores[tags[0]] = (tagScores[tags[0]] || 0) + 5; // +5 al primer tag
+                tagScores[tags[0]] = (tagScores[tags[0]] || 0) + 5;
                 tags.slice(1).forEach(tag => {
-                    tagScores[tag] = (tagScores[tag] || 0) + 2; // +2 a los demás
+                    tagScores[tag] = (tagScores[tag] || 0) + 2;
                 });
             }
         } else if (action === 'like') {
             tags.forEach(tag => {
-                tagScores[tag] = (tagScores[tag] || 0) + 3; // +3 por like
+                tagScores[tag] = (tagScores[tag] || 0) + 3;
             });
         } else if (action === 'time') {
             tags.forEach(tag => {
-                tagScores[tag] = (tagScores[tag] || 0) + 0.3; // +0.3 por cada 2 segundos
+                tagScores[tag] = (tagScores[tag] || 0) + 0.3;
             });
         }
 
@@ -73,23 +83,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     await loadUsername();
-
-    const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-        const body = document.body;
-        if (localStorage.getItem('theme') === 'night') {
-            body.classList.add('night-mode');
-            themeToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
-        }
-        themeToggle.addEventListener('click', e => {
-            e.preventDefault();
-            body.classList.toggle('night-mode');
-            const isNight = body.classList.contains('night-mode');
-            localStorage.setItem('theme', isNight ? 'night' : 'light');
-            themeToggle.querySelector('i').classList.toggle('fa-moon', !isNight);
-            themeToggle.querySelector('i').classList.toggle('fa-sun', isNight);
-        });
-    }
 
     function setupSearch() {
         const searchToggle = document.getElementById('search-toggle');
@@ -167,7 +160,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     dbRealtime.ref(`likes/${id}/${deviceId}`).set(!isLiked).then(() => {
                         btn.classList.toggle('liked');
                         gsap.to(btn.querySelector('i'), { scale: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
-                        if (!isLiked) { // Solo sumar puntos al dar "like", no al quitarlo
+                        if (!isLiked) {
                             const img = images.find(i => i.id === Number(id));
                             if (img) updateTagScores(img.tags, 'like');
                         }
@@ -180,12 +173,16 @@ document.addEventListener('DOMContentLoaded', async function () {
     function setupChat() {
         const chatToggle = document.getElementById('chat-toggle');
         const chatWindow = document.getElementById('chat-window');
+        const chatCloseBtn = document.getElementById('chat-close-btn');
         const chatForm = document.getElementById('chat-form');
         const chatInput = document.getElementById('chat-input');
         const chatMessages = document.getElementById('chat-messages');
         const emojiBtn = document.getElementById('emoji-btn');
         const emojiPicker = document.getElementById('emoji-picker');
+        const chatNotification = document.getElementById('chat-notification');
         const emojis = ['😀', '😂', '😍', '😢', '😡', '👍', '👎', '❤️', '🔥', '🎉'];
+
+        let lastMessageCount = 0;
 
         chatToggle.addEventListener('click', e => {
             e.preventDefault();
@@ -196,6 +193,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                 loadChatMessages();
                 chatMessages.dataset.loaded = 'true';
             }
+            if (isVisible) {
+                unreadMessages = 0;
+                updateNotificationBadge();
+            }
+        });
+
+        chatCloseBtn.addEventListener('click', () => {
+            chatWindow.style.display = 'none';
+            gsap.to(chatWindow, { y: 100, opacity: 0, duration: 0.5 });
         });
 
         chatForm.addEventListener('submit', async e => {
@@ -227,28 +233,108 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
+        function updateNotificationBadge() {
+            if (unreadMessages > 0) {
+                chatNotification.textContent = unreadMessages;
+                chatNotification.style.display = 'flex';
+                gsap.from(chatNotification, { scale: 0.8, opacity: 0, duration: 0.3 });
+            } else {
+                chatNotification.style.display = 'none';
+            }
+        }
+
         function loadChatMessages() {
             dbFirestore.collection('messages')
                 .where('chatId', '==', 'globalChat')
                 .orderBy('timestamp', 'desc')
                 .limit(20)
                 .onSnapshot(snapshot => {
+                    const currentMessageCount = snapshot.size;
+                    if (chatWindow.style.display === 'none' && currentMessageCount > lastMessageCount) {
+                        unreadMessages += currentMessageCount - lastMessageCount;
+                        updateNotificationBadge();
+                    }
+                    lastMessageCount = currentMessageCount;
+
                     chatMessages.innerHTML = '';
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         const div = document.createElement('div');
                         div.classList.add('chat-message');
-                        div.innerHTML = `<p><strong>${data.username}</strong>: ${data.text}</p><span>${new Date(data.timestamp).toLocaleTimeString()}</span>`;
+                        if (data.userId === deviceId) {
+                            div.classList.add('mine');
+                        }
+                        div.innerHTML = `
+                            <p><strong>${data.username}</strong>: ${data.text}</p>
+                            <span>${new Date(data.timestamp).toLocaleTimeString()}</span>
+                        `;
+                        if (data.userId !== deviceId) {
+                            const userColor = getColorFromUserId(data.userId);
+                            div.querySelector('p').style.backgroundColor = userColor;
+                            div.querySelector('p').style.color = '#ffffff';
+                        }
                         chatMessages.insertBefore(div, chatMessages.firstChild);
                     });
                     if (chatMessages.children.length) {
                         gsap.from('.chat-message', { opacity: 0, y: 10, stagger: 0.1, duration: 0.5 });
                     }
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
                 });
         }
     }
 
-    function setupLikeListeners(entries) {
+    function setupFilters() {
+        const filterToggle = document.getElementById('filter-toggle');
+        const filterWindow = document.getElementById('filter-window');
+        const filterCloseBtn = document.getElementById('filter-close-btn');
+        const resetFilterBtn = document.getElementById('reset-filter-btn');
+        const filterCheckboxes = document.querySelectorAll('#filter-window input[type="checkbox"]');
+
+        filterToggle.addEventListener('click', e => {
+            e.preventDefault();
+            const isVisible = filterWindow.style.display === 'none';
+            filterWindow.style.display = 'block'; // Siempre visible, controlamos con clase
+            if (isVisible) {
+                filterWindow.classList.add('open');
+                gsap.from(filterWindow, { x: -300, duration: 0.3, ease: 'power2.out' });
+            } else {
+                filterWindow.classList.remove('open');
+                gsap.to(filterWindow, { x: -300, duration: 0.3, ease: 'power2.in', onComplete: () => filterWindow.style.display = 'none' });
+            }
+        });
+
+        filterCloseBtn.addEventListener('click', () => {
+            filterWindow.classList.remove('open');
+            gsap.to(filterWindow, { x: -300, duration: 0.3, ease: 'power2.in', onComplete: () => filterWindow.style.display = 'none' });
+        });
+
+        filterCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', applyFilters);
+        });
+
+        resetFilterBtn.addEventListener('click', () => {
+            filterCheckboxes.forEach(checkbox => checkbox.checked = false);
+            applyFilters();
+        });
+
+        function applyFilters() {
+            const selectedFilters = Array.from(filterCheckboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value.toLowerCase());
+
+            if (selectedFilters.length === 0) {
+                filteredImages = [...images];
+            } else {
+                filteredImages = images.filter(img => 
+                    selectedFilters.some(filter => img.tags.some(tag => tag.toLowerCase() === filter))
+                );
+            }
+            loadedImages = 0;
+            renderGallery(true);
+        }
+    }
+
+    function setupGalleryLikeListeners(entries) {
         entries.forEach(entry => {
             const btn = entry.target;
             const id = btn.dataset.id;
@@ -268,6 +354,22 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
+    function loadLikesImmediately(container) {
+        const likeButtons = container.querySelectorAll('.like-btn');
+        likeButtons.forEach(btn => {
+            const id = btn.dataset.id;
+            const countElement = btn.nextElementSibling;
+            dbRealtime.ref(`likes/${id}`).on('value', snapshot => {
+                const likesData = snapshot.val() || {};
+                const count = Object.keys(likesData).length || 0;
+                if (countElement && countElement.classList.contains('like-count')) {
+                    countElement.textContent = count;
+                }
+                btn.classList.toggle('liked', likesData[deviceId] === true);
+            });
+        });
+    }
+
     if (document.querySelector('.gallery')) {
         if (username) loadGallery();
 
@@ -283,6 +385,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     setupSearch();
                     setupLikes();
                     setupChat();
+                    setupFilters();
 
                     const sentinel = document.getElementById('sentinel');
                     const observer = new IntersectionObserver(entries => {
@@ -323,8 +426,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 gallery.appendChild(div);
             });
             loadedImages += nextImages.length;
-            const observer = new IntersectionObserver(setupLikeListeners, { rootMargin: '100px' });
-            document.querySelectorAll('.like-btn').forEach(btn => observer.observe(btn));
+            const observer = new IntersectionObserver(setupGalleryLikeListeners, { rootMargin: '100px' });
+            gallery.querySelectorAll('.like-btn').forEach(btn => observer.observe(btn));
         }
 
         function renderForYou() {
@@ -364,8 +467,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 });
                 forYou.appendChild(div);
             });
-            const observer = new IntersectionObserver(setupLikeListeners, { rootMargin: '100px' });
-            document.querySelectorAll('.like-btn').forEach(btn => observer.observe(btn));
+            loadLikesImmediately(forYou);
         }
 
         function renderMostLiked() {
@@ -396,8 +498,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     });
                     mostLiked.appendChild(div);
                 });
-                const observer = new IntersectionObserver(setupLikeListeners, { rootMargin: '100px' });
-                document.querySelectorAll('.like-btn').forEach(btn => observer.observe(btn));
+                loadLikesImmediately(mostLiked);
             });
         }
     }
@@ -475,17 +576,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                         similarGallery.appendChild(div);
                     });
 
-                    // Registrar vista inicial
                     updateTagScores(image.tags, 'view');
 
-                    // Contar tiempo de permanencia (0.3 puntos cada 2 segundos)
                     let timeSpent = 0;
                     const interval = setInterval(() => {
                         timeSpent += 2;
                         updateTagScores(image.tags, 'time');
-                    }, 2000); // Cada 2 segundos
+                    }, 2000);
 
-                    // Limpiar intervalo al salir de la página
                     window.addEventListener('beforeunload', () => clearInterval(interval));
                 } else {
                     details.innerHTML = '<p>Imagen no encontrada</p>';
@@ -494,8 +592,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 setupSearch();
                 setupLikes();
                 setupChat();
+                setupFilters();
 
-                const observer = new IntersectionObserver(setupLikeListeners, { rootMargin: '100px' });
+                const observer = new IntersectionObserver(setupGalleryLikeListeners, { rootMargin: '100px' });
                 document.querySelectorAll('.like-btn').forEach(btn => observer.observe(btn));
             })
             .catch(error => {
