@@ -10,7 +10,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     };
 
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const dbRealtime = firebase.database();
+    const dbFirestore = firebase.firestore();
 
     let images = [];
     let filteredImages = [];
@@ -32,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     async function loadUsername() {
         try {
-            const snapshot = await db.ref(`users/${deviceId}`).once('value');
+            const snapshot = await dbRealtime.ref(`users/${deviceId}`).once('value');
             const userData = snapshot.val();
             if (userData && userData.username) {
                 username = userData.username;
@@ -57,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const newUsername = document.getElementById('username').value.trim();
             if (newUsername) {
                 try {
-                    await db.ref(`users/${deviceId}`).set({ username: newUsername });
+                    await dbRealtime.ref(`users/${deviceId}`).set({ username: newUsername });
                     username = newUsername;
                     userInfo.textContent = `Usuario: ${username}`;
                     if (authContainer) authContainer.style.display = 'none';
@@ -91,53 +92,97 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
+    const chatBackdrop = document.createElement('div');
+    chatBackdrop.classList.add('chat-backdrop');
+    document.body.appendChild(chatBackdrop);
+
     function setupSearch() {
         const searchInput = document.getElementById('search-input');
         const searchBtn = document.getElementById('search-btn');
         const resetBtn = document.getElementById('reset-btn');
         const searchToggle = document.getElementById('search-toggle');
         const searchContainer = document.getElementById('search-container');
+        const searchResults = document.getElementById('search-results');
         const body = document.body;
 
-        if (searchToggle && searchContainer) {
-            searchToggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('Search toggle clicked');
-                const isVisible = searchContainer.style.display === 'none' || searchContainer.style.display === '';
-                searchContainer.style.display = isVisible ? 'flex' : 'none';
-                body.classList.toggle('search-active', isVisible);
-            });
+        if (!searchToggle || !searchContainer || !searchResults) {
+            console.error('No se encontraron elementos del buscador:', { searchToggle, searchContainer, searchResults });
+            return;
+        }
+
+        searchToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Search toggle clicked');
+            const isVisible = searchContainer.style.display === 'none' || searchContainer.style.display === '';
+            searchContainer.style.display = isVisible ? 'flex' : 'none';
+            body.classList.toggle('search-active', isVisible);
+            if (isVisible) {
+                searchInput.focus();
+                searchResults.style.display = 'none';
+            } else {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        function displaySearchResults(query) {
+            const results = images.filter(img => 
+                img.title.toLowerCase().includes(query.toLowerCase()) || 
+                img.description.toLowerCase().includes(query.toLowerCase()) || 
+                img.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+            );
+
+            searchResults.innerHTML = '';
+            if (results.length > 0) {
+                results.forEach(img => {
+                    const div = document.createElement('div');
+                    div.classList.add('result-item');
+                    div.innerHTML = `
+                        <img src="${img.url}" alt="${img.title}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px;">
+                        <span>${img.title}</span>
+                    `;
+                    div.addEventListener('click', () => {
+                        window.location.href = `image-detail.html?id=${img.id}`;
+                    });
+                    searchResults.appendChild(div);
+                });
+                searchResults.style.display = 'block';
+            } else {
+                searchResults.innerHTML = '<p>No se encontraron resultados</p>';
+                searchResults.style.display = 'block';
+            }
         }
 
         if (searchBtn && searchInput) {
             searchBtn.addEventListener('click', () => {
                 const query = searchInput.value.trim();
                 if (query) {
-                    if (document.querySelector('.gallery')) {
-                        filterImages(query);
-                    } else {
-                        window.location.href = `index.html?search=${encodeURIComponent(query)}`;
-                    }
-                    searchContainer.style.display = 'none';
-                    body.classList.remove('search-active');
+                    console.log('Buscando:', query);
+                    displaySearchResults(query);
+                }
+            });
+
+            searchInput.addEventListener('input', () => {
+                const query = searchInput.value.trim();
+                if (query) {
+                    displaySearchResults(query);
+                } else {
+                    searchResults.style.display = 'none';
                 }
             });
 
             searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') searchBtn.click();
+                if (e.key === 'Enter') {
+                    searchBtn.click();
+                }
             });
+        } else {
+            console.error('Faltan elementos de búsqueda:', { searchBtn, searchInput });
         }
 
         if (resetBtn && searchInput) {
             resetBtn.addEventListener('click', () => {
                 searchInput.value = '';
-                if (document.querySelector('.gallery')) {
-                    filteredImages = [...images];
-                    loadedImages = 0;
-                    renderGallery(true);
-                } else {
-                    window.location.href = 'index.html';
-                }
+                searchResults.style.display = 'none';
                 searchContainer.style.display = 'none';
                 body.classList.remove('search-active');
             });
@@ -153,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 e.preventDefault();
                 likesList.style.display = likesList.style.display === 'none' ? 'block' : 'none';
                 if (likesList.style.display === 'block') {
-                    db.ref('likes').once('value', snapshot => {
+                    dbRealtime.ref('likes').once('value', snapshot => {
                         const likesData = snapshot.val() || {};
                         const likedImages = images.filter(img => likesData[img.id] && Object.keys(likesData[img.id]).length > 0);
                         likesList.innerHTML = '';
@@ -177,12 +222,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const btn = e.target.closest('.like-btn');
                 const id = btn.dataset.id;
 
-                // Verificar si este dispositivo ya dio like
-                db.ref(`likes/${id}/${deviceId}`).once('value', snapshot => {
+                dbRealtime.ref(`likes/${id}/${deviceId}`).once('value', snapshot => {
                     const isLiked = snapshot.val() === true;
-
-                    // Alternar el estado del like para este dispositivo
-                    db.ref(`likes/${id}/${deviceId}`).set(!isLiked)
+                    dbRealtime.ref(`likes/${id}/${deviceId}`).set(!isLiked)
                         .then(() => {
                             btn.classList.toggle('liked', !isLiked);
                             updateUserInteraction(id, { liked: !isLiked });
@@ -191,50 +233,175 @@ document.addEventListener('DOMContentLoaded', async function () {
                 });
             }
         });
-
-        // Escuchar cambios en tiempo real para todos los botones de like
-        document.querySelectorAll('.like-btn').forEach(btn => {
-            const id = btn.dataset.id;
-            db.ref(`likes/${id}`).on('value', snapshot => {
-                const likesData = snapshot.val() || {};
-                const likeCount = Object.keys(likesData).length;
-                btn.querySelector('.like-count').textContent = likeCount > 0 ? likeCount : '';
-                // Verificar si este dispositivo dio like
-                const isLiked = likesData[deviceId] === true;
-                btn.classList.toggle('liked', isLiked);
-            });
-        });
     }
 
-    function setupNotifications() {
-        const notificationsToggle = document.getElementById('notifications-toggle');
-        const notificationsList = document.getElementById('notifications-list');
+    function setupChat() {
+        const chatToggle = document.getElementById('chat-toggle');
+        const chatWindow = document.getElementById('chat-window');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+        const emojiBtn = document.getElementById('emoji-btn');
+        const emojiPicker = document.getElementById('emoji-picker');
+        const chatId = 'globalChat';
+        const MESSAGE_LIFETIME = 24 * 60 * 60 * 1000;
+        const body = document.body;
 
-        if (notificationsToggle && notificationsList) {
-            fetch('notificaciones.json')
-                .then(response => response.json())
-                .then(notifications => {
-                    if (notifications.length > 0) {
-                        notificationsToggle.classList.add('has-notifications');
-                    }
+        const emojis = ['😀', '😂', '😍', '😢', '😡', '👍', '👎', '❤️', '🔥', '🎉', '✨', '💪', '🙌', '🤓', '😎'];
 
-                    notificationsToggle.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        notificationsList.style.display = notificationsList.style.display === 'none' ? 'block' : 'none';
-                        if (notificationsList.style.display === 'block') {
-                            notificationsList.innerHTML = '';
-                            notifications.forEach(notif => {
-                                const div = document.createElement('div');
-                                div.classList.add('notification');
-                                div.textContent = notif.message;
-                                notificationsList.appendChild(div);
-                            });
-                            notificationsToggle.classList.remove('has-notifications');
-                        }
-                    });
-                })
-                .catch(error => console.error('Error al cargar notificaciones.json:', error));
+        console.log('Inicializando chat - username:', username, 'deviceId:', deviceId);
+
+        if (chatToggle && chatWindow) {
+            chatToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                const isVisible = chatWindow.style.display === 'none' || chatWindow.style.display === '';
+                chatWindow.style.display = isVisible ? 'block' : 'none';
+                body.classList.toggle('chat-active', isVisible);
+                if (isVisible && !chatMessages.dataset.loaded) {
+                    loadChatMessages();
+                    chatMessages.dataset.loaded = 'true';
+                }
+            });
         }
+
+        if (chatForm && chatInput) {
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = chatInput.value.trim();
+                console.log('Enviando mensaje - username:', username, 'deviceId:', deviceId, 'text:', text);
+                if (text && username && deviceId) {
+                    try {
+                        await dbFirestore.collection('messages').add({
+                            chatId: chatId,
+                            text: text,
+                            timestamp: Date.now(),
+                            userId: deviceId,
+                            username: username
+                        });
+                        chatInput.value = '';
+                        console.log('Mensaje enviado correctamente:', text);
+                    } catch (error) {
+                        console.error('Error detallado al enviar mensaje:', error);
+                        chatMessages.innerHTML = `<p>Error al enviar mensaje: ${error.message}</p>`;
+                    }
+                } else {
+                    chatMessages.innerHTML = '<p>Debes tener un nombre de usuario y deviceId para enviar mensajes.</p>';
+                    console.log('Faltan datos - username:', username, 'deviceId:', deviceId);
+                }
+            });
+
+            chatInput.addEventListener('focus', () => {
+                if (window.innerWidth <= 600) {
+                    chatWindow.classList.add('keyboard-active');
+                    setTimeout(() => {
+                        chatInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }, 300);
+                }
+            });
+
+            chatInput.addEventListener('blur', () => {
+                if (window.innerWidth <= 600) {
+                    chatWindow.classList.remove('keyboard-active');
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            });
+        }
+
+        if (emojiBtn && emojiPicker) {
+            emojiPicker.innerHTML = emojis.map(emoji => `<span class="emoji">${emoji}</span>`).join('');
+            emojiBtn.addEventListener('click', () => {
+                emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
+            });
+
+            emojiPicker.addEventListener('click', (e) => {
+                if (e.target.classList.contains('emoji')) {
+                    chatInput.value += e.target.textContent;
+                    emojiPicker.style.display = 'none';
+                    chatInput.focus();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!emojiBtn.contains(e.target) && !emojiPicker.contains(e.target)) {
+                    emojiPicker.style.display = 'none';
+                }
+            });
+        }
+
+        async function cleanOldMessages() {
+            const now = Date.now();
+            const cutoff = now - MESSAGE_LIFETIME;
+            console.log('Limpiando mensajes anteriores a:', new Date(cutoff).toLocaleString());
+
+            try {
+                const oldMessagesQuery = dbFirestore.collection('messages')
+                    .where('chatId', '==', chatId)
+                    .where('timestamp', '<', cutoff);
+                const snapshot = await oldMessagesQuery.get();
+
+                if (snapshot.empty) {
+                    console.log('No hay mensajes antiguos para eliminar');
+                    return;
+                }
+
+                const batch = dbFirestore.batch();
+                snapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                await batch.commit();
+                console.log(`Eliminados ${snapshot.size} mensajes antiguos`);
+            } catch (error) {
+                console.error('Error al eliminar mensajes antiguos:', error);
+            }
+        }
+
+        function loadChatMessages() {
+            console.log('Cargando mensajes para chatId:', chatId);
+            cleanOldMessages().then(() => {
+                dbFirestore.collection('messages')
+                    .where('chatId', '==', chatId)
+                    .orderBy('timestamp', 'desc')
+                    .limit(20)
+                    .onSnapshot(snapshot => {
+                        chatMessages.innerHTML = '';
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const div = document.createElement('div');
+                            div.classList.add('chat-message');
+                            div.innerHTML = `
+                                <p><strong>${data.username}</strong>: ${data.text}</p>
+                                <p class="timestamp">${new Date(data.timestamp).toLocaleString()}</p>
+                            `;
+                            chatMessages.insertBefore(div, chatMessages.firstChild);
+                        });
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        console.log('Mensajes cargados:', snapshot.size);
+                    }, error => {
+                        console.error('Error detallado al cargar mensajes:', error);
+                        chatMessages.innerHTML = `<p>Error al cargar el chat: ${error.message}</p>`;
+                    });
+            });
+        }
+    }
+
+    function setupLikeListeners(entries, observer) {
+        entries.forEach(entry => {
+            const btn = entry.target;
+            const id = btn.dataset.id;
+
+            if (entry.isIntersecting) {
+                dbRealtime.ref(`likes/${id}`).on('value', snapshot => {
+                    const likesData = snapshot.val() || {};
+                    const likeCount = Object.keys(likesData).length;
+                    btn.querySelector('.like-count').textContent = likeCount > 0 ? likeCount : '';
+                    const isLiked = likesData[deviceId] === true;
+                    btn.classList.toggle('liked', isLiked);
+                });
+            } else {
+                dbRealtime.ref(`likes/${id}`).off('value');
+            }
+        });
     }
 
     function filterImages(query) {
@@ -247,10 +414,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         renderGallery(true);
     }
 
-    function loadLikeState(id) {
-        // Esta función ya no es necesaria con la escucha en tiempo real en setupLikes
-    }
-
     function updateUserInteraction(imageId, interaction) {
         let interactions = JSON.parse(localStorage.getItem('userInteractions')) || {};
         const image = images.find(img => img.id === Number(imageId));
@@ -261,8 +424,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
         if (interaction.time) interactions[imageId].time += interaction.time;
         if (interaction.liked !== undefined) interactions[imageId].likes = interaction.liked ? 1 : 0;
-        interactions[imageId].visits += 1; // Incrementar visitas
-        interactions[imageId].lastInteraction = Date.now(); // Registrar timestamp
+        interactions[imageId].visits += 1;
+        interactions[imageId].lastInteraction = Date.now();
         localStorage.setItem('userInteractions', JSON.stringify(interactions));
 
         updateTagScores(imageId);
@@ -274,15 +437,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (!imageData) return;
 
         let tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
-        const isRecent = (Date.now() - imageData.lastInteraction) < 24 * 60 * 60 * 1000; // Últimas 24 horas
+        const isRecent = (Date.now() - imageData.lastInteraction) < 24 * 60 * 60 * 1000;
         const recencyMultiplier = isRecent ? 1.5 : 1;
 
         imageData.tags.forEach((tag, index) => {
             if (!tagScores[tag]) tagScores[tag] = { time: 0, likes: 0, visits: 0, score: 0 };
-            const timeScore = (imageData.time / 5) * 2; // 2 puntos por 5 segundos
-            const likeScore = imageData.likes * 10; // 10 puntos por like
-            const visitScore = imageData.visits * 5; // 5 puntos por visita
-            const weight = index === 0 ? 1.5 : 1; // 1.5x para el primer tag
+            const timeScore = (imageData.time / 5) * 2;
+            const likeScore = imageData.likes * 10;
+            const visitScore = imageData.visits * 5;
+            const weight = index === 0 ? 1.5 : 1;
             const baseScore = (timeScore + likeScore + visitScore) * weight * recencyMultiplier;
 
             tagScores[tag].time += imageData.time;
@@ -302,10 +465,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     function calculateTagBasedScore(image, topTags) {
         const tagScores = JSON.parse(localStorage.getItem('userInteractions')) || {};
         let totalScore = 0;
-        const topTag = topTags[0]; // Tag con más puntos
         image.tags.forEach((tag, index) => {
             const baseScore = tagScores[tag]?.score || 0;
-            const weight = index === 0 && topTags.includes(tag) ? 1.2 : 1; // 20% extra si el primer tag está en topTags
+            const weight = index === 0 && topTags.includes(tag) ? 1.2 : 1;
             totalScore += baseScore * weight;
         });
         return totalScore / image.tags.length;
@@ -353,7 +515,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     renderMostLiked();
                     setupSearch();
                     setupLikes();
-                    setupNotifications();
+                    setupChat();
                 })
                 .catch(error => console.error('Error al cargar imagenes.json en index:', error));
         }
@@ -397,6 +559,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 gallery.appendChild(sentinel);
             }
 
+            const likeObserver = new IntersectionObserver(setupLikeListeners, { rootMargin: '200px' });
+            document.querySelectorAll('.like-btn').forEach(btn => likeObserver.observe(btn));
+
             if (reset || !window.sentinelObserver) {
                 if (window.sentinelObserver) window.sentinelObserver.disconnect();
                 window.sentinelObserver = new IntersectionObserver((entries) => {
@@ -407,9 +572,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }, { rootMargin: '200px' });
                 window.sentinelObserver.observe(sentinel);
             }
-
-            // Configurar escucha de likes después de renderizar
-            setupLikes();
         }
 
         function renderForYou() {
@@ -440,10 +602,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             }
 
-            const totalInteractions = Object.keys(interactions).length || 1; // Evitar división por 0
+            const totalInteractions = Object.keys(interactions).length || 1;
             const scoredImages = availableImages.map(img => ({
                 ...img,
-                score: calculateTagBasedScore(img, topTags) / totalInteractions + (Math.random() * 0.2) // Normalización + aleatoriedad
+                score: calculateTagBasedScore(img, topTags) / totalInteractions + (Math.random() * 0.2)
             })).sort((a, b) => b.score - a.score).slice(0, 3);
 
             forYou.innerHTML = '';
@@ -453,7 +615,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 div.innerHTML = `
                     <img src="${img.url}" alt="${img.title}">
                     <span class="title">${img.title}</span>
-                `;
+                    `;
                 div.addEventListener('click', () => window.location.href = `image-detail.html?id=${img.id}`);
                 forYou.appendChild(div);
             });
@@ -461,7 +623,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         function renderMostLiked() {
             const mostLiked = document.querySelector('.most-liked');
-            db.ref('likes').once('value', snapshot => {
+            dbRealtime.ref('likes').once('value', snapshot => {
                 const likesData = snapshot.val() || {};
                 const sortedImages = images.map(img => ({
                     ...img,
@@ -525,6 +687,24 @@ document.addEventListener('DOMContentLoaded', async function () {
                     console.log('Imagen encontrada:', image);
                     if (imageContainer) {
                         imageContainer.innerHTML = `<img src="${image.url}" alt="${image.title}">`;
+                        const imgElement = imageContainer.querySelector('img');
+                        imgElement.addEventListener('click', () => {
+                            imageContainer.classList.toggle('fullscreen');
+                            if (imageContainer.classList.contains('fullscreen')) {
+                                const closeBtn = document.createElement('button');
+                                closeBtn.id = 'close-btn';
+                                closeBtn.textContent = 'X';
+                                closeBtn.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    imageContainer.classList.remove('fullscreen');
+                                    closeBtn.remove();
+                                });
+                                imageContainer.appendChild(closeBtn);
+                            } else {
+                                const closeBtn = imageContainer.querySelector('#close-btn');
+                                if (closeBtn) closeBtn.remove();
+                            }
+                        });
                     }
                     if (details) {
                         details.innerHTML = `
@@ -547,7 +727,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         const topTags = image.tags.slice(0, 3);
                         let similarImages = images
                             .filter(img => img.id !== image.id && img.tags.some(tag => topTags.includes(tag)));
-                        similarImages = shuffleArray(similarImages).slice(0, 6);
+                        similarImages = shuffleArray(similarImages).slice(0, 9);
 
                         similarGallery.innerHTML = '';
                         similarImages.forEach(img => {
@@ -581,7 +761,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 setupSearch();
                 setupLikes();
-                setupNotifications();
+                setupChat();
+
+                const likeObserver = new IntersectionObserver(setupLikeListeners, { rootMargin: '200px' });
+                document.querySelectorAll('.like-btn').forEach(btn => likeObserver.observe(btn));
             })
             .catch(error => {
                 console.error('Error al cargar imagenes.json en image-detail:', error);
@@ -605,7 +788,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         username: username,
                         deviceId: deviceId
                     };
-                    db.ref(`comments/${imageId}`).push(comment)
+                    dbRealtime.ref(`comments/${imageId}`).push(comment)
                         .then(() => {
                             document.getElementById('comment-text').value = '';
                             console.log('Comentario enviado:', comment);
@@ -616,7 +799,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         if (commentsList) {
-            db.ref(`comments/${imageId}`).on('value', snapshot => {
+            dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
                 commentsList.innerHTML = '';
                 const comments = snapshot.val();
                 if (comments) {
