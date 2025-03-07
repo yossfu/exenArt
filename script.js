@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         let tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
         let interactedImages = JSON.parse(localStorage.getItem('interactedImages')) || {};
 
-        // Registrar la imagen como interactuada
         if (imageId) {
             interactedImages[imageId] = true;
             localStorage.setItem('interactedImages', JSON.stringify(interactedImages));
@@ -90,6 +89,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     await loadUsername();
+
+    // Función para calcular similitud coseno entre dos arrays de tags
+    function cosineSimilarity(tagsA, tagsB) {
+        const setA = new Set(tagsA);
+        const setB = new Set(tagsB);
+        const intersection = [...setA].filter(tag => setB.has(tag));
+        const union = new Set([...setA, ...setB]);
+        return intersection.length / union.size;
+    }
 
     function setupSearch() {
         const searchToggle = document.getElementById('search-toggle');
@@ -439,31 +447,51 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         function renderForYou() {
             const forYou = document.querySelector('.for-you');
+            forYou.innerHTML = ''; // Limpiar completamente la sección
+
             const tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
             const interactedImages = JSON.parse(localStorage.getItem('interactedImages')) || {};
-
-            forYou.innerHTML = ''; // Limpiar la sección
 
             if (Object.keys(tagScores).length === 0) {
                 forYou.innerHTML = '<p>Aún no hay suficientes datos de interacción.</p>';
                 return;
             }
 
-            // Calcular puntaje por imagen, dando más peso al primer tag y excluyendo imágenes interactuadas
-            const scoredImages = images
-                .filter(img => !interactedImages[img.id]) // Excluir imágenes ya interactuadas
-                .map(img => {
-                    const score = img.tags.reduce((sum, tag, index) => {
-                        const tagScore = tagScores[tag] || 0;
-                        return sum + (index === 0 ? tagScore * 2 : tagScore); // Peso doble al primer tag
-                    }, 0);
-                    return { ...img, score };
-                })
-                .sort((a, b) => b.score - a.score) // Ordenar de mayor a menor puntaje
-                .slice(0, Math.min(3, images.length)); // Tomar hasta 3 imágenes
+            // Crear perfil de usuario normalizado
+            const totalScore = Object.values(tagScores).reduce((sum, score) => sum + score, 0);
+            const userProfile = Object.fromEntries(
+                Object.entries(tagScores).map(([tag, score]) => [tag, score / totalScore])
+            );
 
-            // Renderizar las imágenes seleccionadas
-            scoredImages.forEach(img => {
+            // Calcular puntajes para todas las imágenes no interactuadas
+            const scoredImages = images
+                .filter(img => !interactedImages[img.id]) // Excluir imágenes interactuadas
+                .map(img => {
+                    // Puntaje basado en tags con peso dinámico para el primer tag
+                    const tagScore = img.tags.reduce((sum, tag, index) => {
+                        const weight = index === 0 ? Math.min(2 + (tagScores[tag] || 0) / 10, 3) : 1;
+                        return sum + (userProfile[tag] || 0) * weight;
+                    }, 0);
+
+                    // Similitud con imágenes interactuadas
+                    const interacted = Object.keys(interactedImages).map(id => images.find(i => i.id === Number(id)));
+                    const avgSimilarity = interacted.length > 0
+                        ? interacted.reduce((sum, i) => sum + cosineSimilarity(img.tags, i.tags), 0) / interacted.length
+                        : 0;
+
+                    // Puntaje final con serendipia
+                    const serendipity = Math.random() * 0.2;
+                    const finalScore = (0.7 * tagScore) + (0.3 * avgSimilarity) + serendipity;
+
+                    return { ...img, score: finalScore };
+                })
+                .sort((a, b) => b.score - a.score); // Ordenar por puntaje descendente
+
+            // Tomar exactamente 3 imágenes (o menos si no hay suficientes)
+            const recommendedImages = scoredImages.slice(0, Math.min(3, scoredImages.length));
+
+            // Renderizar las 3 imágenes recomendadas
+            recommendedImages.forEach(img => {
                 const div = document.createElement('div');
                 div.classList.add('grid-item');
                 div.innerHTML = `
@@ -487,10 +515,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             // Cargar los "Me Gusta" inmediatamente
             loadLikesImmediately(forYou);
 
-            // Si no hay imágenes disponibles después de filtrar
-            if (scoredImages.length === 0) {
+            // Si no hay suficientes imágenes recomendadas
+            if (recommendedImages.length === 0) {
                 forYou.innerHTML = '<p>No hay nuevas imágenes relacionadas con tus intereses.</p>';
             }
+
+            // Depuración para verificar las imágenes seleccionadas
+            console.log('Recomendadas en "Para Ti":', recommendedImages.map(img => ({ id: img.id, title: img.title, score: img.score })));
         }
 
         function renderMostLiked() {
