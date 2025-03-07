@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         localStorage.setItem('tagScores', JSON.stringify(tagScores));
+        console.log(`TagScores actualizados (${action}, id: ${imageId}):`, tagScores);
     }
 
     async function loadUsername() {
@@ -90,7 +91,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     await loadUsername();
 
-    // Función para calcular similitud coseno entre dos arrays de tags
     function cosineSimilarity(tagsA, tagsB) {
         const setA = new Set(tagsA);
         const setB = new Set(tagsB);
@@ -166,20 +166,40 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
+        // Manejo del clic en el botón "Like"
         document.addEventListener('click', e => {
             if (e.target.closest('.like-btn')) {
                 const btn = e.target.closest('.like-btn');
                 const id = btn.dataset.id;
+                const countElement = btn.nextElementSibling;
+
+                // Consultar estado actual del "Like" en Firebase
                 dbRealtime.ref(`likes/${id}/${deviceId}`).once('value', snapshot => {
                     const isLiked = snapshot.val() === true;
+
+                    // Cambiar el estado en Firebase
                     dbRealtime.ref(`likes/${id}/${deviceId}`).set(!isLiked).then(() => {
-                        btn.classList.toggle('liked');
-                        gsap.to(btn.querySelector('i'), { scale: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
+                        // Actualizar el estado visual del botón inmediatamente
                         if (!isLiked) {
+                            btn.classList.add('liked');
                             const img = images.find(i => i.id === Number(id));
                             if (img) updateTagScores(img.tags, 'like', img.id);
+                        } else {
+                            btn.classList.remove('liked');
                         }
-                    });
+
+                        // Animación del corazón
+                        gsap.to(btn.querySelector('i'), { scale: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
+
+                        // Actualizar el conteo de likes
+                        dbRealtime.ref(`likes/${id}`).once('value', countSnapshot => {
+                            const likesData = countSnapshot.val() || {};
+                            const count = Object.keys(likesData).length || 0;
+                            if (countElement && countElement.classList.contains('like-count')) {
+                                countElement.textContent = count;
+                            }
+                        });
+                    }).catch(error => console.error('Error al actualizar like:', error));
                 });
             }
         });
@@ -394,7 +414,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .then(data => {
                     images = data;
                     filteredImages = [...images];
+                    console.log('Imágenes cargadas:', images.length);
                     renderGallery(true);
+                    console.log('Llamando a renderForYou...');
                     renderForYou();
                     renderMostLiked();
                     setupSearch();
@@ -447,50 +469,49 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         function renderForYou() {
             const forYou = document.querySelector('.for-you');
-            forYou.innerHTML = ''; // Limpiar completamente la sección
+            console.log('Iniciando renderForYou...');
+            forYou.innerHTML = '';
 
             const tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
             const interactedImages = JSON.parse(localStorage.getItem('interactedImages')) || {};
 
+            console.log('tagScores:', tagScores);
+            console.log('interactedImages:', interactedImages);
+
             if (Object.keys(tagScores).length === 0) {
                 forYou.innerHTML = '<p>Aún no hay suficientes datos de interacción.</p>';
+                console.log('Sin datos de interacción, mostrando mensaje por defecto.');
                 return;
             }
 
-            // Crear perfil de usuario normalizado
             const totalScore = Object.values(tagScores).reduce((sum, score) => sum + score, 0);
             const userProfile = Object.fromEntries(
                 Object.entries(tagScores).map(([tag, score]) => [tag, score / totalScore])
             );
+            console.log('userProfile:', userProfile);
 
-            // Calcular puntajes para todas las imágenes no interactuadas
             const scoredImages = images
-                .filter(img => !interactedImages[img.id]) // Excluir imágenes interactuadas
+                .filter(img => !interactedImages[img.id])
                 .map(img => {
-                    // Puntaje basado en tags con peso dinámico para el primer tag
                     const tagScore = img.tags.reduce((sum, tag, index) => {
                         const weight = index === 0 ? Math.min(2 + (tagScores[tag] || 0) / 10, 3) : 1;
                         return sum + (userProfile[tag] || 0) * weight;
                     }, 0);
-
-                    // Similitud con imágenes interactuadas
                     const interacted = Object.keys(interactedImages).map(id => images.find(i => i.id === Number(id)));
                     const avgSimilarity = interacted.length > 0
                         ? interacted.reduce((sum, i) => sum + cosineSimilarity(img.tags, i.tags), 0) / interacted.length
                         : 0;
-
-                    // Puntaje final con serendipia
                     const serendipity = Math.random() * 0.2;
                     const finalScore = (0.7 * tagScore) + (0.3 * avgSimilarity) + serendipity;
-
                     return { ...img, score: finalScore };
                 })
-                .sort((a, b) => b.score - a.score); // Ordenar por puntaje descendente
+                .sort((a, b) => b.score - a.score);
 
-            // Tomar exactamente 3 imágenes (o menos si no hay suficientes)
+            console.log('scoredImages (top 5):', scoredImages.slice(0, 5).map(img => ({ id: img.id, title: img.title, score: img.score })));
+
             const recommendedImages = scoredImages.slice(0, Math.min(3, scoredImages.length));
+            console.log('recommendedImages:', recommendedImages.map(img => ({ id: img.id, title: img.title, score: img.score })));
 
-            // Renderizar las 3 imágenes recomendadas
             recommendedImages.forEach(img => {
                 const div = document.createElement('div');
                 div.classList.add('grid-item');
@@ -512,16 +533,19 @@ document.addEventListener('DOMContentLoaded', async function () {
                 forYou.appendChild(div);
             });
 
-            // Cargar los "Me Gusta" inmediatamente
             loadLikesImmediately(forYou);
 
-            // Si no hay suficientes imágenes recomendadas
             if (recommendedImages.length === 0) {
                 forYou.innerHTML = '<p>No hay nuevas imágenes relacionadas con tus intereses.</p>';
+                console.log('No hay imágenes recomendadas disponibles.');
             }
 
-            // Depuración para verificar las imágenes seleccionadas
-            console.log('Recomendadas en "Para Ti":', recommendedImages.map(img => ({ id: img.id, title: img.title, score: img.score })));
+            const renderedImages = Array.from(forYou.querySelectorAll('.grid-item')).map(item => {
+                const id = item.querySelector('.like-btn').dataset.id;
+                const title = item.querySelector('.info h3').textContent;
+                return { id, title };
+            });
+            console.log('Imágenes renderizadas en el DOM:', renderedImages);
         }
 
         function renderMostLiked() {
@@ -577,9 +601,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 if (image) {
                     imageViewer.innerHTML = `<img src="${image.url}" alt="${image.title}">`;
-                    likeBtn.innerHTML = `
-                        <i class="fas fa-heart"></i>
-                    `;
+                    likeBtn.innerHTML = `<i class="fas fa-heart"></i>`;
                     likeBtn.insertAdjacentHTML('afterend', '<span class="like-count">0</span>');
                     likeBtn.dataset.id = image.id;
                     likeBtn.style.display = 'inline-block';
