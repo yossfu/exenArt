@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Nueva Entrada para imagenes.json</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff0000;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ff0000;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: #cc0000;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #ff0000;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background: #cc0000;
+            transform: scale(1.02);
+        }
+
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Nueva Entrada para imagenes.json</h1>
+        <form id="image-form">
+            <div class="form-group">
+                <label for="title">Título:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Descripción:</label>
+                <textarea id="description" name="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="url">URL de la Imagen:</label>
+                <input type="text" id="url" name="url" required>
+            </div>
+            <div class="form-group">
+                <label for="tags">Etiquetas (separadas por comas):</label>
+                <input type="text" id="tags" name="tags" placeholder="ej. pasivo, anime, joven" required>
+            </div>
+            <button type="submit">Generar JSON</button>
+        </form>
+        <pre id="output"></pre>
+    </div>
+
+    <script>
+        document.getElementById('image-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Generar ID aleatorio de 20 dígitos
+            const generateRandomId = () => {
+                let id = '';
+                for (let i = 0; i < 20; i++) {
+                    id += Math.floor(Math.random() * 10);
+                }
+                return Number(id);
+            };
+
+            const id = generateRandomId();
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const url = document.getElementById('url').value.trim();
+            const tagsInput = document.getElementById('tags').value.trim();
+            const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+
+            const newEntry = {
+                id: id,
+                title: title,
+                description: description,
+                url: url,
+                tags: tags
+            };
+
+            const output = document.getElementById('output');
+            output.textContent = JSON.stringify(newEntry, null, 2);
+            output.style.display = 'block';
+
+            // Opcional: Limpiar el formulario después de generar
+            // this.reset();
+        });
+    </script>
+</body>
+</html>

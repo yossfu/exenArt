@@ -33,9 +33,16 @@ document.addEventListener('DOMContentLoaded', async function () {
         return `hsl(${hue}, 70%, 50%)`;
     }
 
-    function updateTagScores(tags, action) {
+    function updateTagScores(tags, action, imageId) {
         let tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
-        
+        let interactedImages = JSON.parse(localStorage.getItem('interactedImages')) || {};
+
+        // Registrar la imagen como interactuada
+        if (imageId) {
+            interactedImages[imageId] = true;
+            localStorage.setItem('interactedImages', JSON.stringify(interactedImages));
+        }
+
         if (action === 'view') {
             if (tags.length > 0) {
                 tagScores[tags[0]] = (tagScores[tags[0]] || 0) + 5;
@@ -162,7 +169,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         gsap.to(btn.querySelector('i'), { scale: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
                         if (!isLiked) {
                             const img = images.find(i => i.id === Number(id));
-                            if (img) updateTagScores(img.tags, 'like');
+                            if (img) updateTagScores(img.tags, 'like', img.id);
                         }
                     });
                 });
@@ -293,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         filterToggle.addEventListener('click', e => {
             e.preventDefault();
             const isVisible = filterWindow.style.display === 'none';
-            filterWindow.style.display = 'block'; // Siempre visible, controlamos con clase
+            filterWindow.style.display = 'block';
             if (isVisible) {
                 filterWindow.classList.add('open');
                 gsap.from(filterWindow, { x: -300, duration: 0.3, ease: 'power2.out' });
@@ -433,21 +440,30 @@ document.addEventListener('DOMContentLoaded', async function () {
         function renderForYou() {
             const forYou = document.querySelector('.for-you');
             const tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
-            const sortedTags = Object.entries(tagScores).sort((a, b) => b[1] - a[1]).map(([tag]) => tag);
-            
-            let recommended = [];
-            if (sortedTags.length > 0) {
-                recommended = images
-                    .map(img => ({
-                        ...img,
-                        score: img.tags.reduce((sum, tag) => sum + (tagScores[tag] || 0), 0)
-                    }))
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 3);
-            }
-            const finalImages = recommended.length >= 3 ? recommended : [...recommended, ...shuffleArray(images).slice(0, 3 - recommended.length)];
+            const interactedImages = JSON.parse(localStorage.getItem('interactedImages')) || {};
 
-            finalImages.forEach(img => {
+            forYou.innerHTML = ''; // Limpiar la sección
+
+            if (Object.keys(tagScores).length === 0) {
+                forYou.innerHTML = '<p>Aún no hay suficientes datos de interacción.</p>';
+                return;
+            }
+
+            // Calcular puntaje por imagen, dando más peso al primer tag y excluyendo imágenes interactuadas
+            const scoredImages = images
+                .filter(img => !interactedImages[img.id]) // Excluir imágenes ya interactuadas
+                .map(img => {
+                    const score = img.tags.reduce((sum, tag, index) => {
+                        const tagScore = tagScores[tag] || 0;
+                        return sum + (index === 0 ? tagScore * 2 : tagScore); // Peso doble al primer tag
+                    }, 0);
+                    return { ...img, score };
+                })
+                .sort((a, b) => b.score - a.score) // Ordenar de mayor a menor puntaje
+                .slice(0, Math.min(3, images.length)); // Tomar hasta 3 imágenes
+
+            // Renderizar las imágenes seleccionadas
+            scoredImages.forEach(img => {
                 const div = document.createElement('div');
                 div.classList.add('grid-item');
                 div.innerHTML = `
@@ -467,7 +483,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                 });
                 forYou.appendChild(div);
             });
+
+            // Cargar los "Me Gusta" inmediatamente
             loadLikesImmediately(forYou);
+
+            // Si no hay imágenes disponibles después de filtrar
+            if (scoredImages.length === 0) {
+                forYou.innerHTML = '<p>No hay nuevas imágenes relacionadas con tus intereses.</p>';
+            }
         }
 
         function renderMostLiked() {
@@ -576,12 +599,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                         similarGallery.appendChild(div);
                     });
 
-                    updateTagScores(image.tags, 'view');
+                    updateTagScores(image.tags, 'view', image.id);
 
                     let timeSpent = 0;
                     const interval = setInterval(() => {
                         timeSpent += 2;
-                        updateTagScores(image.tags, 'time');
+                        updateTagScores(image.tags, 'time', image.id);
                     }, 2000);
 
                     window.addEventListener('beforeunload', () => clearInterval(interval));
