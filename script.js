@@ -671,14 +671,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         fetch('imagenes.json')
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('No se pudo cargar imagenes.json');
+                    throw new Error(`Error al cargar imagenes.json: ${response.statusText}`);
                 }
                 return response.json();
             })
             .then(data => {
                 images = data;
-                console.log('Imágenes cargadas en image-detail:', data);
-                const image = data.find(img => img.id === Number(imageId));
+                console.log('Imágenes cargadas en image-detail:', images);
+                const image = images.find(img => img.id === Number(imageId));
                 const imageContainer = document.querySelector('.image-container');
                 const details = document.querySelector('.details');
                 const similarGallery = document.querySelector('.similar-gallery');
@@ -686,8 +686,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (image) {
                     console.log('Imagen encontrada:', image);
                     if (imageContainer) {
-                        imageContainer.innerHTML = `<img src="${image.url}" alt="${image.title}">`;
+                        imageContainer.innerHTML = `
+                            <img src="${image.url}" alt="${image.title}">
+                            <button class="like-btn detail-like-btn" data-id="${image.id}">
+                                <img src="like.png" alt="Like" class="like-icon">
+                                <span class="like-count"></span>
+                            </button>
+                        `;
                         const imgElement = imageContainer.querySelector('img');
+                        const likeBtn = imageContainer.querySelector('.detail-like-btn');
                         imgElement.addEventListener('click', () => {
                             imageContainer.classList.toggle('fullscreen');
                             if (imageContainer.classList.contains('fullscreen')) {
@@ -710,10 +717,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                         details.innerHTML = `
                             <h2>${image.title}</h2>
                             <p>${image.description}</p>
-                            <button class="like-btn detail-like-btn" data-id="${image.id}">
-                                <img src="like.png" alt="Like" class="like-icon">
-                                <span class="like-count"></span>
-                            </button>
                         `;
                     }
                     let viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || [];
@@ -770,7 +773,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 console.error('Error al cargar imagenes.json en image-detail:', error);
                 const details = document.querySelector('.details');
                 if (details) {
-                    details.innerHTML = '<p>Error al cargar los datos de la imagen</p>';
+                    details.innerHTML = `<p>Error al cargar los datos de la imagen: ${error.message}</p>`;
                 }
             });
 
