@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     let unreadComments = 0;
     let interactedImages = JSON.parse(localStorage.getItem('interactedImages')) || {};
     let tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
+    let viewedNotifications = JSON.parse(localStorage.getItem('viewedNotifications')) || {};
 
     function getColorFromUserId(userId) {
         let hash = 0;
@@ -41,17 +42,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             interactedImages[imageId] = true;
             localStorage.setItem('interactedImages', JSON.stringify(interactedImages));
         }
-
         if (action === 'view') {
-            tags.forEach(tag => {
-                tagScores[tag] = (tagScores[tag] || 0) + 1;
-            });
+            tags.forEach(tag => tagScores[tag] = (tagScores[tag] || 0) + 1);
         } else if (action === 'like') {
-            tags.forEach(tag => {
-                tagScores[tag] = (tagScores[tag] || 0) + 3;
-            });
+            tags.forEach(tag => tagScores[tag] = (tagScores[tag] || 0) + 3);
         }
-
         localStorage.setItem('tagScores', JSON.stringify(tagScores));
     }
 
@@ -86,6 +81,24 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     await loadUsername();
 
+    document.addEventListener('click', e => {
+        const windows = [
+            { toggle: '#search-toggle', window: '#search-container', anim: { y: -100, opacity: 0 } },
+            { toggle: '#chat-toggle', window: '#chat-window', anim: { y: 100, opacity: 0 } },
+            { toggle: '#notifications-toggle', window: '#notifications-window', anim: { y: -100, opacity: 0 } },
+            { toggle: '#filter-toggle', window: '#filter-window', anim: { x: -300, onComplete: () => document.querySelector('#filter-window').style.display = 'none' } }
+        ];
+        windows.forEach(w => {
+            const toggle = document.querySelector(w.toggle);
+            const win = document.querySelector(w.window);
+            if (win && toggle && !toggle.contains(e.target) && !win.contains(e.target) && win.style.display !== 'none') {
+                win.classList.remove('open');
+                gsap.to(win, { ...w.anim, duration: 0.3 });
+                if (w.window !== '#filter-window') win.style.display = 'none';
+            }
+        });
+    });
+
     function setupSearch() {
         const searchToggle = document.getElementById('search-toggle');
         const searchContainer = document.getElementById('search-container');
@@ -99,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 e.preventDefault();
                 const isVisible = searchContainer.style.display === 'none';
                 searchContainer.style.display = isVisible ? 'flex' : 'none';
-                gsap.to(searchContainer, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.5 });
+                gsap.to(searchContainer, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.3 });
                 if (isVisible) searchInput.focus();
             });
 
@@ -125,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     results.map(img => `<div class="result-item" onclick="window.location.href='image-detail.html?id=${img.id}'"><img src="${img.url}" alt="${img.title}"><span>${img.title}</span></div>`).join('') : 
                     '<p>No hay resultados</p>';
                 searchResults.style.display = 'block';
-                if (results.length) gsap.from('.result-item', { opacity: 0, y: 20, stagger: 0.1, duration: 0.5 });
+                if (results.length) gsap.from('.result-item', { opacity: 0, y: 20, stagger: 0.1, duration: 0.3 });
             }
         }
     }
@@ -139,7 +152,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 dbRealtime.ref(`likes/${id}/${deviceId}`).once('value', snapshot => {
                     const isLiked = snapshot.val() === true;
-
                     dbRealtime.ref(`likes/${id}/${deviceId}`).set(!isLiked).then(() => {
                         btn.classList.toggle('liked', !isLiked);
                         gsap.to(btn.querySelector('i'), { scale: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
@@ -147,20 +159,38 @@ document.addEventListener('DOMContentLoaded', async function () {
                         dbRealtime.ref(`likes/${id}`).once('value', countSnapshot => {
                             const likesData = countSnapshot.val() || {};
                             const count = Object.keys(likesData).length || 0;
-                            if (countElement && countElement.classList.contains('like-count')) {
-                                countElement.textContent = count;
-                            }
+                            if (countElement && countElement.classList.contains('like-count')) countElement.textContent = count;
                             if (!isLiked) updateTagScores(images.find(img => img.id === Number(id)).tags, 'like', id);
                         });
                     });
                 });
             } else if (e.target.closest('.comment-btn')) {
                 const imageId = new URLSearchParams(window.location.search).get('id');
+                if (imageId) document.getElementById('comment-text').focus();
+            } else if (e.target.closest('.share-btn')) {
+                const imageId = new URLSearchParams(window.location.search).get('id');
                 if (imageId) {
-                    const commentText = document.getElementById('comment-text');
-                    if (commentText) commentText.focus();
+                    const image = images.find(img => img.id === Number(imageId));
+                    if (image && navigator.clipboard) {
+                        const shareUrl = `${window.location.origin}/image-detail.html?id=${imageId}`;
+                        navigator.clipboard.writeText(shareUrl)
+                            .then(() => alert('¡Enlace copiado al portapapeles!'))
+                            .catch(err => console.error('Error al copiar enlace:', err));
+                    } else {
+                        alert('No se pudo copiar el enlace. Intenta manualmente.');
+                    }
                 }
             }
+        });
+
+        document.querySelectorAll('.image-viewer img').forEach(img => {
+            img.addEventListener('dblclick', () => {
+                const likeBtn = img.closest('.image-container').querySelector('.like-btn');
+                if (likeBtn && !likeBtn.classList.contains('liked')) {
+                    likeBtn.click();
+                    gsap.to(img, { scale: 1.1, duration: 0.2, yoyo: true, repeat: 1 });
+                }
+            });
         });
     }
 
@@ -183,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 e.preventDefault();
                 const isVisible = chatWindow.style.display === 'none';
                 chatWindow.style.display = isVisible ? 'block' : 'none';
-                gsap.to(chatWindow, { y: isVisible ? 0 : 100, opacity: isVisible ? 1 : 0, duration: 0.5 });
+                gsap.to(chatWindow, { y: isVisible ? 0 : 100, opacity: isVisible ? 1 : 0, duration: 0.3 });
                 if (isVisible && !chatMessages.dataset.loaded) {
                     loadChatMessages();
                     chatMessages.dataset.loaded = 'true';
@@ -196,7 +226,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             chatCloseBtn.addEventListener('click', () => {
                 chatWindow.style.display = 'none';
-                gsap.to(chatWindow, { y: 100, opacity: 0, duration: 0.5 });
+                gsap.to(chatWindow, { y: 100, opacity: 0, duration: 0.3 });
             });
 
             chatForm.addEventListener('submit', async e => {
@@ -228,17 +258,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             });
 
-            chatInput.addEventListener('focus', () => {
-                setTimeout(() => {
-                    chatInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                    chatWindow.style.maxHeight = '50vh'; // Reduce altura para teclado
-                }, 300);
-            });
-
-            chatInput.addEventListener('blur', () => {
-                chatWindow.style.maxHeight = '80vh'; // Restaura altura
-            });
-
             function updateChatNotificationBadge() {
                 if (unreadMessages > 0) {
                     chatNotification.textContent = unreadMessages;
@@ -267,23 +286,18 @@ document.addEventListener('DOMContentLoaded', async function () {
                             const data = doc.data();
                             const div = document.createElement('div');
                             div.classList.add('chat-message');
-                            if (data.userId === deviceId) {
-                                div.classList.add('mine');
-                            }
+                            if (data.userId === deviceId) div.classList.add('mine');
                             div.innerHTML = `
                                 <p><strong>${data.username}</strong>: ${data.text}</p>
                                 <span>${new Date(data.timestamp).toLocaleTimeString()}</span>
                             `;
                             if (data.userId !== deviceId) {
-                                const userColor = getColorFromUserId(data.userId);
-                                div.querySelector('p').style.backgroundColor = userColor;
-                                div.querySelector('p').style.color = '#ffffff';
+                                div.querySelector('p').style.backgroundColor = getColorFromUserId(data.userId);
+                                div.querySelector('p').style.color = '#fff';
                             }
                             chatMessages.insertBefore(div, chatMessages.firstChild);
                         });
-                        if (chatMessages.children.length) {
-                            gsap.from('.chat-message', { opacity: 0, y: 10, stagger: 0.1, duration: 0.5 });
-                        }
+                        gsap.from('.chat-message', { opacity: 0, y: 10, stagger: 0.1, duration: 0.3 });
                         chatMessages.scrollTop = chatMessages.scrollHeight;
                     });
             }
@@ -302,13 +316,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 e.preventDefault();
                 const isVisible = filterWindow.style.display === 'none';
                 filterWindow.style.display = 'block';
-                if (isVisible) {
-                    filterWindow.classList.add('open');
-                    gsap.from(filterWindow, { x: -300, duration: 0.3, ease: 'power2.out' });
-                } else {
-                    filterWindow.classList.remove('open');
-                    gsap.to(filterWindow, { x: -300, duration: 0.3, ease: 'power2.in', onComplete: () => filterWindow.style.display = 'none' });
-                }
+                filterWindow.classList.toggle('open', isVisible);
+                gsap.to(filterWindow, { x: isVisible ? 0 : -300, duration: 0.3, ease: 'power2.inOut', onComplete: () => !isVisible && (filterWindow.style.display = 'none') });
             });
 
             filterCloseBtn.addEventListener('click', () => {
@@ -316,10 +325,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 gsap.to(filterWindow, { x: -300, duration: 0.3, ease: 'power2.in', onComplete: () => filterWindow.style.display = 'none' });
             });
 
-            filterCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', applyFilters);
-            });
-
+            filterCheckboxes.forEach(checkbox => checkbox.addEventListener('change', applyFilters));
             resetFilterBtn.addEventListener('click', () => {
                 filterCheckboxes.forEach(checkbox => checkbox.checked = false);
                 applyFilters();
@@ -329,14 +335,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const selectedFilters = Array.from(filterCheckboxes)
                     .filter(checkbox => checkbox.checked)
                     .map(checkbox => checkbox.value.toLowerCase());
-
-                if (selectedFilters.length === 0) {
-                    filteredImages = [...images];
-                } else {
-                    filteredImages = images.filter(img => 
-                        selectedFilters.some(filter => img.tags.some(tag => tag.toLowerCase() === filter))
-                    );
-                }
+                filteredImages = selectedFilters.length === 0 ? [...images] : images.filter(img => 
+                    selectedFilters.some(filter => img.tags.some(tag => tag.toLowerCase() === filter))
+                );
                 loadedImages = 0;
                 renderGallery(true);
             }
@@ -355,51 +356,70 @@ document.addEventListener('DOMContentLoaded', async function () {
                 e.preventDefault();
                 const isVisible = notificationsWindow.style.display === 'none';
                 notificationsWindow.style.display = isVisible ? 'block' : 'none';
-                gsap.to(notificationsWindow, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.5 });
+                gsap.to(notificationsWindow, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.3 });
                 if (isVisible) {
                     loadNotifications();
-                    unreadComments = 0;
-                    updateNotificationsBadge();
                 }
             });
 
             notificationsCloseBtn.addEventListener('click', () => {
                 notificationsWindow.style.display = 'none';
-                gsap.to(notificationsWindow, { y: -100, opacity: 0, duration: 0.5 });
+                gsap.to(notificationsWindow, { y: -100, opacity: 0, duration: 0.3 });
             });
 
             function updateNotificationsBadge() {
-                if (unreadComments > 0) {
-                    notificationsBadge.textContent = unreadComments;
-                    notificationsBadge.style.display = 'flex';
-                    gsap.from(notificationsBadge, { scale: 0.8, opacity: 0, duration: 0.3 });
-                } else {
-                    notificationsBadge.style.display = 'none';
+                notificationsBadge.textContent = unreadComments;
+                notificationsBadge.style.display = unreadComments > 0 ? 'flex' : 'none';
+                if (unreadComments > 0) gsap.from(notificationsBadge, { scale: 0.8, opacity: 0, duration: 0.3 });
+            }
+
+            function markNotificationAsViewed(imageId, commentId) {
+                const key = `${imageId}-${commentId}`;
+                if (!viewedNotifications[key]) {
+                    viewedNotifications[key] = true;
+                    unreadComments = Math.max(0, unreadComments - 1);
+                    localStorage.setItem('viewedNotifications', JSON.stringify(viewedNotifications));
+                    updateNotificationsBadge();
                 }
             }
 
             function loadNotifications() {
                 notificationsList.innerHTML = '';
+                let newNotifications = 0;
+
                 Object.keys(interactedImages).forEach(imageId => {
-                    dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
+                    dbRealtime.ref(`comments/${imageId}`).once('value', snapshot => {
                         const comments = snapshot.val();
                         if (comments) {
-                            const commentArray = Object.entries(comments);
-                            commentArray.forEach(([commentId, comment]) => {
-                                const div = document.createElement('div');
-                                div.classList.add('notification-item');
-                                div.innerHTML = `
-                                    <span>${comment.username} comentó en una imagen que viste: "${comment.text}"</span>
-                                `;
-                                div.addEventListener('click', () => window.location.href = `image-detail.html?id=${imageId}`);
-                                notificationsList.appendChild(div);
+                            Object.entries(comments).forEach(([commentId, comment]) => {
+                                const key = `${imageId}-${commentId}`;
+                                if (!viewedNotifications[key] && comment.deviceId !== deviceId) { // No notificar comentarios propios
+                                    const div = document.createElement('div');
+                                    div.classList.add('notification-item');
+                                    div.dataset.commentId = commentId;
+                                    div.dataset.imageId = imageId;
+                                    div.innerHTML = `<span>${comment.username} comentó: "${comment.text}"</span>`;
+                                    div.addEventListener('click', () => {
+                                        markNotificationAsViewed(imageId, commentId);
+                                        window.location.href = `image-detail.html?id=${imageId}`;
+                                    });
+                                    notificationsList.appendChild(div);
+                                    newNotifications++;
+                                }
                             });
-                            gsap.from('.notification-item', { opacity: 0, y: 10, stagger: 0.1, duration: 0.5 });
+                            gsap.from('.notification-item', { opacity: 0, y: 10, stagger: 0.1, duration: 0.3 });
                         }
                     });
                 });
+
+                // Actualizar el conteo solo si hay nuevas notificaciones
+                if (newNotifications > unreadComments) {
+                    unreadComments = newNotifications;
+                    updateNotificationsBadge();
+                }
             }
 
+            // Escuchar nuevos comentarios en tiempo real
             Object.keys(interactedImages).forEach(imageId => {
                 let lastCommentCount = 0;
                 dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
@@ -408,9 +428,22 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const urlParams = new URLSearchParams(window.location.search);
                     const currentImageId = urlParams.get('id');
 
-                    if (currentImageId !== imageId && currentCommentCount > lastCommentCount) {
-                        unreadComments += currentCommentCount - lastCommentCount;
-                        updateNotificationsBadge();
+                    if (currentImageId === imageId) {
+                        // Si estamos en la página de la imagen, marcar los comentarios como vistos
+                        if (comments) {
+                            Object.entries(comments).forEach(([commentId]) => {
+                                markNotificationAsViewed(imageId, commentId);
+                            });
+                        }
+                    } else if (currentCommentCount > lastCommentCount) {
+                        const newComments = Object.entries(comments || {}).slice(lastCommentCount);
+                        newComments.forEach(([commentId, comment]) => {
+                            const key = `${imageId}-${commentId}`;
+                            if (!viewedNotifications[key] && comment.deviceId !== deviceId) {
+                                unreadComments++;
+                                updateNotificationsBadge();
+                            }
+                        });
                     }
                     lastCommentCount = currentCommentCount;
                 });
@@ -427,9 +460,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 dbRealtime.ref(`likes/${id}`).on('value', snapshot => {
                     const likesData = snapshot.val() || {};
                     const count = Object.keys(likesData).length || 0;
-                    if (countElement && countElement.classList.contains('like-count')) {
-                        countElement.textContent = count;
-                    }
+                    if (countElement && countElement.classList.contains('like-count')) countElement.textContent = count;
                     btn.classList.toggle('liked', likesData[deviceId] === true);
                 });
             } else {
@@ -457,14 +488,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const sentinel = document.getElementById('sentinel');
                     if (sentinel) {
                         const observer = new IntersectionObserver(entries => {
-                            if (entries[0].isIntersecting && loadedImages < filteredImages.length) {
-                                renderGallery(false);
-                            }
+                            if (entries[0].isIntersecting && loadedImages < filteredImages.length) renderGallery(false);
                         }, { rootMargin: '200px' });
                         observer.observe(sentinel);
                     }
                 })
-                .catch(error => console.error('Error loading imagenes.json:', error));
+                .catch(error => console.error('Error al cargar imagenes.json:', error));
         }
 
         function renderGallery(reset = false) {
@@ -473,20 +502,18 @@ document.addEventListener('DOMContentLoaded', async function () {
                 gallery.innerHTML = '';
                 loadedImages = 0;
 
-                const sortedImages = images.map(img => {
-                    const score = img.tags.reduce((sum, tag) => sum + (tagScores[tag] || 0), 0);
-                    return { ...img, score };
-                }).sort((a, b) => b.score - a.score);
-                filteredImages = sortedImages.slice(0, 9).concat(images.filter(img => !sortedImages.slice(0, 9).some(s => s.id === img.id)));
+                const topTags = Object.entries(tagScores).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([tag]) => tag);
+                let topImages = images.filter(img => topTags.some(tag => img.tags.includes(tag)));
+                topImages = topImages.sort(() => 0.5 - Math.random()).slice(0, 9);
+                const remainingImages = images.filter(img => !topImages.some(t => t.id === img.id));
+                filteredImages = [...topImages, ...remainingImages];
             }
 
             const nextImages = filteredImages.slice(loadedImages, loadedImages + itemsPerLoad);
             nextImages.forEach(img => {
                 const div = document.createElement('div');
                 div.classList.add('grid-item');
-                div.innerHTML = `
-                    <img src="${img.url}" alt="${img.title}">
-                `;
+                div.innerHTML = `<img src="${img.url}" alt="${img.title}" loading="lazy">`;
                 div.addEventListener('click', () => {
                     updateTagScores(img.tags, 'view', img.id);
                     window.location.href = `image-detail.html?id=${img.id}`;
@@ -513,8 +540,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const imageContainer = document.querySelector('.image-container');
                 const imageViewer = document.getElementById('image-viewer');
                 const likeBtn = imageContainer.querySelector('.like-btn');
-                const details = document.querySelector('.details');
-                const similarGallery = document.querySelector('.similar-gallery');
+                const commentCount = document.querySelector('.comment-count');
 
                 if (image) {
                     imageViewer.innerHTML = `<img src="${image.url}" alt="${image.title}">`;
@@ -523,50 +549,38 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const viewer = new Viewer(imageViewer, {
                         inline: false,
                         navbar: false,
-                        toolbar: {
-                            zoomIn: 0,
-                            zoomOut: 1,
-                            oneToOne: 1,
-                            reset: 1,
-                            prev: 0,
-                            play: 0,
-                            next: 0,
-                            rotateLeft: 1,
-                            rotateRight: 1,
-                            flipHorizontal: 1,
-                            flipVertical: 1,
-                        },
+                        toolbar: { zoomOut: 1, oneToOne: 1, reset: 1, rotateLeft: 1, rotateRight: 1, flipHorizontal: 1, flipVertical: 1 },
                         title: false,
-                        viewed() {
-                            viewer.zoomTo(1);
-                        }
+                        viewed() { viewer.zoomTo(1); }
                     });
-                    details.innerHTML = `
-                        <h2>${username}</h2>
-                        <p>${image.description || 'Sin descripción disponible'}</p>
-                    `;
+                    document.querySelector('.post-meta .title').textContent = image.title;
+                    document.querySelector('.post-meta .description').textContent = image.description || 'Sin descripción';
                     updateTagScores(image.tags, 'view', image.id);
 
+                    const similarGallery = document.querySelector('.similar-gallery');
                     const similarImages = images
                         .filter(img => img.id !== image.id)
-                        .map(img => ({
-                            ...img,
-                            similarity: img.tags.reduce((sum, tag) => sum + (image.tags.includes(tag) ? 1 : 0), 0)
-                        }))
+                        .map(img => ({ ...img, similarity: img.tags.reduce((sum, tag) => sum + (image.tags.includes(tag) ? 1 : 0), 0) }))
                         .sort((a, b) => b.similarity - a.similarity)
                         .slice(0, 9);
                     similarImages.forEach(img => {
                         const div = document.createElement('div');
                         div.classList.add('grid-item');
-                        div.innerHTML = `<img src="${img.url}" alt="${img.title}">`;
+                        div.innerHTML = `<img src="${img.url}" alt="${img.title}" loading="lazy">`;
                         div.addEventListener('click', () => window.location.href = `image-detail.html?id=${img.id}`);
                         similarGallery.appendChild(div);
                     });
 
                     const observer = new IntersectionObserver(setupGalleryLikeListeners, { rootMargin: '100px' });
                     observer.observe(likeBtn);
+
+                    dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
+                        const comments = snapshot.val();
+                        const count = comments ? Object.keys(comments).length : 0;
+                        if (commentCount) commentCount.textContent = `${count} comentarios`;
+                    });
                 } else {
-                    details.innerHTML = '<p>Imagen no encontrada</p>';
+                    imageContainer.innerHTML = '<p>Imagen no encontrada</p>';
                 }
 
                 setupSearch();
@@ -576,9 +590,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 setupNotifications();
             })
             .catch(error => {
-                console.error('Error loading imagenes.json:', error);
-                const details = document.querySelector('.details');
-                if (details) details.innerHTML = `<p>Error: ${error.message}</p>`;
+                console.error('Error al cargar imagenes.json:', error);
+                document.querySelector('.image-container').innerHTML = `<p>Error: ${error.message}</p>`;
             });
 
         const commentForm = document.getElementById('comment-form');
@@ -600,7 +613,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         let allComments = [];
         let displayedComments = 0;
         const commentsPerPage = 10;
-        let sortOrder = 'desc';
 
         function renderComments(commentsList, commentsArray, startIndex, endIndex) {
             for (let i = startIndex; i < endIndex && i < commentsArray.length; i++) {
@@ -610,9 +622,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 commentDiv.dataset.commentId = commentId;
                 commentDiv.innerHTML = `
                     <div class="content">
-                        <strong>${comment.username}</strong>
-                        <span class="text">${comment.text}</span>
-                        <div class="timestamp">${new Date(comment.timestamp).toLocaleTimeString()}</div>
+                        <strong>${comment.username}</strong> ${comment.text}
+                        <span class="timestamp">${new Date(comment.timestamp).toLocaleTimeString()}</span>
                         <a href="#" class="reply-btn">Responder</a>
                     </div>
                     <div class="replies"></div>
@@ -627,9 +638,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                         replyDiv.dataset.replyId = replyId;
                         replyDiv.innerHTML = `
                             <div class="content">
-                                <strong>${reply.username}</strong>
-                                <span class="text">${reply.text}</span>
-                                <div class="timestamp">${new Date(reply.timestamp).toLocaleTimeString()}</div>
+                                <strong>${reply.username}</strong> ${reply.text}
+                                <span class="timestamp">${new Date(reply.timestamp).toLocaleTimeString()}</span>
                                 <a href="#" class="reply-btn">Responder</a>
                             </div>
                         `;
@@ -641,8 +651,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 setupReplyForm(commentDiv, imageId, commentId);
                 commentsList.appendChild(commentDiv);
             }
-
-            gsap.from(commentsList.querySelectorAll('.comment'), { opacity: 0, y: 10, stagger: 0.1, duration: 0.5 });
+            gsap.from(commentsList.querySelectorAll('.comment'), { opacity: 0, y: 10, stagger: 0.1, duration: 0.3 });
         }
 
         const commentsList = document.getElementById('comments-list');
@@ -654,24 +663,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 const comments = snapshot.val();
                 if (comments) {
-                    allComments = Object.entries(comments).map(([id, data]) => [id, data]);
-                    allComments.sort((a, b) => sortOrder === 'desc' 
-                        ? new Date(b[1].timestamp) - new Date(a[1].timestamp) 
-                        : new Date(a[1].timestamp) - new Date(b[1].timestamp));
-
+                    allComments = Object.entries(comments).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
                     renderComments(commentsList, allComments, 0, commentsPerPage);
                     displayedComments = commentsPerPage;
-
-                    if (loadMoreBtn) {
-                        if (allComments.length > commentsPerPage) {
-                            loadMoreBtn.style.display = 'block';
-                        } else {
-                            loadMoreBtn.style.display = 'none';
-                        }
-                    }
+                    loadMoreBtn.style.display = allComments.length > commentsPerPage ? 'block' : 'none';
                 } else {
                     commentsList.innerHTML = '<p>Sin comentarios</p>';
-                    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+                    loadMoreBtn.style.display = 'none';
                 }
             });
         }
@@ -681,35 +679,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const nextEndIndex = displayedComments + commentsPerPage;
                 renderComments(commentsList, allComments, displayedComments, nextEndIndex);
                 displayedComments = nextEndIndex;
-
-                if (displayedComments >= allComments.length) {
-                    loadMoreBtn.style.display = 'none';
-                }
-            });
-        }
-
-        const sortBtn = document.getElementById('sort-btn');
-        if (sortBtn) {
-            sortBtn.addEventListener('click', () => {
-                sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
-                sortBtn.innerHTML = `Ordenar por <i class="fas fa-sort${sortOrder === 'desc' ? '-down' : '-up'}"></i>`;
-                commentsList.innerHTML = '';
-                displayedComments = 0;
-
-                allComments.sort((a, b) => sortOrder === 'desc' 
-                    ? new Date(b[1].timestamp) - new Date(a[1].timestamp) 
-                    : new Date(a[1].timestamp) - new Date(b[1].timestamp));
-
-                renderComments(commentsList, allComments, 0, commentsPerPage);
-                displayedComments = commentsPerPage;
-
-                if (loadMoreBtn) {
-                    if (allComments.length > commentsPerPage) {
-                        loadMoreBtn.style.display = 'block';
-                    } else {
-                        loadMoreBtn.style.display = 'none';
-                    }
-                }
+                loadMoreBtn.style.display = displayedComments >= allComments.length ? 'none' : 'block';
             });
         }
 
@@ -746,9 +716,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 replyBtn.addEventListener('click', e => {
                     e.preventDefault();
                     replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
-                    if (replyForm.style.display === 'block') {
-                        replyForm.querySelector('input').focus();
-                    }
+                    if (replyForm.style.display === 'block') replyForm.querySelector('input').focus();
                 });
             }
         }
