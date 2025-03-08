@@ -85,6 +85,13 @@
             transform: scale(1.02);
         }
 
+        #image-preview {
+            margin-top: 10px;
+            max-width: 100%;
+            display: none;
+            border-radius: 5px;
+        }
+
         #output {
             margin-top: 20px;
             padding: 15px;
@@ -94,6 +101,20 @@
             white-space: pre-wrap;
             word-wrap: break-word;
             display: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .copy-btn {
+            background: #4CAF50;
+        }
+
+        .copy-btn:hover {
+            background: #45a049;
         }
     </style>
 </head>
@@ -112,6 +133,7 @@
             <div class="form-group">
                 <label for="url">URL de la Imagen:</label>
                 <input type="text" id="url" name="url" required>
+                <img id="image-preview" src="" alt="Vista previa de la imagen">
             </div>
             <div class="form-group">
                 <label for="tags">Etiquetas (separadas por comas):</label>
@@ -120,13 +142,30 @@
             <button type="submit">Generar JSON</button>
         </form>
         <pre id="output"></pre>
+        <div class="button-group">
+            <button class="copy-btn" id="copy-json" style="display: none;">Copiar JSON</button>
+        </div>
     </div>
 
     <script>
+        // Vista previa de la imagen
+        const urlInput = document.getElementById('url');
+        const imagePreview = document.getElementById('image-preview');
+
+        urlInput.addEventListener('input', function() {
+            const url = this.value.trim();
+            if (url) {
+                imagePreview.src = url;
+                imagePreview.style.display = 'block';
+            } else {
+                imagePreview.style.display = 'none';
+            }
+        });
+
+        // Generar JSON
         document.getElementById('image-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // Generar ID aleatorio de 20 dígitos
             const generateRandomId = () => {
                 let id = '';
                 for (let i = 0; i < 20; i++) {
@@ -151,11 +190,23 @@
             };
 
             const output = document.getElementById('output');
-            output.textContent = JSON.stringify(newEntry, null, 2);
+            const copyBtn = document.getElementById('copy-json');
+            const jsonString = JSON.stringify(newEntry, null, 2);
+            
+            output.textContent = jsonString;
             output.style.display = 'block';
+            copyBtn.style.display = 'block';
+        });
 
-            // Opcional: Limpiar el formulario después de generar
-            // this.reset();
+        // Copiar JSON al portapapeles
+        document.getElementById('copy-json').addEventListener('click', function() {
+            const output = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(output).then(() => {
+                alert('JSON copiado al portapapeles!');
+            }).catch(err => {
+                console.error('Error al copiar: ', err);
+                alert('Error al copiar el JSON');
+            });
         });
     </script>
 </body>
