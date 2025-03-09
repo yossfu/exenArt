@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     await loadUsername();
 
     document.addEventListener('click', e => {
+        if (e.target.tagName === 'A') return; // No interferir con enlaces
         const windows = [
             { toggle: '#search-toggle', window: '#search-container', anim: { y: -100, opacity: 0 } },
             { toggle: '#chat-toggle', window: '#chat-window', anim: { y: 100, opacity: 0 } },
@@ -124,38 +125,20 @@ document.addEventListener('DOMContentLoaded', async function () {
         const mainContent = document.querySelector('.main-content');
 
         if (!searchToggle || !searchContainer || !searchInput || !searchBtn || !resetBtn || !searchResultsWindow || !searchResults || !searchResultsCloseBtn || !overlay || !mainContent) {
-            console.error('Faltan elementos del buscador en el HTML:', {
-                searchToggle: !!searchToggle,
-                searchContainer: !!searchContainer,
-                searchInput: !!searchInput,
-                searchBtn: !!searchBtn,
-                resetBtn: !!resetBtn,
-                searchResultsWindow: !!searchResultsWindow,
-                searchResults: !!searchResults,
-                searchResultsCloseBtn: !!searchResultsCloseBtn,
-                overlay: !!overlay,
-                mainContent: !!mainContent
-            });
+            console.error('Faltan elementos del buscador en el HTML');
             return;
         }
 
-        console.log('Buscador inicializado correctamente');
-
         searchToggle.addEventListener('click', e => {
             e.preventDefault();
-            console.log('Clic en search-toggle');
             const isVisible = searchContainer.style.display === 'none' || searchContainer.style.display === '';
             searchContainer.style.display = isVisible ? 'flex' : 'none';
             gsap.to(searchContainer, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.3 });
-            if (isVisible) {
-                console.log('Abriendo buscador, enfocando input');
-                searchInput.focus();
-            }
+            if (isVisible) searchInput.focus();
         });
 
         function performSearch() {
             const query = searchInput.value.trim();
-            console.log('Realizando búsqueda con query:', query);
             if (!query) {
                 searchResults.innerHTML = '<p>Por favor, ingresa un término de búsqueda.</p>';
                 showSearchResults();
@@ -165,7 +148,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (images.length === 0) {
                 searchResults.innerHTML = '<p>Cargando imágenes, por favor espera...</p>';
                 showSearchResults();
-                console.log('Imágenes no cargadas');
                 return;
             }
 
@@ -175,7 +157,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 (img.tags && img.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())))
             );
 
-            console.log('Resultados encontrados:', results.length);
             searchResults.innerHTML = results.length ? 
                 results.map(img => `
                     <div class="result-item" onclick="window.location.href='image-detail.html?id=${img.id}'">
@@ -190,19 +171,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             searchResultsWindow.style.display = 'block';
             overlay.style.display = 'block';
             mainContent.style.filter = 'blur(5px)';
-            document.body.style.overflow = 'hidden'; // Bloquea el scroll del fondo
+            document.body.style.overflow = 'hidden';
             gsap.fromTo(searchResultsWindow, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3 });
             if (searchResults.querySelectorAll('.result-item').length) {
                 gsap.from('.result-item', { opacity: 0, scale: 0.8, stagger: 0.1, duration: 0.3 });
-                console.log('Animando resultados');
             }
-            searchInput.blur(); // Quita el foco del input para cerrar el teclado
-
-            // Depuración: verificar alturas y posiciones
-            console.log('Altura de search-results:', searchResults.offsetHeight);
-            console.log('Altura de search-results-window:', searchResultsWindow.offsetHeight);
-            console.log('Posición del header:', document.querySelector('.search-results-header').offsetHeight);
-            console.log('Número de result-items:', searchResults.querySelectorAll('.result-item').length);
+            searchInput.blur();
         }
 
         function hideSearchResults() {
@@ -210,41 +184,25 @@ document.addEventListener('DOMContentLoaded', async function () {
                 searchResultsWindow.style.display = 'none';
                 overlay.style.display = 'none';
                 mainContent.style.filter = 'none';
-                document.body.style.overflow = 'auto'; // Restaura el scroll del fondo
+                document.body.style.overflow = 'auto';
             } });
         }
 
-        searchBtn.addEventListener('click', () => {
-            console.log('Clic en search-btn');
-            performSearch();
-        });
-
+        searchBtn.addEventListener('click', performSearch);
         searchInput.addEventListener('keypress', e => {
             if (e.key === 'Enter') {
-                console.log('Enter presionado en search-input');
                 e.preventDefault();
                 performSearch();
             }
         });
-
         resetBtn.addEventListener('click', () => {
-            console.log('Clic en reset-btn');
             searchInput.value = '';
             hideSearchResults();
             searchContainer.style.display = 'none';
         });
+        searchResultsCloseBtn.addEventListener('click', hideSearchResults);
+        overlay.addEventListener('click', hideSearchResults);
 
-        searchResultsCloseBtn.addEventListener('click', () => {
-            console.log('Clic en search-results-close-btn');
-            hideSearchResults();
-        });
-
-        overlay.addEventListener('click', () => {
-            console.log('Clic en overlay');
-            hideSearchResults();
-        });
-
-        // Evitar que el overlay interfiera con el scroll interno
         searchResults.addEventListener('touchmove', e => {
             e.stopPropagation();
         }, { passive: false });
@@ -279,7 +237,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (imageId && username) {
                     const image = images.find(img => img.id === Number(imageId));
                     if (image) {
-                        const shareUrl = `${window.location.origin}/image-detail.html?id=${imageId}`;
+                        const baseUrl = window.location.origin || `${window.location.protocol}//${window.location.host}`;
+                        const shareUrl = `${baseUrl}/image-detail.html?id=${imageId}`;
                         const message = `[Imagen: ${image.title}] ${shareUrl}`;
                         dbFirestore.collection('messages').add({
                             chatId: 'globalChat',
@@ -329,6 +288,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         let lastMessageCount = 0;
+        let messageMap = new Map();
 
         chatToggle.addEventListener('click', e => {
             e.preventDefault();
@@ -364,6 +324,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     userId: deviceId,
                     username
                 });
+                await manageChatLimit();
                 chatInput.value = '';
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
@@ -401,11 +362,87 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         }
 
+        async function manageChatLimit() {
+            const messagesRef = dbFirestore.collection('messages').where('chatId', '==', 'globalChat');
+            const snapshot = await messagesRef.orderBy('timestamp', 'asc').get();
+            const totalMessages = snapshot.size;
+
+            if (totalMessages > 50) {
+                const messagesToDelete = totalMessages - 50;
+                const oldMessages = snapshot.docs.slice(0, messagesToDelete);
+                const batch = dbFirestore.batch();
+                
+                oldMessages.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                await batch.commit();
+                console.log(`Eliminados ${messagesToDelete} mensajes antiguos`);
+            }
+        }
+
+        function renderMessage(doc) {
+            const data = doc.data();
+            const div = document.createElement('div');
+            div.classList.add('chat-message');
+            div.dataset.messageId = doc.id;
+            if (data.userId === deviceId) div.classList.add('mine');
+            const time = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const imageLinkRegex = /\[Imagen: (.+?)\] (https?:\/\/[^\s]+)/;
+            const match = data.text.match(imageLinkRegex);
+            if (match) {
+                const [, title, url] = match;
+                const imageIdMatch = url.match(/id=(\d+)/);
+                if (imageIdMatch) {
+                    const imageId = imageIdMatch[1];
+                    const image = images.find(img => img.id === Number(imageId));
+                    if (image) {
+                        const redirectUrl = `/image-detail.html?id=${imageId}`;
+                        div.innerHTML = `
+                            <div class="message-bubble image-preview">
+                                <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
+                                <a href="${redirectUrl}" class="image-link">
+                                    <img src="${image.url}" alt="${title}" class="preview-img">
+                                    <span class="message-text">${title}</span>
+                                </a>
+                                <span class="message-time">${time}</span>
+                            </div>
+                        `;
+                    } else {
+                        div.innerHTML = `
+                            <div class="message-bubble">
+                                <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
+                                <span class="message-text">${data.text}</span>
+                                <span class="message-time">${time}</span>
+                            </div>
+                        `;
+                    }
+                } else {
+                    div.innerHTML = `
+                        <div class="message-bubble">
+                            <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
+                            <span class="message-text">${data.text}</span>
+                            <span class="message-time">${time}</span>
+                        </div>
+                    `;
+                }
+            } else {
+                div.innerHTML = `
+                    <div class="message-bubble">
+                        <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
+                        <span class="message-text">${data.text}</span>
+                        <span class="message-time">${time}</span>
+                    </div>
+                `;
+            }
+            return div;
+        }
+
         function loadChatMessages() {
             dbFirestore.collection('messages')
                 .where('chatId', '==', 'globalChat')
                 .orderBy('timestamp', 'asc')
-                .limit(50)
                 .onSnapshot(snapshot => {
                     const currentMessageCount = snapshot.size;
                     if (chatWindow.style.display === 'none' && currentMessageCount > lastMessageCount) {
@@ -414,57 +451,35 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                     lastMessageCount = currentMessageCount;
 
-                    chatMessages.innerHTML = '';
-                    const fragment = document.createDocumentFragment();
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const div = document.createElement('div');
-                        div.classList.add('chat-message');
-                        if (data.userId === deviceId) div.classList.add('mine');
-                        const time = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    snapshot.docChanges().forEach(change => {
+                        const doc = change.doc;
+                        const messageId = doc.id;
 
-                        const imageLinkRegex = /\[Imagen: (.+?)\] (https?:\/\/[^\s]+)/;
-                        const match = data.text.match(imageLinkRegex);
-                        if (match) {
-                            const [, title, url] = match;
-                            const imageIdMatch = url.match(/id=(\d+)/);
-                            if (imageIdMatch) {
-                                const imageId = imageIdMatch[1];
-                                const image = images.find(img => img.id === Number(imageId));
-                                if (image) {
-                                    div.innerHTML = `
-                                        <div class="message-bubble image-preview">
-                                            <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
-                                            <a href="${url}" target="_blank" class="image-link">
-                                                <img src="${image.url}" alt="${title}" class="preview-img">
-                                                <span class="message-text">${title}</span>
-                                            </a>
-                                            <span class="message-time">${time}</span>
-                                        </div>
-                                    `;
-                                } else {
-                                    div.innerHTML = `
-                                        <div class="message-bubble">
-                                            <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
-                                            <span class="message-text">${data.text}</span>
-                                            <span class="message-time">${time}</span>
-                                        </div>
-                                    `;
-                                }
+                        if (change.type === 'added') {
+                            if (!messageMap.has(messageId)) {
+                                const messageDiv = renderMessage(doc);
+                                chatMessages.appendChild(messageDiv);
+                                messageMap.set(messageId, messageDiv);
+                                gsap.from(messageDiv, { opacity: 0, y: 10, duration: 0.2 });
                             }
-                        } else {
-                            div.innerHTML = `
-                                <div class="message-bubble">
-                                    <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
-                                    <span class="message-text">${data.text}</span>
-                                    <span class="message-time">${time}</span>
-                                </div>
-                            `;
+                        } else if (change.type === 'modified') {
+                            const existingDiv = messageMap.get(messageId);
+                            if (existingDiv) {
+                                const newDiv = renderMessage(doc);
+                                existingDiv.replaceWith(newDiv);
+                                messageMap.set(messageId, newDiv);
+                            }
+                        } else if (change.type === 'removed') {
+                            const divToRemove = messageMap.get(messageId);
+                            if (divToRemove) {
+                                gsap.to(divToRemove, { opacity: 0, y: -10, duration: 0.2, onComplete: () => {
+                                    divToRemove.remove();
+                                    messageMap.delete(messageId);
+                                } });
+                            }
                         }
-                        fragment.appendChild(div);
                     });
-                    chatMessages.appendChild(fragment);
-                    gsap.from('.chat-message', { opacity: 0, y: 10, stagger: 0.05, duration: 0.2 });
+
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 }, error => {
                     console.error('Error al cargar mensajes:', error);
@@ -520,101 +535,141 @@ document.addEventListener('DOMContentLoaded', async function () {
         const notificationsList = document.getElementById('notifications-list');
         const notificationsBadge = document.getElementById('notifications-badge');
 
-        if (notificationsToggle && notificationsWindow && notificationsCloseBtn && notificationsList && notificationsBadge) {
-            notificationsToggle.addEventListener('click', e => {
-                e.preventDefault();
-                const isVisible = notificationsWindow.style.display === 'none';
-                notificationsWindow.style.display = isVisible ? 'block' : 'none';
-                gsap.to(notificationsWindow, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.3 });
-                if (isVisible) {
-                    loadNotifications();
-                }
-            });
+        if (!notificationsToggle || !notificationsWindow || !notificationsCloseBtn || !notificationsList || !notificationsBadge) {
+            console.error('Faltan elementos de notificaciones en el HTML');
+            return;
+        }
 
-            notificationsCloseBtn.addEventListener('click', () => {
-                notificationsWindow.style.display = 'none';
-                gsap.to(notificationsWindow, { y: -100, opacity: 0, duration: 0.3 });
-            });
-
-            function updateNotificationsBadge() {
-                notificationsBadge.textContent = unreadComments;
-                notificationsBadge.style.display = unreadComments > 0 ? 'flex' : 'none';
-                if (unreadComments > 0) gsap.from(notificationsBadge, { scale: 0.8, opacity: 0, duration: 0.3 });
+        notificationsToggle.addEventListener('click', e => {
+            e.preventDefault();
+            const isVisible = notificationsWindow.style.display === 'none';
+            notificationsWindow.style.display = isVisible ? 'block' : 'none';
+            gsap.to(notificationsWindow, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.3 });
+            if (isVisible) {
+                loadNotifications();
             }
+        });
 
-            function markNotificationAsViewed(imageId, commentId) {
-                const key = `${imageId}-${commentId}`;
-                if (!viewedNotifications[key]) {
-                    viewedNotifications[key] = true;
-                    unreadComments = Math.max(0, unreadComments - 1);
-                    localStorage.setItem('viewedNotifications', JSON.stringify(viewedNotifications));
-                    updateNotificationsBadge();
-                }
+        notificationsCloseBtn.addEventListener('click', () => {
+            notificationsWindow.style.display = 'none';
+            gsap.to(notificationsWindow, { y: -100, opacity: 0, duration: 0.3 });
+        });
+
+        function updateNotificationsBadge() {
+            notificationsBadge.textContent = unreadComments;
+            notificationsBadge.style.display = unreadComments > 0 ? 'flex' : 'none';
+            if (unreadComments > 0) gsap.from(notificationsBadge, { scale: 0.8, opacity: 0, duration: 0.3 });
+        }
+
+        function markNotificationAsViewed(imageId, commentId) {
+            const key = `${imageId}-${commentId}`;
+            if (!viewedNotifications[key]) {
+                viewedNotifications[key] = true;
+                unreadComments = Math.max(0, unreadComments - 1);
+                localStorage.setItem('viewedNotifications', JSON.stringify(viewedNotifications));
+                updateNotificationsBadge();
             }
+        }
 
-            function loadNotifications() {
-                notificationsList.innerHTML = '';
-                let newNotifications = 0;
-
-                Object.keys(interactedImages).forEach(imageId => {
-                    dbRealtime.ref(`comments/${imageId}`).once('value', snapshot => {
-                        const comments = snapshot.val();
-                        if (comments) {
-                            Object.entries(comments).forEach(([commentId, comment]) => {
-                                const key = `${imageId}-${commentId}`;
-                                if (!viewedNotifications[key] && comment.deviceId !== deviceId) {
-                                    const div = document.createElement('div');
-                                    div.classList.add('notification-item');
-                                    div.dataset.commentId = commentId;
-                                    div.dataset.imageId = imageId;
-                                    div.innerHTML = `<span>${comment.username} comentó: "${comment.text}"</span>`;
-                                    div.addEventListener('click', () => {
-                                        markNotificationAsViewed(imageId, commentId);
-                                        window.location.href = `image-detail.html?id=${imageId}`;
-                                    });
-                                    notificationsList.appendChild(div);
-                                    newNotifications++;
-                                }
-                            });
-                            gsap.from('.notification-item', { opacity: 0, y: 10, stagger: 0.1, duration: 0.3 });
-                        }
-                    });
-                });
-
-                if (newNotifications > unreadComments) {
-                    unreadComments = newNotifications;
-                    updateNotificationsBadge();
-                }
-            }
+        function loadNotifications() {
+            notificationsList.innerHTML = '';
+            unreadComments = 0; // Reiniciamos para recalcular solo las relevantes
 
             Object.keys(interactedImages).forEach(imageId => {
-                let lastCommentCount = 0;
-                dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
+                dbRealtime.ref(`comments/${imageId}`).once('value', snapshot => {
                     const comments = snapshot.val();
-                    const currentCommentCount = comments ? Object.keys(comments).length : 0;
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const currentImageId = urlParams.get('id');
-
-                    if (currentImageId === imageId) {
-                        if (comments) {
-                            Object.entries(comments).forEach(([commentId]) => {
-                                markNotificationAsViewed(imageId, commentId);
-                            });
-                        }
-                    } else if (currentCommentCount > lastCommentCount) {
-                        const newComments = Object.entries(comments || {}).slice(lastCommentCount);
-                        newComments.forEach(([commentId, comment]) => {
+                    if (comments) {
+                        Object.entries(comments).forEach(([commentId, comment]) => {
                             const key = `${imageId}-${commentId}`;
+                            // Notificación para comentarios de otros usuarios
                             if (!viewedNotifications[key] && comment.deviceId !== deviceId) {
+                                const div = document.createElement('div');
+                                div.classList.add('notification-item');
+                                div.dataset.commentId = commentId;
+                                div.dataset.imageId = imageId;
+                                div.innerHTML = `<span style="color: #333;">${comment.username} comentó: "${comment.text}"</span>`;
+                                div.addEventListener('click', () => {
+                                    markNotificationAsViewed(imageId, commentId);
+                                    window.location.href = `image-detail.html?id=${imageId}`;
+                                });
+                                notificationsList.appendChild(div);
                                 unreadComments++;
-                                updateNotificationsBadge();
+                            }
+
+                            // Verificamos respuestas a comentarios del usuario
+                            if (comment.replies) {
+                                Object.entries(comment.replies).forEach(([replyId, reply]) => {
+                                    const replyKey = `${imageId}-${commentId}-${replyId}`;
+                                    if (!viewedNotifications[replyKey] && reply.deviceId !== deviceId && comment.deviceId === deviceId) {
+                                        const replyDiv = document.createElement('div');
+                                        replyDiv.classList.add('notification-item');
+                                        replyDiv.dataset.commentId = commentId;
+                                        replyDiv.dataset.replyId = replyId;
+                                        replyDiv.dataset.imageId = imageId;
+                                        replyDiv.innerHTML = `<span style="color: #333;">${reply.username} respondió a tu comentario: "${reply.text}"</span>`;
+                                        replyDiv.addEventListener('click', () => {
+                                            markNotificationAsViewed(imageId, `${commentId}-${replyId}`);
+                                            window.location.href = `image-detail.html?id=${imageId}`;
+                                        });
+                                        notificationsList.appendChild(replyDiv);
+                                        unreadComments++;
+                                    }
+                                });
                             }
                         });
+                        gsap.from('.notification-item', { opacity: 0, y: 10, stagger: 0.1, duration: 0.3 });
                     }
-                    lastCommentCount = currentCommentCount;
+                    updateNotificationsBadge();
                 });
             });
         }
+
+        // Escuchar cambios en tiempo real solo para imágenes con las que el usuario interactuó
+        Object.keys(interactedImages).forEach(imageId => {
+            let lastCommentCount = 0;
+            dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
+                const comments = snapshot.val();
+                const currentCommentCount = comments ? Object.keys(comments).length : 0;
+                const urlParams = new URLSearchParams(window.location.search);
+                const currentImageId = urlParams.get('id');
+
+                if (currentImageId === imageId) {
+                    // Si el usuario está viendo la imagen, marcar todos los comentarios como vistos
+                    if (comments) {
+                        Object.entries(comments).forEach(([commentId]) => {
+                            markNotificationAsViewed(imageId, commentId);
+                            if (comments[commentId].replies) {
+                                Object.keys(comments[commentId].replies).forEach(replyId => {
+                                    markNotificationAsViewed(imageId, `${commentId}-${replyId}`);
+                                });
+                            }
+                        });
+                    }
+                } else if (currentCommentCount > lastCommentCount && comments) {
+                    // Nuevos comentarios o respuestas en imágenes interactuadas
+                    const newComments = Object.entries(comments).slice(lastCommentCount);
+                    newComments.forEach(([commentId, comment]) => {
+                        const key = `${imageId}-${commentId}`;
+                        if (!viewedNotifications[key] && comment.deviceId !== deviceId) {
+                            unreadComments++;
+                            updateNotificationsBadge();
+                        }
+
+                        // Verificar respuestas a comentarios del usuario
+                        if (comment.replies) {
+                            Object.entries(comment.replies).forEach(([replyId, reply]) => {
+                                const replyKey = `${imageId}-${commentId}-${replyId}`;
+                                if (!viewedNotifications[replyKey] && reply.deviceId !== deviceId && comment.deviceId === deviceId) {
+                                    unreadComments++;
+                                    updateNotificationsBadge();
+                                }
+                            });
+                        }
+                    });
+                }
+                lastCommentCount = currentCommentCount;
+            });
+        });
     }
 
     function setupGalleryLikeListeners(btn, countElement) {
@@ -631,14 +686,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (username) loadGallery();
 
         function loadGallery() {
-            console.log('Cargando galería...');
             fetch('imagenes.json')
                 .then(response => {
                     if (!response.ok) throw new Error('Error al cargar imagenes.json');
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Imágenes cargadas:', data.length);
                     images = data;
                     filteredImages = [...images];
                     renderGallery(true);
@@ -732,7 +785,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return response.json();
             })
             .then(data => {
-                console.log('Imágenes cargadas para image-detail:', data.length);
                 images = data;
                 const image = images.find(img => img.id === Number(imageId));
                 const imageContainer = document.querySelector('.image-container');
