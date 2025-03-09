@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const emojiPicker = document.getElementById('emoji-picker');
         const chatNotification = document.getElementById('chat-notification');
         const emojis = ['😀', '😂', '😍', '😢', '😡', '👍', '👎', '❤️', '🔥', '🎉'];
-        const MAX_MESSAGES = 50; // Límite fijo de mensajes
+        const MAX_MESSAGES = 50;
 
         if (!chatToggle || !chatWindow || !chatCloseBtn || !chatForm || !chatInput || !chatMessages || !emojiBtn || !emojiPicker || !chatNotification) {
             console.error('Faltan elementos del chat en el HTML');
@@ -318,16 +318,45 @@ document.addEventListener('DOMContentLoaded', async function () {
             e.preventDefault();
             const text = chatInput.value.trim();
             if (text && username) {
-                await dbFirestore.collection('messages').add({
-                    chatId: 'globalChat',
-                    text,
-                    timestamp: Date.now(),
-                    userId: deviceId,
-                    username
-                });
-                await manageChatLimit(); // Llama a la gestión del límite después de agregar un mensaje
-                chatInput.value = '';
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                try {
+                    await dbFirestore.collection('messages').add({
+                        chatId: 'globalChat',
+                        text,
+                        timestamp: Date.now(),
+                        userId: deviceId,
+                        username
+                    });
+                    await manageChatLimit();
+                    chatInput.value = '';
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                } catch (error) {
+                    console.error('Error al enviar mensaje:', error);
+                    chatInput.value = '';
+                }
+            }
+        });
+
+        chatInput.addEventListener('keypress', async e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const text = chatInput.value.trim();
+                if (text && username) {
+                    try {
+                        await dbFirestore.collection('messages').add({
+                            chatId: 'globalChat',
+                            text,
+                            timestamp: Date.now(),
+                            userId: deviceId,
+                            username
+                        });
+                        await manageChatLimit();
+                        chatInput.value = '';
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    } catch (error) {
+                        console.error('Error al enviar mensaje con Enter:', error);
+                        chatInput.value = '';
+                    }
+                }
             }
         });
 
@@ -412,10 +441,19 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 <span class="message-time">${time}</span>
                             </div>
                         `;
+                        // Asegurar que el enlace y la imagen redirijan correctamente
                         const link = div.querySelector('.image-link');
+                        const previewImg = div.querySelector('.preview-img');
                         link.addEventListener('click', (e) => {
                             e.preventDefault();
                             console.log("Clic en enlace, redirigiendo a:", redirectUrl);
+                            window.location.href = redirectUrl;
+                        });
+                        previewImg.style.cursor = 'pointer'; // Hacer la imagen visiblemente clicable
+                        previewImg.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation(); // Evitar que el evento se propague al enlace
+                            console.log("Clic en imagen, redirigiendo a:", redirectUrl);
                             window.location.href = redirectUrl;
                         });
                     } else {
@@ -452,10 +490,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             const messagesRef = dbFirestore.collection('messages')
                 .where('chatId', '==', 'globalChat')
                 .orderBy('timestamp', 'asc')
-                .limitToLast(MAX_MESSAGES); // Solo carga los últimos 50 mensajes
+                .limitToLast(MAX_MESSAGES);
 
             messagesRef.onSnapshot(snapshot => {
-                chatMessages.innerHTML = ''; // Limpiamos el chat para evitar duplicados o desorden
+                chatMessages.innerHTML = '';
                 let newMessagesCount = 0;
 
                 snapshot.forEach(doc => {
@@ -464,7 +502,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                     gsap.from(messageDiv, { opacity: 0, y: 10, duration: 0.2 });
                 });
 
-                // Contar mensajes nuevos solo si el chat no está visible
                 if (chatWindow.style.display === 'none') {
                     newMessagesCount = snapshot.size - chatMessages.childElementCount;
                     if (newMessagesCount > 0) {
@@ -473,7 +510,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                 }
 
-                chatMessages.scrollTop = chatMessages.scrollHeight; // Mantener el scroll abajo
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             }, error => {
                 console.error('Error al cargar mensajes:', error);
                 chatMessages.innerHTML = '<p class="error">Error al cargar mensajes</p>';
