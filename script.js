@@ -237,9 +237,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (imageId && username) {
                     const image = images.find(img => img.id === Number(imageId));
                     if (image) {
-                        const baseUrl = window.location.origin || `${window.location.protocol}//${window.location.host}`;
+                        const baseUrl = window.location.origin;
                         const shareUrl = `${baseUrl}/image-detail.html?id=${imageId}`;
                         const message = `[Imagen: ${image.title}] ${shareUrl}`;
+                        console.log("URL compartida al enviar:", shareUrl);
                         dbFirestore.collection('messages').add({
                             chatId: 'globalChat',
                             text: message,
@@ -281,14 +282,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         const emojiPicker = document.getElementById('emoji-picker');
         const chatNotification = document.getElementById('chat-notification');
         const emojis = ['😀', '😂', '😍', '😢', '😡', '👍', '👎', '❤️', '🔥', '🎉'];
+        const MAX_MESSAGES = 50; // Límite fijo de mensajes
 
         if (!chatToggle || !chatWindow || !chatCloseBtn || !chatForm || !chatInput || !chatMessages || !emojiBtn || !emojiPicker || !chatNotification) {
             console.error('Faltan elementos del chat en el HTML');
             return;
         }
 
-        let lastMessageCount = 0;
-        let messageMap = new Map();
+        let unreadMessages = 0;
 
         chatToggle.addEventListener('click', e => {
             e.preventDefault();
@@ -324,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     userId: deviceId,
                     username
                 });
-                await manageChatLimit();
+                await manageChatLimit(); // Llama a la gestión del límite después de agregar un mensaje
                 chatInput.value = '';
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
@@ -363,15 +364,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         async function manageChatLimit() {
-            const messagesRef = dbFirestore.collection('messages').where('chatId', '==', 'globalChat');
-            const snapshot = await messagesRef.orderBy('timestamp', 'asc').get();
+            const messagesRef = dbFirestore.collection('messages')
+                .where('chatId', '==', 'globalChat')
+                .orderBy('timestamp', 'asc');
+            const snapshot = await messagesRef.get();
             const totalMessages = snapshot.size;
 
-            if (totalMessages > 50) {
-                const messagesToDelete = totalMessages - 50;
+            if (totalMessages > MAX_MESSAGES) {
+                const messagesToDelete = totalMessages - MAX_MESSAGES;
                 const oldMessages = snapshot.docs.slice(0, messagesToDelete);
                 const batch = dbFirestore.batch();
-                
+
                 oldMessages.forEach(doc => {
                     batch.delete(doc.ref);
                 });
@@ -389,7 +392,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (data.userId === deviceId) div.classList.add('mine');
             const time = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            const imageLinkRegex = /\[Imagen: (.+?)\] (https?:\/\/[^\s]+)/;
+            const imageLinkRegex = /\[Imagen: (.+?)\] (.+)/;
             const match = data.text.match(imageLinkRegex);
             if (match) {
                 const [, title, url] = match;
@@ -398,17 +401,23 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const imageId = imageIdMatch[1];
                     const image = images.find(img => img.id === Number(imageId));
                     if (image) {
-                        const redirectUrl = `/image-detail.html?id=${imageId}`;
+                        const redirectUrl = `${window.location.origin}/image-detail.html?id=${imageId}`;
                         div.innerHTML = `
                             <div class="message-bubble image-preview">
                                 <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
-                                <a href="${redirectUrl}" class="image-link">
+                                <a href="${redirectUrl}" class="image-link" target="_self">
                                     <img src="${image.url}" alt="${title}" class="preview-img">
                                     <span class="message-text">${title}</span>
                                 </a>
                                 <span class="message-time">${time}</span>
                             </div>
                         `;
+                        const link = div.querySelector('.image-link');
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            console.log("Clic en enlace, redirigiendo a:", redirectUrl);
+                            window.location.href = redirectUrl;
+                        });
                     } else {
                         div.innerHTML = `
                             <div class="message-bubble">
@@ -440,51 +449,35 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         function loadChatMessages() {
-            dbFirestore.collection('messages')
+            const messagesRef = dbFirestore.collection('messages')
                 .where('chatId', '==', 'globalChat')
                 .orderBy('timestamp', 'asc')
-                .onSnapshot(snapshot => {
-                    const currentMessageCount = snapshot.size;
-                    if (chatWindow.style.display === 'none' && currentMessageCount > lastMessageCount) {
-                        unreadMessages += currentMessageCount - lastMessageCount;
+                .limitToLast(MAX_MESSAGES); // Solo carga los últimos 50 mensajes
+
+            messagesRef.onSnapshot(snapshot => {
+                chatMessages.innerHTML = ''; // Limpiamos el chat para evitar duplicados o desorden
+                let newMessagesCount = 0;
+
+                snapshot.forEach(doc => {
+                    const messageDiv = renderMessage(doc);
+                    chatMessages.appendChild(messageDiv);
+                    gsap.from(messageDiv, { opacity: 0, y: 10, duration: 0.2 });
+                });
+
+                // Contar mensajes nuevos solo si el chat no está visible
+                if (chatWindow.style.display === 'none') {
+                    newMessagesCount = snapshot.size - chatMessages.childElementCount;
+                    if (newMessagesCount > 0) {
+                        unreadMessages += newMessagesCount;
                         updateChatNotificationBadge();
                     }
-                    lastMessageCount = currentMessageCount;
+                }
 
-                    snapshot.docChanges().forEach(change => {
-                        const doc = change.doc;
-                        const messageId = doc.id;
-
-                        if (change.type === 'added') {
-                            if (!messageMap.has(messageId)) {
-                                const messageDiv = renderMessage(doc);
-                                chatMessages.appendChild(messageDiv);
-                                messageMap.set(messageId, messageDiv);
-                                gsap.from(messageDiv, { opacity: 0, y: 10, duration: 0.2 });
-                            }
-                        } else if (change.type === 'modified') {
-                            const existingDiv = messageMap.get(messageId);
-                            if (existingDiv) {
-                                const newDiv = renderMessage(doc);
-                                existingDiv.replaceWith(newDiv);
-                                messageMap.set(messageId, newDiv);
-                            }
-                        } else if (change.type === 'removed') {
-                            const divToRemove = messageMap.get(messageId);
-                            if (divToRemove) {
-                                gsap.to(divToRemove, { opacity: 0, y: -10, duration: 0.2, onComplete: () => {
-                                    divToRemove.remove();
-                                    messageMap.delete(messageId);
-                                } });
-                            }
-                        }
-                    });
-
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }, error => {
-                    console.error('Error al cargar mensajes:', error);
-                    chatMessages.innerHTML = '<p class="error">Error al cargar mensajes</p>';
-                });
+                chatMessages.scrollTop = chatMessages.scrollHeight; // Mantener el scroll abajo
+            }, error => {
+                console.error('Error al cargar mensajes:', error);
+                chatMessages.innerHTML = '<p class="error">Error al cargar mensajes</p>';
+            });
         }
     }
 
@@ -573,7 +566,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         function loadNotifications() {
             notificationsList.innerHTML = '';
-            unreadComments = 0; // Reiniciamos para recalcular solo las relevantes
+            unreadComments = 0;
 
             Object.keys(interactedImages).forEach(imageId => {
                 dbRealtime.ref(`comments/${imageId}`).once('value', snapshot => {
@@ -581,7 +574,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                     if (comments) {
                         Object.entries(comments).forEach(([commentId, comment]) => {
                             const key = `${imageId}-${commentId}`;
-                            // Notificación para comentarios de otros usuarios
                             if (!viewedNotifications[key] && comment.deviceId !== deviceId) {
                                 const div = document.createElement('div');
                                 div.classList.add('notification-item');
@@ -596,7 +588,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 unreadComments++;
                             }
 
-                            // Verificamos respuestas a comentarios del usuario
                             if (comment.replies) {
                                 Object.entries(comment.replies).forEach(([replyId, reply]) => {
                                     const replyKey = `${imageId}-${commentId}-${replyId}`;
@@ -624,7 +615,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
         }
 
-        // Escuchar cambios en tiempo real solo para imágenes con las que el usuario interactuó
         Object.keys(interactedImages).forEach(imageId => {
             let lastCommentCount = 0;
             dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
@@ -634,7 +624,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const currentImageId = urlParams.get('id');
 
                 if (currentImageId === imageId) {
-                    // Si el usuario está viendo la imagen, marcar todos los comentarios como vistos
                     if (comments) {
                         Object.entries(comments).forEach(([commentId]) => {
                             markNotificationAsViewed(imageId, commentId);
@@ -646,7 +635,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                         });
                     }
                 } else if (currentCommentCount > lastCommentCount && comments) {
-                    // Nuevos comentarios o respuestas en imágenes interactuadas
                     const newComments = Object.entries(comments).slice(lastCommentCount);
                     newComments.forEach(([commentId, comment]) => {
                         const key = `${imageId}-${commentId}`;
@@ -655,7 +643,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                             updateNotificationsBadge();
                         }
 
-                        // Verificar respuestas a comentarios del usuario
                         if (comment.replies) {
                             Object.entries(comment.replies).forEach(([replyId, reply]) => {
                                 const replyKey = `${imageId}-${commentId}-${replyId}`;
