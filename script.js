@@ -93,8 +93,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const win = document.querySelector(w.window);
             if (win && toggle && !toggle.contains(e.target) && !win.contains(e.target) && win.style.display !== 'none') {
                 win.classList.remove('open');
-                gsap.to(win, { ...w.anim, duration: 0.3 });
-                if (w.window !== '#filter-window') win.style.display = 'none';
+                gsap.to(win, { ...w.anim, duration: 0.3, onComplete: () => win.style.display = 'none' });
             }
         });
     });
@@ -169,15 +168,25 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (imageId) document.getElementById('comment-text').focus();
             } else if (e.target.closest('.share-btn')) {
                 const imageId = new URLSearchParams(window.location.search).get('id');
-                if (imageId) {
+                if (imageId && username) {
                     const image = images.find(img => img.id === Number(imageId));
-                    if (image && navigator.clipboard) {
+                    if (image) {
                         const shareUrl = `${window.location.origin}/image-detail.html?id=${imageId}`;
-                        navigator.clipboard.writeText(shareUrl)
-                            .then(() => alert('¡Enlace copiado al portapapeles!'))
-                            .catch(err => console.error('Error al copiar enlace:', err));
-                    } else {
-                        alert('No se pudo copiar el enlace. Intenta manualmente.');
+                        const message = `[Imagen: ${image.title}] ${shareUrl}`;
+                        dbFirestore.collection('messages').add({
+                            chatId: 'globalChat',
+                            text: message,
+                            timestamp: Date.now(),
+                            userId: deviceId,
+                            username
+                        }).then(() => {
+                            const chatWindow = document.getElementById('chat-window');
+                            if (chatWindow && chatWindow.style.display !== 'none') {
+                                document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+                            } else {
+                                document.getElementById('chat-toggle').click();
+                            }
+                        }).catch(err => console.error('Error al compartir en el chat:', err));
                     }
                 }
             }
@@ -206,101 +215,153 @@ document.addEventListener('DOMContentLoaded', async function () {
         const chatNotification = document.getElementById('chat-notification');
         const emojis = ['😀', '😂', '😍', '😢', '😡', '👍', '👎', '❤️', '🔥', '🎉'];
 
-        if (chatToggle && chatWindow && chatCloseBtn && chatForm && chatInput && chatMessages && emojiBtn && emojiPicker && chatNotification) {
-            let lastMessageCount = 0;
+        if (!chatToggle || !chatWindow || !chatCloseBtn || !chatForm || !chatInput || !chatMessages || !emojiBtn || !emojiPicker || !chatNotification) {
+            console.error('Faltan elementos del chat en el HTML');
+            return;
+        }
 
-            chatToggle.addEventListener('click', e => {
-                e.preventDefault();
-                const isVisible = chatWindow.style.display === 'none';
-                chatWindow.style.display = isVisible ? 'block' : 'none';
-                gsap.to(chatWindow, { y: isVisible ? 0 : 100, opacity: isVisible ? 1 : 0, duration: 0.3 });
-                if (isVisible && !chatMessages.dataset.loaded) {
-                    loadChatMessages();
-                    chatMessages.dataset.loaded = 'true';
-                }
-                if (isVisible) {
-                    unreadMessages = 0;
-                    updateChatNotificationBadge();
-                }
-            });
+        let lastMessageCount = 0;
 
-            chatCloseBtn.addEventListener('click', () => {
-                chatWindow.style.display = 'none';
-                gsap.to(chatWindow, { y: 100, opacity: 0, duration: 0.3 });
-            });
-
-            chatForm.addEventListener('submit', async e => {
-                e.preventDefault();
-                const text = chatInput.value.trim();
-                if (text && username) {
-                    await dbFirestore.collection('messages').add({
-                        chatId: 'globalChat',
-                        text,
-                        timestamp: Date.now(),
-                        userId: deviceId,
-                        username
-                    });
-                    chatInput.value = '';
-                }
-            });
-
-            emojiBtn.addEventListener('click', () => {
-                emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
-                if (emojiPicker.innerHTML === '') {
-                    emojiPicker.innerHTML = emojis.map(e => `<span class="emoji">${e}</span>`).join('');
-                }
-            });
-
-            emojiPicker.addEventListener('click', e => {
-                if (e.target.classList.contains('emoji')) {
-                    chatInput.value += e.target.textContent;
-                    emojiPicker.style.display = 'none';
-                }
-            });
-
-            function updateChatNotificationBadge() {
-                if (unreadMessages > 0) {
-                    chatNotification.textContent = unreadMessages;
-                    chatNotification.style.display = 'flex';
-                    gsap.from(chatNotification, { scale: 0.8, opacity: 0, duration: 0.3 });
-                } else {
-                    chatNotification.style.display = 'none';
-                }
+        chatToggle.addEventListener('click', e => {
+            e.preventDefault();
+            const isVisible = chatWindow.style.display === 'none' || chatWindow.style.display === '';
+            chatWindow.style.display = isVisible ? 'flex' : 'none';
+            gsap.fromTo(chatWindow, 
+                { y: isVisible ? 100 : 0, opacity: isVisible ? 0 : 1 }, 
+                { y: isVisible ? 0 : 100, opacity: isVisible ? 1 : 0, duration: 0.3 }
+            );
+            if (isVisible && !chatMessages.dataset.loaded) {
+                loadChatMessages();
+                chatMessages.dataset.loaded = 'true';
             }
+            if (isVisible) {
+                unreadMessages = 0;
+                updateChatNotificationBadge();
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
 
-            function loadChatMessages() {
-                dbFirestore.collection('messages')
-                    .where('chatId', '==', 'globalChat')
-                    .orderBy('timestamp', 'desc')
-                    .limit(20)
-                    .onSnapshot(snapshot => {
-                        const currentMessageCount = snapshot.size;
-                        if (chatWindow.style.display === 'none' && currentMessageCount > lastMessageCount) {
-                            unreadMessages += currentMessageCount - lastMessageCount;
-                            updateChatNotificationBadge();
-                        }
-                        lastMessageCount = currentMessageCount;
+        chatCloseBtn.addEventListener('click', () => {
+            gsap.to(chatWindow, { y: 100, opacity: 0, duration: 0.3, onComplete: () => chatWindow.style.display = 'none' });
+        });
 
-                        chatMessages.innerHTML = '';
-                        snapshot.forEach(doc => {
-                            const data = doc.data();
-                            const div = document.createElement('div');
-                            div.classList.add('chat-message');
-                            if (data.userId === deviceId) div.classList.add('mine');
-                            div.innerHTML = `
-                                <p><strong>${data.username}</strong>: ${data.text}</p>
-                                <span>${new Date(data.timestamp).toLocaleTimeString()}</span>
-                            `;
-                            if (data.userId !== deviceId) {
-                                div.querySelector('p').style.backgroundColor = getColorFromUserId(data.userId);
-                                div.querySelector('p').style.color = '#fff';
+        chatForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (text && username) {
+                await dbFirestore.collection('messages').add({
+                    chatId: 'globalChat',
+                    text,
+                    timestamp: Date.now(),
+                    userId: deviceId,
+                    username
+                });
+                chatInput.value = '';
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+
+        emojiBtn.addEventListener('click', () => {
+            const isVisible = emojiPicker.style.display === 'none' || emojiPicker.style.display === '';
+            emojiPicker.style.display = isVisible ? 'grid' : 'none';
+            if (isVisible && emojiPicker.innerHTML === '') {
+                emojiPicker.innerHTML = emojis.map(e => `<span class="emoji">${e}</span>`).join('');
+            }
+        });
+
+        emojiPicker.addEventListener('click', e => {
+            if (e.target.classList.contains('emoji')) {
+                chatInput.value += e.target.textContent;
+                emojiPicker.style.display = 'none';
+                chatInput.focus();
+            }
+        });
+
+        chatInput.addEventListener('focus', () => {
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 300);
+        });
+
+        function updateChatNotificationBadge() {
+            if (unreadMessages > 0) {
+                chatNotification.textContent = unreadMessages;
+                chatNotification.style.display = 'flex';
+                gsap.from(chatNotification, { scale: 0.8, opacity: 0, duration: 0.3 });
+            } else {
+                chatNotification.style.display = 'none';
+            }
+        }
+
+        function loadChatMessages() {
+            dbFirestore.collection('messages')
+                .where('chatId', '==', 'globalChat')
+                .orderBy('timestamp', 'asc') // Cambiado a 'asc' para orden ascendente
+                .limit(50)
+                .onSnapshot(snapshot => {
+                    const currentMessageCount = snapshot.size;
+                    if (chatWindow.style.display === 'none' && currentMessageCount > lastMessageCount) {
+                        unreadMessages += currentMessageCount - lastMessageCount;
+                        updateChatNotificationBadge();
+                    }
+                    lastMessageCount = currentMessageCount;
+
+                    chatMessages.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const div = document.createElement('div');
+                        div.classList.add('chat-message');
+                        if (data.userId === deviceId) div.classList.add('mine');
+                        const time = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        const imageLinkRegex = /\[Imagen: (.+?)\] (https?:\/\/[^\s]+)/;
+                        const match = data.text.match(imageLinkRegex);
+                        if (match) {
+                            const [, title, url] = match;
+                            const imageIdMatch = url.match(/id=(\d+)/);
+                            if (imageIdMatch) {
+                                const imageId = imageIdMatch[1];
+                                const image = images.find(img => img.id === Number(imageId));
+                                if (image) {
+                                    div.innerHTML = `
+                                        <div class="message-bubble image-preview">
+                                            <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
+                                            <a href="${url}" target="_blank" class="image-link">
+                                                <img src="${image.url}" alt="${title}" class="preview-img">
+                                                <span class="message-text">${title}</span>
+                                            </a>
+                                            <span class="message-time">${time}</span>
+                                        </div>
+                                    `;
+                                } else {
+                                    div.innerHTML = `
+                                        <div class="message-bubble">
+                                            <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
+                                            <span class="message-text">${data.text}</span>
+                                            <span class="message-time">${time}</span>
+                                        </div>
+                                    `;
+                                }
                             }
-                            chatMessages.insertBefore(div, chatMessages.firstChild);
-                        });
-                        gsap.from('.chat-message', { opacity: 0, y: 10, stagger: 0.1, duration: 0.3 });
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        } else {
+                            div.innerHTML = `
+                                <div class="message-bubble">
+                                    <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
+                                    <span class="message-text">${data.text}</span>
+                                    <span class="message-time">${time}</span>
+                                </div>
+                            `;
+                        }
+                        fragment.appendChild(div);
                     });
-            }
+                    chatMessages.appendChild(fragment);
+                    gsap.from('.chat-message', { opacity: 0, y: 10, stagger: 0.05, duration: 0.2 });
+                    chatMessages.scrollTop = chatMessages.scrollHeight; // Siempre desplazar al final
+                }, error => {
+                    console.error('Error al cargar mensajes:', error);
+                    chatMessages.innerHTML = '<p class="error">Error al cargar mensajes</p>';
+                });
         }
     }
 
@@ -393,7 +454,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         if (comments) {
                             Object.entries(comments).forEach(([commentId, comment]) => {
                                 const key = `${imageId}-${commentId}`;
-                                if (!viewedNotifications[key] && comment.deviceId !== deviceId) { // No notificar comentarios propios
+                                if (!viewedNotifications[key] && comment.deviceId !== deviceId) {
                                     const div = document.createElement('div');
                                     div.classList.add('notification-item');
                                     div.dataset.commentId = commentId;
@@ -412,14 +473,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                     });
                 });
 
-                // Actualizar el conteo solo si hay nuevas notificaciones
                 if (newNotifications > unreadComments) {
                     unreadComments = newNotifications;
                     updateNotificationsBadge();
                 }
             }
 
-            // Escuchar nuevos comentarios en tiempo real
             Object.keys(interactedImages).forEach(imageId => {
                 let lastCommentCount = 0;
                 dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
@@ -429,7 +488,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const currentImageId = urlParams.get('id');
 
                     if (currentImageId === imageId) {
-                        // Si estamos en la página de la imagen, marcar los comentarios como vistos
                         if (comments) {
                             Object.entries(comments).forEach(([commentId]) => {
                                 markNotificationAsViewed(imageId, commentId);
@@ -492,6 +550,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                         }, { rootMargin: '200px' });
                         observer.observe(sentinel);
                     }
+
+                    const likeObserver = new IntersectionObserver(setupGalleryLikeListeners, { rootMargin: '100px' });
+                    document.querySelectorAll('.like-btn').forEach(btn => likeObserver.observe(btn));
                 })
                 .catch(error => console.error('Error al cargar imagenes.json:', error));
         }
@@ -513,10 +574,18 @@ document.addEventListener('DOMContentLoaded', async function () {
             nextImages.forEach(img => {
                 const div = document.createElement('div');
                 div.classList.add('grid-item');
-                div.innerHTML = `<img src="${img.url}" alt="${img.title}" loading="lazy">`;
-                div.addEventListener('click', () => {
-                    updateTagScores(img.tags, 'view', img.id);
-                    window.location.href = `image-detail.html?id=${img.id}`;
+                div.innerHTML = `
+                    <img src="${img.url}" alt="${img.title}" loading="lazy">
+                    <div class="like-container">
+                        <button class="like-btn" data-id="${img.id}"><i class="far fa-heart"></i></button>
+                        <span class="like-count">0</span>
+                    </div>
+                `;
+                div.addEventListener('click', (e) => {
+                    if (!e.target.closest('.like-btn')) {
+                        updateTagScores(img.tags, 'view', img.id);
+                        window.location.href = `image-detail.html?id=${img.id}`;
+                    }
                 });
                 gallery.appendChild(div);
             });
