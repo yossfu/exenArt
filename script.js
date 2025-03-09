@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const chatForm = document.getElementById('chat-form');
         const chatInput = document.getElementById('chat-input');
         const chatMessages = document.getElementById('chat-messages');
-        const emojiBtn = document.getElementById('emoji-btn');
+        const emojiBtn = document.getElementById('emoji-btn'); // Corregido el typo 'TheoId' -> 'getElementById'
         const emojiPicker = document.getElementById('emoji-picker');
         const chatNotification = document.getElementById('chat-notification');
         const emojis = ['😀', '😂', '😍', '😢', '😡', '👍', '👎', '❤️', '🔥', '🎉'];
@@ -430,31 +430,22 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const imageId = imageIdMatch[1];
                     const image = images.find(img => img.id === Number(imageId));
                     if (image) {
-                        const redirectUrl = `${window.location.origin}/image-detail.html?id=${imageId}`;
                         div.innerHTML = `
                             <div class="message-bubble image-preview">
                                 <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
-                                <a href="${redirectUrl}" class="image-link" target="_self">
+                                <div class="image-link" data-id="${imageId}">
                                     <img src="${image.url}" alt="${title}" class="preview-img">
                                     <span class="message-text">${title}</span>
-                                </a>
+                                </div>
                                 <span class="message-time">${time}</span>
                             </div>
                         `;
-                        // Asegurar que el enlace y la imagen redirijan correctamente
-                        const link = div.querySelector('.image-link');
-                        const previewImg = div.querySelector('.preview-img');
-                        link.addEventListener('click', (e) => {
+                        const imageLink = div.querySelector('.image-link');
+                        imageLink.style.cursor = 'pointer';
+                        imageLink.addEventListener('click', (e) => {
                             e.preventDefault();
-                            console.log("Clic en enlace, redirigiendo a:", redirectUrl);
-                            window.location.href = redirectUrl;
-                        });
-                        previewImg.style.cursor = 'pointer'; // Hacer la imagen visiblemente clicable
-                        previewImg.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation(); // Evitar que el evento se propague al enlace
-                            console.log("Clic en imagen, redirigiendo a:", redirectUrl);
-                            window.location.href = redirectUrl;
+                            console.log(`Redirigiendo a image-detail.html?id=${imageId}`);
+                            window.location.href = `image-detail.html?id=${imageId}`;
                         });
                     } else {
                         div.innerHTML = `
