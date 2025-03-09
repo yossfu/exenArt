@@ -82,6 +82,7 @@ body {
     padding: 70px 0 60px;
     max-width: 100%;
     margin: 0 auto;
+    transition: filter 0.3s ease; /* Para el efecto de difuminado */
 }
 
 .gallery-section {
@@ -349,35 +350,95 @@ body {
     font-size: 16px;
 }
 
-.search-results {
-    position: absolute;
-    top: 100%;
+/* Overlay */
+.overlay {
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: none;
+}
+
+/* Search Results Window */
+.search-results-window {
+    position: fixed;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    height: 80vh; /* Altura fija para el contenedor completo */
     background: #fff;
     border: 1px solid #dbdbdb;
-    max-height: 50vh;
-    overflow-y: auto;
-    z-index: 1000;
+    border-radius: 8px;
+    z-index: 1001;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden; /* Evita que el contenido se desborde fuera */
+    border: 2px solid red; /* Depuración visual */
+}
+
+.search-results-header {
+    padding: 10px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dbdbdb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0; /* Evita que el header se comprima */
+    position: relative;
+    z-index: 1; /* Por encima del contenido */
+    border: 2px solid blue; /* Depuración visual */
+}
+
+.search-results-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.search-results {
+    padding: 10px;
+    overflow-y: scroll; /* Scroll solo en el área de resultados */
+    flex: 1; /* Ocupa el espacio restante */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    -webkit-overflow-scrolling: touch; /* Mejora el desplazamiento en iOS */
+    overscroll-behavior: contain; /* Evita propagación del scroll */
+    min-height: 100px; /* Forzamos una altura mínima */
+    height: calc(100% - 45px); /* Altura total menos el header */
+    position: relative;
+    z-index: 0; /* Por debajo del header */
+    border: 2px solid green; /* Depuración visual */
 }
 
 .result-item {
-    padding: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    position: relative;
+    padding-top: 133.33%; /* Relación de aspecto 3:4 */
+    overflow: hidden;
     cursor: pointer;
+    box-shadow: 0Scientifpx 3px rgba(0, 0, 0, 0.1);
 }
 
 .result-item img {
-    width: 50px;
-    height: 50px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+    border: 1px solid #dbdbdb;
     border-radius: 4px;
+    transition: filter 0.2s;
 }
 
-.result-item:hover {
-    background: #fafafa;
+.result-item:hover img {
+    filter: brightness(80%);
 }
 
 /* Chat Redesign */

@@ -86,14 +86,27 @@ document.addEventListener('DOMContentLoaded', async function () {
             { toggle: '#search-toggle', window: '#search-container', anim: { y: -100, opacity: 0 } },
             { toggle: '#chat-toggle', window: '#chat-window', anim: { y: 100, opacity: 0 } },
             { toggle: '#notifications-toggle', window: '#notifications-window', anim: { y: -100, opacity: 0 } },
-            { toggle: '#filter-toggle', window: '#filter-window', anim: { x: -300, onComplete: () => document.querySelector('#filter-window').style.display = 'none' } }
+            { toggle: '#filter-toggle', window: '#filter-window', anim: { x: -300, onComplete: () => document.querySelector('#filter-window').style.display = 'none' } },
+            { toggle: '#search-results-close-btn', window: '#search-results-window', anim: { scale: 0.9, opacity: 0, onComplete: () => {
+                document.querySelector('#search-results-window').style.display = 'none';
+                document.getElementById('overlay').style.display = 'none';
+                document.querySelector('.main-content').style.filter = 'none';
+                document.body.style.overflow = 'auto';
+            } } }
         ];
         windows.forEach(w => {
             const toggle = document.querySelector(w.toggle);
             const win = document.querySelector(w.window);
             if (win && toggle && !toggle.contains(e.target) && !win.contains(e.target) && win.style.display !== 'none') {
                 win.classList.remove('open');
-                gsap.to(win, { ...w.anim, duration: 0.3, onComplete: () => win.style.display = 'none' });
+                gsap.to(win, { ...w.anim, duration: 0.3, onComplete: () => {
+                    win.style.display = 'none';
+                    if (w.window === '#search-results-window') {
+                        document.getElementById('overlay').style.display = 'none';
+                        document.querySelector('.main-content').style.filter = 'none';
+                        document.body.style.overflow = 'auto';
+                    }
+                } });
             }
         });
     });
@@ -104,42 +117,137 @@ document.addEventListener('DOMContentLoaded', async function () {
         const searchInput = document.getElementById('search-input');
         const searchBtn = document.getElementById('search-btn');
         const resetBtn = document.getElementById('reset-btn');
+        const searchResultsWindow = document.getElementById('search-results-window');
         const searchResults = document.getElementById('search-results');
+        const searchResultsCloseBtn = document.getElementById('search-results-close-btn');
+        const overlay = document.getElementById('overlay');
+        const mainContent = document.querySelector('.main-content');
 
-        if (searchToggle && searchContainer && searchInput && searchBtn && resetBtn && searchResults) {
-            searchToggle.addEventListener('click', e => {
-                e.preventDefault();
-                const isVisible = searchContainer.style.display === 'none';
-                searchContainer.style.display = isVisible ? 'flex' : 'none';
-                gsap.to(searchContainer, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.3 });
-                if (isVisible) searchInput.focus();
+        if (!searchToggle || !searchContainer || !searchInput || !searchBtn || !resetBtn || !searchResultsWindow || !searchResults || !searchResultsCloseBtn || !overlay || !mainContent) {
+            console.error('Faltan elementos del buscador en el HTML:', {
+                searchToggle: !!searchToggle,
+                searchContainer: !!searchContainer,
+                searchInput: !!searchInput,
+                searchBtn: !!searchBtn,
+                resetBtn: !!resetBtn,
+                searchResultsWindow: !!searchResultsWindow,
+                searchResults: !!searchResults,
+                searchResultsCloseBtn: !!searchResultsCloseBtn,
+                overlay: !!overlay,
+                mainContent: !!mainContent
             });
-
-            searchBtn.addEventListener('click', () => displaySearchResults(searchInput.value.trim()));
-            searchInput.addEventListener('input', () => displaySearchResults(searchInput.value.trim()));
-            resetBtn.addEventListener('click', () => {
-                searchInput.value = '';
-                searchResults.style.display = 'none';
-                searchContainer.style.display = 'none';
-            });
-
-            function displaySearchResults(query) {
-                if (!query) {
-                    searchResults.style.display = 'none';
-                    return;
-                }
-                const results = images.filter(img => 
-                    img.title.toLowerCase().includes(query.toLowerCase()) || 
-                    img.description.toLowerCase().includes(query.toLowerCase()) || 
-                    img.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
-                );
-                searchResults.innerHTML = results.length ? 
-                    results.map(img => `<div class="result-item" onclick="window.location.href='image-detail.html?id=${img.id}'"><img src="${img.url}" alt="${img.title}"><span>${img.title}</span></div>`).join('') : 
-                    '<p>No hay resultados</p>';
-                searchResults.style.display = 'block';
-                if (results.length) gsap.from('.result-item', { opacity: 0, y: 20, stagger: 0.1, duration: 0.3 });
-            }
+            return;
         }
+
+        console.log('Buscador inicializado correctamente');
+
+        searchToggle.addEventListener('click', e => {
+            e.preventDefault();
+            console.log('Clic en search-toggle');
+            const isVisible = searchContainer.style.display === 'none' || searchContainer.style.display === '';
+            searchContainer.style.display = isVisible ? 'flex' : 'none';
+            gsap.to(searchContainer, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.3 });
+            if (isVisible) {
+                console.log('Abriendo buscador, enfocando input');
+                searchInput.focus();
+            }
+        });
+
+        function performSearch() {
+            const query = searchInput.value.trim();
+            console.log('Realizando búsqueda con query:', query);
+            if (!query) {
+                searchResults.innerHTML = '<p>Por favor, ingresa un término de búsqueda.</p>';
+                showSearchResults();
+                return;
+            }
+
+            if (images.length === 0) {
+                searchResults.innerHTML = '<p>Cargando imágenes, por favor espera...</p>';
+                showSearchResults();
+                console.log('Imágenes no cargadas');
+                return;
+            }
+
+            const results = images.filter(img => 
+                (img.title && img.title.toLowerCase().includes(query.toLowerCase())) || 
+                (img.description && img.description.toLowerCase().includes(query.toLowerCase())) || 
+                (img.tags && img.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())))
+            );
+
+            console.log('Resultados encontrados:', results.length);
+            searchResults.innerHTML = results.length ? 
+                results.map(img => `
+                    <div class="result-item" onclick="window.location.href='image-detail.html?id=${img.id}'">
+                        <img src="${img.url}" alt="${img.title}">
+                    </div>
+                `).join('') : 
+                '<p>No hay resultados para tu búsqueda.</p>';
+            showSearchResults();
+        }
+
+        function showSearchResults() {
+            searchResultsWindow.style.display = 'block';
+            overlay.style.display = 'block';
+            mainContent.style.filter = 'blur(5px)';
+            document.body.style.overflow = 'hidden'; // Bloquea el scroll del fondo
+            gsap.fromTo(searchResultsWindow, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3 });
+            if (searchResults.querySelectorAll('.result-item').length) {
+                gsap.from('.result-item', { opacity: 0, scale: 0.8, stagger: 0.1, duration: 0.3 });
+                console.log('Animando resultados');
+            }
+            searchInput.blur(); // Quita el foco del input para cerrar el teclado
+
+            // Depuración: verificar alturas y posiciones
+            console.log('Altura de search-results:', searchResults.offsetHeight);
+            console.log('Altura de search-results-window:', searchResultsWindow.offsetHeight);
+            console.log('Posición del header:', document.querySelector('.search-results-header').offsetHeight);
+            console.log('Número de result-items:', searchResults.querySelectorAll('.result-item').length);
+        }
+
+        function hideSearchResults() {
+            gsap.to(searchResultsWindow, { scale: 0.9, opacity: 0, duration: 0.3, onComplete: () => {
+                searchResultsWindow.style.display = 'none';
+                overlay.style.display = 'none';
+                mainContent.style.filter = 'none';
+                document.body.style.overflow = 'auto'; // Restaura el scroll del fondo
+            } });
+        }
+
+        searchBtn.addEventListener('click', () => {
+            console.log('Clic en search-btn');
+            performSearch();
+        });
+
+        searchInput.addEventListener('keypress', e => {
+            if (e.key === 'Enter') {
+                console.log('Enter presionado en search-input');
+                e.preventDefault();
+                performSearch();
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            console.log('Clic en reset-btn');
+            searchInput.value = '';
+            hideSearchResults();
+            searchContainer.style.display = 'none';
+        });
+
+        searchResultsCloseBtn.addEventListener('click', () => {
+            console.log('Clic en search-results-close-btn');
+            hideSearchResults();
+        });
+
+        overlay.addEventListener('click', () => {
+            console.log('Clic en overlay');
+            hideSearchResults();
+        });
+
+        // Evitar que el overlay interfiera con el scroll interno
+        searchResults.addEventListener('touchmove', e => {
+            e.stopPropagation();
+        }, { passive: false });
     }
 
     function setupLikesAndComments() {
@@ -296,7 +404,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         function loadChatMessages() {
             dbFirestore.collection('messages')
                 .where('chatId', '==', 'globalChat')
-                .orderBy('timestamp', 'asc') // Cambiado a 'asc' para orden ascendente
+                .orderBy('timestamp', 'asc')
                 .limit(50)
                 .onSnapshot(snapshot => {
                     const currentMessageCount = snapshot.size;
@@ -357,7 +465,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     });
                     chatMessages.appendChild(fragment);
                     gsap.from('.chat-message', { opacity: 0, y: 10, stagger: 0.05, duration: 0.2 });
-                    chatMessages.scrollTop = chatMessages.scrollHeight; // Siempre desplazar al final
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
                 }, error => {
                     console.error('Error al cargar mensajes:', error);
                     chatMessages.innerHTML = '<p class="error">Error al cargar mensajes</p>';
@@ -509,21 +617,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    function setupGalleryLikeListeners(entries) {
-        entries.forEach(entry => {
-            const btn = entry.target;
-            const id = btn.dataset.id;
-            const countElement = btn.nextElementSibling;
-            if (entry.isIntersecting) {
-                dbRealtime.ref(`likes/${id}`).on('value', snapshot => {
-                    const likesData = snapshot.val() || {};
-                    const count = Object.keys(likesData).length || 0;
-                    if (countElement && countElement.classList.contains('like-count')) countElement.textContent = count;
-                    btn.classList.toggle('liked', likesData[deviceId] === true);
-                });
-            } else {
-                dbRealtime.ref(`likes/${id}`).off();
-            }
+    function setupGalleryLikeListeners(btn, countElement) {
+        const id = btn.dataset.id;
+        dbRealtime.ref(`likes/${id}`).on('value', snapshot => {
+            const likesData = snapshot.val() || {};
+            const count = Object.keys(likesData).length || 0;
+            if (countElement && countElement.classList.contains('like-count')) countElement.textContent = count;
+            btn.classList.toggle('liked', likesData[deviceId] === true);
         });
     }
 
@@ -531,9 +631,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (username) loadGallery();
 
         function loadGallery() {
+            console.log('Cargando galería...');
             fetch('imagenes.json')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al cargar imagenes.json');
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Imágenes cargadas:', data.length);
                     images = data;
                     filteredImages = [...images];
                     renderGallery(true);
@@ -551,7 +656,23 @@ document.addEventListener('DOMContentLoaded', async function () {
                         observer.observe(sentinel);
                     }
 
-                    const likeObserver = new IntersectionObserver(setupGalleryLikeListeners, { rootMargin: '100px' });
+                    const likeObserver = new IntersectionObserver(entries => {
+                        entries.forEach(entry => {
+                            const btn = entry.target;
+                            const id = btn.dataset.id;
+                            const countElement = btn.nextElementSibling;
+                            if (entry.isIntersecting) {
+                                dbRealtime.ref(`likes/${id}`).on('value', snapshot => {
+                                    const likesData = snapshot.val() || {};
+                                    const count = Object.keys(likesData).length || 0;
+                                    if (countElement) countElement.textContent = count;
+                                    btn.classList.toggle('liked', likesData[deviceId] === true);
+                                });
+                            } else {
+                                dbRealtime.ref(`likes/${id}`).off();
+                            }
+                        });
+                    }, { rootMargin: '100px' });
                     document.querySelectorAll('.like-btn').forEach(btn => likeObserver.observe(btn));
                 })
                 .catch(error => console.error('Error al cargar imagenes.json:', error));
@@ -588,6 +709,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                 });
                 gallery.appendChild(div);
+
+                const btn = div.querySelector('.like-btn');
+                const countElement = div.querySelector('.like-count');
+                setupGalleryLikeListeners(btn, countElement);
             });
             loadedImages += nextImages.length;
         }
@@ -602,8 +727,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (userInfo) userInfo.textContent = username;
 
         fetch('imagenes.json')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error('Error al cargar imagenes.json');
+                return response.json();
+            })
             .then(data => {
+                console.log('Imágenes cargadas para image-detail:', data.length);
                 images = data;
                 const image = images.find(img => img.id === Number(imageId));
                 const imageContainer = document.querySelector('.image-container');
@@ -640,8 +769,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                         similarGallery.appendChild(div);
                     });
 
-                    const observer = new IntersectionObserver(setupGalleryLikeListeners, { rootMargin: '100px' });
-                    observer.observe(likeBtn);
+                    const countElement = likeBtn.nextElementSibling;
+                    setupGalleryLikeListeners(likeBtn, countElement);
 
                     dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
                         const comments = snapshot.val();
