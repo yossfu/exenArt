@@ -1,989 +1,470 @@
-document.addEventListener('DOMContentLoaded', async function () {
-    const firebaseConfig = {
-        apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
-        authDomain: "exene-53e6b.firebaseapp.com",
-        databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
-        projectId: "exene-53e6b",
-        storageBucket: "exene-53e6b.firebasestorage.app",
-        messagingSenderId: "481369419867",
-        appId: "1:481369419867:web:ac5db24c436344262c8f7e"
-    };
+(async function () {
+    document.addEventListener('DOMContentLoaded', async () => {
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
+            authDomain: "exene-53e6b.firebaseapp.com",
+            databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
+            projectId: "exene-53e6b",
+            storageBucket: "exene-53e6b.firebasestorage.app",
+            messagingSenderId: "481369419867",
+            appId: "1:481369419867:web:ac5db24c436344262c8f7e"
+        };
 
-    firebase.initializeApp(firebaseConfig);
-    const dbRealtime = firebase.database();
-    const dbFirestore = firebase.firestore();
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    let images = [];
-    let filteredImages = [];
-    let loadedImages = 0;
-    const itemsPerLoad = 15;
+        let images = [];
+        let filteredImages = [];
+        let loadedImages = 9;
+        const itemsPerLoad = 9;
 
-    let deviceId = localStorage.getItem('deviceId') || 'device_' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('deviceId', deviceId);
-    let username = null;
+        let deviceId = localStorage.getItem('deviceId') || 'device_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('deviceId', deviceId);
+        let username = null;
+        let unreadNotifications = 0;
 
-    let unreadMessages = 0;
-    let unreadComments = 0;
-    let interactedImages = JSON.parse(localStorage.getItem('interactedImages')) || {};
-    let tagScores = JSON.parse(localStorage.getItem('tagScores')) || {};
-    let viewedNotifications = JSON.parse(localStorage.getItem('viewedNotifications')) || {};
+        const homeBtn = document.getElementById('homeBtn');
+        if (homeBtn) homeBtn.addEventListener('click', () => window.location.href = 'index.html');
 
-    function getColorFromUserId(userId) {
-        let hash = 0;
-        for (let i = 0; i < userId.length; i++) {
-            hash = userId.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const hue = hash % 360;
-        return `hsl(${hue}, 70%, 50%)`;
-    }
-
-    function updateTagScores(tags, action, imageId) {
-        if (imageId) {
-            interactedImages[imageId] = true;
-            localStorage.setItem('interactedImages', JSON.stringify(interactedImages));
-        }
-        if (action === 'view') {
-            tags.forEach(tag => tagScores[tag] = (tagScores[tag] || 0) + 1);
-        } else if (action === 'like') {
-            tags.forEach(tag => tagScores[tag] = (tagScores[tag] || 0) + 3);
-        }
-        localStorage.setItem('tagScores', JSON.stringify(tagScores));
-    }
-
-    async function loadUsername() {
-        const snapshot = await dbRealtime.ref(`users/${deviceId}`).once('value');
-        const userData = snapshot.val();
-        if (userData && userData.username) {
-            username = userData.username;
-            document.querySelectorAll('#user-info').forEach(el => el.textContent = username);
-            const authContainer = document.getElementById('auth-container');
-            if (authContainer) authContainer.style.display = 'none';
-        } else {
-            const authContainer = document.getElementById('auth-container');
-            if (authContainer) authContainer.style.display = 'block';
-        }
-    }
-
-    const usernameForm = document.getElementById('username-form');
-    if (usernameForm) {
-        usernameForm.addEventListener('submit', async e => {
-            e.preventDefault();
-            const newUsername = document.getElementById('username').value.trim();
-            if (newUsername) {
-                await dbRealtime.ref(`users/${deviceId}`).set({ username: newUsername });
-                username = newUsername;
-                document.querySelectorAll('#user-info').forEach(el => el.textContent = username);
-                document.getElementById('auth-container').style.display = 'none';
-                if (document.querySelector('.gallery')) loadGallery();
-            }
-        });
-    }
-
-    await loadUsername();
-
-    document.addEventListener('click', e => {
-        if (e.target.tagName === 'A') return; // No interferir con enlaces
-        const windows = [
-            { toggle: '#search-toggle', window: '#search-container', anim: { y: -100, opacity: 0 } },
-            { toggle: '#chat-toggle', window: '#chat-window', anim: { y: 100, opacity: 0 } },
-            { toggle: '#notifications-toggle', window: '#notifications-window', anim: { y: -100, opacity: 0 } },
-            { toggle: '#filter-toggle', window: '#filter-window', anim: { x: -300, onComplete: () => document.querySelector('#filter-window').style.display = 'none' } },
-            { toggle: '#search-results-close-btn', window: '#search-results-window', anim: { scale: 0.9, opacity: 0, onComplete: () => {
-                document.querySelector('#search-results-window').style.display = 'none';
-                document.getElementById('overlay').style.display = 'none';
-                document.querySelector('.main-content').style.filter = 'none';
-                document.body.style.overflow = 'auto';
-            } } }
-        ];
-        windows.forEach(w => {
-            const toggle = document.querySelector(w.toggle);
-            const win = document.querySelector(w.window);
-            if (win && toggle && !toggle.contains(e.target) && !win.contains(e.target) && win.style.display !== 'none') {
-                win.classList.remove('open');
-                gsap.to(win, { ...w.anim, duration: 0.3, onComplete: () => {
-                    win.style.display = 'none';
-                    if (w.window === '#search-results-window') {
-                        document.getElementById('overlay').style.display = 'none';
-                        document.querySelector('.main-content').style.filter = 'none';
-                        document.body.style.overflow = 'auto';
-                    }
-                } });
-            }
-        });
-    });
-
-    function setupSearch() {
-        const searchToggle = document.getElementById('search-toggle');
-        const searchContainer = document.getElementById('search-container');
-        const searchInput = document.getElementById('search-input');
-        const searchBtn = document.getElementById('search-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const searchResultsWindow = document.getElementById('search-results-window');
-        const searchResults = document.getElementById('search-results');
-        const searchResultsCloseBtn = document.getElementById('search-results-close-btn');
-        const overlay = document.getElementById('overlay');
-        const mainContent = document.querySelector('.main-content');
-
-        if (!searchToggle || !searchContainer || !searchInput || !searchBtn || !resetBtn || !searchResultsWindow || !searchResults || !searchResultsCloseBtn || !overlay || !mainContent) {
-            console.error('Faltan elementos del buscador en el HTML');
-            return;
-        }
-
-        searchToggle.addEventListener('click', e => {
-            e.preventDefault();
-            const isVisible = searchContainer.style.display === 'none' || searchContainer.style.display === '';
-            searchContainer.style.display = isVisible ? 'flex' : 'none';
-            gsap.to(searchContainer, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.3 });
-            if (isVisible) searchInput.focus();
-        });
-
-        function performSearch() {
-            const query = searchInput.value.trim();
-            if (!query) {
-                searchResults.innerHTML = '<p>Por favor, ingresa un término de búsqueda.</p>';
-                showSearchResults();
-                return;
-            }
-
-            if (images.length === 0) {
-                searchResults.innerHTML = '<p>Cargando imágenes, por favor espera...</p>';
-                showSearchResults();
-                return;
-            }
-
-            const results = images.filter(img => 
-                (img.title && img.title.toLowerCase().includes(query.toLowerCase())) || 
-                (img.description && img.description.toLowerCase().includes(query.toLowerCase())) || 
-                (img.tags && img.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())))
-            );
-
-            searchResults.innerHTML = results.length ? 
-                results.map(img => `
-                    <div class="result-item" onclick="window.location.href='image-detail.html?id=${img.id}'">
-                        <img src="${img.url}" alt="${img.title}">
-                    </div>
-                `).join('') : 
-                '<p>No hay resultados para tu búsqueda.</p>';
-            showSearchResults();
-        }
-
-        function showSearchResults() {
-            searchResultsWindow.style.display = 'block';
-            overlay.style.display = 'block';
-            mainContent.style.filter = 'blur(5px)';
-            document.body.style.overflow = 'hidden';
-            gsap.fromTo(searchResultsWindow, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3 });
-            if (searchResults.querySelectorAll('.result-item').length) {
-                gsap.from('.result-item', { opacity: 0, scale: 0.8, stagger: 0.1, duration: 0.3 });
-            }
-            searchInput.blur();
-        }
-
-        function hideSearchResults() {
-            gsap.to(searchResultsWindow, { scale: 0.9, opacity: 0, duration: 0.3, onComplete: () => {
-                searchResultsWindow.style.display = 'none';
-                overlay.style.display = 'none';
-                mainContent.style.filter = 'none';
-                document.body.style.overflow = 'auto';
-            } });
-        }
-
-        searchBtn.addEventListener('click', performSearch);
-        searchInput.addEventListener('keypress', e => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                performSearch();
-            }
-        });
-        resetBtn.addEventListener('click', () => {
-            searchInput.value = '';
-            hideSearchResults();
-            searchContainer.style.display = 'none';
-        });
-        searchResultsCloseBtn.addEventListener('click', hideSearchResults);
-        overlay.addEventListener('click', hideSearchResults);
-
-        searchResults.addEventListener('touchmove', e => {
-            e.stopPropagation();
-        }, { passive: false });
-    }
-
-    function setupLikesAndComments() {
-        document.addEventListener('click', e => {
-            if (e.target.closest('.like-btn')) {
-                const btn = e.target.closest('.like-btn');
-                const id = btn.dataset.id;
-                const countElement = btn.nextElementSibling;
-
-                dbRealtime.ref(`likes/${id}/${deviceId}`).once('value', snapshot => {
-                    const isLiked = snapshot.val() === true;
-                    dbRealtime.ref(`likes/${id}/${deviceId}`).set(!isLiked).then(() => {
-                        btn.classList.toggle('liked', !isLiked);
-                        gsap.to(btn.querySelector('i'), { scale: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
-
-                        dbRealtime.ref(`likes/${id}`).once('value', countSnapshot => {
-                            const likesData = countSnapshot.val() || {};
-                            const count = Object.keys(likesData).length || 0;
-                            if (countElement && countElement.classList.contains('like-count')) countElement.textContent = count;
-                            if (!isLiked) updateTagScores(images.find(img => img.id === Number(id)).tags, 'like', id);
-                        });
-                    });
-                });
-            } else if (e.target.closest('.comment-btn')) {
-                const imageId = new URLSearchParams(window.location.search).get('id');
-                if (imageId) document.getElementById('comment-text').focus();
-            } else if (e.target.closest('.share-btn')) {
-                const imageId = new URLSearchParams(window.location.search).get('id');
-                if (imageId && username) {
-                    const image = images.find(img => img.id === Number(imageId));
-                    if (image) {
-                        const baseUrl = window.location.origin;
-                        const shareUrl = `${baseUrl}/image-detail.html?id=${imageId}`;
-                        const message = `[Imagen: ${image.title}] ${shareUrl}`;
-                        console.log("URL compartida al enviar:", shareUrl);
-                        dbFirestore.collection('messages').add({
-                            chatId: 'globalChat',
-                            text: message,
-                            timestamp: Date.now(),
-                            userId: deviceId,
-                            username
-                        }).then(() => {
-                            const chatWindow = document.getElementById('chat-window');
-                            if (chatWindow && chatWindow.style.display !== 'none') {
-                                document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
-                            } else {
-                                document.getElementById('chat-toggle').click();
-                            }
-                        }).catch(err => console.error('Error al compartir en el chat:', err));
-                    }
+        async function loadUsername() {
+            const snapshot = await db.ref(`users/${deviceId}`).once('value');
+            const userData = snapshot.val();
+            if (userData && userData.username) {
+                username = userData.username;
+                const authContainer = document.getElementById('authContainer');
+                if (authContainer) authContainer.style.display = 'none';
+            } else {
+                const authContainer = document.getElementById('authContainer');
+                if (authContainer) {
+                    authContainer.style.display = 'block';
+                    document.getElementById('overlay').style.display = 'block';
                 }
             }
-        });
+        }
 
-        document.querySelectorAll('.image-viewer img').forEach(img => {
-            img.addEventListener('dblclick', () => {
-                const likeBtn = img.closest('.image-container').querySelector('.like-btn');
-                if (likeBtn && !likeBtn.classList.contains('liked')) {
-                    likeBtn.click();
-                    gsap.to(img, { scale: 1.1, duration: 0.2, yoyo: true, repeat: 1 });
+        const usernameForm = document.getElementById('usernameForm');
+        if (usernameForm) {
+            usernameForm.addEventListener('submit', async e => {
+                e.preventDefault();
+                const newUsername = document.getElementById('username').value.trim();
+                if (newUsername) {
+                    await db.ref(`users/${deviceId}`).set({ username: newUsername });
+                    username = newUsername;
+                    document.getElementById('authContainer').style.display = 'none';
+                    document.getElementById('overlay').style.display = 'none';
+                    loadGallery();
                 }
             });
-        });
-    }
-
-    function setupChat() {
-        const chatToggle = document.getElementById('chat-toggle');
-        const chatWindow = document.getElementById('chat-window');
-        const chatCloseBtn = document.getElementById('chat-close-btn');
-        const chatForm = document.getElementById('chat-form');
-        const chatInput = document.getElementById('chat-input');
-        const chatMessages = document.getElementById('chat-messages');
-        const emojiBtn = document.getElementById('emoji-btn'); // Corregido el typo 'TheoId' -> 'getElementById'
-        const emojiPicker = document.getElementById('emoji-picker');
-        const chatNotification = document.getElementById('chat-notification');
-        const emojis = ['😀', '😂', '😍', '😢', '😡', '👍', '👎', '❤️', '🔥', '🎉'];
-        const MAX_MESSAGES = 50;
-
-        if (!chatToggle || !chatWindow || !chatCloseBtn || !chatForm || !chatInput || !chatMessages || !emojiBtn || !emojiPicker || !chatNotification) {
-            console.error('Faltan elementos del chat en el HTML');
-            return;
         }
 
-        let unreadMessages = 0;
+        await loadUsername();
 
-        chatToggle.addEventListener('click', e => {
-            e.preventDefault();
-            const isVisible = chatWindow.style.display === 'none' || chatWindow.style.display === '';
-            chatWindow.style.display = isVisible ? 'flex' : 'none';
-            gsap.fromTo(chatWindow, 
-                { y: isVisible ? 100 : 0, opacity: isVisible ? 0 : 1 }, 
-                { y: isVisible ? 0 : 100, opacity: isVisible ? 1 : 0, duration: 0.3 }
-            );
-            if (isVisible && !chatMessages.dataset.loaded) {
-                loadChatMessages();
-                chatMessages.dataset.loaded = 'true';
-            }
-            if (isVisible) {
-                unreadMessages = 0;
-                updateChatNotificationBadge();
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-        });
+        function setupInteractions() {
+            document.addEventListener('click', async e => {
+                const likeBtn = e.target.closest('.like-btn');
+                if (likeBtn) {
+                    const id = likeBtn.dataset.id;
+                    const isComment = likeBtn.classList.contains('comment-like');
+                    const ref = isComment ? `comments/${likeBtn.dataset.imageId}/${id}/likes` : `likes/${id}`;
+                    const countElement = likeBtn.nextElementSibling;
 
-        chatCloseBtn.addEventListener('click', () => {
-            gsap.to(chatWindow, { y: 100, opacity: 0, duration: 0.3, onComplete: () => chatWindow.style.display = 'none' });
-        });
+                    const snapshot = await db.ref(`${ref}/${deviceId}`).once('value');
+                    const isLiked = snapshot.val() === true;
+                    await db.ref(`${ref}/${deviceId}`).set(!isLiked);
+                    likeBtn.classList.toggle('liked', !isLiked);
 
-        chatForm.addEventListener('submit', async e => {
-            e.preventDefault();
-            const text = chatInput.value.trim();
-            if (text && username) {
-                try {
-                    await dbFirestore.collection('messages').add({
-                        chatId: 'globalChat',
-                        text,
-                        timestamp: Date.now(),
-                        userId: deviceId,
-                        username
-                    });
-                    await manageChatLimit();
-                    chatInput.value = '';
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                } catch (error) {
-                    console.error('Error al enviar mensaje:', error);
-                    chatInput.value = '';
+                    const countSnapshot = await db.ref(ref).once('value');
+                    const count = Object.keys(countSnapshot.val() || {}).length;
+                    if (countElement) countElement.textContent = `${count} Me gusta`;
+
+                    if (!isLiked && !isComment) {
+                        const image = images.find(img => img.id === Number(id));
+                        notifyUser(image.uploadedBy, `${username} dio me gusta a tu publicación`, id);
+                        image.tags.forEach(tag => db.ref(`userTags/${deviceId}/${tag}`).transaction(val => (val || 0) + 1));
+                    }
                 }
-            }
-        });
 
-        chatInput.addEventListener('keypress', async e => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const text = chatInput.value.trim();
-                if (text && username) {
-                    try {
-                        await dbFirestore.collection('messages').add({
-                            chatId: 'globalChat',
+                const commentBtn = e.target.closest('.comment-btn');
+                if (commentBtn) {
+                    const id = commentBtn.closest('.post, .post-detail').querySelector('.like-btn').dataset.id;
+                    window.location.href = `image-detail.html?id=${id}`;
+                }
+
+                const replyBtn = e.target.closest('.reply-btn');
+                if (replyBtn) {
+                    const commentItem = replyBtn.closest('li');
+                    let replyForm = commentItem.querySelector('.reply-form');
+                    if (!replyForm) {
+                        replyForm = document.createElement('div');
+                        replyForm.classList.add('reply-form');
+                        replyForm.innerHTML = `<input type="text" placeholder="Responder...">`;
+                        commentItem.appendChild(replyForm);
+                        replyForm.querySelector('input').addEventListener('keypress', handleReplySubmit);
+                    }
+                    replyForm.style.display = replyForm.style.display === 'none' ? 'flex' : 'none';
+                    if (replyForm.style.display === 'flex') replyForm.querySelector('input').focus();
+                }
+
+                const postImage = e.target.closest('.post-image');
+                if (postImage && document.querySelector('.gallery')) {
+                    const id = postImage.closest('.post').querySelector('.like-btn').dataset.id;
+                    window.location.href = `image-detail.html?id=${id}`;
+                    db.ref(`views/${id}/${deviceId}`).set(true);
+                }
+            });
+
+            async function handleReplySubmit(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const replyForm = e.target.closest('.reply-form');
+                    const text = e.target.value.trim();
+                    const commentItem = replyForm.closest('li');
+                    const imageId = commentItem.closest('.comments-section') ? new URLSearchParams(window.location.search).get('id') : commentItem.closest('.post').querySelector('.like-btn').dataset.id;
+                    const commentId = commentItem.dataset.commentId;
+
+                    if (text && username) {
+                        const replyRef = await db.ref(`comments/${imageId}/${commentId}/replies`).push({
                             text,
                             timestamp: Date.now(),
-                            userId: deviceId,
-                            username
+                            username,
+                            deviceId
                         });
-                        await manageChatLimit();
-                        chatInput.value = '';
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                    } catch (error) {
-                        console.error('Error al enviar mensaje con Enter:', error);
-                        chatInput.value = '';
-                    }
-                }
-            }
-        });
-
-        emojiBtn.addEventListener('click', () => {
-            const isVisible = emojiPicker.style.display === 'none' || emojiPicker.style.display === '';
-            emojiPicker.style.display = isVisible ? 'grid' : 'none';
-            if (isVisible && emojiPicker.innerHTML === '') {
-                emojiPicker.innerHTML = emojis.map(e => `<span class="emoji">${e}</span>`).join('');
-            }
-        });
-
-        emojiPicker.addEventListener('click', e => {
-            if (e.target.classList.contains('emoji')) {
-                chatInput.value += e.target.textContent;
-                emojiPicker.style.display = 'none';
-                chatInput.focus();
-            }
-        });
-
-        chatInput.addEventListener('focus', () => {
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 300);
-        });
-
-        function updateChatNotificationBadge() {
-            if (unreadMessages > 0) {
-                chatNotification.textContent = unreadMessages;
-                chatNotification.style.display = 'flex';
-                gsap.from(chatNotification, { scale: 0.8, opacity: 0, duration: 0.3 });
-            } else {
-                chatNotification.style.display = 'none';
-            }
-        }
-
-        async function manageChatLimit() {
-            const messagesRef = dbFirestore.collection('messages')
-                .where('chatId', '==', 'globalChat')
-                .orderBy('timestamp', 'asc');
-            const snapshot = await messagesRef.get();
-            const totalMessages = snapshot.size;
-
-            if (totalMessages > MAX_MESSAGES) {
-                const messagesToDelete = totalMessages - MAX_MESSAGES;
-                const oldMessages = snapshot.docs.slice(0, messagesToDelete);
-                const batch = dbFirestore.batch();
-
-                oldMessages.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-
-                await batch.commit();
-                console.log(`Eliminados ${messagesToDelete} mensajes antiguos`);
-            }
-        }
-
-        function renderMessage(doc) {
-            const data = doc.data();
-            const div = document.createElement('div');
-            div.classList.add('chat-message');
-            div.dataset.messageId = doc.id;
-            if (data.userId === deviceId) div.classList.add('mine');
-            const time = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            const imageLinkRegex = /\[Imagen: (.+?)\] (.+)/;
-            const match = data.text.match(imageLinkRegex);
-            if (match) {
-                const [, title, url] = match;
-                const imageIdMatch = url.match(/id=(\d+)/);
-                if (imageIdMatch) {
-                    const imageId = imageIdMatch[1];
-                    const image = images.find(img => img.id === Number(imageId));
-                    if (image) {
-                        div.innerHTML = `
-                            <div class="message-bubble image-preview">
-                                <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
-                                <div class="image-link" data-id="${imageId}">
-                                    <img src="${image.url}" alt="${title}" class="preview-img">
-                                    <span class="message-text">${title}</span>
-                                </div>
-                                <span class="message-time">${time}</span>
-                            </div>
-                        `;
-                        const imageLink = div.querySelector('.image-link');
-                        imageLink.style.cursor = 'pointer';
-                        imageLink.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            console.log(`Redirigiendo a image-detail.html?id=${imageId}`);
-                            window.location.href = `image-detail.html?id=${imageId}`;
-                        });
-                    } else {
-                        div.innerHTML = `
-                            <div class="message-bubble">
-                                <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
-                                <span class="message-text">${data.text}</span>
-                                <span class="message-time">${time}</span>
-                            </div>
-                        `;
-                    }
-                } else {
-                    div.innerHTML = `
-                        <div class="message-bubble">
-                            <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
-                            <span class="message-text">${data.text}</span>
-                            <span class="message-time">${time}</span>
-                        </div>
-                    `;
-                }
-            } else {
-                div.innerHTML = `
-                    <div class="message-bubble">
-                        <span class="username" style="color: ${getColorFromUserId(data.userId)}">${data.username}</span>
-                        <span class="message-text">${data.text}</span>
-                        <span class="message-time">${time}</span>
-                    </div>
-                `;
-            }
-            return div;
-        }
-
-        function loadChatMessages() {
-            const messagesRef = dbFirestore.collection('messages')
-                .where('chatId', '==', 'globalChat')
-                .orderBy('timestamp', 'asc')
-                .limitToLast(MAX_MESSAGES);
-
-            messagesRef.onSnapshot(snapshot => {
-                chatMessages.innerHTML = '';
-                let newMessagesCount = 0;
-
-                snapshot.forEach(doc => {
-                    const messageDiv = renderMessage(doc);
-                    chatMessages.appendChild(messageDiv);
-                    gsap.from(messageDiv, { opacity: 0, y: 10, duration: 0.2 });
-                });
-
-                if (chatWindow.style.display === 'none') {
-                    newMessagesCount = snapshot.size - chatMessages.childElementCount;
-                    if (newMessagesCount > 0) {
-                        unreadMessages += newMessagesCount;
-                        updateChatNotificationBadge();
-                    }
-                }
-
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, error => {
-                console.error('Error al cargar mensajes:', error);
-                chatMessages.innerHTML = '<p class="error">Error al cargar mensajes</p>';
-            });
-        }
-    }
-
-    function setupFilters() {
-        const filterToggle = document.getElementById('filter-toggle');
-        const filterWindow = document.getElementById('filter-window');
-        const filterCloseBtn = document.getElementById('filter-close-btn');
-        const resetFilterBtn = document.getElementById('reset-filter-btn');
-        const filterCheckboxes = document.querySelectorAll('#filter-window input[type="checkbox"]');
-
-        if (filterToggle && filterWindow && filterCloseBtn && resetFilterBtn) {
-            filterToggle.addEventListener('click', e => {
-                e.preventDefault();
-                const isVisible = filterWindow.style.display === 'none';
-                filterWindow.style.display = 'block';
-                filterWindow.classList.toggle('open', isVisible);
-                gsap.to(filterWindow, { x: isVisible ? 0 : -300, duration: 0.3, ease: 'power2.inOut', onComplete: () => !isVisible && (filterWindow.style.display = 'none') });
-            });
-
-            filterCloseBtn.addEventListener('click', () => {
-                filterWindow.classList.remove('open');
-                gsap.to(filterWindow, { x: -300, duration: 0.3, ease: 'power2.in', onComplete: () => filterWindow.style.display = 'none' });
-            });
-
-            filterCheckboxes.forEach(checkbox => checkbox.addEventListener('change', applyFilters));
-            resetFilterBtn.addEventListener('click', () => {
-                filterCheckboxes.forEach(checkbox => checkbox.checked = false);
-                applyFilters();
-            });
-
-            function applyFilters() {
-                const selectedFilters = Array.from(filterCheckboxes)
-                    .filter(checkbox => checkbox.checked)
-                    .map(checkbox => checkbox.value.toLowerCase());
-                filteredImages = selectedFilters.length === 0 ? [...images] : images.filter(img => 
-                    selectedFilters.some(filter => img.tags.some(tag => tag.toLowerCase() === filter))
-                );
-                loadedImages = 0;
-                renderGallery(true);
-            }
-        }
-    }
-
-    function setupNotifications() {
-        const notificationsToggle = document.getElementById('notifications-toggle');
-        const notificationsWindow = document.getElementById('notifications-window');
-        const notificationsCloseBtn = document.getElementById('notifications-close-btn');
-        const notificationsList = document.getElementById('notifications-list');
-        const notificationsBadge = document.getElementById('notifications-badge');
-
-        if (!notificationsToggle || !notificationsWindow || !notificationsCloseBtn || !notificationsList || !notificationsBadge) {
-            console.error('Faltan elementos de notificaciones en el HTML');
-            return;
-        }
-
-        notificationsToggle.addEventListener('click', e => {
-            e.preventDefault();
-            const isVisible = notificationsWindow.style.display === 'none';
-            notificationsWindow.style.display = isVisible ? 'block' : 'none';
-            gsap.to(notificationsWindow, { y: isVisible ? 0 : -100, opacity: isVisible ? 1 : 0, duration: 0.3 });
-            if (isVisible) {
-                loadNotifications();
-            }
-        });
-
-        notificationsCloseBtn.addEventListener('click', () => {
-            notificationsWindow.style.display = 'none';
-            gsap.to(notificationsWindow, { y: -100, opacity: 0, duration: 0.3 });
-        });
-
-        function updateNotificationsBadge() {
-            notificationsBadge.textContent = unreadComments;
-            notificationsBadge.style.display = unreadComments > 0 ? 'flex' : 'none';
-            if (unreadComments > 0) gsap.from(notificationsBadge, { scale: 0.8, opacity: 0, duration: 0.3 });
-        }
-
-        function markNotificationAsViewed(imageId, commentId) {
-            const key = `${imageId}-${commentId}`;
-            if (!viewedNotifications[key]) {
-                viewedNotifications[key] = true;
-                unreadComments = Math.max(0, unreadComments - 1);
-                localStorage.setItem('viewedNotifications', JSON.stringify(viewedNotifications));
-                updateNotificationsBadge();
-            }
-        }
-
-        function loadNotifications() {
-            notificationsList.innerHTML = '';
-            unreadComments = 0;
-
-            Object.keys(interactedImages).forEach(imageId => {
-                dbRealtime.ref(`comments/${imageId}`).once('value', snapshot => {
-                    const comments = snapshot.val();
-                    if (comments) {
-                        Object.entries(comments).forEach(([commentId, comment]) => {
-                            const key = `${imageId}-${commentId}`;
-                            if (!viewedNotifications[key] && comment.deviceId !== deviceId) {
-                                const div = document.createElement('div');
-                                div.classList.add('notification-item');
-                                div.dataset.commentId = commentId;
-                                div.dataset.imageId = imageId;
-                                div.innerHTML = `<span style="color: #333;">${comment.username} comentó: "${comment.text}"</span>`;
-                                div.addEventListener('click', () => {
-                                    markNotificationAsViewed(imageId, commentId);
-                                    window.location.href = `image-detail.html?id=${imageId}`;
-                                });
-                                notificationsList.appendChild(div);
-                                unreadComments++;
-                            }
-
-                            if (comment.replies) {
-                                Object.entries(comment.replies).forEach(([replyId, reply]) => {
-                                    const replyKey = `${imageId}-${commentId}-${replyId}`;
-                                    if (!viewedNotifications[replyKey] && reply.deviceId !== deviceId && comment.deviceId === deviceId) {
-                                        const replyDiv = document.createElement('div');
-                                        replyDiv.classList.add('notification-item');
-                                        replyDiv.dataset.commentId = commentId;
-                                        replyDiv.dataset.replyId = replyId;
-                                        replyDiv.dataset.imageId = imageId;
-                                        replyDiv.innerHTML = `<span style="color: #333;">${reply.username} respondió a tu comentario: "${reply.text}"</span>`;
-                                        replyDiv.addEventListener('click', () => {
-                                            markNotificationAsViewed(imageId, `${commentId}-${replyId}`);
-                                            window.location.href = `image-detail.html?id=${imageId}`;
-                                        });
-                                        notificationsList.appendChild(replyDiv);
-                                        unreadComments++;
-                                    }
-                                });
-                            }
-                        });
-                        gsap.from('.notification-item', { opacity: 0, y: 10, stagger: 0.1, duration: 0.3 });
-                    }
-                    updateNotificationsBadge();
-                });
-            });
-        }
-
-        Object.keys(interactedImages).forEach(imageId => {
-            let lastCommentCount = 0;
-            dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
-                const comments = snapshot.val();
-                const currentCommentCount = comments ? Object.keys(comments).length : 0;
-                const urlParams = new URLSearchParams(window.location.search);
-                const currentImageId = urlParams.get('id');
-
-                if (currentImageId === imageId) {
-                    if (comments) {
-                        Object.entries(comments).forEach(([commentId]) => {
-                            markNotificationAsViewed(imageId, commentId);
-                            if (comments[commentId].replies) {
-                                Object.keys(comments[commentId].replies).forEach(replyId => {
-                                    markNotificationAsViewed(imageId, `${commentId}-${replyId}`);
-                                });
-                            }
-                        });
-                    }
-                } else if (currentCommentCount > lastCommentCount && comments) {
-                    const newComments = Object.entries(comments).slice(lastCommentCount);
-                    newComments.forEach(([commentId, comment]) => {
-                        const key = `${imageId}-${commentId}`;
-                        if (!viewedNotifications[key] && comment.deviceId !== deviceId) {
-                            unreadComments++;
-                            updateNotificationsBadge();
+                        replyForm.style.display = 'none';
+                        e.target.value = '';
+                        loadComments(imageId);
+                        const commentAuthor = commentItem.querySelector('.comment-author').textContent;
+                        if (commentAuthor !== username) {
+                            notifyUser(commentAuthor, `${username} respondió a tu comentario`, imageId, replyRef.key);
                         }
+                    }
+                }
+            }
+        }
 
-                        if (comment.replies) {
-                            Object.entries(comment.replies).forEach(([replyId, reply]) => {
-                                const replyKey = `${imageId}-${commentId}-${replyId}`;
-                                if (!viewedNotifications[replyKey] && reply.deviceId !== deviceId && comment.deviceId === deviceId) {
-                                    unreadComments++;
-                                    updateNotificationsBadge();
-                                }
-                            });
-                        }
+        async function notifyUser(targetUsername, message, imageId, replyId = null) {
+            if (targetUsername && targetUsername !== username) {
+                const snapshot = await db.ref('users').orderByChild('username').equalTo(targetUsername).once('value');
+                const userData = snapshot.val();
+                if (userData) {
+                    const targetDeviceId = Object.keys(userData)[0];
+                    await db.ref(`notifications/${targetDeviceId}`).push({
+                        message,
+                        imageId,
+                        replyId,
+                        timestamp: Date.now(),
+                        read: false
                     });
                 }
-                lastCommentCount = currentCommentCount;
-            });
-        });
-    }
+            }
+        }
 
-    function setupGalleryLikeListeners(btn, countElement) {
-        const id = btn.dataset.id;
-        dbRealtime.ref(`likes/${id}`).on('value', snapshot => {
-            const likesData = snapshot.val() || {};
-            const count = Object.keys(likesData).length || 0;
-            if (countElement && countElement.classList.contains('like-count')) countElement.textContent = count;
-            btn.classList.toggle('liked', likesData[deviceId] === true);
-        });
-    }
+        async function loadLikesAndViews(id, post) {
+            const likeBtn = post.querySelector('.like-btn');
+            const likeCount = post.querySelector('.like-count');
+            const viewCount = post.querySelector('.view-count');
 
-    if (document.querySelector('.gallery')) {
-        if (username) loadGallery();
+            const likeSnapshot = await db.ref(`likes/${id}`).once('value');
+            const likes = Object.keys(likeSnapshot.val() || {}).length;
+            if (likeCount) likeCount.textContent = `${likes} Me gusta`;
+            likeBtn.classList.toggle('liked', likeSnapshot.val()?.[deviceId] === true);
+            likeBtn.dataset.id = id;
 
-        function loadGallery() {
-            fetch('imagenes.json')
-                .then(response => {
-                    if (!response.ok) throw new Error('Error al cargar imagenes.json');
-                    return response.json();
-                })
-                .then(data => {
-                    images = data;
-                    filteredImages = [...images];
-                    renderGallery(true);
-                    setupSearch();
-                    setupLikesAndComments();
-                    setupChat();
-                    setupFilters();
-                    setupNotifications();
+            if (viewCount) {
+                const viewSnapshot = await db.ref(`views/${id}`).once('value');
+                viewCount.textContent = `${Object.keys(viewSnapshot.val() || {}).length} Vistas`;
+            }
+        }
 
-                    const sentinel = document.getElementById('sentinel');
-                    if (sentinel) {
-                        const observer = new IntersectionObserver(entries => {
-                            if (entries[0].isIntersecting && loadedImages < filteredImages.length) renderGallery(false);
-                        }, { rootMargin: '200px' });
-                        observer.observe(sentinel);
-                    }
+        async function loadCommentLikes(imageId, commentId, likeBtn, likeCount) {
+            const snapshot = await db.ref(`comments/${imageId}/${commentId}/likes`).once('value');
+            const likes = Object.keys(snapshot.val() || {}).length;
+            likeCount.textContent = likes > 0 ? `${likes} Me gusta` : '';
+            likeBtn.classList.toggle('liked', snapshot.val()?.[deviceId] === true);
+            likeBtn.dataset.id = commentId;
+            likeBtn.dataset.imageId = imageId;
+        }
 
-                    const likeObserver = new IntersectionObserver(entries => {
-                        entries.forEach(entry => {
-                            const btn = entry.target;
-                            const id = btn.dataset.id;
-                            const countElement = btn.nextElementSibling;
-                            if (entry.isIntersecting) {
-                                dbRealtime.ref(`likes/${id}`).on('value', snapshot => {
-                                    const likesData = snapshot.val() || {};
-                                    const count = Object.keys(likesData).length || 0;
-                                    if (countElement) countElement.textContent = count;
-                                    btn.classList.toggle('liked', likesData[deviceId] === true);
-                                });
-                            } else {
-                                dbRealtime.ref(`likes/${id}`).off();
-                            }
-                        });
+        async function loadGallery() {
+            try {
+                const response = await fetch('imagenes.json');
+                if (!response.ok) throw new Error('Error al cargar imágenes');
+                images = await response.json();
+
+                const tagsSnapshot = await db.ref(`userTags/${deviceId}`).once('value');
+                const userTags = tagsSnapshot.val() || {};
+                const tagScores = Object.entries(userTags).sort((a, b) => b[1] - a[1]).map(([tag]) => tag);
+                images.sort((a, b) => {
+                    const aScore = a.tags.reduce((sum, tag) => sum + (tagScores.indexOf(tag) !== -1 ? tagScores.length - tagScores.indexOf(tag) : 0), 0);
+                    const bScore = b.tags.reduce((sum, tag) => sum + (tagScores.indexOf(tag) !== -1 ? tagScores.length - tagScores.indexOf(tag) : 0), 0);
+                    return bScore - aScore;
+                });
+
+                filteredImages = [...images];
+                renderGallery(true);
+                setupInteractions();
+                setupSearch();
+                setupNotifications();
+
+                const sentinel = document.getElementById('sentinel');
+                if (sentinel) {
+                    const observer = new IntersectionObserver((entries) => {
+                        if (entries[0].isIntersecting && loadedImages < filteredImages.length) {
+                            renderGallery(false);
+                        }
                     }, { rootMargin: '100px' });
-                    document.querySelectorAll('.like-btn').forEach(btn => likeObserver.observe(btn));
-                })
-                .catch(error => console.error('Error al cargar imagenes.json:', error));
+                    observer.observe(sentinel);
+                }
+            } catch (error) {
+                console.error('Error en loadGallery:', error);
+                document.getElementById('gallery').innerHTML = '<p>Error al cargar imágenes</p>';
+            }
         }
 
         function renderGallery(reset = false) {
-            const gallery = document.querySelector('.gallery');
+            const gallery = document.getElementById('gallery');
             if (reset) {
                 gallery.innerHTML = '';
                 loadedImages = 0;
-
-                const topTags = Object.entries(tagScores).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([tag]) => tag);
-                let topImages = images.filter(img => topTags.some(tag => img.tags.includes(tag)));
-                topImages = topImages.sort(() => 0.5 - Math.random()).slice(0, 9);
-                const remainingImages = images.filter(img => !topImages.some(t => t.id === img.id));
-                filteredImages = [...topImages, ...remainingImages];
             }
 
             const nextImages = filteredImages.slice(loadedImages, loadedImages + itemsPerLoad);
             nextImages.forEach(img => {
-                const div = document.createElement('div');
-                div.classList.add('grid-item');
-                div.innerHTML = `
-                    <img src="${img.url}" alt="${img.title}" loading="lazy">
-                    <div class="like-container">
-                        <button class="like-btn" data-id="${img.id}"><i class="far fa-heart"></i></button>
-                        <span class="like-count">0</span>
+                const post = document.createElement('div');
+                post.classList.add('post');
+                post.innerHTML = `
+                    <div class="post-image"><img src="${img.url}" alt="${img.title}" loading="lazy"></div>
+                    <div class="post-info">
+                        <span class="post-title">${img.title}</span>
+                        <div class="post-actions">
+                            <button class="like-btn"><i class="far fa-thumbs-up"></i></button>
+                            <span class="like-count"></span>
+                        </div>
                     </div>
                 `;
-                div.addEventListener('click', (e) => {
-                    if (!e.target.closest('.like-btn')) {
-                        updateTagScores(img.tags, 'view', img.id);
-                        window.location.href = `image-detail.html?id=${img.id}`;
-                    }
-                });
-                gallery.appendChild(div);
-
-                const btn = div.querySelector('.like-btn');
-                const countElement = div.querySelector('.like-count');
-                setupGalleryLikeListeners(btn, countElement);
+                gallery.appendChild(post);
+                loadLikesAndViews(img.id, post);
+                gsap.from(post, { opacity: 0, y: 20, duration: 0.5 });
             });
             loadedImages += nextImages.length;
         }
-    }
 
-    if (document.querySelector('.image-container')) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const imageId = urlParams.get('id');
-        if (!username) window.location.href = 'index.html';
+        function setupSearch() {
+            const toggle = document.getElementById('searchToggle');
+            const bar = document.getElementById('searchBar');
+            const input = document.getElementById('searchInput');
+            const btn = document.getElementById('searchBtn');
+            const resultsWindow = document.getElementById('searchResultsWindow');
+            const results = document.getElementById('searchResults');
+            const closeBtn = document.getElementById('searchResultsCloseBtn');
 
-        const userInfo = document.querySelector('#user-info');
-        if (userInfo) userInfo.textContent = username;
+            if (!toggle || !bar || !input || !btn || !resultsWindow || !results || !closeBtn) {
+                console.error('Elementos del buscador no encontrados');
+                return;
+            }
 
-        fetch('imagenes.json')
-            .then(response => {
-                if (!response.ok) throw new Error('Error al cargar imagenes.json');
-                return response.json();
-            })
-            .then(data => {
+            toggle.addEventListener('click', () => {
+                bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
+                if (bar.style.display === 'flex') input.focus();
+            });
+
+            btn.addEventListener('click', search);
+            input.addEventListener('keypress', e => {
+                if (e.key === 'Enter') search();
+            });
+
+            closeBtn.addEventListener('click', () => {
+                resultsWindow.style.display = 'none';
+                document.getElementById('overlay').style.display = 'none';
+                bar.style.display = 'none';
+            });
+
+            function search() {
+                const query = input.value.trim().toLowerCase();
+                if (!query) {
+                    results.innerHTML = '<p>Ingresa un término de búsqueda</p>';
+                    resultsWindow.style.display = 'block';
+                    document.getElementById('overlay').style.display = 'block';
+                    return;
+                }
+
+                if (!images.length) {
+                    results.innerHTML = '<p>Cargando imágenes, intenta de nuevo</p>';
+                    resultsWindow.style.display = 'block';
+                    document.getElementById('overlay').style.display = 'block';
+                    return;
+                }
+
+                const filtered = images.filter(img => 
+                    img.title.toLowerCase().includes(query) || 
+                    img.tags.some(tag => tag.toLowerCase().includes(query))
+                );
+                results.innerHTML = filtered.map(img => `
+                    <div class="result-item" data-id="${img.id}">
+                        <img src="${img.url}" alt="${img.title}">
+                        <span>${img.title}</span>
+                    </div>
+                `).join('') || '<p>No hay resultados</p>';
+                resultsWindow.style.display = 'block';
+                document.getElementById('overlay').style.display = 'block';
+            }
+
+            results.addEventListener('click', e => {
+                const item = e.target.closest('.result-item');
+                if (item) window.location.href = `image-detail.html?id=${item.dataset.id}`;
+            });
+        }
+
+        function setupNotifications() {
+            const toggle = document.getElementById('notificationsToggle');
+            const window = document.getElementById('notificationsWindow');
+            const list = document.getElementById('notificationsList');
+            const badge = document.getElementById('notificationsBadge');
+            const closeBtn = document.getElementById('notificationsCloseBtn');
+
+            if (toggle) toggle.addEventListener('click', async () => {
+                window.style.display = 'block';
+                document.getElementById('overlay').style.display = 'block';
+                const snapshot = await db.ref(`notifications/${deviceId}`).once('value');
+                const notifs = snapshot.val();
+                list.innerHTML = notifs ? Object.entries(notifs).map(([id, n]) => `
+                    <div class="notification-item" data-id="${id}">${n.message}</div>
+                `).join('') : '<p>No hay notificaciones</p>';
+                unreadNotifications = notifs ? Object.values(notifs).filter(n => !n.read).length : 0;
+                badge.textContent = unreadNotifications;
+                badge.style.display = unreadNotifications > 0 ? 'inline-flex' : 'none';
+            });
+
+            if (closeBtn) closeBtn.addEventListener('click', () => {
+                window.style.display = 'none';
+                document.getElementById('overlay').style.display = 'none';
+            });
+        }
+
+        if (document.querySelector('.gallery')) {
+            if (username) loadGallery();
+        }
+
+        if (document.querySelector('.post-detail')) {
+            const id = new URLSearchParams(window.location.search).get('id');
+            if (!username) window.location.href = 'index.html';
+
+            fetch('imagenes.json').then(r => r.json()).then(async data => {
                 images = data;
-                const image = images.find(img => img.id === Number(imageId));
-                const imageContainer = document.querySelector('.image-container');
-                const imageViewer = document.getElementById('image-viewer');
-                const likeBtn = imageContainer.querySelector('.like-btn');
-                const commentCount = document.querySelector('.comment-count');
+                const img = images.find(i => i.id === Number(id));
+                if (img) {
+                    const post = document.querySelector('.post-detail');
+                    post.querySelector('#imageViewer').innerHTML = `<img src="${img.url}" alt="${img.title}">`;
+                    post.querySelector('.post-title').textContent = img.title;
+                    loadLikesAndViews(id, post);
+                    db.ref(`views/${id}/${deviceId}`).set(true);
+                    new Viewer(document.getElementById('imageViewer'), { navbar: false });
+                    loadComments(id);
 
-                if (image) {
-                    imageViewer.innerHTML = `<img src="${image.url}" alt="${image.title}">`;
-                    likeBtn.dataset.id = image.id;
-                    likeBtn.style.display = 'inline-block';
-                    const viewer = new Viewer(imageViewer, {
-                        inline: false,
-                        navbar: false,
-                        toolbar: { zoomOut: 1, oneToOne: 1, reset: 1, rotateLeft: 1, rotateRight: 1, flipHorizontal: 1, flipVertical: 1 },
-                        title: false,
-                        viewed() { viewer.zoomTo(1); }
-                    });
-                    document.querySelector('.post-meta .title').textContent = image.title;
-                    document.querySelector('.post-meta .description').textContent = image.description || 'Sin descripción';
-                    updateTagScores(image.tags, 'view', image.id);
-
+                    const similarSection = document.createElement('section');
+                    similarSection.classList.add('similar-section');
+                    similarSection.innerHTML = '<h2>Similares</h2><div class="similar-gallery"></div>';
+                    document.querySelector('.main-content').appendChild(similarSection);
                     const similarGallery = document.querySelector('.similar-gallery');
                     const similarImages = images
-                        .filter(img => img.id !== image.id)
-                        .map(img => ({ ...img, similarity: img.tags.reduce((sum, tag) => sum + (image.tags.includes(tag) ? 1 : 0), 0) }))
-                        .sort((a, b) => b.similarity - a.similarity)
-                        .slice(0, 9);
-                    similarImages.forEach(img => {
-                        const div = document.createElement('div');
-                        div.classList.add('grid-item');
-                        div.innerHTML = `<img src="${img.url}" alt="${img.title}" loading="lazy">`;
-                        div.addEventListener('click', () => window.location.href = `image-detail.html?id=${img.id}`);
-                        similarGallery.appendChild(div);
+                        .filter(i => i.id !== Number(id) && i.tags.some(tag => img.tags.includes(tag)))
+                        .sort(() => 0.5 - Math.random())
+                        .slice(0, 6);
+                    similarImages.forEach(i => {
+                        const similarPost = document.createElement('div');
+                        similarPost.classList.add('post');
+                        similarPost.innerHTML = `<div class="post-image"><img src="${i.url}" alt="${i.title}" loading="lazy"></div>`;
+                        similarPost.addEventListener('click', () => window.location.href = `image-detail.html?id=${i.id}`);
+                        similarGallery.appendChild(similarPost);
                     });
-
-                    const countElement = likeBtn.nextElementSibling;
-                    setupGalleryLikeListeners(likeBtn, countElement);
-
-                    dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
-                        const comments = snapshot.val();
-                        const count = comments ? Object.keys(comments).length : 0;
-                        if (commentCount) commentCount.textContent = `${count} comentarios`;
-                    });
-                } else {
-                    imageContainer.innerHTML = '<p>Imagen no encontrada</p>';
                 }
 
+                setupInteractions();
                 setupSearch();
-                setupLikesAndComments();
-                setupChat();
-                setupFilters();
                 setupNotifications();
-            })
-            .catch(error => {
-                console.error('Error al cargar imagenes.json:', error);
-                document.querySelector('.image-container').innerHTML = `<p>Error: ${error.message}</p>`;
-            });
 
-        const commentForm = document.getElementById('comment-form');
-        if (commentForm) {
-            commentForm.addEventListener('submit', e => {
-                e.preventDefault();
-                const text = document.getElementById('comment-text').value.trim();
-                if (text && username) {
-                    dbRealtime.ref(`comments/${imageId}`).push({
-                        text,
-                        timestamp: new Date().toISOString(),
-                        username,
-                        deviceId
-                    }).then(() => document.getElementById('comment-text').value = '');
-                }
-            });
-        }
-
-        let allComments = [];
-        let displayedComments = 0;
-        const commentsPerPage = 10;
-
-        function renderComments(commentsList, commentsArray, startIndex, endIndex) {
-            for (let i = startIndex; i < endIndex && i < commentsArray.length; i++) {
-                const [commentId, comment] = commentsArray[i];
-                const commentDiv = document.createElement('div');
-                commentDiv.classList.add('comment');
-                commentDiv.dataset.commentId = commentId;
-                commentDiv.innerHTML = `
-                    <div class="content">
-                        <strong>${comment.username}</strong> ${comment.text}
-                        <span class="timestamp">${new Date(comment.timestamp).toLocaleTimeString()}</span>
-                        <a href="#" class="reply-btn">Responder</a>
-                    </div>
-                    <div class="replies"></div>
-                `;
-
-                if (comment.replies) {
-                    const repliesDiv = commentDiv.querySelector('.replies');
-                    const repliesArray = Object.entries(comment.replies);
-                    repliesArray.forEach(([replyId, reply]) => {
-                        const replyDiv = document.createElement('div');
-                        replyDiv.classList.add('comment', 'reply');
-                        replyDiv.dataset.replyId = replyId;
-                        replyDiv.innerHTML = `
-                            <div class="content">
-                                <strong>${reply.username}</strong> ${reply.text}
-                                <span class="timestamp">${new Date(reply.timestamp).toLocaleTimeString()}</span>
-                                <a href="#" class="reply-btn">Responder</a>
-                            </div>
-                        `;
-                        repliesDiv.appendChild(replyDiv);
-                        setupReplyForm(replyDiv, imageId, commentId);
-                    });
-                }
-
-                setupReplyForm(commentDiv, imageId, commentId);
-                commentsList.appendChild(commentDiv);
-            }
-            gsap.from(commentsList.querySelectorAll('.comment'), { opacity: 0, y: 10, stagger: 0.1, duration: 0.3 });
-        }
-
-        const commentsList = document.getElementById('comments-list');
-        const loadMoreBtn = document.getElementById('load-more-btn');
-        if (commentsList) {
-            dbRealtime.ref(`comments/${imageId}`).on('value', snapshot => {
-                commentsList.innerHTML = '';
-                displayedComments = 0;
-
-                const comments = snapshot.val();
-                if (comments) {
-                    allComments = Object.entries(comments).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
-                    renderComments(commentsList, allComments, 0, commentsPerPage);
-                    displayedComments = commentsPerPage;
-                    loadMoreBtn.style.display = allComments.length > commentsPerPage ? 'block' : 'none';
-                } else {
-                    commentsList.innerHTML = '<p>Sin comentarios</p>';
-                    loadMoreBtn.style.display = 'none';
-                }
-            });
-        }
-
-        if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', () => {
-                const nextEndIndex = displayedComments + commentsPerPage;
-                renderComments(commentsList, allComments, displayedComments, nextEndIndex);
-                displayedComments = nextEndIndex;
-                loadMoreBtn.style.display = displayedComments >= allComments.length ? 'none' : 'block';
-            });
-        }
-
-        function setupReplyForm(commentElement, imageId, parentCommentId) {
-            const replyBtn = commentElement.querySelector('.reply-btn');
-            let replyForm = commentElement.querySelector('.reply-form');
-
-            if (replyBtn) {
-                if (!replyForm) {
-                    replyForm = document.createElement('div');
-                    replyForm.classList.add('reply-form');
-                    replyForm.innerHTML = `<input type="text" placeholder="Escribe una respuesta..." required>`;
-                    commentElement.appendChild(replyForm);
-
-                    replyForm.querySelector('input').addEventListener('keypress', e => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const replyText = replyForm.querySelector('input').value.trim();
-                            if (replyText && username) {
-                                dbRealtime.ref(`comments/${imageId}/${parentCommentId}/replies`).push({
-                                    text: replyText,
-                                    timestamp: new Date().toISOString(),
-                                    username,
-                                    deviceId
-                                }).then(() => {
-                                    replyForm.querySelector('input').value = '';
-                                    replyForm.style.display = 'none';
-                                });
-                            }
+                const commentForm = document.getElementById('commentForm');
+                if (commentForm) {
+                    commentForm.addEventListener('submit', async e => {
+                        e.preventDefault();
+                        const text = document.getElementById('commentText').value.trim();
+                        if (text && username) {
+                            const commentRef = await db.ref(`comments/${id}`).push({
+                                text,
+                                timestamp: Date.now(),
+                                username,
+                                deviceId
+                            });
+                            document.getElementById('commentText').value = '';
+                            loadComments(id);
+                            notifyUser(img.uploadedBy, `${username} comentó tu publicación`, id, commentRef.key);
                         }
                     });
                 }
+            });
 
-                replyBtn.addEventListener('click', e => {
-                    e.preventDefault();
-                    replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
-                    if (replyForm.style.display === 'block') replyForm.querySelector('input').focus();
-                });
+            async function loadComments(imageId) {
+                const commentsList = document.getElementById('commentsList');
+                const snapshot = await db.ref(`comments/${imageId}`).once('value');
+                commentsList.innerHTML = '';
+
+                const comments = snapshot.val();
+                if (comments) {
+                    const commentsArray = Object.entries(comments)
+                        .map(([commentId, comment]) => ({
+                            id: commentId,
+                            ...comment
+                        }))
+                        .sort((a, b) => a.timestamp - b.timestamp);
+
+                    commentsArray.forEach(comment => {
+                        const commentItem = document.createElement('li');
+                        commentItem.dataset.commentId = comment.id;
+                        commentItem.innerHTML = `
+                            <div class="comment-avatar"></div>
+                            <div class="comment-content">
+                                <span class="comment-author">${comment.username}</span>
+                                <span class="comment-text">${comment.text}</span>
+                                <div class="comment-actions">
+                                    <button class="like-btn comment-like"><i class="far fa-thumbs-up"></i></button>
+                                    <span class="like-count"></span>
+                                    <a href="#" class="reply-btn">Responder</a>
+                                </div>
+                            </div>
+                        `;
+                        if (comment.replies) {
+                            const repliesList = document.createElement('ul');
+                            repliesList.classList.add('replies');
+                            const repliesArray = Object.entries(comment.replies)
+                                .map(([replyId, reply]) => ({
+                                    id: replyId,
+                                    ...reply
+                                }))
+                                .sort((a, b) => a.timestamp - b.timestamp);
+                            repliesArray.forEach(reply => {
+                                const replyItem = document.createElement('li');
+                                replyItem.dataset.commentId = reply.id;
+                                replyItem.innerHTML = `
+                                    <div class="comment-avatar"></div>
+                                    <div class="comment-content">
+                                        <span class="comment-author">${reply.username}</span>
+                                        <span class="comment-text">${reply.text}</span>
+                                        <div class="comment-actions">
+                                            <button class="like-btn comment-like"><i class="far fa-thumbs-up"></i></button>
+                                            <span class="like-count"></span>
+                                            <a href="#" class="reply-btn">Responder</a>
+                                        </div>
+                                    </div>
+                                `;
+                                repliesList.appendChild(replyItem);
+                                loadCommentLikes(imageId, reply.id, replyItem.querySelector('.like-btn'), replyItem.querySelector('.like-count'));
+                            });
+                            commentItem.appendChild(repliesList);
+                        }
+                        commentsList.appendChild(commentItem);
+                        loadCommentLikes(imageId, comment.id, commentItem.querySelector('.like-btn'), commentItem.querySelector('.like-count'));
+                    });
+                }
             }
         }
-    }
-});
+    });
+})();
