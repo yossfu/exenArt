@@ -82,16 +82,20 @@
         function setupInteractions() {
             document.addEventListener('click', async e => {
                 const likeBtn = e.target.closest('.like-btn');
-                if (likeBtn) {
-                    const id = likeBtn.dataset.id;
-                    const isComment = likeBtn.classList.contains('comment-like');
-                    const ref = isComment ? `comments/${likeBtn.dataset.imageId}/${id}/likes` : `likes/${id}`;
-                    const countElement = likeBtn.nextElementSibling;
+                const likeCount = e.target.closest('.like-count'); // Nuevo: Detectar clic en "Me gusta"
+
+                if (likeBtn || likeCount) {
+                    const targetElement = likeBtn || likeCount; // Usar el botón o el texto
+                    const postElement = targetElement.closest('.post, .post-detail');
+                    const id = postElement.querySelector('.like-btn').dataset.id;
+                    const isComment = targetElement.classList.contains('comment-like');
+                    const ref = isComment ? `comments/${targetElement.dataset.imageId}/${id}/likes` : `likes/${id}`;
+                    const countElement = postElement.querySelector('.like-count');
 
                     const snapshot = await db.ref(`${ref}/${deviceId}`).once('value');
                     const isLiked = snapshot.val() === true;
                     await db.ref(`${ref}/${deviceId}`).set(!isLiked);
-                    likeBtn.classList.toggle('liked', !isLiked);
+                    postElement.querySelector('.like-btn').classList.toggle('liked', !isLiked);
 
                     const countSnapshot = await db.ref(ref).once('value');
                     const count = Object.keys(countSnapshot.val() || {}).length;
