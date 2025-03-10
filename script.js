@@ -18,7 +18,9 @@
         let loadedImages = 9;
         const itemsPerLoad = 9;
 
+        // Identificadores de usuario
         let deviceId = localStorage.getItem('deviceId') || 'device_' + Math.random().toString(36).substr(2, 9);
+        let userUID = localStorage.getItem('userUID'); // Para sincronización entre dispositivos
         localStorage.setItem('deviceId', deviceId);
         let username = null;
         let unreadNotifications = 0;
@@ -26,11 +28,27 @@
         const homeBtn = document.getElementById('homeBtn');
         if (homeBtn) homeBtn.addEventListener('click', () => window.location.href = 'index.html');
 
+        // Mostrar loader
+        function showLoader(show = true) {
+            const loader = document.getElementById('galleryLoader') || document.createElement('div');
+            if (!loader.id) {
+                loader.id = 'galleryLoader';
+                loader.className = 'loader';
+                loader.textContent = 'Cargando...';
+                document.querySelector('.main-content')?.prepend(loader);
+            }
+            loader.style.display = show ? 'block' : 'none';
+        }
+
         async function loadUsername() {
-            const snapshot = await db.ref(`users/${deviceId}`).once('value');
+            const localPrefs = JSON.parse(localStorage.getItem('userPrefs') || '{}');
+            username = localPrefs.username;
+            const userRef = userUID ? db.ref(`users/${userUID}`) : db.ref(`users/${deviceId}`);
+            const snapshot = await userRef.once('value');
             const userData = snapshot.val();
             if (userData && userData.username) {
                 username = userData.username;
+                localStorage.setItem('userPrefs', JSON.stringify({ username, lastTags: userData.lastTags || {} }));
                 const authContainer = document.getElementById('authContainer');
                 if (authContainer) authContainer.style.display = 'none';
             } else {
@@ -48,8 +66,10 @@
                 e.preventDefault();
                 const newUsername = document.getElementById('username').value.trim();
                 if (newUsername) {
-                    await db.ref(`users/${deviceId}`).set({ username: newUsername });
+                    const userRef = userUID ? db.ref(`users/${userUID}`) : db.ref(`users/${deviceId}`);
+                    await userRef.set({ username: newUsername, lastTags: {} });
                     username = newUsername;
+                    localStorage.setItem('userPrefs', JSON.stringify({ username, lastTags: {} }));
                     document.getElementById('authContainer').style.display = 'none';
                     document.getElementById('overlay').style.display = 'none';
                     loadGallery();
@@ -80,7 +100,14 @@
                     if (!isLiked && !isComment) {
                         const image = images.find(img => img.id === Number(id));
                         notifyUser(image.uploadedBy, `${username} dio me gusta a tu publicación`, id);
-                        image.tags.forEach(tag => db.ref(`userTags/${deviceId}/${tag}`).transaction(val => (val || 0) + 1));
+                        const userRef = userUID ? db.ref(`users/${userUID}/lastTags`) : db.ref(`users/${deviceId}/lastTags`);
+                        image.tags.forEach(tag => {
+                            userRef.child(tag).transaction(val => ({ count: (val?.count || 0) + 1, timestamp: Date.now() }));
+                        });
+                        localStorage.setItem('userPrefs', JSON.stringify({
+                            username,
+                            lastTags: Object.fromEntries(image.tags.map(tag => [tag, { count: 1, timestamp: Date.now() }]))
+                        }));
                     }
                 }
 
@@ -186,16 +213,29 @@
 
         async function loadGallery() {
             try {
+                showLoader(true);
                 const response = await fetch('imagenes.json');
                 if (!response.ok) throw new Error('Error al cargar imágenes');
                 images = await response.json();
 
-                const tagsSnapshot = await db.ref(`userTags/${deviceId}`).once('value');
+                const userRef = userUID ? db.ref(`users/${userUID}/lastTags`) : db.ref(`users/${deviceId}/lastTags`);
+                const tagsSnapshot = await userRef.once('value');
                 const userTags = tagsSnapshot.val() || {};
-                const tagScores = Object.entries(userTags).sort((a, b) => b[1] - a[1]).map(([tag]) => tag);
+                
+                // Ordenamiento con factor de tiempo
+                const now = Date.now();
+                const decayFactor = 0.00000001; // Reduce peso con el tiempo (ajústalo según necesidad)
                 images.sort((a, b) => {
-                    const aScore = a.tags.reduce((sum, tag) => sum + (tagScores.indexOf(tag) !== -1 ? tagScores.length - tagScores.indexOf(tag) : 0), 0);
-                    const bScore = b.tags.reduce((sum, tag) => sum + (tagScores.indexOf(tag) !== -1 ? tagScores.length - tagScores.indexOf(tag) : 0), 0);
+                    const aScore = a.tags.reduce((sum, tag) => {
+                        const tagData = userTags[tag] || { count: 0, timestamp: 0 };
+                        const age = (now - tagData.timestamp) * decayFactor;
+                        return sum + (tagData.count * (1 - age));
+                    }, 0);
+                    const bScore = b.tags.reduce((sum, tag) => {
+                        const tagData = userTags[tag] || { count: 0, timestamp: 0 };
+                        const age = (now - tagData.timestamp) * decayFactor;
+                        return sum + (tagData.count * (1 - age));
+                    }, 0);
                     return bScore - aScore;
                 });
 
@@ -217,6 +257,8 @@
             } catch (error) {
                 console.error('Error en loadGallery:', error);
                 document.getElementById('gallery').innerHTML = '<p>Error al cargar imágenes</p>';
+            } finally {
+                showLoader(false);
             }
         }
 
@@ -268,8 +310,10 @@
             });
 
             btn.addEventListener('click', search);
-            input.addEventListener('keypress', e => {
-                if (e.key === 'Enter') search();
+            let timeout;
+            input.addEventListener('input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(search, 300); // Debounce de 300ms
             });
 
             closeBtn.addEventListener('click', () => {
@@ -294,10 +338,18 @@
                     return;
                 }
 
-                const filtered = images.filter(img => 
-                    img.title.toLowerCase().includes(query) || 
-                    img.tags.some(tag => tag.toLowerCase().includes(query))
-                );
+                const searchTerms = query.split(/\s+/);
+                const filtered = images.filter(img => {
+                    const title = img.title.toLowerCase();
+                    const description = img.description.toLowerCase();
+                    const tags = img.tags.map(tag => tag.toLowerCase());
+                    return searchTerms.every(term => 
+                        title.includes(term) || 
+                        description.includes(term) || 
+                        tags.some(tag => tag.includes(term))
+                    );
+                });
+
                 results.innerHTML = filtered.map(img => `
                     <div class="result-item" data-id="${img.id}">
                         <img src="${img.url}" alt="${img.title}">
@@ -348,13 +400,18 @@
             const id = new URLSearchParams(window.location.search).get('id');
             if (!username) window.location.href = 'index.html';
 
-            fetch('imagenes.json').then(r => r.json()).then(async data => {
-                images = data;
+            try {
+                showLoader(true);
+                const response = await fetch('imagenes.json');
+                if (!response.ok) throw new Error('No se pudo cargar imagenes.json');
+                images = await response.json();
+
                 const img = images.find(i => i.id === Number(id));
                 if (img) {
                     const post = document.querySelector('.post-detail');
                     post.querySelector('#imageViewer').innerHTML = `<img src="${img.url}" alt="${img.title}">`;
                     post.querySelector('.post-title').textContent = img.title;
+                    post.querySelector('.post-description').textContent = img.description || 'Sin descripción';
                     loadLikesAndViews(id, post);
                     db.ref(`views/${id}/${deviceId}`).set(true);
                     new Viewer(document.getElementById('imageViewer'), { navbar: false });
@@ -376,6 +433,8 @@
                         similarPost.addEventListener('click', () => window.location.href = `image-detail.html?id=${i.id}`);
                         similarGallery.appendChild(similarPost);
                     });
+                } else {
+                    document.querySelector('.post-detail').innerHTML = '<p>Imagen no encontrada</p>';
                 }
 
                 setupInteractions();
@@ -400,7 +459,12 @@
                         }
                     });
                 }
-            });
+            } catch (error) {
+                console.error('Error al cargar detalles:', error);
+                document.querySelector('.post-detail').innerHTML = '<p>Error al cargar la imagen</p>';
+            } finally {
+                showLoader(false);
+            }
 
             async function loadComments(imageId) {
                 const commentsList = document.getElementById('commentsList');
