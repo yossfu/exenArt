@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <title>froggiAI - Generador Avanzado</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #fafafa;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .app-bar {
+      background: linear-gradient(to right, #6200ea, #03dac5);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+    }
+    .app-bar h1 {
+      font-size: 18px;
+      margin: 0;
+      flex-grow: 1;
+      text-align: center;
+    }
+    .content {
+      padding: 16px;
+      margin-top: 56px;
+      margin-bottom: 72px;
+    }
+    .bottom-nav {
+      background-color: #fff;
+      border-top: 1px solid #e0e0e0;
+      padding: 8px 0;
+      display: flex;
+      justify-content: space-around;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
+      z-index: 1000;
+    }
+    .bottom-nav a {
+      color: #6200ea;
+      text-align: center;
+      text-decoration: none;
+      padding: 6px;
+      font-size: 11px;
+    }
+    .card {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .form-control, .form-select {
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #e0e0e0;
+      background-color: #fff;
+    }
+    .btn-primary {
+      background-color: #6200ea;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-weight: 500;
+    }
+    .btn-inject {
+      background-color: #03dac5;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      margin-left: 8px;
+    }
+    .carousel-item img {
+      max-height: 400px;
+      object-fit: contain;
+      border-radius: 12px;
+      width: 100%;
+    }
+    .carousel-control-prev, .carousel-control-next {
+      filter: invert(100%);
+    }
+    .modal-body {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .grid-item {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .grid-item img {
+      max-width: 100%;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .selected-item {
+      border: 1px solid #6200ea;
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      background-color: #f5f5f5;
+    }
+    .remove-btn {
+      background-color: #ff1744;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    label {
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: #424242;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #212121; color: #fff; }
+      .card, .bottom-nav { background-color: #303030; border-color: #424242; }
+      .form-control, .form-select { background-color: #424242; color: #fff; border-color: #616161; }
+      .grid-item, .selected-item { border-color: #616161; background-color: #424242; }
+      label { color: #e0e0e0; }
+    }
+    @media (max-width: 768px) {
+      .content { padding: 12px; }
+      .card { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-bar">
+    <span class="material-icons" onclick="alert('Menú no implementado aún')">menu</span>
+    <h1>froggiAI</h1>
+    <span class="material-icons" onclick="alert('Configuración no implementada aún')">settings</span>
+  </header>
+
+  <main class="content">
+    <div class="card">
+      <h3 class="mb-3">Generar Imagen</h3>
+      <form id="generateForm">
+        <label for="promptInput">Prompt</label>
+        <textarea class="form-control" id="promptInput" rows="2" placeholder="Ej: un pequeño froggi adorable"></textarea>
+
+        <label>Buscar en Civitai</label>
+        <div class="d-flex mb-3">
+          <input type="text" class="form-control me-2" id="civitaiSearch" placeholder="Ej: cyberpunk">
+          <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#civitaiModal" onclick="searchCivitai('LORA')">LoRAs</button>
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#civitaiModal" onclick="searchCivitai('TextualInversion')">TIs</button>
+        </div>
+
+        <div id="selected-loras" class="mb-3"></div>
+        <div id="selected-tis" class="mb-3"></div>
+
+        <label for="modelSelect">Modelo</label>
+        <select class="form-select" id="modelSelect">
+          <option value="Pony Diffusion XL">Pony Diffusion XL</option>
+          <option value="AutismMix SDXL">AutismMix SDXL (Pony)</option>
+          <option value="Pony Realism">Pony Realism</option>
+          <option value="Flux.1-Schnell fp8 (Compact)">Flux.1-Schnell</option>
+          <option value="AlbedoBase XL (SDXL)">AlbedoBase XL</option>
+          <option value="ICBINP - I Can't Believe It's Not Photography">ICBINP</option>
+          <option value="DreamShaper XL">DreamShaper XL</option>
+          <option value="Anything Diffusion">Anything Diffusion</option>
+          <option value="Stable Diffusion 3 Medium">SD 3 Medium</option>
+        </select>
+
+        <label for="samplerSelect">Sampler</label>
+        <select class="form-select" id="samplerSelect">
+          <option value="k_euler_a">Euler A</option>
+          <option value="k_dpmpp_2m">DPM++ 2M</option>
+          <option value="k_heun">Heun</option>
+          <option value="k_lms">LMS</option>
+          <option value="ddim">DDIM</option>
+        </select>
+
+        <label for="controlImage">ControlNet (Opcional)</label>
+        <input type="file" class="form-control" id="controlImage" accept="image/*">
+
+        <label for="size">Resolución</label>
+        <select class="form-select" id="size">
+          <option value="Portrait">Retrato (768x1280)</option>
+          <option value="Landscape">Paisaje (1280x768)</option>
+          <option value="Square">Cuadrado (1024x1024)</option>
+        </select>
+
+        <label for="numImagesInput">Número de imágenes (1-4)</label>
+        <input type="range" class="form-control" id="numImagesInput" min="1" max="4" value="1">
+
+        <label for="nsfwToggle">Permitir NSFW</label>
+        <input type="checkbox" id="nsfwToggle" checked>
+
+        <button type="submit" class="btn btn-primary w-100 mt-3" id="generateBtn">Generar</button>
+      </form>
+      <div id="status" class="mt-3 text-center text-muted"></div>
+    </div>
+
+    <div class="card">
+      <h3 class="mb-3">Imágenes Generadas</h3>
+      <div class="carousel slide" id="genimages" data-bs-ride="carousel">
+        <div class="carousel-inner" id="generated-images">
+          <div class="carousel-item active">
+            <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+              <p class="text-muted">Esperando generación...</p>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#genimages" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#genimages" data-bs-slide="next">
+          <span class="carousel-control-next-icon"></span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para resultados de Civitai -->
+  <div class="modal fade" id="civitaiModal" tabindex="-1" aria-labelledby="civitaiModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="civitaiModalLabel">Resultados de Civitai</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row" id="civitai-results"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="#home" onclick="scrollToTop()">
+      <span class="material-icons">home</span><br>Inicio
+    </a>
+    <a href="#gallery" onclick="alert('Galería no implementada aún')">
+      <span class="material-icons">photo_library</span><br>Galería
+    </a>
+    <a href="#presets" onclick="savePreset()">
+      <span class="material-icons">save</span><br>Guardar Preset
+    </a>
+    <a href="#kudos" onclick="checkKudos()">
+      <span class="material-icons">star</span><br>Kudos
+    </a>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const apiKey = "0000000000"; // Reemplaza con tu clave de AI Horde
+    const socket = new WebSocket('wss://aihorde.net/api/v2/generate/stream');
+
+    // Obtener valores del formulario
+    async function getFormValues() {
+      const prompt = document.getElementById('promptInput').value;
+      const model = document.getElementById('modelSelect').value;
+      const sampler = document.getElementById('samplerSelect').value;
+      const controlImage = document.getElementById('controlImage').files[0];
+      const resolution = document.getElementById('size').value;
+      const numImages = parseInt(document.getElementById('numImagesInput').value);
+      const nsfw = document.getElementById('nsfwToggle').checked;
+
+      let width, height;
+      switch (resolution) {
+        case "Portrait": width = 768; height = 1280; break;
+        case "Landscape": width = 1280; height = 768; break;
+        case "Square": width = 1024; height = 1024; break;
+      }
+
+      const requestData = {
+        prompt,
+        models: [model],
+        params: {
+          width,
+          height,
+          n: numImages,
+          steps: 30,
+          cfg_scale: 7,
+          sampler_name: sampler
+        },
+        nsfw,
+        allow_downgrade: true,
+        loras: [],
+        tis: []
+      };
+
+      if (controlImage) {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            requestData.control_type = 'canny';
+            requestData.image = reader.result.split(',')[1];
+            resolve(requestData);
+          };
+          reader.readAsDataURL(controlImage);
+        });
+      }
+
+      return Promise.resolve(requestData);
+    }
+
+    let selectedLoras = [];
+    let selectedTIs = [];
+
+    // Buscar en Civitai
+    async function searchCivitai(type) {
+      const query = document.getElementById('civitaiSearch').value;
+      const resultsDiv = document.getElementById('civitai-results');
+      resultsDiv.innerHTML = '<p>Buscando...</p>';
+      try {
+        const response = await fetch(`https://civitai.com/api/v1/models?query=${encodeURIComponent(query)}&types=${type}`);
+        const data = await response.json();
+        resultsDiv.innerHTML = '';
+        data.items.slice(0, 6).forEach(item => {
+          const trigger = item.modelVersions[0]?.trainedWords?.[0] || item.name;
+          const imageUrl = item.modelVersions[0]?.images?.[0]?.url || 'https://via.placeholder.com/100';
+          const col = document.createElement('div');
+          col.className = 'col-6 col-md-4';
+          col.innerHTML = `
+            <div class="grid-item">
+              <img src="${imageUrl}" alt="${item.name}">
+              <p>${item.name}</p>
+              <button class="btn btn-primary" onclick="addToSelected('${trigger.replace(/'/g, "\\'")}', '${type}', '${item.name.replace(/'/g, "\\'")}', '${item.id}')">Seleccionar</button>
+            </div>`;
+          resultsDiv.appendChild(col);
+          document.getElementById('civitaiModalLabel').textContent = `Resultados de Civitai - ${type === 'LORA' ? 'LoRAs' : 'Textual Inversions'}`;
+        });
+      } catch (error) {
+        resultsDiv.innerHTML = `<p>Error al buscar: ${error.message}</p>`;
+      }
+    }
+
+    function addToSelected(trigger, type, name, id) {
+      if (type === 'LORA' && selectedLoras.length >= 4) {
+        alert('Límite de 4 LoRAs alcanzado.');
+        return;
+      }
+      if (type === 'TextualInversion' && selectedTIs.length >= 4) {
+        alert('Límite de 4 TIs alcanzado.');
+        return;
+      }
+
+      const item = { trigger, name, id, weight: 1.0 };
+      if (type === 'LORA') {
+        selectedLoras.push(item);
+        updateSelectedLoras();
+      } else if (type === 'TextualInversion') {
+        selectedTIs.push(item);
+        updateSelectedTIs();
+      }
+    }
+
+    function injectTrigger(trigger) {
+      const promptInput = document.getElementById('promptInput');
+      promptInput.value = `${promptInput.value.trim()}, ${trigger}`.trim();
+    }
+
+    function updateSelectedLoras() {
+      const container = document.getElementById('selected-loras');
+      container.innerHTML = selectedLoras.length ? '<h5 class="mb-2">LoRAs Seleccionados</h5>' : '';
+      selectedLoras.forEach((lora, index) => {
+        const div = document.createElement('div');
+        div.className = 'selected-item';
+        div.innerHTML = `
+          <span>${lora.name}</span>
+          <input type="range" min="0" max="2" step="0.1" value="${lora.weight}" oninput="updateWeight('LORA', ${index}, this.value)">
+          <button class="btn btn-inject" onclick="injectTrigger('${lora.trigger.replace(/'/g, "\\'")}')">Inyectar</button>
+          <button class="remove-btn" onclick="removeSelected('LORA', ${index})">X</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateSelectedTIs() {
+      const container = document.getElementById('selected-tis');
+      container.innerHTML = selectedTIs.length ? '<h5 class="mb-2">TIs Seleccionados</h5>' : '';
+      selectedTIs.forEach((ti, index) => {
+        const div = document.createElement('div');
+        div.className = 'selected-item';
+        div.innerHTML = `
+          <span>${ti.name}</span>
+          <input type="range" min="0" max="2" step="0.1" value="${ti.weight}" oninput="updateWeight('TextualInversion', ${index}, this.value)">
+          <button class="btn btn-inject" onclick="injectTrigger('${ti.trigger.replace(/'/g, "\\'")}')">Inyectar</button>
+          <button class="remove-btn" onclick="removeSelected('TextualInversion', ${index})">X</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateWeight(type, index, value) {
+      if (type === 'LORA') {
+        selectedLoras[index].weight = parseFloat(value);
+      } else if (type === 'TextualInversion') {
+        selectedTIs[index].weight = parseFloat(value);
+      }
+    }
+
+    function removeSelected(type, index) {
+      if (type === 'LORA') {
+        selectedLoras.splice(index, 1);
+        updateSelectedLoras();
+      } else if (type === 'TextualInversion') {
+        selectedTIs.splice(index, 1);
+        updateSelectedTIs();
+      }
+    }
+
+    // Estado de carga en el carrusel
+    function setCarouselLoading(isLoading) {
+      const carouselInner = document.getElementById('generated-images');
+      carouselInner.innerHTML = isLoading
+        ? '<div class="carousel-item active"><div class="d-flex justify-content-center align-items-center" style="height: 400px;"><div class="spinner-border text-primary"></div></div></div>'
+        : '<div class="carousel-item active"><div class="d-flex justify-content-center align-items-center" style="height: 400px;"><p class="text-muted">Esperando generación...</p></div></div>';
+    }
+
+    // Generar contenido
+    async function generateContent(event) {
+      event.preventDefault();
+      const statusDiv = document.getElementById('status');
+      const generateBtn = document.getElementById('generateBtn');
+
+      const requestData = await getFormValues();
+      if (!requestData.prompt.trim()) {
+        statusDiv.textContent = 'Por favor, ingresa un prompt.';
+        return;
+      }
+
+      requestData.loras = selectedLoras.map(lora => ({ name: lora.name, model: lora.id, weight: lora.weight }));
+      requestData.tis = selectedTIs.map(ti => ({ name: `embedding:${ti.id}`, inject_ti: 'prompt', weight: ti.weight }));
+
+      generateBtn.disabled = true;
+      setCarouselLoading(true);
+      statusDiv.textContent = 'Iniciando generación...';
+
+      try {
+        const response = await fetch('https://aihorde.net/api/v2/generate/async', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': apiKey },
+          body: JSON.stringify(requestData)
+        });
+        if (!response.ok) throw new Error('Error en la generación');
+        const data = await response.json();
+        await checkStatus(data.id);
+      } catch (error) {
+        statusDiv.textContent = 'Error: ' + error.message;
+        setCarouselLoading(false);
+      } finally {
+        generateBtn.disabled = false;
+      }
+    }
+
+    async function checkStatus(id) {
+      const statusDiv = document.getElementById('status');
+      let finished = false;
+
+      while (!finished) {
+        const response = await fetch(`https://aihorde.net/api/v2/generate/check/${id}`);
+        const status = await response.json();
+        if (status.done) {
+          finished = true;
+          const results = await getResults(id);
+          displayResults(results);
+          statusDiv.textContent = '¡Generación completada!';
+        } else {
+          statusDiv.textContent = `En cola: Posición ${status.queue_position}`;
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+    }
+
+    async function getResults(id) {
+      const response = await fetch(`https://aihorde.net/api/v2/generate/status/${id}`);
+      return (await response.json()).generations;
+    }
+
+    function displayResults(generations) {
+      const carouselInner = document.getElementById('generated-images');
+      carouselInner.innerHTML = '';
+      generations.forEach((gen, index) => {
+        const item = document.createElement('div');
+        item.className = `carousel-item ${index === 0 ? 'active' : ''}`;
+        item.innerHTML = `
+          <div class="position-relative">
+            <img src="${gen.img}" class="d-block mx-auto" alt="Imagen generada">
+            <a href="${gen.img}" download="imagen_${index}.png" class="btn btn-primary position-absolute bottom-0 end-0 m-2">Descargar</a>
+          </div>`;
+        carouselInner.appendChild(item);
+      });
+      new bootstrap.Carousel(document.getElementById('genimages'));
+    }
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      document.getElementById('status').textContent = `Progreso: ${data.status || 'Esperando...'}`;
+    };
+
+    async function savePreset() {
+      const requestData = await getFormValues();
+      localStorage.setItem('preset_' + Date.now(), JSON.stringify(requestData));
+      alert('Preset guardado en localStorage');
+    }
+
+    function checkKudos() {
+      alert('Kudos no implementados completamente. Requiere autenticación en AI Horde.');
+    }
+
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('generateForm').addEventListener('submit', generateContent);
+    });
+  </script>
+</body>
+</html>
