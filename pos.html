@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punto de Venta Profesional Mejorado</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #e9ecef;
+            padding: 1rem;
+            font-size: 1rem;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.125rem 0.625rem rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            padding: 0.625rem;
+            background: #343a40;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .search-bar {
+            padding: 0.625rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 0.625rem;
+            align-items: center;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 0.625rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            font-size: 1rem;
+        }
+        .exchange-rate {
+            display: flex;
+            align-items: center;
+            gap: 0.3125rem;
+        }
+        .exchange-rate input {
+            width: 5rem;
+            padding: 0.3125rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+        .display-area {
+            flex: 1;
+            padding: 0.625rem;
+            background: #fff;
+            overflow-y: auto;
+            max-height: 50vh;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .cart-list {
+            width: 100%;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        .cart-item-name {
+            flex: 2;
+        }
+        .cart-item-quantity {
+            flex: 1;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3125rem;
+        }
+        .cart-item-price {
+            flex: 1;
+            text-align: right;
+            font-weight: bold;
+        }
+        .cart-item-remove {
+            margin-left: 0.625rem;
+        }
+        .quantity-btn, .remove-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            border: 1px solid #ced4da;
+            background: #f8f9fa;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 1.125rem;
+            touch-action: manipulation;
+        }
+        .quantity-btn:hover, .remove-btn:hover {
+            background: #e9ecef;
+        }
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+        }
+        .remove-btn:hover {
+            background: #c82333;
+        }
+        .product-selection {
+            padding: 0.625rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .menu-btn {
+            padding: 0.375rem 0.75rem;
+            background: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .menu-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        .cart-footer {
+            padding: 0.625rem;
+            background: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #dee2e6;
+            gap: 0.625rem;
+        }
+        .totals {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            touch-action: manipulation;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .numpad-container {
+            padding: 0.625rem;
+            background: #f8f9fa;
+        }
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.3125rem;
+            width: 100%;
+            max-width: 20rem;
+            margin: 0 auto;
+        }
+        .numpad-btn {
+            padding: 0.9375rem;
+            border: 1px solid #ced4da;
+            background: #fff;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 1.125rem;
+            text-align: center;
+            touch-action: manipulation;
+        }
+        .numpad-btn:hover {
+            background: #f1f3f5;
+        }
+        .numpad-btn.enter {
+            background: #007bff;
+            color: white;
+        }
+        .numpad-btn.enter:hover {
+            background: #0056b3;
+        }
+        .numpad-btn.clear {
+            background: #dc3545;
+            color: white;
+        }
+        .numpad-btn.clear:hover {
+            background: #c82333;
+        }
+        .numpad-btn.multiply {
+            background: #28a745;
+            color: white;
+        }
+        .numpad-btn.multiply:hover {
+            background: #218838;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background: #fff;
+            margin: 5% auto;
+            padding: 1.25rem;
+            width: 90%;
+            max-width: 31.25rem;
+            border-radius: 0.5rem;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-content h3 {
+            margin-bottom: 0.9375rem;
+        }
+        .modal-content label {
+            display: block;
+            margin: 0.625rem 0 0.3125rem;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.9375rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            font-size: 1rem;
+        }
+        .modal-content .change {
+            font-size: 1.5rem;
+            color: #28a745;
+            font-weight: bold;
+            margin-bottom: 0.9375rem;
+            text-align: center;
+        }
+        .modal-content .remaining {
+            font-size: 1.2rem;
+            color: #dc3545;
+            font-weight: bold;
+            margin-bottom: 0.9375rem;
+            text-align: center;
+        }
+        .modal-content .total {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.9375rem;
+        }
+        .modal-content .buttons {
+            display: flex;
+            gap: 0.625rem;
+            justify-content: space-between;
+        }
+        .payment-methods {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.625rem;
+            margin-bottom: 0.9375rem;
+        }
+        .payment-btn {
+            width: 5rem;
+            height: 5rem;
+            border: 2px solid #ced4da;
+            border-radius: 0.5rem;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 0.875rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+        .payment-btn.selected {
+            border-color: #007bff;
+            background: #007bff;
+            color: white;
+        }
+        .payment-btn:hover:not(.selected) {
+            background: #e9ecef;
+        }
+        #usdSection {
+            display: none;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 0.5rem;
+                font-size: 0.875rem;
+            }
+            .numpad {
+                grid-template-columns: repeat(4, 1fr);
+                max-width: 100%;
+            }
+            .numpad-btn {
+                padding: 0.625rem;
+                font-size: 1rem;
+            }
+            .quantity-btn, .remove-btn {
+                width: 2rem;
+                height: 2rem;
+                font-size: 1rem;
+            }
+            .btn {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.75rem;
+            }
+            .totals {
+                font-size: 1.25rem;
+            }
+            .payment-btn {
+                width: 4rem;
+                height: 4rem;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Punto de Venta</h2>
+            <span id="currentTime"></span>
+        </div>
+        <div class="search-bar">
+            <input type="text" id="productSearch" placeholder="Código de barras, ID o nombre...">
+            <div class="exchange-rate">
+                <label for="exchangeRate">$ USD:</label>
+                <input type="number" id="exchangeRate" step="0.01" value="20.00" min="0" placeholder="Tipo de cambio">
+            </div>
+        </div>
+        <div class="display-area">
+            <div class="cart-list" id="cartList"></div>
+        </div>
+        <div class="product-selection">
+            <button class="menu-btn" id="menuBtn">Menú</button>
+        </div>
+        <div class="cart-footer">
+            <div class="totals">
+                Total: $<span id="total">0.00</span>
+            </div>
+            <button class="btn btn-primary" id="checkoutBtn">Cobrar</button>
+            <button class="btn btn-success" id="shiftEndBtn">Corte de Caja</button>
+        </div>
+        <div class="numpad-container">
+            <div class="numpad" id="numpad">
+                <button class="numpad-btn" data-value="7">7</button>
+                <button class="numpad-btn" data-value="8">8</button>
+                <button class="numpad-btn" data-value="9">9</button>
+                <button class="numpad-btn multiply" data-value="5*">x5</button>
+                <button class="numpad-btn" data-value="4">4</button>
+                <button class="numpad-btn" data-value="5">5</button>
+                <button class="numpad-btn" data-value="6">6</button>
+                <button class="numpad-btn multiply" data-value="10*">x10</button>
+                <button class="numpad-btn" data-value="1">1</button>
+                <button class="numpad-btn" data-value="2">2</button>
+                <button class="numpad-btn" data-value="3">3</button>
+                <button class="numpad-btn" data-value="0">0</button>
+                <button class="numpad-btn" data-value=".">.</button>
+                <button class="numpad-btn multiply" data-value="*">*</button>
+                <button class="numpad-btn clear" data-action="clear">C</button>
+                <button class="numpad-btn enter" data-action="submit">↵</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <h3>Procesar Pago</h3>
+            <div class="total">Total: $<span id="modalTotal">0.00</span></div>
+            <label>Método de Pago:</label>
+            <div class="payment-methods" id="paymentMethods">
+                <button class="payment-btn" data-method="efectivo">Efectivo MXN</button>
+                <button class="payment-btn" data-method="efectivo_usd">Efectivo USD</button>
+                <button class="payment-btn" data-method="tarjeta">Tarjeta</button>
+                <button class="payment-btn" data-method="transferencia">Transferencia</button>
+            </div>
+            <label for="amountReceivedMXN">Cantidad Recibida (MXN):</label>
+            <input type="text" id="amountReceivedMXN" placeholder="Ingrese cantidad en MXN" readonly>
+            <div id="usdSection">
+                <label for="amountReceivedUSD">Cantidad Recibida (USD):</label>
+                <input type="text" id="amountReceivedUSD" placeholder="Ingrese cantidad en USD" readonly>
+            </div>
+            <div class="remaining" id="remainingDisplay">Falta por pagar: $0.00 MXN</div>
+            <div class="numpad" id="paymentNumpad">
+                <button class="numpad-btn" data-value="7">7</button>
+                <button class="numpad-btn" data-value="8">8</button>
+                <button class="numpad-btn" data-value="9">9</button>
+                <button class="numpad-btn" data-value="4">4</button>
+                <button class="numpad-btn" data-value="5">5</button>
+                <button class="numpad-btn" data-value="6">6</button>
+                <button class="numpad-btn" data-value="1">1</button>
+                <button class="numpad-btn" data-value="2">2</button>
+                <button class="numpad-btn" data-value="3">3</button>
+                <button class="numpad-btn" data-value="0">0</button>
+                <button class="numpad-btn" data-value=".">.</button>
+                <button class="numpad-btn clear" data-action="clear">C</button>
+                <button class="numpad-btn enter" data-action="submit">↵</button>
+            </div>
+            <div class="change" id="changeDisplay">Cambio: $0.00 MXN</div>
+            <div class="buttons">
+                <button class="btn btn-primary" id="confirmPaymentBtn">Confirmar</button>
+                <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h3>Iniciar Sesión</h3>
+            <label for="username">Usuario:</label>
+            <input type="text" id="username" placeholder="Ingrese usuario">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" placeholder="Ingrese contraseña">
+            <div class="buttons">
+                <button class="btn btn-primary" id="loginBtn">Iniciar Sesión</button>
+                <button class="btn btn-secondary" id="cancelLoginBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="shiftEndModal" class="modal">
+        <div class="modal-content">
+            <h3>Autorizar Corte de Caja</h3>
+            <label for="shiftEndPassword">Contraseña:</label>
+            <input type="password" id="shiftEndPassword" placeholder="Ingrese contraseña">
+            <div class="buttons">
+                <button class="btn btn-primary" id="confirmShiftEndBtn">Confirmar</button>
+                <button class="btn btn-secondary" id="cancelShiftEndBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        let firebaseApp, db, ref, push, get;
+        const firebaseConfig = {
+            apiKey: "AIzaSyCU9meIionjsLxtKH-q_k64dHsmRgHPKrk",
+            authDomain: "posventa-9168b.firebaseapp.com",
+            projectId: "posventa-9168b",
+            storageBucket: "posventa-9168b.firebasestorage.app",
+            messagingSenderId: "602077008054",
+            appId: "1:602077008054:web:ca857c7566a9ce0945d617",
+            measurementId: "G-W5L6995VDE",
+            databaseURL: "https://posventa-9168b-default-rtdb.firebaseio.com/"
+        };
+
+        async function loadFirebase() {
+            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js');
+            const { getDatabase, ref: dbRef, push: dbPush, get: dbGet } = await import('https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js');
+            firebaseApp = initializeApp(firebaseConfig);
+            db = getDatabase(firebaseApp);
+            ref = dbRef;
+            push = dbPush;
+            get = dbGet;
+        }
+
+        let products = [];
+        let cart = [];
+        let sales = JSON.parse(localStorage.getItem('sales')) || [];
+        const TAX_RATE = 0.16;
+        let exchangeRate = parseFloat(localStorage.getItem('exchangeRate')) || 20.00;
+        let activeCashier = JSON.parse(localStorage.getItem('activeCashier')) || null;
+        let activeInput = 'amountReceivedMXN'; // Campo activo para el numpad
+
+        async function loadProducts() {
+            try {
+                const response = await fetch('prod.json');
+                products = await response.json();
+                initialize();
+            } catch (error) {
+                console.error('Error al cargar prod.json:', error);
+                alert('No se pudo cargar la lista de productos.');
+            }
+        }
+
+        function initialize() {
+            updateTime();
+            setInterval(updateTime, 1000);
+            document.getElementById('exchangeRate').value = exchangeRate.toFixed(2);
+            setupEventListeners();
+            setupNumpadListeners();
+            updateCartDisplay();
+            updateCashierStatus();
+        }
+
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
+        }
+
+        function updateCashierStatus() {
+            const menuBtn = document.getElementById('menuBtn');
+            if (activeCashier) {
+                menuBtn.textContent = `Cajero: ${activeCashier.username}`;
+                menuBtn.classList.add('active');
+            } else {
+                menuBtn.textContent = 'Menú';
+                menuBtn.classList.remove('active');
+            }
+        }
+
+        function requireLogin() {
+            if (!activeCashier) {
+                showLoginModal();
+                return false;
+            }
+            return true;
+        }
+
+        function searchProduct(event) {
+            if (event.key === 'Enter' && requireLogin()) {
+                submitNumber();
+            }
+        }
+
+        function appendNumber(number) {
+            if (requireLogin()) {
+                const input = document.getElementById('productSearch');
+                input.value += number;
+            }
+        }
+
+        function clearInput() {
+            if (requireLogin()) {
+                document.getElementById('productSearch').value = '';
+            }
+        }
+
+        function submitNumber() {
+            const query = document.getElementById('productSearch').value.trim().toLowerCase();
+            if (!query) return;
+            if (query.includes('*')) {
+                const [quantityStr, productId] = query.split('*');
+                const quantity = parseInt(quantityStr) || 1;
+                if (quantity <= 0) {
+                    alert('Cantidad inválida');
+                    return;
+                }
+                const product = products.find(p => 
+                    p.barcode === productId || 
+                    p.id === productId || 
+                    p.name.toLowerCase().includes(productId)
+                );
+                if (product) {
+                    if (product.stock >= quantity) {
+                        addToCartWithQuantity(product.id, quantity);
+                        clearInput();
+                    } else {
+                        alert(`No hay suficiente stock. Disponible: ${product.stock}`);
+                    }
+                } else {
+                    alert('Producto no encontrado');
+                }
+            } else {
+                const product = products.find(p => 
+                    p.barcode === query || 
+                    p.id === query || 
+                    p.name.toLowerCase().includes(query)
+                );
+                if (product) {
+                    if (product.stock > 0) {
+                        addToCart(product.id);
+                        clearInput();
+                    } else {
+                        alert('Producto sin stock');
+                    }
+                } else {
+                    alert('Producto no encontrado');
+                }
+            }
+        }
+
+        function addToCart(productId) {
+            if (requireLogin()) {
+                addToCartWithQuantity(productId, 1);
+            }
+        }
+
+        function addToCartWithQuantity(productId, quantity) {
+            const product = products.find(p => p.id === productId);
+            if (!product) {
+                console.error(`Producto con ID ${productId} no encontrado`);
+                return;
+            }
+            if (product.stock < quantity) {
+                alert(`No hay suficiente stock. Disponible: ${product.stock}`);
+                return;
+            }
+            const existingItem = cart.find(item => item.id === productId);
+            if (existingItem) {
+                const newQuantity = existingItem.quantity + quantity;
+                if (newQuantity <= product.stock) {
+                    existingItem.quantity = newQuantity;
+                } else {
+                    alert(`No hay suficiente stock. Disponible: ${product.stock}`);
+                    return;
+                }
+            } else {
+                cart.push({ ...product, quantity });
+            }
+            updateCartDisplay();
+            updateTotal();
+        }
+
+        function reduceQuantity(productId) {
+            if (requireLogin()) {
+                const item = cart.find(item => item.id === productId);
+                if (item) {
+                    item.quantity--;
+                    if (item.quantity <= 0) {
+                        cart = cart.filter(i => i.id !== productId);
+                    }
+                    updateCartDisplay();
+                    updateTotal();
+                }
+            }
+        }
+
+        function removeFromCart(productId) {
+            if (requireLogin()) {
+                cart = cart.filter(item => item.id !== productId);
+                updateCartDisplay();
+                updateTotal();
+            }
+        }
+
+        function updateCartDisplay() {
+            const cartList = document.getElementById('cartList');
+            if (!cartList) {
+                console.error('El elemento cartList no existe en el DOM');
+                return;
+            }
+
+            cartList.innerHTML = ''; // Limpiamos y reconstruimos la lista
+            if (cart.length === 0) {
+                cartList.innerHTML = '<p style="text-align: center; color: #6c757d;">Carrito vacío</p>';
+            } else {
+                cart.forEach(item => {
+                    const div = document.createElement('div');
+                    div.dataset.id = item.id;
+                    div.className = 'cart-item';
+                    div.innerHTML = `
+                        <span class="cart-item-name">${item.name}</span>
+                        <span class="cart-item-quantity">
+                            <button class="quantity-btn" data-product-id="${item.id}" data-action="reduce">-</button>
+                            ${item.quantity}
+                            <button class="quantity-btn" data-product-id="${item.id}" data-action="add">+</button>
+                        </span>
+                        <span class="cart-item-price">$${(item.price * item.quantity).toFixed(2)}</span>
+                        <span class="cart-item-remove">
+                            <button class="remove-btn" data-product-id="${item.id}" data-action="remove">X</button>
+                        </span>
+                    `;
+                    cartList.appendChild(div);
+                });
+            }
+            setupCartListeners();
+        }
+
+        function updateTotal() {
+            let subtotal = 0;
+            cart.forEach(item => {
+                subtotal += (item.price || 0) * (item.quantity || 0);
+            });
+            const tax = subtotal * TAX_RATE;
+            const total = subtotal + tax;
+            document.getElementById('total').textContent = total.toFixed(2);
+            document.getElementById('modalTotal').textContent = total.toFixed(2);
+            return total;
+        }
+
+        function showCheckoutModal() {
+            if (requireLogin()) {
+                if (!Array.isArray(cart) || cart.length === 0) {
+                    alert('El carrito está vacío');
+                    return;
+                }
+                document.getElementById('checkoutModal').style.display = 'block';
+                document.getElementById('amountReceivedMXN').value = '';
+                document.getElementById('amountReceivedUSD').value = '';
+                document.getElementById('usdSection').style.display = 'none';
+                document.getElementById('changeDisplay').textContent = 'Cambio: $0.00 MXN';
+                document.getElementById('remainingDisplay').textContent = `Falta por pagar: $${updateTotal().toFixed(2)} MXN`;
+                activeInput = 'amountReceivedMXN'; // Por defecto MXN
+                clearPaymentNumpadListeners();
+                setupPaymentNumpadListeners();
+                setupPaymentMethodButtons();
+            }
+        }
+
+        function showLoginModal() {
+            document.getElementById('loginModal').style.display = 'block';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function showShiftEndModal() {
+            if (!requireLogin()) return;
+            document.getElementById('shiftEndModal').style.display = 'block';
+            document.getElementById('shiftEndPassword').value = '';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            if (modalId === 'checkoutModal') {
+                clearPaymentNumpadListeners();
+            }
+        }
+
+        function calculateChange() {
+            const total = parseFloat(document.getElementById('modalTotal').textContent) || 0;
+            const amountReceivedMXN = parseFloat(document.getElementById('amountReceivedMXN').value) || 0;
+            const amountReceivedUSD = parseFloat(document.getElementById('amountReceivedUSD').value) || 0;
+            const amountReceivedMXNConverted = amountReceivedUSD * (exchangeRate || 20.00);
+            const totalReceivedMXN = amountReceivedMXN + amountReceivedMXNConverted;
+            let change = 0;
+            let remaining = total - totalReceivedMXN;
+
+            if (totalReceivedMXN >= total) {
+                change = totalReceivedMXN - total;
+                remaining = 0;
+            }
+
+            document.getElementById('changeDisplay').textContent = `Cambio: $${change.toFixed(2)} MXN`;
+            document.getElementById('remainingDisplay').textContent = `Falta por pagar: $${remaining.toFixed(2)} MXN`;
+            return { totalReceivedMXN, change };
+        }
+
+        function checkout(method, amountReceivedMXN, amountReceivedUSD, change) {
+            const total = parseFloat(document.getElementById('total').textContent) || 0;
+            const sale = {
+                timestamp: new Date().toISOString(),
+                method: method,
+                items: [...cart],
+                total: total,
+                amountReceivedMXN: amountReceivedMXN,
+                amountReceivedUSD: amountReceivedUSD,
+                change: change,
+                exchangeRate: exchangeRate,
+                cashier: activeCashier?.username || 'Desconocido'
+            };
+
+            cart.forEach(item => {
+                const product = products.find(p => p.id === item.id);
+                if (product) product.stock -= item.quantity;
+            });
+
+            sales.push(sale);
+            localStorage.setItem('sales', JSON.stringify(sales));
+            syncSalesOffline();
+
+            let methodText = method;
+            if (amountReceivedMXN > 0 && amountReceivedUSD > 0) {
+                methodText = 'Mixto (MXN + USD)';
+            } else if (amountReceivedUSD > 0) {
+                methodText = 'Efectivo (USD)';
+            } else if (method === 'efectivo') {
+                methodText = 'Efectivo (MXN)';
+            }
+
+            alert(`Venta procesada por ${methodText} - Total: $${total.toFixed(2)}\n` +
+                  `Cantidad Recibida: $${amountReceivedMXN.toFixed(2)} MXN + $${amountReceivedUSD.toFixed(2)} USD\n` +
+                  `Cambio: $${change.toFixed(2)} MXN`);
+            cart = []; // Vaciamos el carrito después de procesar la venta
+            updateCartDisplay();
+            updateTotal();
+            closeModal('checkoutModal');
+        }
+
+        async function syncSalesOffline() {
+            if (!navigator.onLine || !firebaseApp) return;
+            await loadFirebase();
+            const pendingSales = JSON.parse(localStorage.getItem('pendingSales')) || [];
+            const allSales = [...sales, ...pendingSales];
+            try {
+                const salesRef = ref(db, 'sales');
+                for (const sale of allSales) {
+                    await push(salesRef, sale);
+                }
+                localStorage.removeItem('pendingSales');
+                sales = [];
+                localStorage.setItem('sales', JSON.stringify(sales));
+            } catch (error) {
+                console.error('Error al sincronizar ventas:', error);
+                localStorage.setItem('pendingSales', JSON.stringify(allSales));
+            }
+        }
+
+        async function verifyShiftEndPassword() {
+            const password = document.getElementById('shiftEndPassword').value;
+            const username = activeCashier?.username;
+
+            if (!username) {
+                alert('No hay un cajero activo. Por favor, inicia sesión.');
+                closeModal('shiftEndModal');
+                return;
+            }
+
+            await loadFirebase();
+            try {
+                const usersRef = ref(db, 'users');
+                const snapshot = await get(usersRef);
+                if (snapshot.exists()) {
+                    const users = snapshot.val();
+                    const user = Object.values(users).find(u => u.username === username && u.password === password);
+                    if (user) {
+                        closeModal('shiftEndModal');
+                        await performShiftEnd();
+                    } else {
+                        alert('Contraseña incorrecta');
+                    }
+                } else {
+                    alert('No hay usuarios registrados');
+                }
+            } catch (error) {
+                console.error('Error al verificar contraseña:', error);
+                alert('Error al conectar con la base de datos');
+            }
+        }
+
+        async function performShiftEnd() {
+            if (!sales || sales.length === 0) {
+                alert('No hay ventas registradas en este turno.');
+                return;
+            }
+
+            let totalCashMXN = 0, totalCashUSD = 0, totalCard = 0, totalTransfer = 0, totalSales = 0, totalSubtotal = 0;
+            let cashTransactions = 0, cardTransactions = 0, transferTransactions = 0;
+            let csvContent = 'Fecha,Hora,Método,Productos,Total,Cantidad Recibida MXN,Cantidad Recibida USD,Cambio,Cajero\n';
+            const shiftItems = [];
+
+            sales.forEach(sale => {
+                totalSales += sale.total || 0;
+                totalSubtotal += (sale.total || 0) / (1 + TAX_RATE);
+                if (sale.method === 'efectivo' || (sale.amountReceivedMXN > 0 && sale.amountReceivedUSD === 0)) {
+                    totalCashMXN += sale.total || 0;
+                    cashTransactions++;
+                } else if (sale.method === 'efectivo_usd' || (sale.amountReceivedUSD > 0 && sale.amountReceivedMXN === 0)) {
+                    totalCashUSD += sale.amountReceivedUSD || 0;
+                    cashTransactions++;
+                } else if (sale.amountReceivedMXN > 0 && sale.amountReceivedUSD > 0) {
+                    totalCashMXN += sale.amountReceivedMXN || 0;
+                    totalCashUSD += sale.amountReceivedUSD || 0;
+                    cashTransactions++;
+                } else if (sale.method === 'tarjeta') {
+                    totalCard += sale.total || 0;
+                    cardTransactions++;
+                } else if (sale.method === 'transferencia') {
+                    totalTransfer += sale.total || 0;
+                    transferTransactions++;
+                }
+
+                const date = new Date(sale.timestamp);
+                const items = sale.items.map(item => `${item.name} (${item.quantity})`).join('; ');
+                shiftItems.push({
+                    date: date.toLocaleString(),
+                    method: sale.method,
+                    items: items,
+                    total: sale.total || 0,
+                    amountReceivedMXN: sale.amountReceivedMXN || 0,
+                    amountReceivedUSD: sale.amountReceivedUSD || 0,
+                    change: sale.change || 0,
+                    cashier: sale.cashier || 'Desconocido'
+                });
+                csvContent += `${date.toLocaleDateString()},${date.toLocaleTimeString()},${sale.method},${items},${(sale.total || 0).toFixed(2)},${(sale.amountReceivedMXN || 0).toFixed(2)},${(sale.amountReceivedUSD || 0).toFixed(2)},${(sale.change || 0).toFixed(2)},${sale.cashier || 'Desconocido'}\n`;
+            });
+
+            const totalTax = totalSales - totalSubtotal;
+            const totalCashReceivedMXN = sales.reduce((sum, sale) => sum + (sale.amountReceivedMXN || 0), 0);
+            const totalCashReceivedUSD = sales.reduce((sum, sale) => sum + (sale.amountReceivedUSD || 0), 0);
+            const totalChangeMXN = sales.reduce((sum, sale) => sum + (sale.change || 0), 0);
+            const cashExpectedMXN = totalCashReceivedMXN + (totalCashReceivedUSD * (exchangeRate || 20.00)) - totalChangeMXN;
+
+            const shiftReport = {
+                shiftId: new Date().toISOString(),
+                cashier: activeCashier?.username || 'Desconocido',
+                startTime: new Date(activeCashier?.startTime || sales[0].timestamp).toLocaleString(),
+                endTime: new Date().toLocaleString(),
+                totalTransactions: sales.length,
+                cashTransactions,
+                cardTransactions,
+                transferTransactions,
+                subtotal: totalSubtotal.toFixed(2),
+                tax: totalTax.toFixed(2),
+                totalSales: totalSales.toFixed(2),
+                totalCashMXN: totalCashMXN.toFixed(2),
+                totalCashUSD: totalCashUSD.toFixed(2),
+                totalCard: totalCard.toFixed(2),
+                totalTransfer: totalTransfer.toFixed(2),
+                cashExpectedMXN: cashExpectedMXN.toFixed(2),
+                items: shiftItems
+            };
+
+            csvContent += `\nTotal Transacciones,${sales.length}\n`;
+            csvContent += `Transacciones en Efectivo,${cashTransactions}\n`;
+            csvContent += `Transacciones con Tarjeta,${cardTransactions}\n`;
+            csvContent += `Transacciones por Transferencia,${transferTransactions}\n`;
+            csvContent += `Subtotal,${totalSubtotal.toFixed(2)}\n`;
+            csvContent += `IVA (16%),${totalTax.toFixed(2)}\n`;
+            csvContent += `Total Ventas,${totalSales.toFixed(2)}\n`;
+            csvContent += `Total Efectivo MXN,${totalCashMXN.toFixed(2)}\n`;
+            csvContent += `Total Efectivo USD,${totalCashUSD.toFixed(2)}\n`;
+            csvContent += `Total Tarjeta,${totalCard.toFixed(2)}\n`;
+            csvContent += `Total Transferencia,${totalTransfer.toFixed(2)}\n`;
+            csvContent += `Efectivo Esperado MXN,${cashExpectedMXN.toFixed(2)}\n`;
+            csvContent += `Inicio Turno,${new Date(activeCashier?.startTime || sales[0].timestamp).toLocaleTimeString()}\n`;
+            csvContent += `Fin Turno,${new Date().toLocaleTimeString()}\n`;
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `corte_caja_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            await loadFirebase();
+            try {
+                const shiftReportsRef = ref(db, 'shiftReports');
+                await push(shiftReportsRef, shiftReport);
+                sales = [];
+                activeCashier = null;
+                localStorage.setItem('sales', JSON.stringify(sales));
+                localStorage.removeItem('activeCashier');
+                updateCashierStatus();
+                alert(`Corte de caja realizado.\nCantidad esperada en caja: $${cashExpectedMXN.toFixed(2)} MXN`);
+            } catch (error) {
+                console.error('Error al enviar reporte:', error);
+                localStorage.setItem('pendingShiftReport', JSON.stringify(shiftReport));
+                alert('Reporte guardado localmente debido a un error. Se sincronizará cuando haya conexión.');
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !password) {
+                alert('Por favor, complete todos los campos');
+                return;
+            }
+
+            await loadFirebase();
+            try {
+                const usersRef = ref(db, 'users');
+                const snapshot = await get(usersRef);
+                if (snapshot.exists()) {
+                    const users = snapshot.val();
+                    const user = Object.values(users).find(u => u.username === username && u.password === password);
+                    if (user) {
+                        activeCashier = { username: username, startTime: new Date().toISOString() };
+                        localStorage.setItem('activeCashier', JSON.stringify(activeCashier));
+                        updateCashierStatus();
+                        closeModal('loginModal');
+                        alert(`Bienvenido, ${username}`);
+                    } else {
+                        alert('Usuario o contraseña incorrectos');
+                    }
+                } else {
+                    alert('No hay usuarios registrados');
+                }
+            } catch (error) {
+                console.error('Error al verificar usuario:', error);
+                alert('Error al conectar con la base de datos');
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('productSearch').addEventListener('keyup', searchProduct);
+            document.getElementById('checkoutBtn').addEventListener('click', showCheckoutModal);
+            document.getElementById('shiftEndBtn').addEventListener('click', showShiftEndModal);
+            document.getElementById('menuBtn').addEventListener('click', showLoginModal);
+            document.getElementById('exchangeRate').addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                exchangeRate = isNaN(value) || value < 0 ? 20.00 : value;
+                localStorage.setItem('exchangeRate', exchangeRate);
+                e.target.value = exchangeRate.toFixed(2);
+            });
+
+            document.getElementById('confirmPaymentBtn').addEventListener('click', () => {
+                const method = document.querySelector('.payment-btn.selected')?.getAttribute('data-method') || 'efectivo';
+                const amountReceivedMXN = parseFloat(document.getElementById('amountReceivedMXN').value) || 0;
+                const amountReceivedUSD = parseFloat(document.getElementById('amountReceivedUSD').value) || 0;
+                const total = updateTotal();
+                const { totalReceivedMXN, change } = calculateChange();
+
+                if (totalReceivedMXN < total && (method === 'efectivo' || method === 'efectivo_usd' || (amountReceivedMXN > 0 || amountReceivedUSD > 0))) {
+                    alert('La cantidad recibida es menor al total.');
+                    return;
+                }
+
+                checkout(method, amountReceivedMXN, amountReceivedUSD, change);
+            });
+            document.getElementById('cancelBtn').addEventListener('click', () => closeModal('checkoutModal'));
+
+            document.getElementById('loginBtn').addEventListener('click', login);
+            document.getElementById('cancelLoginBtn').addEventListener('click', () => closeModal('loginModal'));
+
+            document.getElementById('confirmShiftEndBtn').addEventListener('click', verifyShiftEndPassword);
+            document.getElementById('cancelShiftEndBtn').addEventListener('click', () => closeModal('shiftEndModal'));
+        }
+
+        function setupNumpadListeners() {
+            const numpadButtons = document.querySelectorAll('#numpad .numpad-btn');
+            numpadButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const value = button.getAttribute('data-value');
+                    const action = button.getAttribute('data-action');
+                    
+                    if (value) {
+                        appendNumber(value);
+                    } else if (action === 'clear') {
+                        clearInput();
+                    } else if (action === 'submit') {
+                        submitNumber();
+                    }
+                });
+            });
+        }
+
+        function clearPaymentNumpadListeners() {
+            const numpadButtons = document.querySelectorAll('#paymentNumpad .numpad-btn');
+            numpadButtons.forEach(button => {
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+            });
+        }
+
+        function setupPaymentMethodButtons() {
+            const paymentButtons = document.querySelectorAll('.payment-btn');
+            const usdSection = document.getElementById('usdSection');
+            paymentButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    paymentButtons.forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                    const method = button.getAttribute('data-method');
+                    if (method === 'efectivo_usd') {
+                        usdSection.style.display = 'block';
+                        activeInput = 'amountReceivedUSD'; // Cambiar foco a USD
+                        document.getElementById('amountReceivedUSD').focus();
+                    } else {
+                        usdSection.style.display = 'none';
+                        activeInput = 'amountReceivedMXN'; // Volver a MXN
+                        document.getElementById('amountReceivedMXN').focus();
+                    }
+                    calculateChange();
+                });
+            });
+            // Seleccionar "Efectivo MXN" por defecto
+            paymentButtons[0].classList.add('selected');
+        }
+
+        function setupPaymentNumpadListeners() {
+            const numpadButtons = document.querySelectorAll('#paymentNumpad .numpad-btn');
+            const inputMXN = document.getElementById('amountReceivedMXN');
+            const inputUSD = document.getElementById('amountReceivedUSD');
+
+            inputMXN.addEventListener('focus', () => activeInput = 'amountReceivedMXN');
+            inputUSD.addEventListener('focus', () => activeInput = 'amountReceivedUSD');
+
+            numpadButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const value = button.getAttribute('data-value');
+                    const action = button.getAttribute('data-action');
+                    const input = document.getElementById(activeInput);
+                    
+                    if (value) {
+                        input.value += value;
+                        calculateChange();
+                    } else if (action === 'clear') {
+                        input.value = '';
+                        calculateChange();
+                    } else if (action === 'submit') {
+                        const method = document.querySelector('.payment-btn.selected')?.getAttribute('data-method') || 'efectivo';
+                        const amountReceivedMXN = parseFloat(inputMXN.value) || 0;
+                        const amountReceivedUSD = parseFloat(inputUSD.value) || 0;
+                        const total = updateTotal();
+                        const { totalReceivedMXN, change } = calculateChange();
+
+                        if (totalReceivedMXN < total && (method === 'efectivo' || method === 'efectivo_usd' || (amountReceivedMXN > 0 || amountReceivedUSD > 0))) {
+                            alert('La cantidad recibida es menor al total.');
+                            return;
+                        }
+
+                        checkout(method, amountReceivedMXN, amountReceivedUSD, change);
+                    }
+                });
+            });
+        }
+
+        function setupCartListeners() {
+            const quantityButtons = document.querySelectorAll('.quantity-btn');
+            const removeButtons = document.querySelectorAll('.remove-btn');
+            
+            quantityButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const productId = button.getAttribute('data-product-id');
+                    const action = button.getAttribute('data-action');
+                    if (action === 'add') {
+                        addToCart(productId);
+                    } else if (action === 'reduce') {
+                        reduceQuantity(productId);
+                    }
+                });
+            });
+
+            removeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const productId = button.getAttribute('data-product-id');
+                    removeFromCart(productId);
+                });
+            });
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>

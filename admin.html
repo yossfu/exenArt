@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Cajeros</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #e9ecef;
+            padding: 1.25rem;
+        }
+        .container {
+            max-width: 37.5rem;
+            margin: 0 auto;
+            background: #fff;
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.125rem 0.625rem rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+        .form-group {
+            margin-bottom: 0.9375rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.3125rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            font-size: 1rem;
+        }
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 1rem;
+            background: #007bff;
+            color: white;
+            touch-action: manipulation;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .user-list {
+            margin-top: 1.25rem;
+        }
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.625rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 0.625rem;
+            }
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Administración de Cajeros</h1>
+        <div class="form-group">
+            <label for="username">Usuario:</label>
+            <input type="text" id="username" placeholder="Ingrese usuario">
+        </div>
+        <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" placeholder="Ingrese contraseña">
+        </div>
+        <button class="btn" id="addUserBtn">Agregar Cajero</button>
+        <div class="user-list" id="userList"></div>
+    </div>
+
+    <script type="module">
+        let firebaseApp, db, ref, push, onValue, remove;
+        const firebaseConfig = {
+            apiKey: "AIzaSyCU9meIionjsLxtKH-q_k64dHsmRgHPKrk",
+            authDomain: "posventa-9168b.firebaseapp.com",
+            projectId: "posventa-9168b",
+            storageBucket: "posventa-9168b.firebasestorage.app",
+            messagingSenderId: "602077008054",
+            appId: "1:602077008054:web:ca857c7566a9ce0945d617",
+            measurementId: "G-W5L6995VDE",
+            databaseURL: "https://posventa-9168b-default-rtdb.firebaseio.com/"
+        };
+
+        async function loadFirebase() {
+            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js');
+            const { getDatabase, ref: dbRef, push: dbPush, onValue: dbOnValue, remove: dbRemove } = await import('https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js');
+            firebaseApp = initializeApp(firebaseConfig);
+            db = getDatabase(firebaseApp);
+            ref = dbRef;
+            push = dbPush;
+            onValue = dbOnValue;
+            remove = dbRemove;
+        }
+
+        async function addUser() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !password) {
+                alert('Por favor, complete todos los campos');
+                return;
+            }
+
+            await loadFirebase();
+            const usersRef = ref(db, 'users');
+            onValue(usersRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const users = snapshot.val();
+                    const userExists = Object.values(users).some(u => u.username === username);
+                    if (userExists) {
+                        alert('El usuario ya existe');
+                        return;
+                    }
+                }
+
+                push(usersRef, { username, password })
+                    .then(() => {
+                        alert('Cajero agregado exitosamente');
+                        document.getElementById('username').value = '';
+                        document.getElementById('password').value = '';
+                    })
+                    .catch(error => {
+                        console.error('Error al agregar cajero:', error);
+                        alert('Error al agregar cajero: ' + error.message);
+                    });
+            }, { onlyOnce: true });
+        }
+
+        async function displayUsers() {
+            await loadFirebase();
+            const userList = document.getElementById('userList');
+            const usersRef = ref(db, 'users');
+            onValue(usersRef, (snapshot) => {
+                userList.innerHTML = '';
+                if (snapshot.exists()) {
+                    const users = snapshot.val();
+                    Object.entries(users).forEach(([key, user]) => {
+                        const div = document.createElement('div');
+                        div.className = 'user-item';
+                        div.innerHTML = `
+                            <span>${user.username}</span>
+                            <button class="btn btn-danger" data-key="${key}">Eliminar</button>
+                        `;
+                        userList.appendChild(div);
+                    });
+                    setupDeleteListeners();
+                } else {
+                    userList.innerHTML = '<p>No hay cajeros registrados</p>';
+                }
+            }, (error) => {
+                console.error('Error al cargar usuarios:', error);
+                userList.innerHTML = '<p>Error al cargar cajeros</p>';
+            });
+        }
+
+        function setupDeleteListeners() {
+            document.querySelectorAll('.btn-danger').forEach(button => {
+                button.addEventListener('click', () => {
+                    const key = button.getAttribute('data-key');
+                    deleteUser(key);
+                });
+            });
+        }
+
+        async function deleteUser(key) {
+            await loadFirebase();
+            const userRef = ref(db, `users/${key}`);
+            remove(userRef)
+                .then(() => {
+                    alert('Cajero eliminado exitosamente');
+                })
+                .catch(error => {
+                    console.error('Error al eliminar cajero:', error);
+                    alert('Error al eliminar cajero: ' + error.message);
+                });
+        }
+
+        document.getElementById('addUserBtn').addEventListener('click', addUser);
+        displayUsers();
+    </script>
+</body>
+</html>
