@@ -22,6 +22,7 @@
         let username = localStorage.getItem('username');
         let currentUserData = {};
         let currentViewer = null;
+        let lastView = 'galleryView'; 
 
         const INTEREST_LIMIT = 10;
 
@@ -58,7 +59,7 @@
                 await loadUserData();
                 await renderPersonalizedGallery(true);
                 setupAllEventListeners();
-                navigateTo('galleryView'); // Asegurarse de empezar en la galería
+                navigateTo('galleryView');
             } catch (error) {
                 console.error("Error inicializando la app:", error);
             } finally {
@@ -80,7 +81,6 @@
             currentUserData.profile.avatar = currentUserData.profile.avatar || defaultAvatar;
             currentUserData.profile.interests = currentUserData.profile.interests || [];
             
-            // Actualizar avatares en la UI
             document.getElementById('navProfileAvatar').src = currentUserData.profile.avatar;
             document.getElementById('commentFormAvatar').src = currentUserData.profile.avatar;
         }
@@ -89,37 +89,51 @@
             const response = await fetch('imagenes.json');
             if (!response.ok) throw new Error('Error al cargar imágenes');
             allImages = await response.json();
-            allImages.forEach(img => img.tags.forEach(tag => allTags.add(tag)));
+            allImages.forEach(img => {
+                img.tags.forEach(tag => allTags.add(tag));
+                // Asegurar que hay un autor, aunque sea de sistema.
+                // Esto es crucial para evitar errores si el JSON no tiene 'authorDeviceId'.
+                img.authorDeviceId = img.authorDeviceId || 'system_user_placeholder'; 
+            });
         }
 
         // --- NAVEGACIÓN ---
-        function navigateTo(viewId) {
+        function navigateTo(viewId, data = null) {
+            const currentActiveView = document.querySelector('.view:not(.hidden)');
+            if (currentActiveView && !['detailView', 'userProfileView'].includes(currentActiveView.id)) {
+                lastView = currentActiveView.id;
+            }
+            
             document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
             const targetView = document.getElementById(viewId);
             if(targetView) {
                 targetView.classList.remove('hidden');
             }
 
+            // Actualizar estado visual de la barra de navegación
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                const isActive = btn.dataset.view === viewId;
-                btn.classList.toggle('text-indigo-400', isActive);
-                btn.classList.toggle('text-gray-400', !isActive);
+                const isForCurrentView = btn.dataset.view === viewId;
+                btn.classList.toggle('text-indigo-400', isForCurrentView);
+                btn.classList.toggle('text-gray-400', !isForCurrentView);
             });
-            document.getElementById('navProfileAvatar').parentElement.classList.toggle('text-indigo-400', viewId === 'profileView');
-            document.getElementById('navProfileAvatar').parentElement.classList.toggle('text-gray-400', viewId !== 'profileView');
-            document.getElementById('navProfileAvatar').classList.toggle('border-indigo-500', viewId === 'profileView');
-            document.getElementById('navProfileAvatar').classList.toggle('border-transparent', viewId !== 'profileView');
+            const navProfileBtn = document.getElementById('navProfileAvatar').parentElement;
+            const isProfileActive = viewId === 'profileView';
+            navProfileBtn.classList.toggle('text-indigo-400', isProfileActive);
+            navProfileBtn.classList.toggle('text-gray-400', !isProfileActive);
+            document.getElementById('navProfileAvatar').classList.toggle('border-indigo-500', isProfileActive);
+            document.getElementById('navProfileAvatar').classList.toggle('border-transparent', !isProfileActive);
 
+            // Cargar contenido específico de la vista
             if (viewId === 'popularView') renderPopularGallery();
             if (viewId === 'profileView') populateProfileView();
-
-             // Animación de entrada para la vista de detalle
-            if (viewId === 'detailView') {
-                requestAnimationFrame(() => {
-                    document.getElementById('detailView').classList.add('active');
-                });
+            if (viewId === 'userProfileView' && data) showUserProfile(data);
+            
+            // Animar vistas que se deslizan
+            if (['detailView', 'userProfileView'].includes(viewId)) {
+                requestAnimationFrame(() => targetView.classList.add('active'));
             } else {
                 document.getElementById('detailView').classList.remove('active');
+                document.getElementById('userProfileView').classList.remove('active');
             }
         }
 
@@ -128,9 +142,9 @@
              container.innerHTML = '';
              imagesToRender.forEach(img => {
                 const postCard = document.createElement('div');
-                postCard.className = 'bg-gray-800 rounded-lg overflow-hidden cursor-pointer group relative aspect-w-1 aspect-h-1';
+                postCard.className = 'bg-gray-800 rounded-lg overflow-hidden cursor-pointer group portrait-aspect';
                 postCard.innerHTML = `
-                    <img src="${img.url}" alt="${img.title}" loading="lazy" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+                    <img src="${img.url}" alt="${img.title}" loading="lazy" class="transition-transform duration-300 group-hover:scale-105">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                     <h3 class="absolute bottom-0 left-0 p-2 text-white font-semibold text-sm truncate">${img.title}</h3>
                 `;
@@ -147,12 +161,12 @@
             }
             const userInterests = new Set(currentUserData.profile.interests);
             const sortedImages = [...allImages].sort((a, b) => {
-                const scoreA = a.tags.reduce((s, tag) => s + (userInterests.has(tag) ? 1 : 0), 0);
-                const scoreB = b.tags.reduce((s, tag) => s + (userInterests.has(tag) ? 1 : 0), 0);
+                const scoreA = a.tags.reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + (Math.random() * 0.1); // Puntuación alta por interés + aleatoriedad
+                const scoreB = b.tags.reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + (Math.random() * 0.1);
                 return scoreB - scoreA;
             });
             const nextImages = sortedImages.slice(loadedImagesCount, loadedImagesCount + itemsPerLoad);
-            renderImageGrid(galleryContainer, nextImages);
+            renderImageGrid(galleryContainer, galleryContainer.innerHTML === '' ? nextImages : [...document.querySelectorAll('#gallery .portrait-aspect'), ...nextImages]);
             loadedImagesCount += nextImages.length;
         }
 
@@ -167,23 +181,25 @@
             renderImageGrid(container, popularImages.slice(0, 21));
         }
 
-        // --- VISTA DE DETALLE ---
+        // --- VISTAS ESPECÍFICAS (Detalle, Perfiles) ---
         async function showDetailView(imageId) {
             const img = allImages.find(i => i.id === Number(imageId));
             if (!img) return;
 
             if (currentViewer) currentViewer.destroy();
             
-            // Populate data
             document.getElementById('imageViewer').innerHTML = `<img src="${img.url}" alt="${img.title}">`;
             document.getElementById('detailTitle').textContent = img.title;
             document.getElementById('detailDescription').textContent = img.description;
             
-            // TODO: Fetch author data if available
-            document.getElementById('detailAuthorUsername').textContent = img.uploadedBy || 'Anónimo';
-            document.getElementById('detailAuthorAvatar').src = `https://api.dicebear.com/8.x/initials/svg?seed=${img.uploadedBy || 'Anónimo'}`;
+            const authorRef = db.ref(`users/${img.authorDeviceId}`);
+            const authorSnap = await authorRef.once('value');
+            const authorData = authorSnap.val() || { username: 'Anónimo', profile: { avatar: `https://api.dicebear.com/8.x/initials/svg?seed=Anónimo` }};
+            document.getElementById('detailAuthorUsername').textContent = authorData.username;
+            document.getElementById('detailAuthorAvatar').src = authorData.profile ? authorData.profile.avatar : `https://api.dicebear.com/8.x/initials/svg?seed=Anónimo`;
+            const authorInfoBtn = document.getElementById('detailAuthorInfo');
+            authorInfoBtn.onclick = () => navigateTo('userProfileView', { userId: img.authorDeviceId });
             
-            // Set up interactions
             document.getElementById('detailLikeBtn').dataset.id = imageId;
             document.getElementById('commentForm').dataset.imageId = imageId;
             
@@ -195,6 +211,40 @@
             currentViewer = new Viewer(document.getElementById('imageViewer'), { navbar: false, toolbar: false, button: true, title: false });
         }
 
+        async function showUserProfile({ userId }) {
+            const userRef = db.ref(`users/${userId}`);
+            const snapshot = await userRef.once('value');
+            const userData = snapshot.val();
+
+            if (!userData) {
+                alert('Usuario no encontrado');
+                navigateTo(lastView);
+                return;
+            }
+            
+            const profile = userData.profile || {};
+            const avatar = profile.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${userData.username}`;
+
+            document.getElementById('userProfileHeaderUsername').textContent = `Perfil de ${userData.username}`;
+            document.getElementById('userProfileAvatar').src = avatar;
+            document.getElementById('userProfileUsername').textContent = userData.username;
+            document.getElementById('userProfileBio').textContent = profile.bio || 'Este usuario aún no ha escrito una biografía.';
+            
+            const interestsContainer = document.getElementById('userProfileInterests');
+            interestsContainer.innerHTML = '';
+            if (profile.interests && profile.interests.length > 0) {
+                 profile.interests.forEach(tag => {
+                    const tagEl = document.createElement('span');
+                    tagEl.className = 'px-3 py-1 text-sm rounded-full bg-indigo-600 text-white';
+                    tagEl.textContent = tag;
+                    interestsContainer.appendChild(tagEl);
+                 });
+            } else {
+                interestsContainer.innerHTML = `<p class="text-sm text-gray-500">Sin intereses seleccionados.</p>`;
+            }
+        }
+
+        // --- FUNCIONES DE CARGA ASÍNCRONA (Likes, Comentarios) ---
         async function loadLikesAndViews(id) {
             const likeBtn = document.getElementById('detailLikeBtn');
             const likeCountEl = document.getElementById('detailLikeCount');
@@ -208,7 +258,7 @@
                 viewCountEl.textContent = `${Object.keys(snap.val() || {}).length} Vistas`;
             });
         }
-
+        
         async function loadComments(imageId) {
             const commentsList = document.getElementById('commentsList');
             db.ref(`comments/${imageId}`).orderByChild('timestamp').on('value', snapshot => {
@@ -218,16 +268,24 @@
                         const comment = childSnapshot.val();
                         const li = document.createElement('li');
                         li.className = "flex space-x-3";
+                        const commentAuthorAvatar = comment.userAvatar || `https://api.dicebear.com/8.x/initials/svg?seed=${comment.username}`;
                         li.innerHTML = `
-                            <img src="https://api.dicebear.com/8.x/initials/svg?seed=${comment.username}" class="w-8 h-8 rounded-full flex-shrink-0">
+                            <img src="${commentAuthorAvatar}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover cursor-pointer" data-userid="${comment.deviceId}">
                             <div class="flex-1">
                                 <div class="bg-gray-800 rounded-lg p-2">
-                                    <span class="font-bold text-sm text-white">${comment.username}</span>
+                                    <span class="font-bold text-sm text-white cursor-pointer hover:underline" data-userid="${comment.deviceId}">${comment.username}</span>
                                     <p class="text-gray-300">${comment.text}</p>
                                 </div>
                             </div>
                         `;
-                        commentsList.prepend(li); // Prepend for newest first
+                        commentsList.prepend(li);
+                    });
+                     
+                    commentsList.querySelectorAll('[data-userid]').forEach(el => {
+                        el.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            navigateTo('userProfileView', { userId: el.dataset.userid });
+                        });
                     });
                 } else {
                     commentsList.innerHTML = `<p class="text-gray-500 text-center text-sm">Sé el primero en comentar.</p>`;
@@ -235,7 +293,7 @@
             });
         }
         
-        // --- PERFIL ---
+        // --- LÓGICA DE TU PROPIO PERFIL ---
         function populateProfileView() {
             document.getElementById('profileAvatar').src = currentUserData.profile.avatar;
             document.getElementById('profileUsername').textContent = currentUserData.username;
@@ -249,17 +307,13 @@
                 const tagEl = document.createElement('button');
                 tagEl.textContent = tag;
                 tagEl.dataset.tag = tag;
-                tagEl.className = `px-3 py-1 text-sm rounded-full cursor-pointer transition-colors`;
-                tagEl.classList.toggle('bg-indigo-600', userInterests.has(tag));
-                tagEl.classList.toggle('text-white', userInterests.has(tag));
-                tagEl.classList.toggle('bg-gray-700', !userInterests.has(tag));
-                tagEl.classList.toggle('text-gray-300', !userInterests.has(tag));
+                const isSelected = userInterests.has(tag);
+                tagEl.className = `px-3 py-1 text-sm rounded-full cursor-pointer transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300'}`;
                 
                 tagEl.addEventListener('click', () => {
                     const selectedCount = interestsContainer.querySelectorAll('.bg-indigo-600').length;
                     const isCurrentlySelected = tagEl.classList.contains('bg-indigo-600');
                     if (!isCurrentlySelected && selectedCount >= INTEREST_LIMIT) {
-                        // Optionally show a message
                         return; 
                     }
                     tagEl.classList.toggle('bg-indigo-600');
@@ -282,13 +336,12 @@
 
         // --- MANEJO DE EVENTOS ---
         function setupAllEventListeners() {
-            // Navegación
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', () => navigateTo(btn.dataset.view));
+                if(btn.dataset.view) btn.addEventListener('click', () => navigateTo(btn.dataset.view));
             });
-            document.getElementById('detailBackBtn').addEventListener('click', () => navigateTo('galleryView'));
+            document.getElementById('detailBackBtn').addEventListener('click', () => navigateTo(lastView || 'galleryView'));
+            document.getElementById('userProfileBackBtn').addEventListener('click', () => navigateTo(lastView || 'galleryView'));
 
-            // Scroll infinito
             const observer = new IntersectionObserver((entries) => {
                 if (entries[0].isIntersecting && loadedImagesCount < allImages.length) {
                     renderPersonalizedGallery(false);
@@ -296,7 +349,6 @@
             }, { rootMargin: '300px' });
             observer.observe(document.getElementById('sentinel'));
 
-            // Acciones de Perfil
             document.getElementById('saveProfileBtn').addEventListener('click', async () => {
                 const bio = document.getElementById('profileBio').value;
                 const interests = Array.from(document.querySelectorAll('#profileInterests .bg-indigo-600')).map(el => el.dataset.tag);
@@ -323,7 +375,7 @@
                     const avatarUrl = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${seed}`;
                     const img = document.createElement('img');
                     img.src = avatarUrl;
-                    img.className = 'w-16 h-16 rounded-full cursor-pointer hover:ring-2 ring-indigo-500';
+                    img.className = 'w-16 h-16 rounded-full cursor-pointer hover:ring-2 ring-indigo-500 object-cover';
                     img.onclick = async () => {
                         currentUserData.profile.avatar = avatarUrl;
                         document.getElementById('profileAvatar').src = avatarUrl;
@@ -337,7 +389,6 @@
             });
             document.getElementById('closeAvatarModal').addEventListener('click', () => document.getElementById('avatarModal').classList.add('hidden'));
 
-            // Interacciones de detalle
             document.getElementById('detailLikeBtn').addEventListener('click', function() {
                 const id = this.dataset.id;
                 const ref = db.ref(`likes/${id}/${deviceId}`);
@@ -353,14 +404,14 @@
                         text: textInput.value.trim(),
                         timestamp: firebase.database.ServerValue.TIMESTAMP,
                         username: currentUserData.username,
-                        deviceId
+                        deviceId: deviceId,
+                        userAvatar: currentUserData.profile.avatar
                     });
                     textInput.value = '';
                 }
             });
         }
 
-        // --- INICIO DE LA APP ---
         masterInit();
     });
 })();
