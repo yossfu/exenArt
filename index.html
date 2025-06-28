@@ -4,67 +4,175 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exene</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <button id="homeBtn" class="icon-btn"><i class="fas fa-home"></i></button>
-        <img src="logo.png" alt="Exene" class="logo">
-        <div class="header-actions">
-            <button id="searchToggle" class="icon-btn"><i class="fas fa-search"></i></button>
-            <button id="notificationsToggle" class="icon-btn">
-                <i class="fas fa-bell"></i>
-                <span id="notificationsBadge" class="notification-badge" style="display: none;">0</span>
-            </button>
-        </div>
-    </header>
+<body class="bg-gray-900 text-gray-200 font-sans antialiased">
 
-    <!-- Buscador -->
-    <div id="searchBar" class="search-bar" style="display: none;">
-        <input type="text" id="searchInput" placeholder="Buscar...">
-        <button id="searchBtn"><i class="fas fa-search"></i></button>
+    <!-- MODAL DE AUTENTICACIÓN -->
+    <div id="authOverlay" class="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center hidden">
+        <div id="authContainer" class="bg-gray-800 p-6 rounded-lg shadow-xl w-11/12 max-w-sm">
+            <h2 class="text-xl font-bold mb-4 text-center text-white">Crea tu usuario</h2>
+            <form id="usernameForm">
+                <input type="text" id="username" placeholder="Elige un nombre de usuario" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Entrar</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- MODAL PARA ELEGIR AVATAR -->
+    <div id="avatarModal" class="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-11/12 max-w-md">
+            <h3 class="text-lg font-bold text-white mb-4">Elige tu Avatar</h3>
+            <div id="avatarSelection" class="grid grid-cols-4 gap-4"></div>
+             <button id="closeAvatarModal" class="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Cerrar</button>
+        </div>
     </div>
 
-    <!-- Contenido Principal -->
-    <main class="main-content">
-        <div class="gallery" id="gallery"></div>
-        <div id="sentinel" style="height: 1px;"></div>
+    <!-- VISTA PRINCIPAL (Galería Personalizada) -->
+    <main id="galleryView" class="view pb-20">
+        <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+            <img src="logo.png" alt="Exene" class="h-8">
+            <h2 class="text-lg font-bold text-white">Para ti</h2>
+        </header>
+        <div id="gallery" class="p-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div>
+        <div id="sentinel" class="h-1"></div>
+        <div id="galleryLoader" class="text-center p-8 hidden">
+             <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
+        </div>
+    </main>
+    
+    <!-- VISTA POPULARES -->
+    <main id="popularView" class="view pb-20 hidden">
+        <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+            <h2 class="text-lg font-bold text-white">Populares 🔥</h2>
+        </header>
+        <div id="popularGallery" class="p-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div>
     </main>
 
-    <!-- Modal de Autenticación -->
-    <div id="overlay" class="overlay" style="display: none;"></div>
-    <div id="authContainer" class="modal" style="display: none;">
-        <h2>Ingresa tu usuario</h2>
-        <form id="usernameForm">
-            <input type="text" id="username" placeholder="Usuario" required>
-            <button type="submit" class="btn">Guardar</button>
+    <!-- VISTA DE PERFIL -->
+    <main id="profileView" class="view pb-20 hidden">
+         <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+            <h2 class="text-lg font-bold text-white">Mi Perfil</h2>
+        </header>
+        <div class="p-4 space-y-6">
+            <div class="flex flex-col items-center space-y-4">
+                <div class="relative">
+                    <img id="profileAvatar" src="" alt="Avatar" class="w-24 h-24 rounded-full border-2 border-indigo-500">
+                    <button id="changeAvatarBtn" class="absolute bottom-0 right-0 bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded-full flex items-center justify-center">
+                        <i class="fas fa-pen text-xs"></i>
+                    </button>
+                </div>
+                <h3 id="profileUsername" class="text-2xl font-bold text-white"></h3>
+            </div>
+            <div>
+                <label for="profileBio" class="block text-sm font-medium text-gray-400 mb-1">Tu biografía</label>
+                <textarea id="profileBio" rows="3" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Describe algo sobre ti..."></textarea>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="text-sm font-medium text-gray-400">Tus intereses</h4>
+                    <p id="interestCounter" class="text-sm text-gray-500">0/10</p>
+                </div>
+                <div class="relative mb-2">
+                    <input id="interestSearchInput" type="search" placeholder="Buscar intereses..." class="w-full bg-gray-800 text-white rounded-full pl-10 pr-4 py-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                </div>
+                <div id="profileInterests" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto"></div>
+            </div>
+            <button id="saveProfileBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-md transition-colors">
+                Guardar Cambios
+            </button>
+        </div>
+    </main>
+
+    <!-- VISTA DE DETALLE DE IMAGEN -->
+    <div id="detailView" class="view hidden fixed inset-0 bg-gray-900 z-20 overflow-y-auto transform translate-y-full transition-transform duration-300 ease-in-out">
+        <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+            <button id="detailBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors"><i class="fas fa-arrow-left"></i></button>
+            <div id="detailAuthorInfo" class="flex items-center gap-2">
+                 <img id="detailAuthorAvatar" src="" class="w-8 h-8 rounded-full">
+                 <h3 class="font-bold text-lg text-white" id="detailAuthorUsername"></h3>
+            </div>
+            <button class="text-xl text-gray-400 hover:text-white transition-colors"><i class="fas fa-ellipsis-h"></i></button>
+        </header>
+        <div class="pb-20">
+            <div id="imageViewer" class="bg-black"></div>
+            <div class="p-4">
+                <div class="flex items-center space-x-4 text-xl text-gray-400">
+                    <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group">
+                        <i class="far fa-heart group-hover:text-pink-500 transition-colors"></i>
+                    </button>
+                    <button class="comment-btn flex items-center space-x-2 group">
+                        <i class="far fa-comment group-hover:text-indigo-400 transition-colors"></i>
+                    </button>
+                </div>
+                <div class="mt-3">
+                    <span id="detailLikeCount" class="font-semibold text-white cursor-pointer">0 Me gusta</span>
+                     <span class="text-gray-500 mx-1">•</span>
+                    <span id="detailViewCount" class="text-sm text-gray-500">0 Vistas</span>
+                </div>
+                <h1 id="detailTitle" class="text-white font-bold text-lg mt-2"></h1>
+                <p id="detailDescription" class="text-gray-300 mt-1"></p>
+            </div>
+            <section class="px-4">
+                 <h2 class="font-bold text-white mb-2">Comentarios</h2>
+                 <ul id="commentsList" class="space-y-4"></ul>
+            </section>
+        </div>
+        <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2 fixed bottom-0 left-0 right-0 border-t border-gray-700">
+            <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full">
+            <input type="text" id="commentText" placeholder="Escribe un comentario..." class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <button type="submit" class="btn-comment text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
         </form>
     </div>
 
-    <!-- Modal de Resultados de Búsqueda -->
-    <div id="searchResultsWindow" class="modal" style="display: none;">
-        <div class="modal-header">
-            <h3>Resultados</h3>
-            <button id="searchResultsCloseBtn" class="btn-close"><i class="fas fa-times"></i></button>
+    <!-- VISTA DE BÚSQUEDA -->
+    <div id="searchView" class="view hidden p-4 pt-20 pb-20">
+        <div class="fixed top-0 left-0 right-0 p-4 bg-gray-900/80 backdrop-blur-sm z-10">
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Buscar..." class="w-full bg-gray-800 text-white border border-gray-700 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+            </div>
         </div>
-        <div id="searchResults" class="search-results"></div>
+        <div id="searchResults" class="mt-4 space-y-3"></div>
+    </div>
+    
+    <!-- MODAL DE NOTIFICACIONES -->
+    <div id="notificationsWindow" class="modal hidden fixed inset-0 bg-black bg-opacity-70 z-30 flex items-end">
+        <div class="bg-gray-800 w-full rounded-t-2xl p-4 transform translate-y-full transition-transform duration-300 ease-in-out" data-modal-content>
+            <div class="flex justify-between items-center mb-4">
+                 <h3 class="text-lg font-bold text-white">Notificaciones</h3>
+                 <button id="notificationsCloseBtn" class="text-xl text-gray-400">&times;</button>
+            </div>
+            <div id="notificationsList" class="space-y-3 max-h-60 overflow-y-auto"></div>
+        </div>
     </div>
 
-    <!-- Modal de Notificaciones -->
-    <div id="notificationsWindow" class="modal" style="display: none;">
-        <div class="modal-header">
-            <h3>Notificaciones</h3>
-            <button id="notificationsCloseBtn" class="btn-close"><i class="fas fa-times"></i></button>
-        </div>
-        <div id="notificationsList" class="notifications-list"></div>
-    </div>
+    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-10">
+        <nav class="flex justify-around items-center h-16">
+            <button data-view="galleryView" class="nav-btn text-indigo-400 text-2xl p-3"><i class="fas fa-home"></i></button>
+            <button data-view="searchView" class="nav-btn text-gray-400 hover:text-white transition-colors text-2xl p-3"><i class="fas fa-search"></i></button>
+            <button data-view="popularView" class="nav-btn text-gray-400 hover:text-white transition-colors text-2xl p-3"><i class="fas fa-fire"></i></button>
+            <button id="navNotificationsBtn" class="nav-btn relative text-gray-400 hover:text-white transition-colors text-2xl p-3">
+                <i class="fas fa-bell"></i>
+                <span id="navNotificationsBadge" class="absolute top-2 right-2 bg-red-500 w-2.5 h-2.5 rounded-full" style="display: none;"></span>
+            </button>
+            <button data-view="profileView" class="nav-btn text-gray-400 hover:text-white transition-colors text-2xl p-3">
+                 <img id="navProfileAvatar" src="" class="w-7 h-7 rounded-full border-2 border-transparent">
+            </button>
+        </nav>
+    </footer>
 
+    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
+

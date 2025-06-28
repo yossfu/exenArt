@@ -1,410 +1,56 @@
-/* styles.css */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
+/* Usamos Inter como fuente principal a través de la clase 'font-sans' de Tailwind */
 body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #f0f2f5;
-    color: #1c1e21;
-    line-height: 1.34;
+    font-family: 'Inter', sans-serif;
 }
 
-/* Header */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px;
-    background-color: #fff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1000;
+/* Clases para la navegación entre vistas */
+.view.hidden {
+    display: none;
 }
 
-.logo {
-    height: 36px;
+/* Animación para la vista de detalle */
+#detailView.active {
+    transform: translateY(0%);
 }
 
-.header-actions {
-    display: flex;
-    gap: 10px;
+/* Estilo para el botón de like activo */
+.like-btn.liked i {
+    color: #ec4899; /* color-pink-500 */
+    font-weight: 900; /* Icono relleno */
 }
 
-.icon-btn {
-    background: none;
-    border: none;
-    font-size: 20px;
-    color: #65676b;
-    padding: 8px;
-    border-radius: 50%;
-    cursor: pointer;
+/* Personalización del visor de imágenes */
+.viewer-container {
+    background-color: rgba(0, 0, 0, 0.85);
 }
-
-.icon-btn:hover {
-    background-color: #e4e6eb;
-}
-
-.notification-badge {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background-color: #e41e26;
-    color: white;
-    border-radius: 50%;
-    padding: 2px 5px;
-    font-size: 10px;
-}
-
-/* Buscador */
-.search-bar {
-    display: flex;
-    padding: 10px 15px;
-    background-color: #fff;
-    position: fixed;
-    top: 56px;
-    width: 100%;
-    z-index: 999;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.search-bar input {
-    flex: 1;
-    padding: 8px 12px;
-    border: none;
-    background-color: #e4e6eb;
-    border-radius: 20px;
-    font-size: 14px;
-}
-
-.search-bar button {
-    background: none;
-    border: none;
-    padding: 8px;
-    color: #65676b;
-    cursor: pointer;
-}
-
-/* Contenido Principal */
-.main-content {
-    padding: 66px 0 20px;
-}
-
-/* Galería en index */
-.gallery {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Forzamos exactamente 3 columnas */
-    gap: 2px;
-    max-width: 100%; /* Evita desbordamiento lateral */
-    padding: 0 15px; /* Margen lateral para centrar */
-    justify-content: center; /* Centra las columnas */
-}
-
-.gallery .post {
-    position: relative;
-    background-color: #fff;
-    width: 100%; /* Asegura que el post ocupe el ancho de la columna */
-    overflow: hidden; /* Evita desbordamiento del contenido */
-}
-
-.gallery .post-image img {
-    width: 100%; /* Ocupa todo el ancho del contenedor */
-    height: 200px; /* Altura fija para modo portrait */
-    object-fit: cover; /* Recorta la imagen para mantener proporciones */
-    display: block;
-    aspect-ratio: 3 / 4; /* Fuerza una proporción vertical (portrait) */
-}
-
-.gallery .post-info {
-    padding: 5px;
-}
-
-.gallery .post-title {
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.gallery .post-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-/* Detalle de Publicación */
-.post-detail {
-    background-color: #fff;
-    margin-bottom: 10px;
-}
-
-.post-image {
-    width: 100%;
-}
-
-.post-image img {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-}
-
-.post-info {
-    padding: 10px 15px;
-}
-
-.post-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e4e6eb;
-}
-
-.like-btn, .comment-btn {
-    background: none;
-    border: none;
-    font-size: 20px;
-    color: #65676b;
-    cursor: pointer;
-}
-
-.like-btn.liked {
-    color: #1877f2;
-}
-
-.like-count, .view-count {
-    font-size: 13px;
-    color: #65676b;
-}
-
-.post-title {
-    font-size: 16px;
-    font-weight: 500;
-    margin-top: 10px;
-}
-
-.post-description {
-    font-size: 14px;
-    color: #1c1e21;
-    margin-top: 5px;
-    word-wrap: break-word;
-}
-
-/* Comentarios (Estilo Facebook) */
-.comments-section {
-    padding: 0 15px;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.comments-list {
-    list-style: none;
-    width: 100%;
-}
-
-.comments-list li {
-    padding: 8px 0;
-    width: 100%;
-}
-
-.comment-content {
-    width: 100%;
-    word-wrap: break-word;
-}
-
-.comment-author {
-    font-weight: 600;
-    font-size: 13px;
-    color: #050505;
-    margin-right: 5px;
-}
-
-.comment-text {
-    font-size: 13px;
-    color: #1c1e21;
-    word-wrap: break-word;
-    display: block;
-    margin-top: 2px;
-}
-
-.comment-actions {
-    display: flex;
-    gap: 15px;
-    margin-top: 4px;
-    font-size: 12px;
-    color: #65676b;
-}
-
-.comment-actions .like-btn {
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.comment-actions .like-count {
-    font-size: 12px;
-}
-
-.reply-btn {
-    color: #65676b;
-    text-decoration: none;
-}
-
-.replies {
-    margin-left: 20px;
-    list-style: none;
-    width: calc(100% - 20px);
-}
-
-.replies li {
-    padding: 6px 0;
-}
-
-.reply-form {
-    display: flex;
-    gap: 10px;
-    margin-top: 8px;
-    width: 100%;
-    margin-left: 20px;
-}
-
-.reply-form input {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid #e4e6eb;
-    border-radius: 15px;
-    font-size: 13px;
-}
-
-.comment-form {
-    display: flex;
-    gap: 10px;
-    padding: 10px 0;
-    background-color: #fff;
-    position: sticky;
-    bottom: 0;
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.comment-form input {
-    flex: 1;
-    padding: 8px 12px;
-    border: none;
-    background-color: #e4e6eb;
-    border-radius: 20px;
-    font-size: 13px;
-}
-
-.btn-comment {
-    background: none;
-    border: none;
-    padding: 8px;
-    color: #65676b;
-    cursor: pointer;
-}
-
-/* Modales */
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 998;
-}
-
-.modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #fff;
-    padding: 15px;
+.viewer-canvas {
     border-radius: 8px;
-    z-index: 999;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
+}
+.viewer-close:before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f00d"; /* Icono de 'times' de Font Awesome */
+    font-size: 24px;
+    color: white;
 }
 
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e4e6eb;
+/* Animación para modales */
+.modal.active [data-modal-content] {
+    transform: translateY(0);
 }
 
-.modal-header h3 {
-    font-size: 16px;
-    font-weight: 600;
+/* Propiedades para forzar aspect ratio en la galería */
+.aspect-w-1 {
+  position: relative;
+  padding-bottom: 100%;
+}
+.aspect-h-1 > * {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }
 
-.btn-close {
-    background: none;
-    border: none;
-    font-size: 20px;
-    color: #65676b;
-    cursor: pointer;
-}
-
-.search-results .result-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border-bottom: 1px solid #e4e6eb;
-    cursor: pointer;
-}
-
-.search-results .result-item img {
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-.search-results .result-item span {
-    font-size: 14px;
-}
-
-.notifications-list .notification-item {
-    padding: 10px;
-    border-bottom: 1px solid #e4e6eb;
-    font-size: 13px;
-}
-
-/* Similares en image-detail */
-.similar-section {
-    padding: 15px;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.similar-section h2 {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 10px;
-}
-
-.similar-gallery {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-}
-
-.similar-gallery .post-image img {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-}
