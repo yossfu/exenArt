@@ -45,6 +45,9 @@
                 <input type="email" id="loginEmail" placeholder="Correo electrónico" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <input type="password" id="loginPassword" placeholder="Contraseña" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Entrar</button>
+                 <div class="text-center mt-4">
+                    <button type="button" id="showForgotPasswordModalBtn" class="text-sm text-indigo-400 hover:underline">¿Olvidaste tu contraseña?</button>
+                </div>
                 <button type="button" class="mt-2 w-full text-gray-400 hover:text-white transition-colors py-2 close-modal-btn">Cancelar</button>
             </form>
         </div>
@@ -59,6 +62,18 @@
                 <input type="password" id="registerPassword" placeholder="Crea una contraseña (mín. 6 caracteres)" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <input type="password" id="registerPasswordConfirm" placeholder="Confirmar contraseña" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Registrarse</button>
+                <button type="button" class="mt-2 w-full text-gray-400 hover:text-white transition-colors py-2 close-modal-btn">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="forgotPasswordModal" class="modal-container hidden">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4 text-center text-white">Restablecer Contraseña</h2>
+            <p class="text-gray-400 text-sm mb-4 text-center">Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.</p>
+            <form id="forgotPasswordForm">
+                <input type="email" id="forgotPasswordEmail" placeholder="Correo electrónico" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Enviar Correo</button>
                 <button type="button" class="mt-2 w-full text-gray-400 hover:text-white transition-colors py-2 close-modal-btn">Cancelar</button>
             </form>
         </div>
@@ -85,12 +100,21 @@
         <div id="createPostModal" class="modal-container hidden">
             <div class="modal-content">
                 <h2 class="text-xl font-bold mb-4 text-center text-white">Nueva Publicación</h2>
-                <form id="createPostForm">
-                    <label for="postImageUrl" class="block text-sm font-medium text-gray-400 mb-1">URL de la Imagen</label>
-                    <input type="url" id="postImageUrl" placeholder="https://..." required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <label for="postTitle" class="block text-sm font-medium text-gray-400 mb-1">Título</label>
-                    <input type="text" id="postTitle" placeholder="Un título para tu imagen" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Publicar</button>
+                <form id="createPostForm" class="space-y-4">
+                    <div>
+                        <label for="postImageUrl" class="block text-sm font-medium text-gray-400 mb-1">URL de la Imagen</label>
+                        <input type="url" id="postImageUrl" placeholder="https://..." required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <p class="text-xs text-gray-500 mt-2">Sube tus fotos en <a href="https://catbox.moe/" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:underline">catbox.moe</a> y pega la URL aquí.</p>
+                    </div>
+                    <div>
+                        <label for="postTitle" class="block text-sm font-medium text-gray-400 mb-1">Título</label>
+                        <input type="text" id="postTitle" placeholder="Un título para tu imagen" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="postTags" class="block text-sm font-medium text-gray-400 mb-1">Etiquetas (separadas por comas)</label>
+                        <input type="text" id="postTags" placeholder="ej: arte, paisaje, retrato" class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors !mt-6">Publicar</button>
                     <button type="button" class="mt-2 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors close-modal-btn">Cancelar</button>
                 </form>
             </div>
@@ -107,7 +131,7 @@
                         <span id="navNotificationsBadge" class="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900 hidden"></span>
                     </button>
                     <div id="notificationsWindow" class="notifications-panel">
-                        <div class="flex justify-between items-center mb-4 px-4 pt-4">
+                        <div class="notifications-panel-header">
                             <h3 class="text-lg font-bold text-white">Notificaciones</h3>
                         </div>
                         <div id="notificationsList" class="space-y-1 max-h-80 overflow-y-auto"></div>
@@ -205,7 +229,7 @@
                 </div>
                 <div class="w-10"></div>
             </header>
-            <main class="flex-1 overflow-y-auto pb-32">
+            <main class="flex-1 overflow-y-auto pb-20">
                 <div id="imageViewer" class="bg-black cursor-zoom-in"></div>
                 <div class="p-4 space-y-4">
                     <div><h1 id="detailTitle" class="text-white font-bold text-xl"></h1><p id="detailDescription" class="text-gray-300 mt-1 text-sm leading-relaxed"></p></div>
@@ -218,7 +242,21 @@
                         <div class="text-sm text-gray-400"><span id="detailLikeCount" class="font-semibold text-white">0 Me gusta</span><span class="text-gray-500 mx-1">•</span><span id="detailViewCount" class="">0 Vistas</span></div>
                     </div>
                 </div>
-                <section class="p-4 pt-2 border-t border-gray-800/60"><h2 class="font-bold text-white mb-4">Comentarios</h2><ul id="commentsList" class="space-y-4"></ul></section>
+                <section class="p-4 pt-2 border-t border-gray-800/60">
+                    <h2 class="font-bold text-white mb-4">Comentarios</h2>
+                    <div id="comment-container" class="my-4">
+                        <div id="replyingToBanner" class="hidden bg-gray-700 p-2 text-sm flex justify-between items-center rounded-t-md">
+                            <span class="text-gray-300">Respondiendo a <strong id="replyingToUsername" class="text-white"></strong></span>
+                            <button id="cancelReplyBtn" class="text-xs text-gray-400 hover:text-white font-bold">&times; Cancelar</button>
+                        </div>
+                        <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2">
+                            <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full object-cover">
+                            <input type="text" id="commentText" placeholder="Escribe un comentario..." class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <button type="submit" class="text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
+                        </form>
+                    </div>
+                    <ul id="commentsList" class="space-y-4"></ul>
+                </section>
                 <section id="similar-section" class="p-4 pt-6 border-t border-gray-800/60 hidden"><h2 class="font-bold text-white mb-4">Imágenes Similares</h2><div id="similar-images-grid" class="grid grid-cols-3 gap-2"></div></section>
             </main>
         </main>
@@ -233,18 +271,6 @@
             <p id="searchResultCount" class="text-sm text-gray-400 mt-4 px-2"></p>
             <div id="searchResults" class="mt-2 p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
         </main>
-        
-        <div id="comment-container" class="fixed bottom-16 left-0 right-0 z-[60] hidden">
-            <div id="replyingToBanner" class="hidden bg-gray-700 p-2 text-sm flex justify-between items-center">
-                <span class="text-gray-300">Respondiendo a <strong id="replyingToUsername" class="text-white"></strong></span>
-                <button id="cancelReplyBtn" class="text-xs text-gray-400 hover:text-white font-bold">&times; Cancelar</button>
-            </div>
-            <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2 border-t border-gray-700">
-                <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full object-cover">
-                <input type="text" id="commentText" placeholder="Escribe un comentario..." class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <button type="submit" class="text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
-            </form>
-        </div>
         
         <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg z-[100] transition-all duration-300 opacity-0 transform translate-y-4">
             <p id="toastMessage"></p>

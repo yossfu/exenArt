@@ -31,9 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const INTEREST_LIMIT = 10;
     let featuredSwiper = null;
     let appInitialized = false;
+    let activeDetailListeners = {};
 
     // --- FUNCIONES AUXILIARES ---
     const showModal = (modalId) => document.getElementById(modalId).classList.remove('hidden');
+    const hideModal = (modalId) => document.getElementById(modalId).classList.add('hidden');
     const showLoader = (loaderId, show) => document.getElementById(loaderId).classList.toggle('hidden', !show);
     const showToast = (message) => {
         const toast = document.getElementById('toast');
@@ -45,7 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const getFirebaseErrorMessage = (error) => {
         switch (error.code) {
             case 'auth/invalid-email': return 'El formato del correo es inválido.';
-            case 'auth/user-not-found': case 'auth/wrong-password': return 'Correo o contraseña incorrectos.';
+            case 'auth/user-not-found': return 'No se encontró ningún usuario con este correo.';
+            case 'auth/wrong-password': return 'Correo o contraseña incorrectos.';
             case 'auth/email-already-in-use': return 'Este correo ya está registrado.';
             case 'auth/weak-password': return 'La contraseña debe tener al menos 6 caracteres.';
             default: console.error(error); return 'Ha ocurrido un error inesperado.';
@@ -54,8 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSlideUpView = (viewId) => {
         const view = document.getElementById(viewId);
         view.classList.remove('active');
-        // Usamos un timeout para permitir que la animación de salida termine antes de cambiar de vista
-        setTimeout(() => navigateTo(lastView || 'galleryView'), 300);
+        if (viewId === 'detailView') {
+            detachDetailViewListeners();
+        }
+        setTimeout(() => triggerView(lastView || 'galleryView'), 300);
     };
     const cancelReply = () => {
         const form = document.getElementById('commentForm');
@@ -75,6 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('commentText').placeholder = `Respondiendo a ${commentElement.dataset.authorName}...`;
         document.getElementById('commentText').focus();
     };
+    const detachDetailViewListeners = () => {
+        if (activeDetailListeners.likes) activeDetailListeners.likes.ref.off('value', activeDetailListeners.likes.callback);
+        if (activeDetailListeners.views) activeDetailListeners.views.ref.off('value', activeDetailListeners.views.callback);
+        if (activeDetailListeners.comments) activeDetailListeners.comments.ref.off('value', activeDetailListeners.comments.callback);
+        activeDetailListeners = {};
+    };
 
     // --- FLUJO DE AUTENTICACIÓN ---
     setupAuthEventListeners();
@@ -92,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             appInitialized = false;
             authOverlay.classList.remove('opacity-0', 'pointer-events-none');
             appContent.classList.add('hidden');
-            document.querySelectorAll('.modal-container, .notifications-panel').forEach(m => m.classList.add('hidden', 'active'));
+            document.querySelectorAll('.modal-container, .notifications-panel').forEach(m => m.classList.remove('active'));
         }
     });
 
@@ -112,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast("Error al cargar la aplicación");
         } finally {
             showLoader('galleryLoader', false);
-            navigateTo('galleryView');
+            triggerView('galleryView');
         }
     }
 
@@ -136,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const images = await response.json();
             allImages = images.map(img => ({ ...img, isPost: false, authorUid: ADMIN_USER_DATA.uid }));
             let allTagsSet = new Set();
-            allImages.forEach(img => (img.tags || []).forEach(tag => allTagsSet.add(tag)));
+            allImages.forEach(img => (img.tags || []).forEach(tag => allTagsSet.add(tag.trim().toLowerCase())));
             window.allTags = Array.from(allTagsSet);
         } catch (error) {
             console.error("Fallo al cargar imagenes.json:", error);
@@ -154,14 +165,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         allPosts.push({ ...childSnapshot.val(), id: childSnapshot.key, isPost: true });
                     });
                 }
-                allPosts.sort((a, b) => b.timestamp - a.timestamp); // Ordenar por más nuevo
+                allPosts.sort((a, b) => b.timestamp - a.timestamp);
                 
                 if(appInitialized) {
                     renderUserPostCarousel();
-                    if(document.getElementById('feedView').offsetParent !== null) renderUserFeed(true);
-                    if(document.getElementById('profileView').offsetParent !== null) {
-                        renderUserPosts(currentUser.uid, 'userPostsGrid', 'no-posts-message');
-                    }
+                    const currentVisibleView = document.querySelector('.view:not(.hidden)');
+                    if (currentVisibleView?.id === 'feedView') renderUserFeed(true);
+                    if (currentVisibleView?.id === 'profileView') renderUserPosts(currentUser.uid, 'userPostsGrid', 'no-posts-message');
                 }
                 resolve();
             });
@@ -169,10 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- NAVEGACIÓN Y RENDERIZADO ---
-    function navigateTo(viewId, data = null) {
-        // **CORRECCIÓN CLAVE:** Actualiza `lastView` con el ID de la vista actual ANTES de cambiar.
+    function navigateTo(viewId) {
         const currentView = document.querySelector('.view:not(.hidden)');
-        if (currentView && currentView.id !== viewId) {
+        if (currentView && !currentView.classList.contains('slide-up')) {
             lastView = currentView.id;
         }
 
@@ -180,9 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetView = document.getElementById(viewId);
         if(!targetView) return;
         targetView.classList.remove('hidden');
-
-        document.getElementById('comment-container').classList.toggle('hidden', viewId !== 'detailView');
-        if(viewId !== 'detailView') cancelReply();
         
         document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
             btn.classList.toggle('text-indigo-400', btn.dataset.view === viewId);
@@ -190,19 +196,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         document.getElementById('navProfileAvatar').classList.toggle('border-indigo-500', viewId === 'profileView');
         document.getElementById('navProfileAvatar').classList.toggle('border-transparent', viewId !== 'profileView');
-        
-        if (viewId === 'feedView' && !targetView.dataset.loaded) { renderUserFeed(true); targetView.dataset.loaded = 'true'; }
-        if (viewId === 'popularView' && !targetView.dataset.loaded) { renderPopularGallery(); targetView.dataset.loaded = 'true'; }
-        if (viewId === 'profileView') populateProfileView();
-        if (viewId === 'userProfileView' && data) showUserProfile(data.userId);
-        if (viewId === 'searchView') document.getElementById('searchInput').focus();
 
         if (targetView.classList.contains('slide-up')) {
             setTimeout(() => targetView.classList.add('active'), 10);
         }
     }
+    
+    function triggerView(viewId) {
+        switch(viewId) {
+            case 'galleryView': navigateTo(viewId); break;
+            case 'feedView': renderUserFeed(true); navigateTo(viewId); break;
+            case 'popularView': renderPopularGallery(); navigateTo(viewId); break;
+            case 'profileView': populateProfileView(); break;
+            case 'searchView': navigateTo(viewId); document.getElementById('searchInput').focus(); break;
+        }
+    }
 
-    // --- LÓGICA DE RENDERIZADO DE CONTENIDO ---
+
+    // --- LÓGICA DE RENDERIZADO ---
     function appendToImageGrid(container, itemsToRender) {
          itemsToRender.forEach(item => {
             const card = document.createElement('div');
@@ -303,6 +314,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('showLoginModalBtn').addEventListener('click', () => showModal('loginModal'));
         document.getElementById('showRegisterModalBtn').addEventListener('click', () => showModal('registerModal'));
         document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', (e) => e.target.closest('.modal-container').classList.add('hidden')));
+        
+        document.getElementById('showForgotPasswordModalBtn').addEventListener('click', () => {
+            hideModal('loginModal');
+            showModal('forgotPasswordModal');
+        });
+
+        document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('forgotPasswordEmail').value;
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showToast('Correo de restablecimiento enviado. Revisa tu bandeja de entrada.');
+                hideModal('forgotPasswordModal');
+            } catch (error) {
+                showToast(getFirebaseErrorMessage(error));
+            }
+        });
 
         document.getElementById('registerForm').addEventListener('submit', async e => {
             e.preventDefault();
@@ -317,11 +345,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     username: username,
                     profile: { 
                         avatar: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(username)}`,
-                        bio: '',
-                        interests: []
+                        bio: '', interests: []
                     }
                 });
-                e.target.closest('.modal-container').classList.add('hidden');
+                hideModal('registerModal');
             } catch (error) { showToast(getFirebaseErrorMessage(error)); }
         });
 
@@ -329,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             try {
                 await auth.signInWithEmailAndPassword(e.target.loginEmail.value, e.target.loginPassword.value);
-                e.target.closest('.modal-container').classList.add('hidden');
+                hideModal('loginModal');
             } catch (error) { showToast(getFirebaseErrorMessage(error)); }
         });
     }
@@ -339,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('logoutBtn').addEventListener('click', () => auth.signOut());
         document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
-            btn.addEventListener('click', () => navigateTo(btn.dataset.view));
+            btn.addEventListener('click', () => triggerView(btn.dataset.view));
         });
 
         document.getElementById('createPostBtn').addEventListener('click', () => showModal('createPostModal'));
@@ -374,10 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.dataset.appListenersAttached = 'true';
     }
 
-    // El resto de funciones (setupProfileEventListeners, setupDetailViewEventListeners, etc.) se mantienen igual
-    // que en la versión anterior, ya que su lógica interna no necesitaba cambios para estos arreglos.
-    // Aquí se incluyen para que el script esté completo.
-
+    // El resto de funciones se mantienen igual
     function setupProfileEventListeners() {
         document.getElementById('saveProfileBtn').addEventListener('click', async () => {
             const bio = document.getElementById('profileBio').value;
@@ -390,14 +414,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Perfil guardado');
             } catch (error) { console.error(error); showToast("Error al guardar el perfil."); }
         });
-
         document.getElementById('interestSearchInput').addEventListener('input', e => {
             const query = e.target.value.toLowerCase();
             document.querySelectorAll('#profileInterests button').forEach(btn => {
                 btn.style.display = btn.textContent.toLowerCase().includes(query) ? '' : 'none';
             });
         });
-
         document.querySelectorAll('.profile-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 document.querySelectorAll('.profile-tab').forEach(item => item.classList.remove('tab-active'));
@@ -407,7 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         });
-
         document.getElementById('changeAvatarBtn').addEventListener('click', () => {
             const selection = document.getElementById('avatarSelection');
             selection.innerHTML = '';
@@ -419,7 +440,6 @@ document.addEventListener('DOMContentLoaded', () => {
             selection.querySelectorAll('img').forEach(img => img.addEventListener('click', (e) => updateAvatar(e.target.dataset.url)));
             showModal('avatarModal');
         });
-
         document.getElementById('avatarUrlForm').addEventListener('submit', e => {
             e.preventDefault();
             const input = document.getElementById('avatarUrlInput');
@@ -454,19 +474,22 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const imageUrl = document.getElementById('postImageUrl').value.trim();
             const title = document.getElementById('postTitle').value.trim();
-            if(!imageUrl || !title) return showToast("Debes completar todos los campos.");
+            const tagsInput = document.getElementById('postTags').value.trim();
+            if(!imageUrl || !title) return showToast("La URL y el título son obligatorios.");
             
+            const tags = tagsInput.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag !== '');
+
             const newPostRef = db.ref('posts').push();
             try {
                 await newPostRef.set({ 
-                    id: newPostRef.key, imageUrl, title, 
+                    id: newPostRef.key, imageUrl, title, tags,
                     authorUid: currentUser.uid, 
                     timestamp: firebase.database.ServerValue.TIMESTAMP 
                 });
                 document.getElementById('createPostForm').reset();
-                document.getElementById('createPostModal').classList.add('hidden');
+                hideModal('createPostModal');
                 showToast("Publicación creada con éxito");
-                navigateTo('feedView');
+                triggerView('feedView');
             } catch (error) {
                 console.error("Error creando post:", error);
                 showToast("No se pudo crear la publicación.");
@@ -475,11 +498,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function showDetailView(id, isPost = false) {
+        detachDetailViewListeners();
+        navigateTo('detailView');
+        document.querySelector('#detailView > main').scrollTop = 0;
+
         const item = isPost ? allPosts.find(p => p.id === id) : allImages.find(i => i.id == id);
         if (!item) return showToast('Contenido no encontrado');
-
-        navigateTo('detailView', { id: item.id });
-        document.querySelector('#detailView > main').scrollTop = 0;
 
         const dbId = String(item.id);
         const userSnapshot = item.authorUid === ADMIN_USER_DATA.uid ? null : await db.ref(`users/${item.authorUid}`).once('value');
@@ -489,10 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('detailAuthorAvatar').src = authorData.profile?.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${authorData.username}`;
         document.getElementById('detailAuthorInfo').onclick = () => {
             if (item.authorUid === ADMIN_USER_DATA.uid) return;
-            closeSlideUpView('detailView');
-            setTimeout(() => {
-                item.authorUid === currentUser.uid ? navigateTo('profileView') : showUserProfile(item.authorUid);
-            }, 300);
+            showUserProfile(item.authorUid);
         };
         
         document.getElementById('detailTitle').textContent = item.title;
@@ -518,6 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function populateProfileView() {
         if (!currentUserData.profile) return;
+        navigateTo('profileView');
         document.getElementById('profileAvatar').src = currentUserData.profile.avatar;
         document.getElementById('profileUsername').textContent = currentUserData.username;
         document.getElementById('profileBio').value = currentUserData.profile.bio || '';
@@ -528,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function showUserProfile(userId) {
         if (userId === ADMIN_USER_DATA.uid) return;
-        navigateTo('userProfileView', { userId });
+        
         const snapshot = await db.ref(`users/${userId}`).once('value');
         if (!snapshot.exists()) return showToast('Usuario no encontrado');
         
@@ -540,38 +562,47 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('userProfileUsername').textContent = userData.username;
         document.getElementById('userProfileBio').textContent = profile.bio || 'Este usuario aún no ha escrito una biografía.';
         renderUserPosts(userId, 'visitingUserPostsGrid', 'no-visiting-posts-message');
+
+        navigateTo('userProfileView');
     }
     
     function listenToLikesAndViews(id) {
-        db.ref(`likes/${id}`).on('value', snap => {
+        const likesRef = db.ref(`likes/${id}`);
+        const viewsRef = db.ref(`views/${id}`);
+
+        const likesCallback = likesRef.on('value', snap => {
             const likeCountEl = document.getElementById('detailLikeCount');
-            if (!likeCountEl || document.getElementById('detailView').classList.contains('hidden')) return;
+            if (!likeCountEl) return;
             const data = snap.val() || {};
             likeCountEl.textContent = `${Object.keys(data).length} Me gusta`;
             document.getElementById('detailLikeBtn').classList.toggle('liked', !!(currentUser && data[currentUser.uid]));
         });
-        db.ref(`views/${id}`).on('value', snap => {
+        const viewsCallback = viewsRef.on('value', snap => {
             const viewCountEl = document.getElementById('detailViewCount');
-            if (viewCountEl && !document.getElementById('detailView').classList.contains('hidden')) {
-                viewCountEl.textContent = `${Object.keys(snap.val() || {}).length} Vistas`;
-            }
+            if (viewCountEl) viewCountEl.textContent = `${Object.keys(snap.val() || {}).length} Vistas`;
         });
+        
+        activeDetailListeners.likes = { ref: likesRef, callback: likesCallback };
+        activeDetailListeners.views = { ref: viewsRef, callback: viewsCallback };
     }
 
     function listenToComments(imageId) {
-        db.ref(`comments/${imageId}`).orderByChild('timestamp').on('value', snapshot => {
+        const commentsRef = db.ref(`comments/${imageId}`);
+        const commentsCallback = commentsRef.orderByChild('timestamp').on('value', snapshot => {
             const list = document.getElementById('commentsList');
-            if(!list || document.getElementById('detailView').classList.contains('hidden')) return;
+            if(!list) return;
             list.innerHTML = '';
-            if (!snapshot.exists()) return list.innerHTML = `<p class="text-gray-500 text-center text-sm">Sé el primero en comentar.</p>`;
+            if (!snapshot.exists()) return list.innerHTML = `<p class="text-gray-500 text-center text-sm py-4">Sé el primero en comentar.</p>`;
             
             const comments = [];
             snapshot.forEach(s => comments.push({ id: s.key, ...s.val() }));
-            comments.reverse().forEach(c => list.appendChild(createCommentElement(c, imageId)));
+            comments.reverse().forEach(c => list.appendChild(createCommentElement(c)));
         });
+
+        activeDetailListeners.comments = { ref: commentsRef, callback: commentsCallback };
     }
 
-    function createCommentElement(commentData, imageId) {
+    function createCommentElement(commentData) {
         const li = document.createElement('li');
         li.className = 'comment-item';
         li.dataset.commentId = commentData.id;
@@ -592,8 +623,12 @@ document.addEventListener('DOMContentLoaded', () => {
         li.querySelector('.reply-btn').addEventListener('click', e => initiateReply(e.currentTarget.closest('li')));
         li.querySelectorAll('[data-userid]').forEach(el => el.addEventListener('click', e => {
             e.stopPropagation();
-            closeSlideUpView('detailView');
-            setTimeout(() => { el.dataset.userid === currentUser.uid ? navigateTo('profileView') : showUserProfile(el.dataset.userid); }, 300);
+            if (el.dataset.userid === currentUser.uid) {
+                closeSlideUpView('detailView');
+                setTimeout(() => triggerView('profileView'), 300);
+            } else {
+                showUserProfile(el.dataset.userid);
+            }
         }));
 
         if (commentData.replies) {
@@ -612,10 +647,10 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const textInput = document.getElementById('commentText');
         const text = textInput.value.trim();
-        const imageId = e.target.dataset.imageId;
+        const imageId = document.getElementById('commentForm').dataset.imageId;
         if (!text || !imageId) return;
         
-        const replyToCommentId = e.target.dataset.replyToCommentId;
+        const replyToCommentId = document.getElementById('commentForm').dataset.replyToCommentId;
         const commentData = { 
             text, timestamp: firebase.database.ServerValue.TIMESTAMP, 
             username: currentUserData.username, authorUid: currentUser.uid, 
@@ -625,7 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             if (replyToCommentId) {
                 await db.ref(`comments/${imageId}/${replyToCommentId}/replies`).push(commentData);
-                sendReplyNotification(e.target.dataset.replyToAuthorId, imageId);
+                sendReplyNotification(document.getElementById('commentForm').dataset.replyToAuthorId, imageId);
                 cancelReply();
             } else {
                 await db.ref(`comments/${imageId}`).push(commentData);
@@ -645,6 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function listenToNotifications() {
+        if (!currentUser) return;
         const ref = db.ref(`notifications/${currentUser.uid}`);
         ref.on('value', snapshot => {
             const list = document.getElementById('notificationsList');
@@ -714,7 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUserData.profile.avatar = url;
             updateAllAvatars(url);
             await db.ref(`users/${currentUser.uid}/profile/avatar`).set(url);
-            document.getElementById('avatarModal').classList.add('hidden');
+            hideModal('avatarModal');
             showToast("Avatar actualizado");
         } catch (error) {
             showToast("La URL de la imagen no parece ser válida.");
