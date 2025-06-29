@@ -15,6 +15,7 @@
 
         // --- ESTADO Y VARIABLES GLOBALES ---
         let allImages = [];
+        let sortedPersonalizedImages = [];
         let allTags = new Set();
         let loadedImagesCount = 0;
         const itemsPerLoad = 12;
@@ -22,8 +23,9 @@
         let username = localStorage.getItem('username');
         let currentUserData = {};
         let currentViewer = null;
-        let lastView = 'galleryView'; 
-
+        let lastView = 'galleryView';
+        let isGalleryLoading = false;
+        const ADMIN_USER_DATA = { deviceId: 'admin_exen', username: 'Exen', profile: { avatar: 'logo.png' } };
         const INTEREST_LIMIT = 10;
 
         // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
@@ -57,6 +59,7 @@
             try {
                 await loadAllImagesAndTags();
                 await loadUserData();
+                sortPersonalizedFeed();
                 await renderPersonalizedGallery(true);
                 setupAllEventListeners();
                 navigateTo('galleryView');
@@ -71,7 +74,7 @@
             document.getElementById('galleryLoader').classList.toggle('hidden', !show);
         }
 
-        // --- CARGA DE DATOS ---
+        // --- LÓGICA DE DATOS Y ORDENAMIENTO ---
         async function loadUserData() {
             const userRef = db.ref(`users/${deviceId}`);
             const snapshot = await userRef.once('value');
@@ -91,9 +94,16 @@
             allImages = await response.json();
             allImages.forEach(img => {
                 img.tags.forEach(tag => allTags.add(tag));
-                // Asegurar que hay un autor, aunque sea de sistema.
-                // Esto es crucial para evitar errores si el JSON no tiene 'authorDeviceId'.
-                img.authorDeviceId = img.authorDeviceId || 'system_user_placeholder'; 
+                img.authorDeviceId = ADMIN_USER_DATA.deviceId;
+            });
+        }
+        
+        function sortPersonalizedFeed() {
+             const userInterests = new Set(currentUserData.profile.interests);
+             sortedPersonalizedImages = [...allImages].sort((a, b) => {
+                const scoreA = a.tags.reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + Math.random();
+                const scoreB = b.tags.reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + Math.random();
+                return scoreB - scoreA;
             });
         }
 
@@ -110,7 +120,6 @@
                 targetView.classList.remove('hidden');
             }
 
-            // Actualizar estado visual de la barra de navegación
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 const isForCurrentView = btn.dataset.view === viewId;
                 btn.classList.toggle('text-indigo-400', isForCurrentView);
@@ -123,12 +132,11 @@
             document.getElementById('navProfileAvatar').classList.toggle('border-indigo-500', isProfileActive);
             document.getElementById('navProfileAvatar').classList.toggle('border-transparent', !isProfileActive);
 
-            // Cargar contenido específico de la vista
             if (viewId === 'popularView') renderPopularGallery();
             if (viewId === 'profileView') populateProfileView();
             if (viewId === 'userProfileView' && data) showUserProfile(data);
+            if (viewId === 'searchView') document.getElementById('searchInput').focus();
             
-            // Animar vistas que se deslizan
             if (['detailView', 'userProfileView'].includes(viewId)) {
                 requestAnimationFrame(() => targetView.classList.add('active'));
             } else {
@@ -136,10 +144,9 @@
                 document.getElementById('userProfileView').classList.remove('active');
             }
         }
-
+        
         // --- RENDERIZADO DE GALERÍAS ---
-        function renderImageGrid(container, imagesToRender) {
-             container.innerHTML = '';
+        function appendToImageGrid(container, imagesToRender) {
              imagesToRender.forEach(img => {
                 const postCard = document.createElement('div');
                 postCard.className = 'bg-gray-800 rounded-lg overflow-hidden cursor-pointer group portrait-aspect';
@@ -153,21 +160,26 @@
             });
         }
         
-        async function renderPersonalizedGallery(reset = false) {
+        function renderPersonalizedGallery(reset = false) {
+            if (isGalleryLoading) return;
+            isGalleryLoading = true;
+            showLoader(true);
+
             const galleryContainer = document.getElementById('gallery');
             if (reset) {
                 galleryContainer.innerHTML = '';
                 loadedImagesCount = 0;
             }
-            const userInterests = new Set(currentUserData.profile.interests);
-            const sortedImages = [...allImages].sort((a, b) => {
-                const scoreA = a.tags.reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + (Math.random() * 0.1); // Puntuación alta por interés + aleatoriedad
-                const scoreB = b.tags.reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + (Math.random() * 0.1);
-                return scoreB - scoreA;
-            });
-            const nextImages = sortedImages.slice(loadedImagesCount, loadedImagesCount + itemsPerLoad);
-            renderImageGrid(galleryContainer, galleryContainer.innerHTML === '' ? nextImages : [...document.querySelectorAll('#gallery .portrait-aspect'), ...nextImages]);
-            loadedImagesCount += nextImages.length;
+            
+            const nextImages = sortedPersonalizedImages.slice(loadedImagesCount, loadedImagesCount + itemsPerLoad);
+            
+            if (nextImages.length > 0) {
+                appendToImageGrid(galleryContainer, nextImages);
+                loadedImagesCount += nextImages.length;
+            }
+
+            showLoader(false);
+            isGalleryLoading = false;
         }
 
         async function renderPopularGallery() {
@@ -178,10 +190,12 @@
             const popularImages = allImages
                 .map(img => ({ ...img, score: Object.keys(likesData[img.id] || {}).length }))
                 .sort((a, b) => b.score - a.score);
-            renderImageGrid(container, popularImages.slice(0, 21));
+            
+            container.innerHTML = '';
+            appendToImageGrid(container, popularImages.slice(0, 21));
         }
 
-        // --- VISTAS ESPECÍFICAS (Detalle, Perfiles) ---
+        // --- VISTAS ESPECÍFICAS ---
         async function showDetailView(imageId) {
             const img = allImages.find(i => i.id === Number(imageId));
             if (!img) return;
@@ -192,13 +206,10 @@
             document.getElementById('detailTitle').textContent = img.title;
             document.getElementById('detailDescription').textContent = img.description;
             
-            const authorRef = db.ref(`users/${img.authorDeviceId}`);
-            const authorSnap = await authorRef.once('value');
-            const authorData = authorSnap.val() || { username: 'Anónimo', profile: { avatar: `https://api.dicebear.com/8.x/initials/svg?seed=Anónimo` }};
+            const authorData = ADMIN_USER_DATA;
             document.getElementById('detailAuthorUsername').textContent = authorData.username;
-            document.getElementById('detailAuthorAvatar').src = authorData.profile ? authorData.profile.avatar : `https://api.dicebear.com/8.x/initials/svg?seed=Anónimo`;
-            const authorInfoBtn = document.getElementById('detailAuthorInfo');
-            authorInfoBtn.onclick = () => navigateTo('userProfileView', { userId: img.authorDeviceId });
+            document.getElementById('detailAuthorAvatar').src = authorData.profile.avatar;
+            document.getElementById('detailAuthorInfo').onclick = () => alert("Este es el perfil del administrador.");
             
             document.getElementById('detailLikeBtn').dataset.id = imageId;
             document.getElementById('commentForm').dataset.imageId = imageId;
@@ -212,6 +223,10 @@
         }
 
         async function showUserProfile({ userId }) {
+            if (userId === ADMIN_USER_DATA.deviceId) {
+                alert("Este es el perfil del administrador.");
+                return;
+            }
             const userRef = db.ref(`users/${userId}`);
             const snapshot = await userRef.once('value');
             const userData = snapshot.val();
@@ -224,7 +239,6 @@
             
             const profile = userData.profile || {};
             const avatar = profile.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${userData.username}`;
-
             document.getElementById('userProfileHeaderUsername').textContent = `Perfil de ${userData.username}`;
             document.getElementById('userProfileAvatar').src = avatar;
             document.getElementById('userProfileUsername').textContent = userData.username;
@@ -243,8 +257,43 @@
                 interestsContainer.innerHTML = `<p class="text-sm text-gray-500">Sin intereses seleccionados.</p>`;
             }
         }
+        
+        function renderSearchResults(query) {
+            const resultsContainer = document.getElementById('searchResults');
+            const resultCountEl = document.getElementById('searchResultCount');
+            
+            resultsContainer.innerHTML = ''; // Limpiar resultados anteriores
+            if (query.length < 2) {
+                resultCountEl.textContent = 'Escribe al menos 2 caracteres para buscar.';
+                return;
+            }
+            const searchTerms = query.toLowerCase().split(/\s+/).filter(Boolean);
+            
+            const scoredResults = allImages.map(img => {
+                let score = 0;
+                const title = img.title.toLowerCase();
+                const description = img.description.toLowerCase();
+                const tags = img.tags.map(tag => tag.toLowerCase());
 
-        // --- FUNCIONES DE CARGA ASÍNCRONA (Likes, Comentarios) ---
+                searchTerms.forEach(term => {
+                    if (title.includes(term)) score += 3;
+                    if (tags.some(tag => tag.includes(term))) score += 2;
+                    if (description.includes(term)) score += 1;
+                });
+
+                return { ...img, score };
+            }).filter(img => img.score > 0).sort((a, b) => b.score - a.score);
+
+            resultCountEl.textContent = `${scoredResults.length} resultado(s) encontrado(s).`;
+            
+            if (scoredResults.length > 0) {
+                appendToImageGrid(resultsContainer, scoredResults);
+            } else {
+                resultsContainer.innerHTML = '<p class="text-gray-500 text-center col-span-full">No se encontraron resultados.</p>';
+            }
+        }
+
+        // --- LÓGICA DE COMENTARIOS Y RESPUESTAS ---
         async function loadLikesAndViews(id) {
             const likeBtn = document.getElementById('detailLikeBtn');
             const likeCountEl = document.getElementById('detailLikeCount');
@@ -258,114 +307,199 @@
                 viewCountEl.textContent = `${Object.keys(snap.val() || {}).length} Vistas`;
             });
         }
-        
+
         async function loadComments(imageId) {
             const commentsList = document.getElementById('commentsList');
             db.ref(`comments/${imageId}`).orderByChild('timestamp').on('value', snapshot => {
                 commentsList.innerHTML = '';
-                if (snapshot.exists()) {
-                    snapshot.forEach(childSnapshot => {
-                        const comment = childSnapshot.val();
-                        const li = document.createElement('li');
-                        li.className = "flex space-x-3";
-                        const commentAuthorAvatar = comment.userAvatar || `https://api.dicebear.com/8.x/initials/svg?seed=${comment.username}`;
-                        li.innerHTML = `
-                            <img src="${commentAuthorAvatar}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover cursor-pointer" data-userid="${comment.deviceId}">
-                            <div class="flex-1">
-                                <div class="bg-gray-800 rounded-lg p-2">
-                                    <span class="font-bold text-sm text-white cursor-pointer hover:underline" data-userid="${comment.deviceId}">${comment.username}</span>
-                                    <p class="text-gray-300">${comment.text}</p>
-                                </div>
-                            </div>
-                        `;
-                        commentsList.prepend(li);
-                    });
-                     
-                    commentsList.querySelectorAll('[data-userid]').forEach(el => {
-                        el.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            navigateTo('userProfileView', { userId: el.dataset.userid });
-                        });
-                    });
-                } else {
+                if (!snapshot.exists()) {
                     commentsList.innerHTML = `<p class="text-gray-500 text-center text-sm">Sé el primero en comentar.</p>`;
+                    return;
+                }
+
+                snapshot.forEach(commentSnapshot => {
+                    const commentId = commentSnapshot.key;
+                    const comment = commentSnapshot.val();
+                    const li = createCommentElement(commentId, comment, imageId);
+                    
+                    if (comment.replies) {
+                        const repliesList = li.querySelector('.replies-list');
+                        Object.entries(comment.replies).forEach(([replyId, reply]) => {
+                            const replyLi = createCommentElement(replyId, reply, imageId, true, comment.username);
+                            repliesList.appendChild(replyLi);
+                        });
+                    }
+                    commentsList.prepend(li);
+                });
+            });
+        }
+        
+        function createCommentElement(id, data, imageId, isReply = false, replyingTo = '') {
+            const li = document.createElement('li');
+            li.className = `flex space-x-3 ${isReply ? 'ml-6' : ''}`;
+            li.dataset.commentId = id;
+            li.dataset.authorId = data.deviceId;
+            li.dataset.authorName = data.username;
+
+            const avatar = data.userAvatar || `https://api.dicebear.com/8.x/initials/svg?seed=${data.username}`;
+            
+            li.innerHTML = `
+                <img src="${avatar}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover cursor-pointer" data-userid="${data.deviceId}">
+                <div class="flex-1">
+                    <div class="bg-gray-800 rounded-lg p-2">
+                        <span class="font-bold text-sm text-white cursor-pointer hover:underline" data-userid="${data.deviceId}">${data.username}</span>
+                        ${replyingTo ? `<span class="text-sm text-indigo-400"> en respuesta a ${replyingTo}</span>` : ''}
+                        <p class="text-gray-300 mt-1">${data.text}</p>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">
+                        <button class="hover:underline reply-btn">Responder</button>
+                    </div>
+                    <div class="reply-form-container hidden mt-2"></div>
+                    <ul class="replies-list mt-2 space-y-3"></ul>
+                </div>
+            `;
+            
+            li.querySelector('.reply-btn').addEventListener('click', (e) => showReplyForm(e.currentTarget.closest('li')));
+            li.querySelectorAll('[data-userid]').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    navigateTo('userProfileView', { userId: el.dataset.userid });
+                });
+            });
+            return li;
+        }
+
+        function showReplyForm(commentElement) {
+            const container = commentElement.querySelector('.reply-form-container');
+            if (container.innerHTML !== '') {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+
+            const form = document.createElement('form');
+            form.className = 'flex items-center space-x-2';
+            form.innerHTML = `
+                <img src="${currentUserData.profile.avatar}" class="w-6 h-6 rounded-full object-cover">
+                <input type="text" placeholder="Escribe una respuesta..." class="flex-1 bg-gray-700 text-white rounded-full px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <button type="submit" class="text-indigo-400"><i class="fas fa-paper-plane"></i></button>
+            `;
+            container.appendChild(form);
+            form.querySelector('input').focus();
+            
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const imageId = document.getElementById('commentForm').dataset.imageId;
+                const parentCommentId = commentElement.dataset.commentId;
+                const textInput = form.querySelector('input');
+                const text = textInput.value.trim();
+
+                if (text) {
+                    const replyData = {
+                        text,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        username: currentUserData.username,
+                        deviceId,
+                        userAvatar: currentUserData.profile.avatar
+                    };
+                    await db.ref(`comments/${imageId}/${parentCommentId}/replies`).push(replyData);
+                    
+                    const parentAuthorId = commentElement.dataset.authorId;
+                    const parentAuthorName = commentElement.dataset.authorName;
+                    sendReplyNotification(parentAuthorId, parentAuthorName, imageId);
+                    
+                    container.innerHTML = '';
+                    container.classList.add('hidden');
                 }
             });
         }
         
-        // --- LÓGICA DE TU PROPIO PERFIL ---
-        function populateProfileView() {
-            document.getElementById('profileAvatar').src = currentUserData.profile.avatar;
-            document.getElementById('profileUsername').textContent = currentUserData.username;
-            document.getElementById('profileBio').value = currentUserData.profile.bio || '';
-
-            const interestsContainer = document.getElementById('profileInterests');
-            interestsContainer.innerHTML = '';
-            const userInterests = new Set(currentUserData.profile.interests);
-
-            Array.from(allTags).sort().forEach(tag => {
-                const tagEl = document.createElement('button');
-                tagEl.textContent = tag;
-                tagEl.dataset.tag = tag;
-                const isSelected = userInterests.has(tag);
-                tagEl.className = `px-3 py-1 text-sm rounded-full cursor-pointer transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300'}`;
+        // --- NOTIFICACIONES ---
+        function setupNotificationsListener() {
+            const notificationsRef = db.ref(`notifications/${deviceId}`);
+            const badge = document.getElementById('navNotificationsBadge');
+            const list = document.getElementById('notificationsList');
+            
+            notificationsRef.on('value', snapshot => {
+                const notifications = snapshot.val() || {};
+                const unreadCount = Object.values(notifications).filter(n => !n.read).length;
+                badge.style.display = unreadCount > 0 ? 'block' : 'none';
                 
-                tagEl.addEventListener('click', () => {
-                    const selectedCount = interestsContainer.querySelectorAll('.bg-indigo-600').length;
-                    const isCurrentlySelected = tagEl.classList.contains('bg-indigo-600');
-                    if (!isCurrentlySelected && selectedCount >= INTEREST_LIMIT) {
-                        return; 
-                    }
-                    tagEl.classList.toggle('bg-indigo-600');
-                    tagEl.classList.toggle('text-white');
-                    tagEl.classList.toggle('bg-gray-700');
-                    tagEl.classList.toggle('text-gray-300');
-                    updateInterestCounter();
+                list.innerHTML = '';
+                if(Object.keys(notifications).length === 0) {
+                    list.innerHTML = '<p class="text-gray-500 text-center">No tienes notificaciones.</p>';
+                    return;
+                }
+
+                Object.entries(notifications).reverse().forEach(([id, n]) => {
+                    const notifEl = document.createElement('div');
+                    notifEl.className = `p-2 rounded-lg hover:bg-gray-700 cursor-pointer ${n.read ? 'opacity-60' : ''}`;
+                    notifEl.innerHTML = `<p>${n.message}</p><p class="text-xs text-gray-500">${new Date(n.timestamp).toLocaleString()}</p>`;
+                    notifEl.onclick = () => {
+                        const notificationsWindow = document.getElementById('notificationsWindow');
+                        notificationsWindow.classList.remove('active');
+                        setTimeout(() => notificationsWindow.classList.add('hidden'), 300);
+                        showDetailView(n.imageId);
+                        db.ref(`notifications/${deviceId}/${id}/read`).set(true);
+                    };
+                    list.appendChild(notifEl);
                 });
-                interestsContainer.appendChild(tagEl);
             });
-            updateInterestCounter();
         }
-        
-        function updateInterestCounter() {
-            const count = document.querySelectorAll('#profileInterests .bg-indigo-600').length;
-            const counterEl = document.getElementById('interestCounter');
-            counterEl.textContent = `${count}/${INTEREST_LIMIT}`;
-            counterEl.classList.toggle('text-red-500', count >= INTEREST_LIMIT);
+
+        async function sendReplyNotification(targetUserId, targetUsername, imageId) {
+            if (targetUserId && targetUserId !== deviceId) {
+                const message = `${currentUserData.username} respondió a tu comentario.`;
+                await db.ref(`notifications/${targetUserId}`).push({
+                    message,
+                    imageId,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false,
+                    fromUser: currentUserData.username
+                });
+            }
         }
 
         // --- MANEJO DE EVENTOS ---
         function setupAllEventListeners() {
+            // Navegación
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 if(btn.dataset.view) btn.addEventListener('click', () => navigateTo(btn.dataset.view));
             });
             document.getElementById('detailBackBtn').addEventListener('click', () => navigateTo(lastView || 'galleryView'));
             document.getElementById('userProfileBackBtn').addEventListener('click', () => navigateTo(lastView || 'galleryView'));
 
+            // Scroll infinito
             const observer = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting && loadedImagesCount < allImages.length) {
+                if (entries[0].isIntersecting && !isGalleryLoading) {
                     renderPersonalizedGallery(false);
                 }
-            }, { rootMargin: '300px' });
+            }, { threshold: 0.5 });
             observer.observe(document.getElementById('sentinel'));
+            
+            // Búsqueda
+            document.getElementById('searchForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                renderSearchResults(document.getElementById('searchInput').value);
+            });
 
+            // Perfil
             document.getElementById('saveProfileBtn').addEventListener('click', async () => {
                 const bio = document.getElementById('profileBio').value;
                 const interests = Array.from(document.querySelectorAll('#profileInterests .bg-indigo-600')).map(el => el.dataset.tag);
-                currentUserData.profile.bio = bio;
-                currentUserData.profile.interests = interests;
                 await db.ref(`users/${deviceId}/profile`).update({ bio, interests });
+                await loadUserData(); 
                 alert('Perfil guardado');
+                sortPersonalizedFeed();
                 await renderPersonalizedGallery(true);
             });
-            
             document.getElementById('interestSearchInput').addEventListener('input', (e) => {
                 const query = e.target.value.toLowerCase();
                 document.querySelectorAll('#profileInterests button').forEach(btn => {
                     btn.style.display = btn.textContent.toLowerCase().includes(query) ? '' : 'none';
                 });
             });
-
             document.getElementById('changeAvatarBtn').addEventListener('click', () => {
                 const modal = document.getElementById('avatarModal');
                 const selection = document.getElementById('avatarSelection');
@@ -389,6 +523,24 @@
             });
             document.getElementById('closeAvatarModal').addEventListener('click', () => document.getElementById('avatarModal').classList.add('hidden'));
 
+            // Notificaciones Modal
+            const notificationsWindow = document.getElementById('notificationsWindow');
+            document.getElementById('navNotificationsBtn').addEventListener('click', () => {
+                notificationsWindow.classList.remove('hidden');
+                requestAnimationFrame(() => notificationsWindow.classList.add('active'));
+            });
+            document.getElementById('notificationsCloseBtn').addEventListener('click', () => {
+                 notificationsWindow.classList.remove('active');
+                 setTimeout(() => notificationsWindow.classList.add('hidden'), 300);
+            });
+            notificationsWindow.addEventListener('click', (e) => {
+                if(e.target.hasAttribute('data-close-modal')) {
+                    notificationsWindow.classList.remove('active');
+                    setTimeout(() => notificationsWindow.classList.add('hidden'), 300);
+                }
+            });
+
+            // Interacciones de detalle
             document.getElementById('detailLikeBtn').addEventListener('click', function() {
                 const id = this.dataset.id;
                 const ref = db.ref(`likes/${id}/${deviceId}`);
@@ -397,7 +549,7 @@
 
             document.getElementById('commentForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const imageId = this.dataset.imageId;
+                const imageId = Number(this.dataset.imageId);
                 const textInput = document.getElementById('commentText');
                 if (textInput.value.trim() && imageId) {
                     await db.ref(`comments/${imageId}`).push({
@@ -410,6 +562,11 @@
                     textInput.value = '';
                 }
             });
+            
+            document.getElementById('focusCommentBtn').addEventListener('click', () => {
+                document.getElementById('commentText').focus();
+            });
+            setupNotificationsListener();
         }
 
         masterInit();
