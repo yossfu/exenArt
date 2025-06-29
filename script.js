@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let appInitialized = false;
     let activeDetailListeners = {};
 
+
     // --- FUNCIONES AUXILIARES ---
     const showModal = (modalId) => document.getElementById(modalId).classList.remove('hidden');
     const hideModal = (modalId) => document.getElementById(modalId).classList.add('hidden');
@@ -207,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'galleryView': navigateTo(viewId); break;
             case 'feedView': renderUserFeed(true); navigateTo(viewId); break;
             case 'popularView': renderPopularGallery(); navigateTo(viewId); break;
-            case 'profileView': populateProfileView(); break;
+            case 'profileView': populateProfileView(); break; 
             case 'searchView': navigateTo(viewId); document.getElementById('searchInput').focus(); break;
         }
     }
@@ -400,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.body.dataset.appListenersAttached = 'true';
     }
-
+    
     // El resto de funciones se mantienen igual
     function setupProfileEventListeners() {
         document.getElementById('saveProfileBtn').addEventListener('click', async () => {
@@ -503,7 +504,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#detailView > main').scrollTop = 0;
 
         const item = isPost ? allPosts.find(p => p.id === id) : allImages.find(i => i.id == id);
-        if (!item) return showToast('Contenido no encontrado');
+        if (!item) {
+            showToast('Contenido no encontrado.');
+            closeSlideUpView('detailView');
+            return;
+        };
 
         const dbId = String(item.id);
         const userSnapshot = item.authorUid === ADMIN_USER_DATA.uid ? null : await db.ref(`users/${item.authorUid}`).once('value');
