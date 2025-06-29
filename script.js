@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 3. DECLARACIÓN DE TODAS LAS FUNCIONES ---
 
-    // ** Funciones Auxiliares **
+    // ** Funciones Auxiliares y de UI **
     const showModal = (modalId) => document.getElementById(modalId).classList.remove('hidden');
     const hideModal = (modalId) => document.getElementById(modalId).classList.add('hidden');
     const showLoader = (loaderId, show) => document.getElementById(loaderId).classList.toggle('hidden', !show);
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return { username: 'Anónimo', profile: {} };
     };
-
+    
     // ** Lógica de Datos y Carga **
     async function loadUserData() {
         if (!currentUser) return;
@@ -126,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const currentVisibleView = document.querySelector('.view:not(.hidden)');
                     if (currentVisibleView?.id === 'feedView') renderUserFeed(true);
                     if (currentVisibleView?.id === 'profileView') renderUserPosts(currentUser.uid, 'userPostsGrid', 'no-posts-message');
+                    if (currentVisibleView?.id === 'galleryView') listenToLeaderboard();
                 }
                 resolve();
             });
@@ -164,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'searchView': navigateTo(viewId); document.getElementById('searchInput').focus(); break;
         }
     }
+
 
     // ** Lógica de Renderizado **
     async function appendToImageGrid(container, itemsToRender) {
@@ -250,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoader('feedLoader', false);
         isFeedLoading = false;
     }
-
+    
     // ** Lógica de Eventos y Listeners **
     function setupAuthEventListeners() {
         document.getElementById('showLoginModalBtn').addEventListener('click', () => showModal('loginModal'));
@@ -548,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
             notifications.reverse().forEach(n => {
                 const el = document.createElement('div');
                 el.className = `px-4 py-3 hover:bg-gray-700 cursor-pointer ${n.read ? 'opacity-60' : 'font-semibold'}`;
-                el.innerHTML = `<p>${n.message}</p><p class="text-xs text-gray-500 mt-1 font-normal">${new Date(n.timestamp).toLocaleString()}</p>`;
+                el.innerHTML = `<p>${n.message || 'Nueva notificación'}</p><p class="text-xs text-gray-500 mt-1 font-normal">${new Date(n.timestamp).toLocaleString()}</p>`;
                 el.onclick = () => {
                     panel.classList.remove('active');
                     const isPost = allPosts.some(p => p.id === n.imageId);
@@ -559,8 +561,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
-
-    // ** Otras funciones auxiliares **
     function renderUserPosts(userId, gridId, messageId) {
         const container = document.getElementById(gridId);
         const message = document.getElementById(messageId);
@@ -679,8 +679,49 @@ document.addEventListener('DOMContentLoaded', () => {
             section.classList.add('hidden');
         }
     }
+    function listenToLeaderboard() {
+        const likesRef = db.ref('likes');
+        likesRef.on('value', async (snapshot) => {
+            const allLikes = snapshot.val() || {};
+            const userTopScores = {};
+            for (const post of allPosts) {
+                const likeCount = allLikes[post.id] ? Object.keys(allLikes[post.id]).length : 0;
+                if (!userTopScores[post.authorUid] || likeCount > userTopScores[post.authorUid].topScore) {
+                    userTopScores[post.authorUid] = {
+                        uid: post.authorUid,
+                        topScore: likeCount,
+                    };
+                }
+            }
+            const rankedUsers = Object.values(userTopScores).sort((a, b) => b.topScore - a.topScore);
+            const leaderboardContainer = document.getElementById('leaderboard');
+            leaderboardContainer.innerHTML = '';
+            const topUsers = rankedUsers.slice(0, 5);
+            if (topUsers.length === 0) {
+                 leaderboardContainer.innerHTML = `<p class="text-center text-gray-500 text-sm">Aún no hay suficientes datos para mostrar un ranking.</p>`;
+                 return;
+            }
+            for (let i = 0; i < topUsers.length; i++) {
+                const userData = topUsers[i];
+                const authorInfo = await getAuthorData(userData.uid);
+                const isVerified = userData.uid === ADMIN_USER_DATA.uid;
+                let rankIcon;
+                if (i === 0) rankIcon = '<i class="fas fa-medal rank-1"></i>';
+                else if (i === 1) rankIcon = '<i class="fas fa-medal rank-2"></i>';
+                else if (i === 2) rankIcon = '<i class="fas fa-medal rank-3"></i>';
+                else rankIcon = `<span class="text-gray-400">${i + 1}</span>`;
+                const leaderboardItem = document.createElement('div');
+                leaderboardItem.className = 'leaderboard-item cursor-pointer';
+                leaderboardItem.innerHTML = `<div class="leaderboard-rank">${rankIcon}</div><img src="${authorInfo.profile?.avatar || ''}" alt="${authorInfo.username}" class="w-10 h-10 rounded-full mx-4 bg-gray-700"><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><p class="font-semibold text-white truncate">${authorInfo.username}</p>${isVerified ? '<i class="fas fa-check-circle text-blue-400 text-xs"></i>' : ''}</div><p class="text-sm text-gray-400">Puntuación más alta</p></div><div class="text-right"><p class="font-bold text-white text-lg">${userData.topScore}</p><p class="text-sm text-pink-400">Me gusta</p></div>`;
+                leaderboardItem.addEventListener('click', () => showUserProfile(userData.uid));
+                leaderboardContainer.appendChild(leaderboardItem);
+            }
+        });
+    }
 
     // --- 4. PUNTO DE ENTRADA DE LA APLICACIÓN ---
+    
+    // **Función de Inicialización Principal**
     async function initializeApp() {
         showLoader('galleryLoader', true);
         appInitialized = true;
@@ -692,6 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderCuratedFeed(true);
             listenToUserFavorites();
             listenToNotifications();
+            listenToLeaderboard();
         } catch (error) {
             console.error("Error inicializando la app:", error);
             showToast("Error al cargar la aplicación");
@@ -701,7 +743,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Se configuran los listeners de autenticación desde el principio.
     setupAuthEventListeners();
+
+    // El listener de estado de autenticación decide si mostrar la pantalla de bienvenida o la app.
     auth.onAuthStateChanged(user => {
         const authOverlay = document.getElementById('authOverlay');
         const appContent = document.getElementById('appContent');
