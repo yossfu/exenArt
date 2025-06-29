@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let featuredSwiper = null;
     let appInitialized = false;
 
-    // --- FUNCIONES AUXILIARES (Definidas primero para evitar ReferenceError) ---
+    // --- FUNCIONES AUXILIARES ---
     const showModal = (modalId) => document.getElementById(modalId).classList.remove('hidden');
     const showLoader = (loaderId, show) => document.getElementById(loaderId).classList.toggle('hidden', !show);
     const showToast = (message) => {
@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSlideUpView = (viewId) => {
         const view = document.getElementById(viewId);
         view.classList.remove('active');
+        // Usamos un timeout para permitir que la animación de salida termine antes de cambiar de vista
         setTimeout(() => navigateTo(lastView || 'galleryView'), 300);
     };
     const cancelReply = () => {
@@ -91,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             appInitialized = false;
             authOverlay.classList.remove('opacity-0', 'pointer-events-none');
             appContent.classList.add('hidden');
-            document.querySelectorAll('.modal-container').forEach(m => m.classList.add('hidden'));
+            document.querySelectorAll('.modal-container, .notifications-panel').forEach(m => m.classList.add('hidden', 'active'));
         }
     });
 
@@ -156,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 allPosts.sort((a, b) => b.timestamp - a.timestamp); // Ordenar por más nuevo
                 
                 if(appInitialized) {
-                    renderUserPostCarousel(); // Actualizar carrusel con nuevos posts
+                    renderUserPostCarousel();
                     if(document.getElementById('feedView').offsetParent !== null) renderUserFeed(true);
                     if(document.getElementById('profileView').offsetParent !== null) {
                         renderUserPosts(currentUser.uid, 'userPostsGrid', 'no-posts-message');
@@ -169,9 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- NAVEGACIÓN Y RENDERIZADO ---
     function navigateTo(viewId, data = null) {
-        lastView = document.querySelector('.view:not(.hidden):not(.slide-up)')?.id || 'galleryView';
+        // **CORRECCIÓN CLAVE:** Actualiza `lastView` con el ID de la vista actual ANTES de cambiar.
+        const currentView = document.querySelector('.view:not(.hidden)');
+        if (currentView && currentView.id !== viewId) {
+            lastView = currentView.id;
+        }
+
         document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-        
         const targetView = document.getElementById(viewId);
         if(!targetView) return;
         targetView.classList.remove('hidden');
@@ -215,11 +220,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderUserPostCarousel() {
         const wrapper = document.getElementById('featured-wrapper');
+        const carouselContainer = wrapper.closest('.featured-carousel');
         if (allPosts.length === 0) {
-            wrapper.parentElement.style.display = 'none';
+            carouselContainer.style.display = 'none';
             return;
         }
-        wrapper.parentElement.style.display = 'block';
+        carouselContainer.style.display = 'block';
 
         const shuffledPosts = [...allPosts].sort(() => 0.5 - Math.random());
         const carouselPosts = shuffledPosts.slice(0, 7);
@@ -338,7 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('createPostBtn').addEventListener('click', () => showModal('createPostModal'));
         
-        // Listeners de notificaciones
         const notificationsBtn = document.getElementById('navNotificationsBtn');
         const notificationsPanel = document.getElementById('notificationsWindow');
         notificationsBtn.addEventListener('click', (e) => {
@@ -351,7 +356,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Infinite scroll listeners
         new IntersectionObserver(entries => {
             if (entries[0].isIntersecting && !isGalleryLoading && document.getElementById('galleryView').offsetParent !== null) renderCuratedFeed(false);
         }, { threshold: 0.1 }).observe(document.getElementById('curated-sentinel'));
@@ -370,8 +374,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.dataset.appListenersAttached = 'true';
     }
 
-    // ... (El resto de las funciones de setup y lógica permanecen muy similares)
-    // Se copian las funciones restantes de la versión anterior que no necesitan grandes cambios.
+    // El resto de funciones (setupProfileEventListeners, setupDetailViewEventListeners, etc.) se mantienen igual
+    // que en la versión anterior, ya que su lógica interna no necesitaba cambios para estos arreglos.
+    // Aquí se incluyen para que el script esté completo.
+
     function setupProfileEventListeners() {
         document.getElementById('saveProfileBtn').addEventListener('click', async () => {
             const bio = document.getElementById('profileBio').value;
@@ -427,11 +433,13 @@ document.addEventListener('DOMContentLoaded', () => {
          document.getElementById('userProfileBackBtn').addEventListener('click', () => closeSlideUpView('userProfileView'));
         
         document.getElementById('detailLikeBtn').addEventListener('click', function() {
+            if(!this.dataset.id || !currentUser) return;
             const ref = db.ref(`likes/${this.dataset.id}/${currentUser.uid}`);
             ref.once('value', snap => ref.set(snap.exists() ? null : true));
         });
         
         document.getElementById('detailFavoriteBtn').addEventListener('click', function() {
+            if(!this.dataset.id || !currentUser) return;
             const ref = db.ref(`favorites/${currentUser.uid}/${this.dataset.id}`);
             ref.once('value', snap => ref.set(snap.exists() ? null : true));
         });
@@ -466,23 +474,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // ... y el resto de funciones
     async function showDetailView(id, isPost = false) {
-        document.querySelector('#detailView > main').scrollTop = 0;
         const item = isPost ? allPosts.find(p => p.id === id) : allImages.find(i => i.id == id);
         if (!item) return showToast('Contenido no encontrado');
 
+        navigateTo('detailView', { id: item.id });
+        document.querySelector('#detailView > main').scrollTop = 0;
+
         const dbId = String(item.id);
-        
         const userSnapshot = item.authorUid === ADMIN_USER_DATA.uid ? null : await db.ref(`users/${item.authorUid}`).once('value');
         const authorData = item.authorUid === ADMIN_USER_DATA.uid ? ADMIN_USER_DATA : userSnapshot.val() || { username: 'Anónimo' };
         
         document.getElementById('detailAuthorUsername').textContent = authorData.username;
         document.getElementById('detailAuthorAvatar').src = authorData.profile?.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${authorData.username}`;
-        const authorInfo = document.getElementById('detailAuthorInfo');
-        authorInfo.onclick = () => {
+        document.getElementById('detailAuthorInfo').onclick = () => {
             if (item.authorUid === ADMIN_USER_DATA.uid) return;
-            item.authorUid === currentUser.uid ? navigateTo('profileView') : showUserProfile(item.authorUid);
+            closeSlideUpView('detailView');
+            setTimeout(() => {
+                item.authorUid === currentUser.uid ? navigateTo('profileView') : showUserProfile(item.authorUid);
+            }, 300);
         };
         
         document.getElementById('detailTitle').textContent = item.title;
@@ -504,7 +514,6 @@ document.addEventListener('DOMContentLoaded', () => {
         else document.getElementById('similar-section').classList.add('hidden');
         
         db.ref(`views/${dbId}/${currentUser.uid}`).set(true);
-        navigateTo('detailView', { id: dbId });
     }
 
     async function populateProfileView() {
@@ -519,6 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function showUserProfile(userId) {
         if (userId === ADMIN_USER_DATA.uid) return;
+        navigateTo('userProfileView', { userId });
         const snapshot = await db.ref(`users/${userId}`).once('value');
         if (!snapshot.exists()) return showToast('Usuario no encontrado');
         
@@ -530,27 +540,28 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('userProfileUsername').textContent = userData.username;
         document.getElementById('userProfileBio').textContent = profile.bio || 'Este usuario aún no ha escrito una biografía.';
         renderUserPosts(userId, 'visitingUserPostsGrid', 'no-visiting-posts-message');
-        navigateTo('userProfileView', { userId });
     }
     
     function listenToLikesAndViews(id) {
         db.ref(`likes/${id}`).on('value', snap => {
             const likeCountEl = document.getElementById('detailLikeCount');
-            if (!likeCountEl) return;
+            if (!likeCountEl || document.getElementById('detailView').classList.contains('hidden')) return;
             const data = snap.val() || {};
             likeCountEl.textContent = `${Object.keys(data).length} Me gusta`;
             document.getElementById('detailLikeBtn').classList.toggle('liked', !!(currentUser && data[currentUser.uid]));
         });
         db.ref(`views/${id}`).on('value', snap => {
             const viewCountEl = document.getElementById('detailViewCount');
-            if (viewCountEl) viewCountEl.textContent = `${Object.keys(snap.val() || {}).length} Vistas`;
+            if (viewCountEl && !document.getElementById('detailView').classList.contains('hidden')) {
+                viewCountEl.textContent = `${Object.keys(snap.val() || {}).length} Vistas`;
+            }
         });
     }
 
     function listenToComments(imageId) {
         db.ref(`comments/${imageId}`).orderByChild('timestamp').on('value', snapshot => {
             const list = document.getElementById('commentsList');
-            if(!list) return;
+            if(!list || document.getElementById('detailView').classList.contains('hidden')) return;
             list.innerHTML = '';
             if (!snapshot.exists()) return list.innerHTML = `<p class="text-gray-500 text-center text-sm">Sé el primero en comentar.</p>`;
             
@@ -566,7 +577,6 @@ document.addEventListener('DOMContentLoaded', () => {
         li.dataset.commentId = commentData.id;
         li.dataset.authorId = commentData.authorUid; 
         li.dataset.authorName = commentData.username;
-        
         const avatar = commentData.userAvatar || `https://api.dicebear.com/8.x/initials/svg?seed=${commentData.username}`;
         
         li.innerHTML = `
@@ -576,19 +586,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="font-bold text-sm text-white cursor-pointer hover:underline" data-userid="${commentData.authorUid}">${commentData.username}</span>
                     <p class="text-gray-300 mt-1 break-words">${commentData.text}</p>
                 </div>
-                <div class="text-xs text-gray-500 mt-1 pl-2">
-                    <button class="hover:underline reply-btn">Responder</button>
-                </div>
+                <div class="text-xs text-gray-500 mt-1 pl-2"><button class="hover:underline reply-btn">Responder</button></div>
             </div>`;
 
         li.querySelector('.reply-btn').addEventListener('click', e => initiateReply(e.currentTarget.closest('li')));
         li.querySelectorAll('[data-userid]').forEach(el => el.addEventListener('click', e => {
             e.stopPropagation();
             closeSlideUpView('detailView');
-            setTimeout(() => {
-                 if(el.dataset.userid === currentUser.uid) navigateTo('profileView');
-                 else showUserProfile(el.dataset.userid);
-            }, 300)
+            setTimeout(() => { el.dataset.userid === currentUser.uid ? navigateTo('profileView') : showUserProfile(el.dataset.userid); }, 300);
         }));
 
         if (commentData.replies) {
@@ -612,10 +617,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const replyToCommentId = e.target.dataset.replyToCommentId;
         const commentData = { 
-            text, 
-            timestamp: firebase.database.ServerValue.TIMESTAMP, 
-            username: currentUserData.username, 
-            authorUid: currentUser.uid, 
+            text, timestamp: firebase.database.ServerValue.TIMESTAMP, 
+            username: currentUserData.username, authorUid: currentUser.uid, 
             userAvatar: currentUserData.profile.avatar 
         };
 
@@ -636,9 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const message = `${currentUserData.username} respondió a tu comentario.`;
             db.ref(`notifications/${targetUserId}`).push({
                 message, imageId,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                read: false,
-                fromUsername: currentUserData.username
+                timestamp: firebase.database.ServerValue.TIMESTAMP, read: false,
             });
         }
     }
@@ -648,6 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ref.on('value', snapshot => {
             const list = document.getElementById('notificationsList');
             const badge = document.getElementById('navNotificationsBadge');
+            const panel = document.getElementById('notificationsWindow');
             list.innerHTML = '';
             if(!snapshot.exists()) {
                 badge.classList.add('hidden');
@@ -659,10 +661,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             notifications.reverse().forEach(n => {
                 const el = document.createElement('div');
-                el.className = `px-4 py-3 hover:bg-gray-700 cursor-pointer ${n.read ? 'opacity-60' : 'bg-indigo-900/30'}`;
-                el.innerHTML = `<p>${n.message}</p><p class="text-xs text-gray-500 mt-1">${new Date(n.timestamp).toLocaleString()}</p>`;
+                el.className = `px-4 py-3 hover:bg-gray-700 cursor-pointer ${n.read ? 'opacity-60' : 'font-semibold'}`;
+                el.innerHTML = `<p>${n.message}</p><p class="text-xs text-gray-500 mt-1 font-normal">${new Date(n.timestamp).toLocaleString()}</p>`;
                 el.onclick = () => {
-                    document.getElementById('notificationsWindow').classList.remove('active');
+                    panel.classList.remove('active');
                     const isPost = allPosts.some(p => p.id === n.imageId);
                     showDetailView(n.imageId, isPost);
                     ref.child(n.id).child('read').set(true);
