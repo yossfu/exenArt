@@ -9,7 +9,6 @@ body {
 }
 
 /* Animación para la vista de detalle y perfil de usuario */
-/* La clase 'active' hace que la vista se deslice hacia arriba */
 #detailView.active, #userProfileView.active {
     transform: translateY(0%);
 }
@@ -19,6 +18,24 @@ body {
     color: #ec4899; /* color-pink-500 */
     font-weight: 900; /* Icono relleno */
 }
+
+/* ========== NUEVOS ESTILOS PARA FAVORITOS Y PESTAÑAS ========== */
+
+/* Estilo para el botón de favorito activo */
+.favorite-btn.favorited i {
+    color: #facc15; /* color-yellow-400 */
+    font-weight: 900; /* Icono relleno */
+}
+
+/* Estilos para las pestañas del perfil */
+.profile-tab {
+    @apply border-transparent text-gray-400 hover:text-white hover:border-gray-500 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors;
+}
+
+.profile-tab.tab-active {
+    @apply border-indigo-500 text-indigo-400;
+}
+
 
 /* Personalización del visor de imágenes */
 .viewer-container {
@@ -44,7 +61,7 @@ body {
 .portrait-aspect {
     position: relative;
     width: 100%;
-    padding-bottom: 150%; /* 3 / 2 = 1.5 * 100 = 150% */
+    padding-bottom: 150%; 
 }
 
 .portrait-aspect img {
@@ -53,7 +70,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Asegura que la imagen cubra el área sin deformarse */
+    object-fit: cover;
 }
 
 /* Estilos para la notificación TOAST */
@@ -62,17 +79,70 @@ body {
     transform: translate(-50%, 0);
 }
 
-/* ===== NUEVO DISEÑO VISTA DE DETALLE ===== */
-
-/* Estilo para los comentarios para que el avatar y el contenido estén alineados correctamente */
+/* Estilo para los comentarios */
 .comment-item {
     display: flex;
-    align-items: flex-start; /* Alinea los items al inicio */
-    gap: 0.75rem; /* Espacio entre avatar y contenido */
+    align-items: flex-start;
+    gap: 0.75rem;
 }
 
 .comment-content {
-    flex: 1; /* El contenido ocupa el espacio restante */
+    flex: 1;
 }
 
+/* Estilos para el Carrusel (Swiper.js) */
+.featured-carousel {
+    width: 100%;
+    height: 50vw; 
+    max-height: 300px;
+}
+
+.featured-carousel .swiper-slide {
+    text-align: center;
+    font-size: 18px;
+    background: #1f2937;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.featured-carousel .swiper-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.featured-carousel .swiper-button-next,
+.featured-carousel .swiper-button-prev {
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.3);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+.featured-carousel .swiper-button-next:hover,
+.featured-carousel .swiper-button-prev:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.featured-carousel .swiper-button-next::after,
+.featured-carousel .swiper-button-prev::after {
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.featured-carousel .swiper-pagination-bullet {
+    background-color: rgba(255, 255, 255, 0.5);
+    width: 10px;
+    height: 10px;
+    opacity: 1;
+}
+
+.featured-carousel .swiper-pagination-bullet-active {
+    background-color: #6366f1;
+}
 

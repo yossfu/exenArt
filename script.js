@@ -28,6 +28,7 @@
         let toastTimeout;
         const ADMIN_USER_DATA = { deviceId: 'admin_exen', username: 'Exen', profile: { avatar: 'logo.png' } };
         const INTEREST_LIMIT = 10;
+        let featuredSwiper = null;
 
         // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
         async function masterInit() {
@@ -60,6 +61,7 @@
             try {
                 await loadAllImagesAndTags();
                 await loadUserData();
+                renderFeaturedCarousel();
                 sortPersonalizedFeed();
                 await renderPersonalizedGallery(true);
                 setupAllEventListeners();
@@ -126,7 +128,6 @@
             const targetView = document.getElementById(viewId);
             if(targetView) {
                 targetView.classList.remove('hidden');
-                // Aseguramos que las vistas que no son modales estén visibles
                 if (!['detailView', 'userProfileView'].includes(viewId)) {
                     document.getElementById('detailView').classList.remove('active');
                     document.getElementById('userProfileView').classList.remove('active');
@@ -162,7 +163,61 @@
             }
         }
         
-        // --- RENDERIZADO DE GALERÍAS ---
+        // --- RENDERIZADO DE GALERÍAS Y SECCIONES ---
+        function renderFeaturedCarousel() {
+            let featuredImages = [];
+            const userInterests = new Set(currentUserData.profile.interests || []);
+
+            if (userInterests.size === 0) {
+                featuredImages = allImages.filter(img => img.featured);
+            } else {
+                const scoredImages = allImages.map(img => {
+                    const score = img.tags.reduce((currentScore, tag) => {
+                        return userInterests.has(tag) ? currentScore + 1 : currentScore;
+                    }, 0);
+                    return { ...img, relevanceScore: score };
+                });
+                featuredImages = scoredImages
+                    .sort((a, b) => b.relevanceScore - a.relevanceScore)
+                    .slice(0, 7);
+            }
+
+            const wrapper = document.getElementById('featured-wrapper');
+            wrapper.innerHTML = ''; 
+
+            if (featuredImages.length === 0) {
+                document.querySelector('.featured-carousel').style.display = 'none';
+                return;
+            }
+
+            featuredImages.forEach(img => {
+                const slide = document.createElement('div');
+                slide.className = 'swiper-slide';
+                slide.innerHTML = `<img src="${img.url}" alt="${img.title}">`;
+                slide.addEventListener('click', () => showDetailView(img.id));
+                wrapper.appendChild(slide);
+            });
+            
+            if (featuredSwiper) {
+                featuredSwiper.destroy(true, true);
+            }
+            featuredSwiper = new Swiper('.featured-carousel', {
+                loop: featuredImages.length > 1,
+                autoplay: {
+                    delay: 4000,
+                    disableOnInteraction: false,
+                },
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+            });
+        }
+
         function appendToImageGrid(container, imagesToRender) {
              imagesToRender.forEach(img => {
                 const postCard = document.createElement('div');
@@ -211,13 +266,53 @@
             container.innerHTML = '';
             appendToImageGrid(container, popularImages.slice(0, 21));
         }
+        
+        function renderSimilarImages(currentImage) {
+            const section = document.getElementById('similar-section');
+            const container = document.getElementById('similar-images-grid');
+            container.innerHTML = ''; 
+            
+            const currentTags = new Set(currentImage.tags);
+
+            if (currentTags.size === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            const similarImages = allImages
+                .map(img => {
+                    if (img.id === currentImage.id) {
+                        return { ...img, score: -1 }; 
+                    }
+                    const sharedTagsCount = img.tags.filter(tag => currentTags.has(tag)).length;
+                    return { ...img, score: sharedTagsCount };
+                })
+                .filter(img => img.score > 0) 
+                .sort((a, b) => b.score - a.score) 
+                .slice(0, 6);
+
+            if (similarImages.length > 0) {
+                section.classList.remove('hidden');
+                appendToImageGrid(container, similarImages);
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+
 
         // --- VISTAS ESPECÍFICAS ---
         async function showDetailView(imageId) {
+            const detailViewScroller = document.querySelector('#detailView > main');
+            if (detailViewScroller) {
+                detailViewScroller.scrollTop = 0;
+            }
+
             const img = allImages.find(i => i.id === Number(imageId));
             if (!img) return;
 
-            if (currentViewer) currentViewer.destroy();
+            if (currentViewer) {
+                currentViewer.destroy();
+            }
             
             document.getElementById('imageViewer').innerHTML = `<img src="${img.url}" alt="${img.title}">`;
             document.getElementById('detailTitle').textContent = img.title;
@@ -229,10 +324,18 @@
             document.getElementById('detailAuthorInfo').onclick = () => showToast("Este es el perfil del administrador.");
             
             document.getElementById('detailLikeBtn').dataset.id = imageId;
+            document.getElementById('detailFavoriteBtn').dataset.id = imageId; // Asignar ID al botón de favorito
             document.getElementById('commentForm').dataset.imageId = imageId;
             
+            // Comprobar estado de favorito
+            const favRef = db.ref(`favorites/${deviceId}/${imageId}`);
+            favRef.once('value', snap => {
+                document.getElementById('detailFavoriteBtn').classList.toggle('favorited', snap.exists());
+            });
+
             loadLikesAndViews(imageId);
             loadComments(imageId);
+            renderSimilarImages(img);
             db.ref(`views/${imageId}/${deviceId}`).set(true);
             
             navigateTo('detailView');
@@ -310,8 +413,6 @@
             }
         }
         
-        // --- SISTEMA DE NOTIFICACIONES TOAST ---
-        // CORRECCIÓN: Se reemplazó alert() por un sistema de toast no invasivo.
         function showToast(message) {
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toastMessage');
@@ -324,10 +425,9 @@
             
             toastTimeout = setTimeout(() => {
                 toast.classList.remove('show');
-            }, 3000); // El toast desaparece después de 3 segundos
+            }, 3000);
         }
 
-        // --- LÓGICA DE COMENTARIOS Y RESPUESTAS ---
         async function loadLikesAndViews(id) {
             const likeBtn = document.getElementById('detailLikeBtn');
             const likeCountEl = document.getElementById('detailLikeCount');
@@ -372,17 +472,17 @@
         
         function createCommentElement(id, data, imageId, isReply = false, replyingTo = '') {
             const li = document.createElement('li');
-            li.className = 'flex space-x-3';
+            li.className = 'comment-item';
             li.dataset.commentId = id;
-            li.dataset.authorId = data.deviceId; // Guardamos el ID del autor para usarlo después
+            li.dataset.authorId = data.deviceId; 
             li.dataset.authorName = data.username;
 
             const avatar = data.userAvatar || `https://api.dicebear.com/8.x/initials/svg?seed=${data.username}`;
             
             li.innerHTML = `
                 <img src="${avatar}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover cursor-pointer" data-userid="${data.deviceId}">
-                <div class="flex-1 comment-content">
-                    <div class="bg-gray-800 rounded-lg p-2">
+                <div class="comment-content">
+                    <div class="bg-gray-800/50 rounded-lg p-2">
                         <span class="font-bold text-sm text-white cursor-pointer hover:underline" data-userid="${data.deviceId}">${data.username}</span>
                         ${replyingTo ? `<span class="text-sm text-indigo-400"> en respuesta a ${replyingTo}</span>` : ''}
                         <p class="text-gray-300 mt-1">${data.text}</p>
@@ -403,7 +503,6 @@
             return li;
         }
 
-        // CORRECCIÓN: Ahora guardamos el ID del autor para no tener que leerlo de la DB
         function initiateReply(commentElement) {
             const commentForm = document.getElementById('commentForm');
             const replyingToBanner = document.getElementById('replyingToBanner');
@@ -411,12 +510,12 @@
             const commentText = document.getElementById('commentText');
 
             const authorName = commentElement.dataset.authorName;
-            const authorId = commentElement.dataset.authorId; // Se obtiene el ID del autor del dataset
+            const authorId = commentElement.dataset.authorId;
             const commentId = commentElement.dataset.commentId;
 
             commentForm.dataset.replyToCommentId = commentId;
             commentForm.dataset.replyToUsername = authorName;
-            commentForm.dataset.replyToAuthorId = authorId; // Se guarda en el formulario
+            commentForm.dataset.replyToAuthorId = authorId;
 
             replyingToUsername.textContent = authorName;
             replyingToBanner.classList.remove('hidden');
@@ -432,13 +531,12 @@
 
             delete commentForm.dataset.replyToCommentId;
             delete commentForm.dataset.replyToUsername;
-            delete commentForm.dataset.replyToAuthorId; // Se limpia el ID del autor
+            delete commentForm.dataset.replyToAuthorId;
 
             replyingToBanner.classList.add('hidden');
             commentText.placeholder = 'Escribe un comentario...';
         }
         
-        // --- NOTIFICACIONES ---
         function setupNotificationsListener() {
             const notificationsRef = db.ref(`notifications/${deviceId}`);
             const badge = document.getElementById('navNotificationsBadge');
@@ -484,12 +582,11 @@
             }
         }
 
-        // --- LÓGICA DE PERFIL PROPIO ---
-        function populateProfileView() {
+        async function populateProfileView() {
             document.getElementById('profileAvatar').src = currentUserData.profile.avatar;
             document.getElementById('profileUsername').textContent = currentUserData.username;
             document.getElementById('profileBio').value = currentUserData.profile.bio || '';
-
+            
             const interestsContainer = document.getElementById('profileInterests');
             interestsContainer.innerHTML = '';
             const userInterests = new Set(currentUserData.profile.interests);
@@ -517,37 +614,62 @@
                 interestsContainer.appendChild(tagEl);
             });
             updateInterestCounter();
+            
+            // Cargar favoritos al abrir el perfil
+            const favSnapshot = await db.ref(`favorites/${deviceId}`).once('value');
+            const favoriteIds = favSnapshot.exists() ? Object.keys(favSnapshot.val()) : [];
+            renderFavorites(favoriteIds);
         }
         
+        async function renderFavorites(favoriteIds) {
+            const container = document.getElementById('favoritesGrid');
+            const noFavsMessage = document.getElementById('no-favorites-message');
+            container.innerHTML = '';
+            
+            if(favoriteIds.length === 0) {
+                noFavsMessage.classList.remove('hidden');
+                return;
+            }
+            noFavsMessage.classList.add('hidden');
+            
+            const favoriteImages = allImages.filter(img => favoriteIds.includes(String(img.id)));
+            appendToImageGrid(container, favoriteImages);
+        }
+
         function updateInterestCounter() {
             const count = document.querySelectorAll('#profileInterests .bg-indigo-600').length;
             const counterEl = document.getElementById('interestCounter');
             counterEl.textContent = `${count}/${INTEREST_LIMIT}`;
             counterEl.classList.toggle('text-red-500', count >= INTEREST_LIMIT);
         }
+        
+        async function updateAvatar(url) {
+            currentUserData.profile.avatar = url;
+            document.getElementById('profileAvatar').src = url;
+            document.getElementById('navProfileAvatar').src = url;
+            document.getElementById('commentFormAvatar').src = url;
+            await db.ref(`users/${deviceId}/profile/avatar`).set(url);
+            document.getElementById('avatarModal').classList.add('hidden');
+            showToast("Avatar actualizado");
+        }
 
-        // --- MANEJO DE EVENTOS ---
         function setupAllEventListeners() {
-            // Navegación
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 if(btn.dataset.view) btn.addEventListener('click', () => navigateTo(btn.dataset.view));
             });
 
-            // CORRECCIÓN: Se añade lógica para que la animación de salida se complete.
             document.getElementById('detailBackBtn').addEventListener('click', () => {
                 const view = document.getElementById('detailView');
-                view.classList.remove('active'); // Inicia animación de salida
-                setTimeout(() => navigateTo(lastView || 'galleryView'), 300); // Espera a que termine la animación
+                view.classList.remove('active');
+                setTimeout(() => navigateTo(lastView || 'galleryView'), 300);
             });
             
             document.getElementById('userProfileBackBtn').addEventListener('click', () => {
                 const view = document.getElementById('userProfileView');
-                view.classList.remove('active'); // Inicia animación de salida
-                setTimeout(() => navigateTo(lastView || 'galleryView'), 300); // Espera a que termine la animación
+                view.classList.remove('active');
+                setTimeout(() => navigateTo(lastView || 'galleryView'), 300);
             });
 
-
-            // Scroll infinito
             const observer = new IntersectionObserver((entries) => {
                 if (entries[0].isIntersecting && !isGalleryLoading) {
                     renderPersonalizedGallery(false);
@@ -555,7 +677,6 @@
             }, { threshold: 0.5 });
             observer.observe(document.getElementById('sentinel'));
             
-            // Búsqueda
             document.getElementById('searchForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 renderSearchResults(document.getElementById('searchInput').value);
@@ -564,8 +685,6 @@
                 renderSearchResults(e.target.value);
             });
 
-
-            // Perfil
             document.getElementById('saveProfileBtn').addEventListener('click', async () => {
                 const bio = document.getElementById('profileBio').value;
                 const interests = Array.from(document.querySelectorAll('#profileInterests .bg-indigo-600')).map(el => el.dataset.tag);
@@ -574,38 +693,57 @@
                 showToast('Perfil guardado');
                 sortPersonalizedFeed();
                 renderPersonalizedGallery(true);
+                renderFeaturedCarousel(); 
             });
-            document.getElementById('interestSearchInput').addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase();
-                document.querySelectorAll('#profileInterests button').forEach(btn => {
-                    btn.style.display = btn.textContent.toLowerCase().includes(query) ? '' : 'none';
+            
+            // --- Lógica de Pestañas de Perfil ---
+            const tabs = document.querySelectorAll('.profile-tab');
+            const tabContents = document.querySelectorAll('.profile-tab-content');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(item => item.classList.remove('tab-active'));
+                    tab.classList.add('tab-active');
+                    
+                    const targetId = tab.id.replace('tab-', 'content-');
+                    tabContents.forEach(content => {
+                        content.classList.toggle('hidden', content.id !== targetId);
+                    });
                 });
             });
+
+            // --- Lógica del Modal de Avatar Mejorado ---
             document.getElementById('changeAvatarBtn').addEventListener('click', () => {
                 const modal = document.getElementById('avatarModal');
                 const selection = document.getElementById('avatarSelection');
                 selection.innerHTML = '';
-                for (let i = 0; i < 8; i++) {
+                // Aumentado a 16 avatares
+                for (let i = 0; i < 16; i++) {
                     const seed = Math.random().toString(36).substring(7);
                     const avatarUrl = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${seed}`;
                     const img = document.createElement('img');
                     img.src = avatarUrl;
                     img.className = 'w-16 h-16 rounded-full cursor-pointer hover:ring-2 ring-indigo-500 object-cover';
-                    img.onclick = async () => {
-                        currentUserData.profile.avatar = avatarUrl;
-                        document.getElementById('profileAvatar').src = avatarUrl;
-                        document.getElementById('navProfileAvatar').src = avatarUrl;
-                        document.getElementById('commentFormAvatar').src = avatarUrl;
-                        await db.ref(`users/${deviceId}/profile/avatar`).set(avatarUrl);
-                        modal.classList.add('hidden');
-                    };
+                    img.onclick = () => updateAvatar(avatarUrl);
                     selection.appendChild(img);
                 }
                 modal.classList.remove('hidden');
             });
+
+            document.getElementById('avatarUrlForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const input = document.getElementById('avatarUrlInput');
+                const url = input.value.trim();
+                const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+                if (url && validExtensions.some(ext => url.toLowerCase().endsWith(ext))) {
+                    updateAvatar(url);
+                    input.value = '';
+                } else {
+                    showToast('Por favor, introduce una URL de imagen válida.');
+                }
+            });
+            
             document.getElementById('closeAvatarModal').addEventListener('click', () => document.getElementById('avatarModal').classList.add('hidden'));
 
-            // Notificaciones Modal
             const notificationsWindow = document.getElementById('notificationsWindow');
             document.getElementById('navNotificationsBtn').addEventListener('click', () => {
                 notificationsWindow.classList.remove('hidden');
@@ -622,14 +760,22 @@
                 }
             });
 
-            // Interacciones de detalle
             document.getElementById('detailLikeBtn').addEventListener('click', function() {
                 const id = this.dataset.id;
                 const ref = db.ref(`likes/${id}/${deviceId}`);
                 ref.once('value', snap => ref.set(snap.exists() ? null : true));
             });
 
-            // CORRECCIÓN: Lógica optimizada para enviar notificación de respuesta.
+            // --- Lógica del Botón de Favoritos ---
+            document.getElementById('detailFavoriteBtn').addEventListener('click', function() {
+                const id = this.dataset.id;
+                const ref = db.ref(`favorites/${deviceId}/${id}`);
+                this.classList.toggle('favorited');
+                ref.once('value', snap => {
+                    ref.set(snap.exists() ? null : true); // Si existe lo borra, si no, lo crea.
+                });
+            });
+
             document.getElementById('commentForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const imageId = Number(this.dataset.imageId);
@@ -645,7 +791,6 @@
                     await db.ref(`comments/${imageId}/${replyToCommentId}/replies`).push(replyData);
                     
                     const replyToUsername = this.dataset.replyToUsername;
-                    // Se usa el ID del autor guardado, evitando una lectura a la DB.
                     const targetUserId = this.dataset.replyToAuthorId; 
 
                     sendReplyNotification(targetUserId, replyToUsername, imageId);

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exene</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -27,7 +28,16 @@
         <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-11/12 max-w-md">
             <h3 class="text-lg font-bold text-white mb-4">Elige tu Avatar</h3>
             <div id="avatarSelection" class="grid grid-cols-4 gap-4"></div>
-             <button id="closeAvatarModal" class="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Cerrar</button>
+            
+            <div class="mt-6 border-t border-gray-700 pt-4">
+                 <h4 class="text-sm font-medium text-gray-400 mb-2">O pega una URL de imagen</h4>
+                 <form id="avatarUrlForm" class="flex items-center gap-2">
+                     <input type="url" id="avatarUrlInput" placeholder="https://..." required class="flex-1 w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                     <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Usar</button>
+                 </form>
+            </div>
+
+             <button id="closeAvatarModal" class="mt-6 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Cerrar</button>
         </div>
     </div>
 
@@ -37,6 +47,14 @@
             <img src="logo.png" alt="Exene" class="h-8">
             <h2 class="text-lg font-bold text-white">Para ti</h2>
         </header>
+        
+        <div class="swiper featured-carousel container mx-auto my-4 rounded-lg overflow-hidden">
+            <div class="swiper-wrapper" id="featured-wrapper"></div>
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+        </div>
+
         <div id="gallery" class="p-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div>
         <div id="sentinel" class="h-1"></div>
         <div id="galleryLoader" class="text-center p-8 hidden">
@@ -65,24 +83,43 @@
                 </div>
                 <h3 id="profileUsername" class="text-2xl font-bold text-white"></h3>
             </div>
-            <div>
-                <label for="profileBio" class="block text-sm font-medium text-gray-400 mb-1">Tu biografía</label>
-                <textarea id="profileBio" rows="3" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Describe algo sobre ti..."></textarea>
+            
+            <!-- PESTAÑAS DEL PERFIL -->
+            <div class="border-b border-gray-700">
+                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button id="tab-interests" class="profile-tab tab-active">Intereses</button>
+                    <button id="tab-favorites" class="profile-tab">Favoritos</button>
+                </nav>
             </div>
-            <div>
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="text-sm font-medium text-gray-400">Tus intereses</h4>
-                    <p id="interestCounter" class="text-sm text-gray-500">0/10</p>
+            
+            <!-- CONTENIDO DE LAS PESTAÑAS -->
+            <div id="content-interests" class="profile-tab-content">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-sm font-medium text-gray-400">Tus intereses</h4>
+                        <p id="interestCounter" class="text-sm text-gray-500">0/10</p>
+                    </div>
+                    <div class="relative mb-2">
+                        <input id="interestSearchInput" type="search" placeholder="Buscar intereses..." class="w-full bg-gray-800 text-white rounded-full pl-10 pr-4 py-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    </div>
+                    <div id="profileInterests" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto"></div>
                 </div>
-                <div class="relative mb-2">
-                    <input id="interestSearchInput" type="search" placeholder="Buscar intereses..." class="w-full bg-gray-800 text-white rounded-full pl-10 pr-4 py-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <div>
+                    <label for="profileBio" class="block text-sm font-medium text-gray-400 mb-1 mt-4">Tu biografía</label>
+                    <textarea id="profileBio" rows="3" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Describe algo sobre ti..."></textarea>
                 </div>
-                <div id="profileInterests" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto"></div>
+                <button id="saveProfileBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-md transition-colors mt-4">
+                    Guardar Cambios
+                </button>
             </div>
-            <button id="saveProfileBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-md transition-colors">
-                Guardar Cambios
-            </button>
+
+            <div id="content-favorites" class="profile-tab-content hidden">
+                 <div id="favoritesGrid" class="p-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    <!-- Las imágenes favoritas se inyectarán aquí -->
+                </div>
+                <p id="no-favorites-message" class="text-center text-gray-500 hidden">Aún no has guardado ninguna imagen en favoritos.</p>
+            </div>
         </div>
     </main>
     
@@ -107,7 +144,7 @@
         </div>
     </main>
 
-    <!-- ========== VISTA DE DETALLE (DISEÑO MEJORADO) ========== -->
+    <!-- ========== VISTA DE DETALLE ========== -->
     <div id="detailView" class="view hidden fixed inset-0 bg-gray-900 z-20 flex flex-col transform translate-y-full transition-transform duration-300 ease-in-out">
         <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm z-10 flex-shrink-0">
             <button id="detailBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center">
@@ -122,24 +159,14 @@
             </button>
         </header>
 
-        <!-- CORRECCIÓN: Se aumentó el padding inferior de pb-20 a pb-32 para dejar espacio al formulario de comentarios -->
         <main class="flex-1 overflow-y-auto pb-32">
-            <!-- 1. Visor de la imagen -->
-            <div id="imageViewer" class="bg-black">
-                <!-- La imagen se inyecta aquí con Viewer.js -->
-            </div>
-
-            <!-- 2. Contenedor de Información y Acciones -->
+            <div id="imageViewer" class="bg-black"></div>
             <div class="p-4 space-y-4">
-                <!-- Título y Descripción -->
                 <div>
                     <h1 id="detailTitle" class="text-white font-bold text-xl"></h1>
                     <p id="detailDescription" class="text-gray-300 mt-1 text-sm leading-relaxed"></p>
                 </div>
-                
-                <!-- Barra de Acciones y Estadísticas -->
                 <div class="flex items-center justify-between">
-                    <!-- Acciones (Like y Comentar) -->
                     <div class="flex items-center space-x-6 text-2xl text-gray-400">
                         <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group">
                             <i class="far fa-heart group-hover:text-pink-500 transition-colors"></i>
@@ -147,8 +174,11 @@
                         <button id="focusCommentBtn" class="comment-btn flex items-center space-x-2 group">
                             <i class="far fa-comment group-hover:text-indigo-400 transition-colors"></i>
                         </button>
+                        <!-- NUEVO BOTÓN DE FAVORITOS -->
+                        <button id="detailFavoriteBtn" class="favorite-btn flex items-center space-x-2 group">
+                            <i class="far fa-bookmark group-hover:text-yellow-400 transition-colors"></i>
+                        </button>
                     </div>
-                    <!-- Estadísticas (Likes y Vistas) -->
                     <div class="text-sm text-gray-400">
                         <span id="detailLikeCount" class="font-semibold text-white cursor-pointer">0 Me gusta</span>
                         <span class="text-gray-500 mx-1">•</span>
@@ -156,11 +186,14 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 3. Sección de Comentarios -->
             <section class="p-4 pt-2 border-t border-gray-800/60">
                  <h2 class="font-bold text-white mb-4">Comentarios</h2>
                  <ul id="commentsList" class="space-y-4"></ul>
+            </section>
+            
+            <section id="similar-section" class="p-4 pt-6 border-t border-gray-800/60 hidden">
+                <h2 class="font-bold text-white mb-4">Imágenes Similares</h2>
+                <div id="similar-images-grid" class="grid grid-cols-3 gap-2"></div>
             </section>
         </main>
     </div>
@@ -189,7 +222,6 @@
         </div>
     </div>
     
-    <!-- Formulario de Comentario - AHORA ES INDEPENDIENTE Y SE MUESTRA/OCULTA CON JS -->
     <div id="comment-container" class="fixed bottom-16 left-0 right-0 z-30 hidden">
         <div id="replyingToBanner" class="hidden bg-gray-700 p-2 text-sm flex justify-between items-center">
             <span class="text-gray-300">Respondiendo a <strong id="replyingToUsername" class="text-white"></strong></span>
@@ -202,13 +234,10 @@
         </form>
     </div>
     
-    <!-- ========== NOTIFICACIÓN TOAST ========== -->
     <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 opacity-0 transform translate-y-4">
         <p id="toastMessage"></p>
     </div>
 
-
-    <!-- ========== BARRA DE NAVEGACIÓN INFERIOR ========== -->
     <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-20">
         <nav class="flex justify-around items-center h-16">
             <button data-view="galleryView" class="nav-btn text-indigo-400 text-2xl p-3"><i class="fas fa-home"></i></button>
@@ -227,6 +256,7 @@
     <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.js"></script>
     <script src="script.js"></script>
 </body>
