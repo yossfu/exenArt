@@ -25,6 +25,7 @@
         let currentViewer = null;
         let lastView = 'galleryView';
         let isGalleryLoading = false;
+        let toastTimeout;
         const ADMIN_USER_DATA = { deviceId: 'admin_exen', username: 'Exen', profile: { avatar: 'logo.png' } };
         const INTEREST_LIMIT = 10;
 
@@ -65,6 +66,7 @@
                 navigateTo('galleryView');
             } catch (error) {
                 console.error("Error inicializando la app:", error);
+                showToast("Error al cargar la aplicación");
             } finally {
                 showLoader(false);
             }
@@ -89,13 +91,18 @@
         }
 
         async function loadAllImagesAndTags() {
-            const response = await fetch('imagenes.json');
-            if (!response.ok) throw new Error('Error al cargar imágenes');
-            allImages = await response.json();
-            allImages.forEach(img => {
-                img.tags.forEach(tag => allTags.add(tag));
-                img.authorDeviceId = ADMIN_USER_DATA.deviceId;
-            });
+            try {
+                const response = await fetch('imagenes.json');
+                if (!response.ok) throw new Error('Error al cargar imágenes');
+                allImages = await response.json();
+                allImages.forEach(img => {
+                    img.tags.forEach(tag => allTags.add(tag));
+                    img.authorDeviceId = ADMIN_USER_DATA.deviceId;
+                });
+            } catch (error) {
+                console.error("Fallo al cargar imagenes.json:", error);
+                showToast("No se pudieron cargar las imágenes");
+            }
         }
         
         function sortPersonalizedFeed() {
@@ -107,8 +114,9 @@
             });
         }
 
-        // --- NAVEGACIÓN ---
+        // --- NAVEGACIÓN Y UI ---
         function navigateTo(viewId, data = null) {
+            const commentContainer = document.getElementById('comment-container');
             const currentActiveView = document.querySelector('.view:not(.hidden)');
             if (currentActiveView && !['detailView', 'userProfileView'].includes(currentActiveView.id)) {
                 lastView = currentActiveView.id;
@@ -118,6 +126,18 @@
             const targetView = document.getElementById(viewId);
             if(targetView) {
                 targetView.classList.remove('hidden');
+                // Aseguramos que las vistas que no son modales estén visibles
+                if (!['detailView', 'userProfileView'].includes(viewId)) {
+                    document.getElementById('detailView').classList.remove('active');
+                    document.getElementById('userProfileView').classList.remove('active');
+                }
+            }
+
+            if (viewId === 'detailView') {
+                commentContainer.classList.remove('hidden');
+            } else {
+                commentContainer.classList.add('hidden');
+                cancelReply();
             }
 
             document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -138,10 +158,7 @@
             if (viewId === 'searchView') document.getElementById('searchInput').focus();
             
             if (['detailView', 'userProfileView'].includes(viewId)) {
-                requestAnimationFrame(() => targetView.classList.add('active'));
-            } else {
-                document.getElementById('detailView').classList.remove('active');
-                document.getElementById('userProfileView').classList.remove('active');
+                 setTimeout(() => targetView.classList.add('active'), 10);
             }
         }
         
@@ -209,7 +226,7 @@
             const authorData = ADMIN_USER_DATA;
             document.getElementById('detailAuthorUsername').textContent = authorData.username;
             document.getElementById('detailAuthorAvatar').src = authorData.profile.avatar;
-            document.getElementById('detailAuthorInfo').onclick = () => alert("Este es el perfil del administrador.");
+            document.getElementById('detailAuthorInfo').onclick = () => showToast("Este es el perfil del administrador.");
             
             document.getElementById('detailLikeBtn').dataset.id = imageId;
             document.getElementById('commentForm').dataset.imageId = imageId;
@@ -224,7 +241,7 @@
 
         async function showUserProfile({ userId }) {
             if (userId === ADMIN_USER_DATA.deviceId) {
-                alert("Este es el perfil del administrador.");
+                showToast("Este es el perfil del administrador.");
                 return;
             }
             const userRef = db.ref(`users/${userId}`);
@@ -232,8 +249,7 @@
             const userData = snapshot.val();
 
             if (!userData) {
-                alert('Usuario no encontrado');
-                navigateTo(lastView);
+                showToast('Usuario no encontrado');
                 return;
             }
             
@@ -256,13 +272,14 @@
             } else {
                 interestsContainer.innerHTML = `<p class="text-sm text-gray-500">Sin intereses seleccionados.</p>`;
             }
+            navigateTo('userProfileView');
         }
         
         function renderSearchResults(query) {
             const resultsContainer = document.getElementById('searchResults');
             const resultCountEl = document.getElementById('searchResultCount');
             
-            resultsContainer.innerHTML = ''; // Limpiar resultados anteriores
+            resultsContainer.innerHTML = ''; 
             if (query.length < 2) {
                 resultCountEl.textContent = 'Escribe al menos 2 caracteres para buscar.';
                 return;
@@ -291,6 +308,23 @@
             } else {
                 resultsContainer.innerHTML = '<p class="text-gray-500 text-center col-span-full">No se encontraron resultados.</p>';
             }
+        }
+        
+        // --- SISTEMA DE NOTIFICACIONES TOAST ---
+        // CORRECCIÓN: Se reemplazó alert() por un sistema de toast no invasivo.
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            
+            if (toastTimeout) clearTimeout(toastTimeout);
+            
+            toast.classList.add('show');
+            
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000); // El toast desaparece después de 3 segundos
         }
 
         // --- LÓGICA DE COMENTARIOS Y RESPUESTAS ---
@@ -323,11 +357,13 @@
                     const li = createCommentElement(commentId, comment, imageId);
                     
                     if (comment.replies) {
-                        const repliesList = li.querySelector('.replies-list');
-                        Object.entries(comment.replies).forEach(([replyId, reply]) => {
+                        const repliesList = document.createElement('ul');
+                        repliesList.className = 'pl-6 mt-3 space-y-3';
+                        Object.entries(comment.replies).sort((a,b) => a[1].timestamp - b[1].timestamp).forEach(([replyId, reply]) => {
                             const replyLi = createCommentElement(replyId, reply, imageId, true, comment.username);
                             repliesList.appendChild(replyLi);
                         });
+                        li.querySelector('.comment-content').appendChild(repliesList);
                     }
                     commentsList.prepend(li);
                 });
@@ -336,83 +372,70 @@
         
         function createCommentElement(id, data, imageId, isReply = false, replyingTo = '') {
             const li = document.createElement('li');
-            li.className = `flex space-x-3 ${isReply ? 'ml-6' : ''}`;
+            li.className = 'flex space-x-3';
             li.dataset.commentId = id;
-            li.dataset.authorId = data.deviceId;
+            li.dataset.authorId = data.deviceId; // Guardamos el ID del autor para usarlo después
             li.dataset.authorName = data.username;
 
             const avatar = data.userAvatar || `https://api.dicebear.com/8.x/initials/svg?seed=${data.username}`;
             
             li.innerHTML = `
                 <img src="${avatar}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover cursor-pointer" data-userid="${data.deviceId}">
-                <div class="flex-1">
+                <div class="flex-1 comment-content">
                     <div class="bg-gray-800 rounded-lg p-2">
                         <span class="font-bold text-sm text-white cursor-pointer hover:underline" data-userid="${data.deviceId}">${data.username}</span>
                         ${replyingTo ? `<span class="text-sm text-indigo-400"> en respuesta a ${replyingTo}</span>` : ''}
                         <p class="text-gray-300 mt-1">${data.text}</p>
                     </div>
-                    <div class="text-xs text-gray-500 mt-1">
+                    <div class="text-xs text-gray-500 mt-1 pl-2">
                         <button class="hover:underline reply-btn">Responder</button>
                     </div>
-                    <div class="reply-form-container hidden mt-2"></div>
-                    <ul class="replies-list mt-2 space-y-3"></ul>
                 </div>
             `;
             
-            li.querySelector('.reply-btn').addEventListener('click', (e) => showReplyForm(e.currentTarget.closest('li')));
+            li.querySelector('.reply-btn').addEventListener('click', (e) => initiateReply(e.currentTarget.closest('li')));
             li.querySelectorAll('[data-userid]').forEach(el => {
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    navigateTo('userProfileView', { userId: el.dataset.userid });
+                    showUserProfile({ userId: el.dataset.userid });
                 });
             });
             return li;
         }
 
-        function showReplyForm(commentElement) {
-            const container = commentElement.querySelector('.reply-form-container');
-            if (container.innerHTML !== '') {
-                container.innerHTML = '';
-                container.classList.add('hidden');
-                return;
-            }
-            container.classList.remove('hidden');
+        // CORRECCIÓN: Ahora guardamos el ID del autor para no tener que leerlo de la DB
+        function initiateReply(commentElement) {
+            const commentForm = document.getElementById('commentForm');
+            const replyingToBanner = document.getElementById('replyingToBanner');
+            const replyingToUsername = document.getElementById('replyingToUsername');
+            const commentText = document.getElementById('commentText');
 
-            const form = document.createElement('form');
-            form.className = 'flex items-center space-x-2';
-            form.innerHTML = `
-                <img src="${currentUserData.profile.avatar}" class="w-6 h-6 rounded-full object-cover">
-                <input type="text" placeholder="Escribe una respuesta..." class="flex-1 bg-gray-700 text-white rounded-full px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                <button type="submit" class="text-indigo-400"><i class="fas fa-paper-plane"></i></button>
-            `;
-            container.appendChild(form);
-            form.querySelector('input').focus();
-            
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const imageId = document.getElementById('commentForm').dataset.imageId;
-                const parentCommentId = commentElement.dataset.commentId;
-                const textInput = form.querySelector('input');
-                const text = textInput.value.trim();
+            const authorName = commentElement.dataset.authorName;
+            const authorId = commentElement.dataset.authorId; // Se obtiene el ID del autor del dataset
+            const commentId = commentElement.dataset.commentId;
 
-                if (text) {
-                    const replyData = {
-                        text,
-                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        username: currentUserData.username,
-                        deviceId,
-                        userAvatar: currentUserData.profile.avatar
-                    };
-                    await db.ref(`comments/${imageId}/${parentCommentId}/replies`).push(replyData);
-                    
-                    const parentAuthorId = commentElement.dataset.authorId;
-                    const parentAuthorName = commentElement.dataset.authorName;
-                    sendReplyNotification(parentAuthorId, parentAuthorName, imageId);
-                    
-                    container.innerHTML = '';
-                    container.classList.add('hidden');
-                }
-            });
+            commentForm.dataset.replyToCommentId = commentId;
+            commentForm.dataset.replyToUsername = authorName;
+            commentForm.dataset.replyToAuthorId = authorId; // Se guarda en el formulario
+
+            replyingToUsername.textContent = authorName;
+            replyingToBanner.classList.remove('hidden');
+
+            commentText.placeholder = `Respondiendo a ${authorName}...`;
+            commentText.focus();
+        }
+
+        function cancelReply() {
+            const commentForm = document.getElementById('commentForm');
+            const replyingToBanner = document.getElementById('replyingToBanner');
+            const commentText = document.getElementById('commentText');
+
+            delete commentForm.dataset.replyToCommentId;
+            delete commentForm.dataset.replyToUsername;
+            delete commentForm.dataset.replyToAuthorId; // Se limpia el ID del autor
+
+            replyingToBanner.classList.add('hidden');
+            commentText.placeholder = 'Escribe un comentario...';
         }
         
         // --- NOTIFICACIONES ---
@@ -461,14 +484,68 @@
             }
         }
 
+        // --- LÓGICA DE PERFIL PROPIO ---
+        function populateProfileView() {
+            document.getElementById('profileAvatar').src = currentUserData.profile.avatar;
+            document.getElementById('profileUsername').textContent = currentUserData.username;
+            document.getElementById('profileBio').value = currentUserData.profile.bio || '';
+
+            const interestsContainer = document.getElementById('profileInterests');
+            interestsContainer.innerHTML = '';
+            const userInterests = new Set(currentUserData.profile.interests);
+
+            Array.from(allTags).sort().forEach(tag => {
+                const tagEl = document.createElement('button');
+                tagEl.textContent = tag;
+                tagEl.dataset.tag = tag;
+                const isSelected = userInterests.has(tag);
+                tagEl.className = `px-3 py-1 text-sm rounded-full cursor-pointer transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300'}`;
+                
+                tagEl.addEventListener('click', () => {
+                    const selectedCount = interestsContainer.querySelectorAll('.bg-indigo-600').length;
+                    const isCurrentlySelected = tagEl.classList.contains('bg-indigo-600');
+                    if (!isCurrentlySelected && selectedCount >= INTEREST_LIMIT) {
+                        showToast(`Puedes elegir hasta ${INTEREST_LIMIT} intereses.`);
+                        return; 
+                    }
+                    tagEl.classList.toggle('bg-indigo-600');
+                    tagEl.classList.toggle('text-white');
+                    tagEl.classList.toggle('bg-gray-700');
+                    tagEl.classList.toggle('text-gray-300');
+                    updateInterestCounter();
+                });
+                interestsContainer.appendChild(tagEl);
+            });
+            updateInterestCounter();
+        }
+        
+        function updateInterestCounter() {
+            const count = document.querySelectorAll('#profileInterests .bg-indigo-600').length;
+            const counterEl = document.getElementById('interestCounter');
+            counterEl.textContent = `${count}/${INTEREST_LIMIT}`;
+            counterEl.classList.toggle('text-red-500', count >= INTEREST_LIMIT);
+        }
+
         // --- MANEJO DE EVENTOS ---
         function setupAllEventListeners() {
             // Navegación
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 if(btn.dataset.view) btn.addEventListener('click', () => navigateTo(btn.dataset.view));
             });
-            document.getElementById('detailBackBtn').addEventListener('click', () => navigateTo(lastView || 'galleryView'));
-            document.getElementById('userProfileBackBtn').addEventListener('click', () => navigateTo(lastView || 'galleryView'));
+
+            // CORRECCIÓN: Se añade lógica para que la animación de salida se complete.
+            document.getElementById('detailBackBtn').addEventListener('click', () => {
+                const view = document.getElementById('detailView');
+                view.classList.remove('active'); // Inicia animación de salida
+                setTimeout(() => navigateTo(lastView || 'galleryView'), 300); // Espera a que termine la animación
+            });
+            
+            document.getElementById('userProfileBackBtn').addEventListener('click', () => {
+                const view = document.getElementById('userProfileView');
+                view.classList.remove('active'); // Inicia animación de salida
+                setTimeout(() => navigateTo(lastView || 'galleryView'), 300); // Espera a que termine la animación
+            });
+
 
             // Scroll infinito
             const observer = new IntersectionObserver((entries) => {
@@ -483,6 +560,10 @@
                 e.preventDefault();
                 renderSearchResults(document.getElementById('searchInput').value);
             });
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                renderSearchResults(e.target.value);
+            });
+
 
             // Perfil
             document.getElementById('saveProfileBtn').addEventListener('click', async () => {
@@ -490,9 +571,9 @@
                 const interests = Array.from(document.querySelectorAll('#profileInterests .bg-indigo-600')).map(el => el.dataset.tag);
                 await db.ref(`users/${deviceId}/profile`).update({ bio, interests });
                 await loadUserData(); 
-                alert('Perfil guardado');
+                showToast('Perfil guardado');
                 sortPersonalizedFeed();
-                await renderPersonalizedGallery(true);
+                renderPersonalizedGallery(true);
             });
             document.getElementById('interestSearchInput').addEventListener('input', (e) => {
                 const query = e.target.value.toLowerCase();
@@ -514,6 +595,7 @@
                         currentUserData.profile.avatar = avatarUrl;
                         document.getElementById('profileAvatar').src = avatarUrl;
                         document.getElementById('navProfileAvatar').src = avatarUrl;
+                        document.getElementById('commentFormAvatar').src = avatarUrl;
                         await db.ref(`users/${deviceId}/profile/avatar`).set(avatarUrl);
                         modal.classList.add('hidden');
                     };
@@ -527,7 +609,7 @@
             const notificationsWindow = document.getElementById('notificationsWindow');
             document.getElementById('navNotificationsBtn').addEventListener('click', () => {
                 notificationsWindow.classList.remove('hidden');
-                requestAnimationFrame(() => notificationsWindow.classList.add('active'));
+                setTimeout(() => notificationsWindow.classList.add('active'), 10);
             });
             document.getElementById('notificationsCloseBtn').addEventListener('click', () => {
                  notificationsWindow.classList.remove('active');
@@ -547,25 +629,39 @@
                 ref.once('value', snap => ref.set(snap.exists() ? null : true));
             });
 
+            // CORRECCIÓN: Lógica optimizada para enviar notificación de respuesta.
             document.getElementById('commentForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const imageId = Number(this.dataset.imageId);
                 const textInput = document.getElementById('commentText');
-                if (textInput.value.trim() && imageId) {
-                    await db.ref(`comments/${imageId}`).push({
-                        text: textInput.value.trim(),
-                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        username: currentUserData.username,
-                        deviceId: deviceId,
-                        userAvatar: currentUserData.profile.avatar
-                    });
-                    textInput.value = '';
+                const text = textInput.value.trim();
+
+                if (!text || !imageId) return;
+
+                const replyToCommentId = this.dataset.replyToCommentId;
+
+                if (replyToCommentId) {
+                    const replyData = { text, timestamp: firebase.database.ServerValue.TIMESTAMP, username: currentUserData.username, deviceId, userAvatar: currentUserData.profile.avatar };
+                    await db.ref(`comments/${imageId}/${replyToCommentId}/replies`).push(replyData);
+                    
+                    const replyToUsername = this.dataset.replyToUsername;
+                    // Se usa el ID del autor guardado, evitando una lectura a la DB.
+                    const targetUserId = this.dataset.replyToAuthorId; 
+
+                    sendReplyNotification(targetUserId, replyToUsername, imageId);
+                    cancelReply();
+                } else {
+                    await db.ref(`comments/${imageId}`).push({ text, timestamp: firebase.database.ServerValue.TIMESTAMP, username: currentUserData.username, deviceId, userAvatar: currentUserData.profile.avatar });
                 }
+                textInput.value = '';
             });
             
             document.getElementById('focusCommentBtn').addEventListener('click', () => {
                 document.getElementById('commentText').focus();
             });
+
+            document.getElementById('cancelReplyBtn').addEventListener('click', cancelReply);
+
             setupNotificationsListener();
         }
 

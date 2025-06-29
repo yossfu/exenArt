@@ -107,44 +107,62 @@
         </div>
     </main>
 
+    <!-- ========== VISTA DE DETALLE (DISEÑO MEJORADO) ========== -->
     <div id="detailView" class="view hidden fixed inset-0 bg-gray-900 z-20 flex flex-col transform translate-y-full transition-transform duration-300 ease-in-out">
         <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm z-10 flex-shrink-0">
-            <button id="detailBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors"><i class="fas fa-arrow-left"></i></button>
-            <button id="detailAuthorInfo" class="flex items-center gap-2 cursor-pointer group">
-                 <img id="detailAuthorAvatar" src="" class="w-8 h-8 rounded-full object-cover">
-                 <h3 class="font-bold text-lg text-white group-hover:underline" id="detailAuthorUsername"></h3>
+            <button id="detailBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center">
+                <i class="fas fa-arrow-left"></i>
             </button>
-            <button class="text-xl text-gray-400 hover:text-white transition-colors"><i class="fas fa-ellipsis-h"></i></button>
-        </header>
-        <main class="flex-1 overflow-y-auto">
-            <div id="imageViewer" class="bg-black"></div>
-            <div class="p-4">
-                <div class="flex items-center space-x-4 text-xl text-gray-400">
-                    <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group">
-                        <i class="far fa-heart group-hover:text-pink-500 transition-colors"></i>
-                    </button>
-                    <button id="focusCommentBtn" class="comment-btn flex items-center space-x-2 group">
-                        <i class="far fa-comment group-hover:text-indigo-400 transition-colors"></i>
-                    </button>
-                </div>
-                <div class="mt-3">
-                    <span id="detailLikeCount" class="font-semibold text-white cursor-pointer">0 Me gusta</span>
-                     <span class="text-gray-500 mx-1">•</span>
-                    <span id="detailViewCount" class="text-sm text-gray-500">0 Vistas</span>
-                </div>
-                <h1 id="detailTitle" class="text-white font-bold text-lg mt-2"></h1>
-                <p id="detailDescription" class="text-gray-300 mt-1"></p>
+            <div id="detailAuthorInfo" class="flex items-center gap-3 cursor-pointer group flex-1 justify-center">
+                 <img id="detailAuthorAvatar" src="" class="w-9 h-9 rounded-full object-cover border-2 border-gray-700 group-hover:border-indigo-500 transition-colors">
+                 <h3 class="font-bold text-lg text-white group-hover:underline" id="detailAuthorUsername"></h3>
             </div>
-            <section class="p-4 pt-0">
-                 <h2 class="font-bold text-white mb-2">Comentarios</h2>
+            <button class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+        </header>
+
+        <!-- CORRECCIÓN: Se aumentó el padding inferior de pb-20 a pb-32 para dejar espacio al formulario de comentarios -->
+        <main class="flex-1 overflow-y-auto pb-32">
+            <!-- 1. Visor de la imagen -->
+            <div id="imageViewer" class="bg-black">
+                <!-- La imagen se inyecta aquí con Viewer.js -->
+            </div>
+
+            <!-- 2. Contenedor de Información y Acciones -->
+            <div class="p-4 space-y-4">
+                <!-- Título y Descripción -->
+                <div>
+                    <h1 id="detailTitle" class="text-white font-bold text-xl"></h1>
+                    <p id="detailDescription" class="text-gray-300 mt-1 text-sm leading-relaxed"></p>
+                </div>
+                
+                <!-- Barra de Acciones y Estadísticas -->
+                <div class="flex items-center justify-between">
+                    <!-- Acciones (Like y Comentar) -->
+                    <div class="flex items-center space-x-6 text-2xl text-gray-400">
+                        <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group">
+                            <i class="far fa-heart group-hover:text-pink-500 transition-colors"></i>
+                        </button>
+                        <button id="focusCommentBtn" class="comment-btn flex items-center space-x-2 group">
+                            <i class="far fa-comment group-hover:text-indigo-400 transition-colors"></i>
+                        </button>
+                    </div>
+                    <!-- Estadísticas (Likes y Vistas) -->
+                    <div class="text-sm text-gray-400">
+                        <span id="detailLikeCount" class="font-semibold text-white cursor-pointer">0 Me gusta</span>
+                        <span class="text-gray-500 mx-1">•</span>
+                        <span id="detailViewCount" class="">0 Vistas</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Sección de Comentarios -->
+            <section class="p-4 pt-2 border-t border-gray-800/60">
+                 <h2 class="font-bold text-white mb-4">Comentarios</h2>
                  <ul id="commentsList" class="space-y-4"></ul>
             </section>
         </main>
-        <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2 border-t border-gray-700 z-10 flex-shrink-0">
-            <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full object-cover">
-            <input type="text" id="commentText" placeholder="Escribe un comentario..." class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <button type="submit" class="btn-comment text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
-        </form>
     </div>
 
     <main id="searchView" class="view hidden p-4 pt-4 pb-20">
@@ -170,6 +188,25 @@
             <div id="notificationsList" class="space-y-3 max-h-60 overflow-y-auto"></div>
         </div>
     </div>
+    
+    <!-- Formulario de Comentario - AHORA ES INDEPENDIENTE Y SE MUESTRA/OCULTA CON JS -->
+    <div id="comment-container" class="fixed bottom-16 left-0 right-0 z-30 hidden">
+        <div id="replyingToBanner" class="hidden bg-gray-700 p-2 text-sm flex justify-between items-center">
+            <span class="text-gray-300">Respondiendo a <strong id="replyingToUsername" class="text-white"></strong></span>
+            <button id="cancelReplyBtn" class="text-xs text-gray-400 hover:text-white font-bold">&times; Cancelar</button>
+        </div>
+        <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2 border-t border-gray-700">
+            <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full object-cover">
+            <input type="text" id="commentText" placeholder="Escribe un comentario..." class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <button type="submit" class="btn-comment text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
+        </form>
+    </div>
+    
+    <!-- ========== NOTIFICACIÓN TOAST ========== -->
+    <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 opacity-0 transform translate-y-4">
+        <p id="toastMessage"></p>
+    </div>
+
 
     <!-- ========== BARRA DE NAVEGACIÓN INFERIOR ========== -->
     <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-20">
