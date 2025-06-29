@@ -16,66 +16,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ESTADO Y VARIABLES GLOBALES ---
     let allImages = [];
     let allPosts = [];
-    let sortedPersonalizedContent = [];
-    let allTags = new Set();
-    let loadedItemsCount = 0;
+    let sortedCuratedContent = [];
+    let loadedCuratedCount = 0;
+    let loadedFeedCount = 0;
     const itemsPerLoad = 12;
     let currentUser = null;
     let currentUserData = {};
     let currentViewer = null;
     let lastView = 'galleryView';
     let isGalleryLoading = false;
+    let isFeedLoading = false;
     let toastTimeout;
     const ADMIN_USER_DATA = { uid: 'admin_exen', username: 'Exen', profile: { avatar: 'https://raw.githubusercontent.com/eacardenas/recursos-reales/main/logo-exene.png' } };
     const INTEREST_LIMIT = 10;
     let featuredSwiper = null;
     let appInitialized = false;
 
-    // --- ELEMENTOS DEL DOM ---
-    const ui = {
-        authOverlay: document.getElementById('authOverlay'),
-        appContent: document.getElementById('appContent'),
-        modals: document.querySelectorAll('.modal-container'),
-        views: document.querySelectorAll('#appContent .view'),
-        navButtons: document.querySelectorAll('.nav-btn'),
-        commentContainer: document.getElementById('comment-container'),
-        toast: document.getElementById('toast'),
-        toastMessage: document.getElementById('toastMessage'),
-    };
-
-    // --- FUNCIONES AUXILIARES ---
-    function showModal(modalId) { document.getElementById(modalId).classList.remove('hidden'); }
-    function showLoader(show) { document.getElementById('galleryLoader').classList.toggle('hidden', !show); }
-    function showToast(message) {
+    // --- FUNCIONES AUXILIARES (Definidas primero para evitar ReferenceError) ---
+    const showModal = (modalId) => document.getElementById(modalId).classList.remove('hidden');
+    const showLoader = (loaderId, show) => document.getElementById(loaderId).classList.toggle('hidden', !show);
+    const showToast = (message) => {
+        const toast = document.getElementById('toast');
         if (toastTimeout) clearTimeout(toastTimeout);
-        ui.toastMessage.textContent = message;
-        ui.toast.classList.add('show');
-        toastTimeout = setTimeout(() => { ui.toast.classList.remove('show'); }, 3000);
-    }
-    function getFirebaseErrorMessage(error) {
+        document.getElementById('toastMessage').textContent = message;
+        toast.classList.add('show');
+        toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3000);
+    };
+    const getFirebaseErrorMessage = (error) => {
         switch (error.code) {
             case 'auth/invalid-email': return 'El formato del correo es inválido.';
-            case 'auth/user-not-found':
-            case 'auth/wrong-password': return 'Correo o contraseña incorrectos.';
+            case 'auth/user-not-found': case 'auth/wrong-password': return 'Correo o contraseña incorrectos.';
             case 'auth/email-already-in-use': return 'Este correo ya está registrado.';
             case 'auth/weak-password': return 'La contraseña debe tener al menos 6 caracteres.';
             default: console.error(error); return 'Ha ocurrido un error inesperado.';
         }
-    }
-    function closeSlideUpView(viewId) {
+    };
+    const closeSlideUpView = (viewId) => {
         const view = document.getElementById(viewId);
         view.classList.remove('active');
         setTimeout(() => navigateTo(lastView || 'galleryView'), 300);
-    }
-    function cancelReply() {
+    };
+    const cancelReply = () => {
         const form = document.getElementById('commentForm');
         delete form.dataset.replyToCommentId;
         delete form.dataset.replyToUsername;
         delete form.dataset.replyToAuthorId;
         document.getElementById('replyingToBanner').classList.add('hidden');
         document.getElementById('commentText').placeholder = 'Escribe un comentario...';
-    }
-    function initiateReply(commentElement) {
+    };
+    const initiateReply = (commentElement) => {
         const form = document.getElementById('commentForm');
         form.dataset.replyToCommentId = commentElement.dataset.commentId;
         form.dataset.replyToUsername = commentElement.dataset.authorName;
@@ -84,55 +73,51 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('replyingToBanner').classList.remove('hidden');
         document.getElementById('commentText').placeholder = `Respondiendo a ${commentElement.dataset.authorName}...`;
         document.getElementById('commentText').focus();
-    }
-
+    };
 
     // --- FLUJO DE AUTENTICACIÓN ---
     setupAuthEventListeners();
-
     auth.onAuthStateChanged(user => {
+        const authOverlay = document.getElementById('authOverlay');
+        const appContent = document.getElementById('appContent');
         if (user) {
             currentUser = user;
-            if (!appInitialized) {
-                initializeApp();
-            }
-            ui.authOverlay.classList.add('opacity-0', 'pointer-events-none');
-            ui.appContent.classList.remove('hidden');
+            if (!appInitialized) initializeApp();
+            authOverlay.classList.add('opacity-0', 'pointer-events-none');
+            appContent.classList.remove('hidden');
         } else {
             currentUser = null;
             currentUserData = {};
             appInitialized = false;
-            ui.authOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            ui.appContent.classList.add('hidden');
-            ui.modals.forEach(m => m.classList.add('hidden'));
+            authOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            appContent.classList.add('hidden');
+            document.querySelectorAll('.modal-container').forEach(m => m.classList.add('hidden'));
         }
     });
 
     async function initializeApp() {
-        showLoader(true);
+        showLoader('galleryLoader', true);
         appInitialized = true;
         try {
             setupAppEventListeners();
             await loadUserData();
             await Promise.all([loadCuratedImages(), listenToPosts()]);
-            
-            sortPersonalizedFeed();
-            renderFeaturedCarousel();
-            renderPersonalizedGallery(true);
+            sortCuratedFeed();
+            renderCuratedFeed(true);
             listenToUserFavorites();
             listenToNotifications();
         } catch (error) {
             console.error("Error inicializando la app:", error);
             showToast("Error al cargar la aplicación");
         } finally {
-            showLoader(false);
+            showLoader('galleryLoader', false);
             navigateTo('galleryView');
         }
     }
 
     // --- LÓGICA DE DATOS ---
     async function loadUserData() {
-        if (!currentUser) return;
+        if (!currentUser) return Promise.resolve();
         const userRef = db.ref(`users/${currentUser.uid}`);
         const snapshot = await userRef.once('value');
         currentUserData = snapshot.val() || { username: currentUser.email.split('@')[0] };
@@ -149,7 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Network response was not ok');
             const images = await response.json();
             allImages = images.map(img => ({ ...img, isPost: false, authorUid: ADMIN_USER_DATA.uid }));
-            allImages.forEach(img => (img.tags || []).forEach(tag => allTags.add(tag)));
+            let allTagsSet = new Set();
+            allImages.forEach(img => (img.tags || []).forEach(tag => allTagsSet.add(tag)));
+            window.allTags = Array.from(allTagsSet);
         } catch (error) {
             console.error("Fallo al cargar imagenes.json:", error);
             showToast("No se pudieron cargar las imágenes curadas");
@@ -166,11 +153,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         allPosts.push({ ...childSnapshot.val(), id: childSnapshot.key, isPost: true });
                     });
                 }
+                allPosts.sort((a, b) => b.timestamp - a.timestamp); // Ordenar por más nuevo
+                
                 if(appInitialized) {
-                    sortPersonalizedFeed();
-                    if(document.getElementById('galleryView').offsetParent !== null) {
-                         renderPersonalizedGallery(true);
-                    }
+                    renderUserPostCarousel(); // Actualizar carrusel con nuevos posts
+                    if(document.getElementById('feedView').offsetParent !== null) renderUserFeed(true);
                     if(document.getElementById('profileView').offsetParent !== null) {
                         renderUserPosts(currentUser.uid, 'userPostsGrid', 'no-posts-message');
                     }
@@ -180,32 +167,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- NAVEGACIÓN Y RENDERIZADO DE UI ---
+    // --- NAVEGACIÓN Y RENDERIZADO ---
     function navigateTo(viewId, data = null) {
-        const currentActiveSlideView = document.querySelector('.view.slide-up.active');
-        if (currentActiveSlideView && !data) {
-            lastView = document.querySelector('.view:not(.hidden):not(.slide-up)')?.id || 'galleryView';
-        }
-
-        ui.views.forEach(v => v.classList.add('hidden'));
+        lastView = document.querySelector('.view:not(.hidden):not(.slide-up)')?.id || 'galleryView';
+        document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+        
         const targetView = document.getElementById(viewId);
         if(!targetView) return;
-
         targetView.classList.remove('hidden');
 
-        ui.commentContainer.classList.toggle('hidden', viewId !== 'detailView');
+        document.getElementById('comment-container').classList.toggle('hidden', viewId !== 'detailView');
         if(viewId !== 'detailView') cancelReply();
         
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            const view = btn.dataset.view;
-            if(view) {
-                btn.classList.toggle('text-indigo-400', view === viewId);
-                btn.classList.toggle('text-gray-400', view !== viewId);
-            }
+        document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
+            btn.classList.toggle('text-indigo-400', btn.dataset.view === viewId);
+            btn.classList.toggle('text-gray-400', btn.dataset.view !== viewId);
         });
         document.getElementById('navProfileAvatar').classList.toggle('border-indigo-500', viewId === 'profileView');
         document.getElementById('navProfileAvatar').classList.toggle('border-transparent', viewId !== 'profileView');
         
+        if (viewId === 'feedView' && !targetView.dataset.loaded) { renderUserFeed(true); targetView.dataset.loaded = 'true'; }
         if (viewId === 'popularView' && !targetView.dataset.loaded) { renderPopularGallery(); targetView.dataset.loaded = 'true'; }
         if (viewId === 'profileView') populateProfileView();
         if (viewId === 'userProfileView' && data) showUserProfile(data.userId);
@@ -217,75 +198,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- LÓGICA DE RENDERIZADO DE CONTENIDO ---
-    
-    function sortPersonalizedFeed() {
-        const userInterests = new Set(currentUserData.profile?.interests || []);
-        const combinedContent = [...allImages, ...allPosts];
-        
-        sortedPersonalizedContent = combinedContent.sort((a, b) => {
-           const scoreA = (a.tags || []).reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + Math.random();
-           const scoreB = (b.tags || []).reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + Math.random();
-           return (b.timestamp || 0) - (a.timestamp || 0) || scoreB - scoreA;
-       });
-    }
-
-    function renderPersonalizedGallery(reset = false) {
-        if (isGalleryLoading) return;
-        isGalleryLoading = true;
-        showLoader(true);
-        const galleryContainer = document.getElementById('gallery');
-        if (reset) {
-            galleryContainer.innerHTML = '';
-            loadedItemsCount = 0;
-        }
-        const nextItems = sortedPersonalizedContent.slice(loadedItemsCount, loadedItemsCount + itemsPerLoad);
-        if (nextItems.length > 0) {
-            appendToImageGrid(galleryContainer, nextItems);
-            loadedItemsCount += nextItems.length;
-        } else if (reset && sortedPersonalizedContent.length === 0) {
-            galleryContainer.innerHTML = `<p class="text-center text-gray-500 col-span-full py-8">No hay imágenes. ¡Explora y personaliza tus intereses!</p>`;
-        }
-        showLoader(false);
-        isGalleryLoading = false;
-    }
-    
     function appendToImageGrid(container, itemsToRender) {
          itemsToRender.forEach(item => {
-            const postCard = document.createElement('div');
-            postCard.className = 'bg-gray-800 rounded-lg overflow-hidden cursor-pointer group portrait-aspect';
+            const card = document.createElement('div');
+            card.className = 'bg-gray-800 rounded-lg overflow-hidden cursor-pointer group portrait-aspect';
             const imageUrl = item.isPost ? item.imageUrl : item.url;
-            postCard.innerHTML = `
+            card.innerHTML = `
                 <img src="${imageUrl}" alt="${item.title}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/400x600/1f2937/a7a7a7?text=Error';" class="transition-transform duration-300 group-hover:scale-105">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <h3 class="absolute bottom-0 left-0 p-2 text-white font-semibold text-sm truncate">${item.title}</h3>
             `;
-            postCard.addEventListener('click', () => showDetailView(item.id, item.isPost));
-            container.appendChild(postCard);
+            card.addEventListener('click', () => showDetailView(item.id, item.isPost));
+            container.appendChild(card);
         });
     }
 
-    function renderFeaturedCarousel() {
-        const userInterests = new Set(currentUserData.profile?.interests || []);
-        let featuredImages = allImages.filter(img => img.featured);
-
-        if (userInterests.size > 0) {
-            featuredImages.sort((a, b) => {
-                const scoreA = (a.tags || []).reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + Math.random();
-                const scoreB = (b.tags || []).reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + Math.random();
-                return scoreB - scoreA;
-            });
-        }
-        
+    function renderUserPostCarousel() {
         const wrapper = document.getElementById('featured-wrapper');
-        wrapper.innerHTML = featuredImages.slice(0, 7).map(img => `
+        if (allPosts.length === 0) {
+            wrapper.parentElement.style.display = 'none';
+            return;
+        }
+        wrapper.parentElement.style.display = 'block';
+
+        const shuffledPosts = [...allPosts].sort(() => 0.5 - Math.random());
+        const carouselPosts = shuffledPosts.slice(0, 7);
+        
+        wrapper.innerHTML = carouselPosts.map(post => `
             <div class="swiper-slide">
-                <img src="${img.url}" alt="${img.title}" data-id="${img.id}" data-is-post="false">
+                <img src="${post.imageUrl}" alt="${post.title}" data-id="${post.id}" data-is-post="true">
             </div>
         `).join('');
 
         if (featuredSwiper) featuredSwiper.destroy(true, true);
         featuredSwiper = new Swiper('.featured-carousel', {
-            loop: featuredImages.length > 1,
+            loop: carouselPosts.length > 1,
             autoplay: { delay: 4000, disableOnInteraction: false },
             pagination: { el: '.swiper-pagination', clickable: true },
             navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
@@ -294,6 +241,55 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.querySelectorAll('img').forEach(img => {
              img.addEventListener('click', (e) => showDetailView(e.target.dataset.id, e.target.dataset.isPost === 'true'));
         });
+    }
+    
+    function sortCuratedFeed() {
+        const userInterests = new Set(currentUserData.profile?.interests || []);
+        sortedCuratedContent = [...allImages].sort((a, b) => {
+           const scoreA = (a.tags || []).reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + Math.random();
+           const scoreB = (b.tags || []).reduce((s, tag) => s + (userInterests.has(tag) ? 5 : 0), 0) + Math.random();
+           return scoreB - scoreA;
+        });
+    }
+
+    function renderCuratedFeed(reset = false) {
+        if (isGalleryLoading) return;
+        isGalleryLoading = true;
+        showLoader('galleryLoader', true);
+        const galleryContainer = document.getElementById('gallery');
+        if (reset) {
+            galleryContainer.innerHTML = '';
+            loadedCuratedCount = 0;
+        }
+        const nextItems = sortedCuratedContent.slice(loadedCuratedCount, loadedCuratedCount + itemsPerLoad);
+        if (nextItems.length > 0) {
+            appendToImageGrid(galleryContainer, nextItems);
+            loadedCuratedCount += nextItems.length;
+        } else if (reset && sortedCuratedContent.length === 0) {
+            galleryContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">No hay contenido oficial para mostrar.</p>`;
+        }
+        showLoader('galleryLoader', false);
+        isGalleryLoading = false;
+    }
+
+    function renderUserFeed(reset = false) {
+        if (isFeedLoading) return;
+        isFeedLoading = true;
+        showLoader('feedLoader', true);
+        const feedContainer = document.getElementById('feedGrid');
+        if (reset) {
+            feedContainer.innerHTML = '';
+            loadedFeedCount = 0;
+        }
+        const nextItems = allPosts.slice(loadedFeedCount, loadedFeedCount + itemsPerLoad);
+        if (nextItems.length > 0) {
+            appendToImageGrid(feedContainer, nextItems);
+            loadedFeedCount += nextItems.length;
+        } else if (reset && allPosts.length === 0) {
+            feedContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Aún no hay publicaciones de la comunidad. ¡Sé el primero!</p>`;
+        }
+        showLoader('feedLoader', false);
+        isFeedLoading = false;
     }
 
     // --- EVENT LISTENERS ---
@@ -341,26 +337,41 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.getElementById('createPostBtn').addEventListener('click', () => showModal('createPostModal'));
-        document.getElementById('navNotificationsBtn').addEventListener('click', () => showModal('notificationsWindow'));
-
-        const observer = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && !isGalleryLoading && document.getElementById('galleryView').offsetParent !== null) {
-                renderPersonalizedGallery(false);
+        
+        // Listeners de notificaciones
+        const notificationsBtn = document.getElementById('navNotificationsBtn');
+        const notificationsPanel = document.getElementById('notificationsWindow');
+        notificationsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notificationsPanel.classList.toggle('active');
+        });
+        document.addEventListener('click', (e) => {
+            if (!notificationsPanel.contains(e.target) && !notificationsBtn.contains(e.target)) {
+                notificationsPanel.classList.remove('active');
             }
-        }, { threshold: 0.1 });
-        observer.observe(document.getElementById('sentinel'));
+        });
+
+        // Infinite scroll listeners
+        new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && !isGalleryLoading && document.getElementById('galleryView').offsetParent !== null) renderCuratedFeed(false);
+        }, { threshold: 0.1 }).observe(document.getElementById('curated-sentinel'));
+        
+        new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && !isFeedLoading && document.getElementById('feedView').offsetParent !== null) renderUserFeed(false);
+        }, { threshold: 0.1 }).observe(document.getElementById('feed-sentinel'));
 
         setupProfileEventListeners();
         setupDetailViewEventListeners();
         setupCreatePostForm();
 
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', e => renderSearchResults(e.target.value));
         document.getElementById('searchForm').addEventListener('submit', e => e.preventDefault());
+        document.getElementById('searchInput').addEventListener('input', e => renderSearchResults(e.target.value));
 
         document.body.dataset.appListenersAttached = 'true';
     }
 
+    // ... (El resto de las funciones de setup y lógica permanecen muy similares)
+    // Se copian las funciones restantes de la versión anterior que no necesitan grandes cambios.
     function setupProfileEventListeners() {
         document.getElementById('saveProfileBtn').addEventListener('click', async () => {
             const bio = document.getElementById('profileBio').value;
@@ -368,9 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 await db.ref(`users/${currentUser.uid}/profile`).update({ bio, interests });
                 await loadUserData();
-                sortPersonalizedFeed();
-                renderPersonalizedGallery(true);
-                renderFeaturedCarousel();
+                sortCuratedFeed();
+                renderCuratedFeed(true);
                 showToast('Perfil guardado');
             } catch (error) { console.error(error); showToast("Error al guardar el perfil."); }
         });
@@ -441,26 +451,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const newPostRef = db.ref('posts').push();
             try {
                 await newPostRef.set({ 
-                    id: newPostRef.key, 
-                    imageUrl, 
-                    title, 
+                    id: newPostRef.key, imageUrl, title, 
                     authorUid: currentUser.uid, 
                     timestamp: firebase.database.ServerValue.TIMESTAMP 
                 });
                 document.getElementById('createPostForm').reset();
                 document.getElementById('createPostModal').classList.add('hidden');
                 showToast("Publicación creada con éxito");
-                navigateTo('profileView');
-                document.getElementById('tab-posts').click();
+                navigateTo('feedView');
             } catch (error) {
                 console.error("Error creando post:", error);
                 showToast("No se pudo crear la publicación.");
             }
         });
     }
-
-    // --- LÓGICA DE VISTAS ESPECÍFICAS ---
     
+    // ... y el resto de funciones
     async function showDetailView(id, isPost = false) {
         document.querySelector('#detailView > main').scrollTop = 0;
         const item = isPost ? allPosts.find(p => p.id === id) : allImages.find(i => i.id == id);
@@ -502,6 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function populateProfileView() {
+        if (!currentUserData.profile) return;
         document.getElementById('profileAvatar').src = currentUserData.profile.avatar;
         document.getElementById('profileUsername').textContent = currentUserData.username;
         document.getElementById('profileBio').value = currentUserData.profile.bio || '';
@@ -525,21 +532,18 @@ document.addEventListener('DOMContentLoaded', () => {
         renderUserPosts(userId, 'visitingUserPostsGrid', 'no-visiting-posts-message');
         navigateTo('userProfileView', { userId });
     }
-
-    // --- LÓGICA DE COMENTARIOS, LIKES, NOTIFICACIONES ---
     
     function listenToLikesAndViews(id) {
         db.ref(`likes/${id}`).on('value', snap => {
+            const likeCountEl = document.getElementById('detailLikeCount');
+            if (!likeCountEl) return;
             const data = snap.val() || {};
-            if(document.getElementById('detailLikeCount')) {
-                document.getElementById('detailLikeCount').textContent = `${Object.keys(data).length} Me gusta`;
-                document.getElementById('detailLikeBtn').classList.toggle('liked', !!(currentUser && data[currentUser.uid]));
-            }
+            likeCountEl.textContent = `${Object.keys(data).length} Me gusta`;
+            document.getElementById('detailLikeBtn').classList.toggle('liked', !!(currentUser && data[currentUser.uid]));
         });
         db.ref(`views/${id}`).on('value', snap => {
-            if(document.getElementById('detailViewCount')) {
-                document.getElementById('detailViewCount').textContent = `${Object.keys(snap.val() || {}).length} Vistas`;
-            }
+            const viewCountEl = document.getElementById('detailViewCount');
+            if (viewCountEl) viewCountEl.textContent = `${Object.keys(snap.val() || {}).length} Vistas`;
         });
     }
 
@@ -647,7 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
             list.innerHTML = '';
             if(!snapshot.exists()) {
                 badge.classList.add('hidden');
-                return list.innerHTML = `<p class="text-gray-500 text-center">No tienes notificaciones.</p>`;
+                return list.innerHTML = `<p class="p-4 text-center text-gray-500">No tienes notificaciones.</p>`;
             }
 
             const notifications = Object.entries(snapshot.val()).map(([id, data]) => ({id, ...data}));
@@ -655,10 +659,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             notifications.reverse().forEach(n => {
                 const el = document.createElement('div');
-                el.className = `p-3 rounded-lg hover:bg-gray-700 cursor-pointer ${n.read ? 'opacity-60' : 'bg-indigo-900/30'}`;
+                el.className = `px-4 py-3 hover:bg-gray-700 cursor-pointer ${n.read ? 'opacity-60' : 'bg-indigo-900/30'}`;
                 el.innerHTML = `<p>${n.message}</p><p class="text-xs text-gray-500 mt-1">${new Date(n.timestamp).toLocaleString()}</p>`;
                 el.onclick = () => {
-                    document.getElementById('notificationsWindow').classList.add('hidden');
+                    document.getElementById('notificationsWindow').classList.remove('active');
                     const isPost = allPosts.some(p => p.id === n.imageId);
                     showDetailView(n.imageId, isPost);
                     ref.child(n.id).child('read').set(true);
@@ -668,12 +672,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- FUNCIONES AUXILIARES DE RENDERIZADO ---
     function renderUserPosts(userId, gridId, messageId) {
         const container = document.getElementById(gridId);
         const message = document.getElementById(messageId);
         container.innerHTML = '';
-        const userPosts = allPosts.filter(p => p.authorUid === userId).reverse();
+        const userPosts = allPosts.filter(p => p.authorUid === userId);
         message.classList.toggle('hidden', userPosts.length > 0);
         if(userPosts.length > 0) appendToImageGrid(container, userPosts); 
     }
@@ -705,8 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function updateAvatar(url) {
         try {
-            // Simple check to see if it's a plausible image URL before setting
-            const response = await fetch(url, { mode: 'no-cors' });
+            await fetch(url, { mode: 'no-cors' });
             currentUserData.profile.avatar = url;
             updateAllAvatars(url);
             await db.ref(`users/${currentUser.uid}/profile/avatar`).set(url);
@@ -735,18 +737,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         countEl.textContent = `${results.length} resultado(s) encontrado(s).`;
-        if (results.length > 0) {
-            appendToImageGrid(resultsContainer, results);
-        } else {
-            resultsContainer.innerHTML = `<p class="text-center text-gray-500 col-span-full py-8">No se encontraron resultados.</p>`;
-        }
+        if (results.length > 0) appendToImageGrid(resultsContainer, results);
+        else resultsContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">No se encontraron resultados.</p>`;
     }
 
     function renderProfileInterests() {
         const container = document.getElementById('profileInterests');
         container.innerHTML = '';
         const userInterests = new Set(currentUserData.profile?.interests || []);
-        Array.from(allTags).sort().forEach(tag => {
+        window.allTags.forEach(tag => {
             const isSelected = userInterests.has(tag);
             const tagEl = document.createElement('button');
             tagEl.textContent = tag;

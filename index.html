@@ -64,7 +64,7 @@
         </div>
     </div>
     
-    <!-- ========== CONTENIDO PRINCIPAL DE LA APP (OCULTO INICIALMENTE) ========== -->
+    <!-- ========== CONTENIDO PRINCIPAL DE LA APP ========== -->
     <div id="appContent" class="hidden">
         <!-- MODALES DE LA APP -->
         <div id="avatarModal" class="modal-container hidden">
@@ -96,21 +96,23 @@
             </div>
         </div>
 
-        <div id="notificationsWindow" class="modal-container hidden">
-            <div class="modal-content">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-white">Notificaciones</h3>
-                    <button class="text-xl text-gray-400 close-modal-btn">&times;</button>
-                </div>
-                <div id="notificationsList" class="space-y-3 max-h-80 overflow-y-auto"></div>
-            </div>
-        </div>
-
         <!-- VISTAS PRINCIPALES -->
         <main id="galleryView" class="view pb-20">
-            <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+            <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40">
                 <img src="https://raw.githubusercontent.com/eacardenas/recursos-reales/main/logo-exene.png" alt="Exene" class="h-8" onerror="this.style.display='none'">
                 <h2 class="text-lg font-bold text-white">Para ti</h2>
+                <div class="relative">
+                    <button id="navNotificationsBtn" class="text-gray-400 hover:text-white text-xl p-2 relative">
+                        <i class="fas fa-bell"></i>
+                        <span id="navNotificationsBadge" class="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900 hidden"></span>
+                    </button>
+                    <div id="notificationsWindow" class="notifications-panel">
+                        <div class="flex justify-between items-center mb-4 px-4 pt-4">
+                            <h3 class="text-lg font-bold text-white">Notificaciones</h3>
+                        </div>
+                        <div id="notificationsList" class="space-y-1 max-h-80 overflow-y-auto"></div>
+                    </div>
+                </div>
             </header>
             <div class="swiper featured-carousel container mx-auto my-4 rounded-lg overflow-hidden">
                 <div class="swiper-wrapper" id="featured-wrapper"></div>
@@ -118,9 +120,21 @@
                 <div class="swiper-button-prev"></div>
                 <div class="swiper-button-next"></div>
             </div>
+            <h3 class="px-4 text-xl font-bold text-white mt-6 mb-2">Contenido Oficial</h3>
             <div id="gallery" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-            <div id="sentinel" class="h-10"></div>
+            <div id="curated-sentinel" class="h-10"></div>
             <div id="galleryLoader" class="text-center p-8 hidden">
+                <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
+            </div>
+        </main>
+
+        <main id="feedView" class="view pb-20 hidden">
+            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+                <h2 class="text-lg font-bold text-white">Comunidad</h2>
+            </header>
+            <div id="feedGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+            <div id="feed-sentinel" class="h-10"></div>
+             <div id="feedLoader" class="text-center p-8 hidden">
                 <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
             </div>
         </main>
@@ -169,7 +183,7 @@
             </div>
         </main>
         
-        <main id="userProfileView" class="view hidden fixed inset-0 bg-gray-900 z-30 flex flex-col slide-up">
+        <main id="userProfileView" class="view hidden fixed inset-0 bg-gray-900 z-50 flex flex-col slide-up">
             <header class="p-4 flex items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 flex-shrink-0">
                 <button id="userProfileBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
                 <h2 id="userProfileHeaderUsername" class="text-lg font-bold text-white mx-auto"></h2>
@@ -182,7 +196,7 @@
             </div>
         </main>
 
-        <main id="detailView" class="view hidden fixed inset-0 bg-gray-900 z-20 flex flex-col slide-up">
+        <main id="detailView" class="view hidden fixed inset-0 bg-gray-900 z-50 flex flex-col slide-up">
             <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm z-10 flex-shrink-0">
                 <button id="detailBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
                 <div id="detailAuthorInfo" class="flex items-center gap-3 cursor-pointer group flex-1 justify-center min-w-0">
@@ -220,7 +234,7 @@
             <div id="searchResults" class="mt-2 p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
         </main>
         
-        <div id="comment-container" class="fixed bottom-16 left-0 right-0 z-30 hidden">
+        <div id="comment-container" class="fixed bottom-16 left-0 right-0 z-[60] hidden">
             <div id="replyingToBanner" class="hidden bg-gray-700 p-2 text-sm flex justify-between items-center">
                 <span class="text-gray-300">Respondiendo a <strong id="replyingToUsername" class="text-white"></strong></span>
                 <button id="cancelReplyBtn" class="text-xs text-gray-400 hover:text-white font-bold">&times; Cancelar</button>
@@ -232,20 +246,17 @@
             </form>
         </div>
         
-        <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 opacity-0 transform translate-y-4">
+        <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg z-[100] transition-all duration-300 opacity-0 transform translate-y-4">
             <p id="toastMessage"></p>
         </div>
 
-        <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-20">
+        <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-40">
             <nav class="flex justify-around items-center h-16">
                 <button data-view="galleryView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-home"></i></button>
-                <button data-view="popularView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-fire"></i></button>
+                <button data-view="feedView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-users"></i></button>
                 <button id="createPostBtn" class="text-white bg-indigo-600 hover:bg-indigo-700 w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg"><i class="fas fa-plus"></i></button>
+                <button data-view="popularView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-fire"></i></button>
                 <button data-view="searchView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-search"></i></button>
-                <button id="navNotificationsBtn" class="nav-btn text-gray-400 text-2xl p-3 relative">
-                    <i class="fas fa-bell"></i>
-                    <span id="navNotificationsBadge" class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-800 hidden"></span>
-                </button>
                 <button data-view="profileView" id="navProfileBtn" class="nav-btn text-gray-400 p-2">
                     <img id="navProfileAvatar" src="" class="w-8 h-8 rounded-full object-cover border-2 border-transparent transition-colors">
                 </button>
