@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- CONFIGURACIÓN DE FIREBASE ---
+    // --- 1. CONFIGURACIÓN E INICIALIZACIÓN DE FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
         authDomain: "exene-53e6b.firebaseapp.com",
@@ -10,22 +10,18 @@ document.addEventListener('DOMContentLoaded', () => {
         appId: "1:481369419867:web:ac5db24c436344262c8f7e"
     };
     firebase.initializeApp(firebaseConfig);
+
+    // --- 2. VARIABLES GLOBALES Y CACHÉ ---
     const db = firebase.database();
     const auth = firebase.auth();
-
-    // --- ESTADO Y VARIABLES GLOBALES ---
-    let allImages = [];
-    let allPosts = [];
-    let sortedCuratedContent = [];
-    let loadedCuratedCount = 0;
-    let loadedFeedCount = 0;
+    let allImages = [], allPosts = [], sortedCuratedContent = [];
+    let loadedCuratedCount = 0, loadedFeedCount = 0;
     const itemsPerLoad = 12;
-    let currentUser = null;
-    let currentUserData = {};
+    let currentUser = null, currentUserData = {};
+    let usersCache = {};
     let currentViewer = null;
     let lastView = 'galleryView';
-    let isGalleryLoading = false;
-    let isFeedLoading = false;
+    let isGalleryLoading = false, isFeedLoading = false;
     let toastTimeout;
     const ADMIN_USER_DATA = { uid: 'admin_exen', username: 'Exen', profile: { avatar: 'https://raw.githubusercontent.com/eacardenas/recursos-reales/main/logo-exene.png' } };
     const INTEREST_LIMIT = 10;
@@ -33,8 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let appInitialized = false;
     let activeDetailListeners = {};
 
+    // --- 3. DECLARACIÓN DE TODAS LAS FUNCIONES ---
 
-    // --- FUNCIONES AUXILIARES ---
+    // ** Funciones Auxiliares **
     const showModal = (modalId) => document.getElementById(modalId).classList.remove('hidden');
     const hideModal = (modalId) => document.getElementById(modalId).classList.add('hidden');
     const showLoader = (loaderId, show) => document.getElementById(loaderId).classList.toggle('hidden', !show);
@@ -58,27 +55,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSlideUpView = (viewId) => {
         const view = document.getElementById(viewId);
         view.classList.remove('active');
-        if (viewId === 'detailView') {
-            detachDetailViewListeners();
-        }
+        if (viewId === 'detailView') detachDetailViewListeners();
         setTimeout(() => triggerView(lastView || 'galleryView'), 300);
     };
     const cancelReply = () => {
         const form = document.getElementById('commentForm');
-        delete form.dataset.replyToCommentId;
+        delete form.dataset.replyToPath;
         delete form.dataset.replyToUsername;
-        delete form.dataset.replyToAuthorId;
         document.getElementById('replyingToBanner').classList.add('hidden');
         document.getElementById('commentText').placeholder = 'Escribe un comentario...';
     };
     const initiateReply = (commentElement) => {
         const form = document.getElementById('commentForm');
-        form.dataset.replyToCommentId = commentElement.dataset.commentId;
+        form.dataset.replyToPath = commentElement.dataset.commentPath;
         form.dataset.replyToUsername = commentElement.dataset.authorName;
-        form.dataset.replyToAuthorId = commentElement.dataset.authorId;
         document.getElementById('replyingToUsername').textContent = commentElement.dataset.authorName;
         document.getElementById('replyingToBanner').classList.remove('hidden');
-        document.getElementById('commentText').placeholder = `Respondiendo a ${commentElement.dataset.authorName}...`;
         document.getElementById('commentText').focus();
     };
     const detachDetailViewListeners = () => {
@@ -87,60 +79,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeDetailListeners.comments) activeDetailListeners.comments.ref.off('value', activeDetailListeners.comments.callback);
         activeDetailListeners = {};
     };
-
-    // --- FLUJO DE AUTENTICACIÓN ---
-    setupAuthEventListeners();
-    auth.onAuthStateChanged(user => {
-        const authOverlay = document.getElementById('authOverlay');
-        const appContent = document.getElementById('appContent');
-        if (user) {
-            currentUser = user;
-            if (!appInitialized) initializeApp();
-            authOverlay.classList.add('opacity-0', 'pointer-events-none');
-            appContent.classList.remove('hidden');
-        } else {
-            currentUser = null;
-            currentUserData = {};
-            appInitialized = false;
-            authOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            appContent.classList.add('hidden');
-            document.querySelectorAll('.modal-container, .notifications-panel').forEach(m => m.classList.remove('active'));
+    const getAuthorData = async (uid) => {
+        if (uid === ADMIN_USER_DATA.uid) return ADMIN_USER_DATA;
+        if (usersCache[uid]) return usersCache[uid];
+        const snapshot = await db.ref(`users/${uid}`).once('value');
+        if (snapshot.exists()) {
+            usersCache[uid] = snapshot.val();
+            return usersCache[uid];
         }
-    });
+        return { username: 'Anónimo', profile: {} };
+    };
 
-    async function initializeApp() {
-        showLoader('galleryLoader', true);
-        appInitialized = true;
-        try {
-            setupAppEventListeners();
-            await loadUserData();
-            await Promise.all([loadCuratedImages(), listenToPosts()]);
-            sortCuratedFeed();
-            renderCuratedFeed(true);
-            listenToUserFavorites();
-            listenToNotifications();
-        } catch (error) {
-            console.error("Error inicializando la app:", error);
-            showToast("Error al cargar la aplicación");
-        } finally {
-            showLoader('galleryLoader', false);
-            triggerView('galleryView');
-        }
-    }
-
-    // --- LÓGICA DE DATOS ---
+    // ** Lógica de Datos y Carga **
     async function loadUserData() {
-        if (!currentUser) return Promise.resolve();
-        const userRef = db.ref(`users/${currentUser.uid}`);
-        const snapshot = await userRef.once('value');
-        currentUserData = snapshot.val() || { username: currentUser.email.split('@')[0] };
-        currentUserData.profile = currentUserData.profile || {};
+        if (!currentUser) return;
+        const data = await getAuthorData(currentUser.uid);
+        currentUserData = data || { username: currentUser.email.split('@')[0], profile: {} };
         const defaultAvatar = `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(currentUserData.username)}`;
         currentUserData.profile.avatar = currentUserData.profile.avatar || defaultAvatar;
-        currentUserData.profile.interests = currentUserData.profile.interests || [];
         updateAllAvatars(currentUserData.profile.avatar);
     }
-    
     async function loadCuratedImages() {
         try {
             const response = await fetch('imagenes.json');
@@ -150,25 +108,20 @@ document.addEventListener('DOMContentLoaded', () => {
             let allTagsSet = new Set();
             allImages.forEach(img => (img.tags || []).forEach(tag => allTagsSet.add(tag.trim().toLowerCase())));
             window.allTags = Array.from(allTagsSet);
-        } catch (error) {
-            console.error("Fallo al cargar imagenes.json:", error);
-            showToast("No se pudieron cargar las imágenes curadas");
-        }
+        } catch (error) { console.error("Fallo al cargar imagenes.json:", error); showToast("No se pudieron cargar las imágenes curadas"); }
     }
-
     function listenToPosts() {
         return new Promise((resolve) => {
             const postsRef = db.ref('posts');
             postsRef.on('value', snapshot => {
                 allPosts = [];
-                if(snapshot.exists()) {
+                if (snapshot.exists()) {
                     snapshot.forEach(childSnapshot => {
                         allPosts.push({ ...childSnapshot.val(), id: childSnapshot.key, isPost: true });
                     });
                 }
                 allPosts.sort((a, b) => b.timestamp - a.timestamp);
-                
-                if(appInitialized) {
+                if (appInitialized) {
                     renderUserPostCarousel();
                     const currentVisibleView = document.querySelector('.view:not(.hidden)');
                     if (currentVisibleView?.id === 'feedView') renderUserFeed(true);
@@ -179,25 +132,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- NAVEGACIÓN Y RENDERIZADO ---
+    // ** Lógica de Navegación y Vistas **
     function navigateTo(viewId) {
         const currentView = document.querySelector('.view:not(.hidden)');
         if (currentView && !currentView.classList.contains('slide-up')) {
             lastView = currentView.id;
+        } else if (currentView && currentView.classList.contains('slide-up') && document.querySelectorAll('.slide-up.active').length <= 1) {
+            lastView = document.querySelector('.view:not(.hidden):not(.slide-up)')?.id || 'galleryView';
         }
-
         document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
         const targetView = document.getElementById(viewId);
         if(!targetView) return;
         targetView.classList.remove('hidden');
-        
         document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
             btn.classList.toggle('text-indigo-400', btn.dataset.view === viewId);
             btn.classList.toggle('text-gray-400', btn.dataset.view !== viewId);
         });
         document.getElementById('navProfileAvatar').classList.toggle('border-indigo-500', viewId === 'profileView');
         document.getElementById('navProfileAvatar').classList.toggle('border-transparent', viewId !== 'profileView');
-
         if (targetView.classList.contains('slide-up')) {
             setTimeout(() => targetView.classList.add('active'), 10);
         }
@@ -213,24 +165,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
-    // --- LÓGICA DE RENDERIZADO ---
-    function appendToImageGrid(container, itemsToRender) {
-         itemsToRender.forEach(item => {
+    // ** Lógica de Renderizado **
+    async function appendToImageGrid(container, itemsToRender) {
+        for (const item of itemsToRender) {
             const card = document.createElement('div');
             card.className = 'bg-gray-800 rounded-lg overflow-hidden cursor-pointer group portrait-aspect';
             const imageUrl = item.isPost ? item.imageUrl : item.url;
-            card.innerHTML = `
-                <img src="${imageUrl}" alt="${item.title}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/400x600/1f2937/a7a7a7?text=Error';" class="transition-transform duration-300 group-hover:scale-105">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <h3 class="absolute bottom-0 left-0 p-2 text-white font-semibold text-sm truncate">${item.title}</h3>
-            `;
+            let authorOverlay = '';
+            if (item.isPost) {
+                const authorData = await getAuthorData(item.authorUid);
+                const isVerified = item.authorUid === ADMIN_USER_DATA.uid;
+                authorOverlay = `
+                    <div class="card-author-overlay">
+                        <img src="${authorData.profile?.avatar || ''}" alt="${authorData.username}" class="bg-gray-700">
+                        <span class="text-white text-sm font-semibold truncate">${authorData.username}</span>
+                        ${isVerified ? '<i class="fas fa-check-circle text-blue-400 text-sm ml-1"></i>' : ''}
+                    </div>
+                `;
+            }
+            card.innerHTML = `${authorOverlay}<img src="${imageUrl}" alt="${item.title}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/400x600/1f2937/a7a7a7?text=Error';" class="transition-transform duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div><h3 class="absolute bottom-0 left-0 p-2 text-white font-semibold text-sm truncate w-full">${item.title}</h3>`;
             card.addEventListener('click', () => showDetailView(item.id, item.isPost));
             container.appendChild(card);
-        });
+        }
     }
-
-    function renderUserPostCarousel() {
+    async function renderUserPostCarousel() {
         const wrapper = document.getElementById('featured-wrapper');
         const carouselContainer = wrapper.closest('.featured-carousel');
         if (allPosts.length === 0) {
@@ -238,29 +196,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         carouselContainer.style.display = 'block';
-
-        const shuffledPosts = [...allPosts].sort(() => 0.5 - Math.random());
-        const carouselPosts = shuffledPosts.slice(0, 7);
-        
-        wrapper.innerHTML = carouselPosts.map(post => `
-            <div class="swiper-slide">
-                <img src="${post.imageUrl}" alt="${post.title}" data-id="${post.id}" data-is-post="true">
-            </div>
-        `).join('');
-
+        const postsForCarousel = [...allPosts].sort(() => 0.5 - Math.random()).slice(0, 7);
+        let slidesHtml = '';
+        for (const post of postsForCarousel) {
+            const authorData = await getAuthorData(post.authorUid);
+            const isVerified = post.authorUid === ADMIN_USER_DATA.uid;
+            slidesHtml += `<div class="swiper-slide"><img src="${post.imageUrl}" alt="${post.title}" data-id="${post.id}" data-is-post="true"><div class="slide-author-overlay"><img src="${authorData.profile?.avatar}" alt="${authorData.username}" class="bg-gray-700"><span class="text-white font-bold">${authorData.username}</span>${isVerified ? '<i class="fas fa-check-circle text-blue-400 ml-1"></i>' : ''}</div></div>`;
+        }
+        wrapper.innerHTML = slidesHtml;
         if (featuredSwiper) featuredSwiper.destroy(true, true);
-        featuredSwiper = new Swiper('.featured-carousel', {
-            loop: carouselPosts.length > 1,
-            autoplay: { delay: 4000, disableOnInteraction: false },
-            pagination: { el: '.swiper-pagination', clickable: true },
-            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
-        });
-
+        featuredSwiper = new Swiper('.featured-carousel', { loop: postsForCarousel.length > 1, autoplay: { delay: 4000, disableOnInteraction: false }, pagination: { el: '.swiper-pagination', clickable: true }, navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' } });
         wrapper.querySelectorAll('img').forEach(img => {
-             img.addEventListener('click', (e) => showDetailView(e.target.dataset.id, e.target.dataset.isPost === 'true'));
+            img.addEventListener('click', (e) => showDetailView(e.target.dataset.id, e.target.dataset.isPost === 'true'));
         });
     }
-    
     function sortCuratedFeed() {
         const userInterests = new Set(currentUserData.profile?.interests || []);
         sortedCuratedContent = [...allImages].sort((a, b) => {
@@ -269,16 +218,12 @@ document.addEventListener('DOMContentLoaded', () => {
            return scoreB - scoreA;
         });
     }
-
     function renderCuratedFeed(reset = false) {
         if (isGalleryLoading) return;
         isGalleryLoading = true;
         showLoader('galleryLoader', true);
         const galleryContainer = document.getElementById('gallery');
-        if (reset) {
-            galleryContainer.innerHTML = '';
-            loadedCuratedCount = 0;
-        }
+        if (reset) { galleryContainer.innerHTML = ''; loadedCuratedCount = 0; }
         const nextItems = sortedCuratedContent.slice(loadedCuratedCount, loadedCuratedCount + itemsPerLoad);
         if (nextItems.length > 0) {
             appendToImageGrid(galleryContainer, nextItems);
@@ -289,16 +234,12 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoader('galleryLoader', false);
         isGalleryLoading = false;
     }
-
     function renderUserFeed(reset = false) {
         if (isFeedLoading) return;
         isFeedLoading = true;
         showLoader('feedLoader', true);
         const feedContainer = document.getElementById('feedGrid');
-        if (reset) {
-            feedContainer.innerHTML = '';
-            loadedFeedCount = 0;
-        }
+        if (reset) { feedContainer.innerHTML = ''; loadedFeedCount = 0; }
         const nextItems = allPosts.slice(loadedFeedCount, loadedFeedCount + itemsPerLoad);
         if (nextItems.length > 0) {
             appendToImageGrid(feedContainer, nextItems);
@@ -310,17 +251,12 @@ document.addEventListener('DOMContentLoaded', () => {
         isFeedLoading = false;
     }
 
-    // --- EVENT LISTENERS ---
+    // ** Lógica de Eventos y Listeners **
     function setupAuthEventListeners() {
         document.getElementById('showLoginModalBtn').addEventListener('click', () => showModal('loginModal'));
         document.getElementById('showRegisterModalBtn').addEventListener('click', () => showModal('registerModal'));
         document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', (e) => e.target.closest('.modal-container').classList.add('hidden')));
-        
-        document.getElementById('showForgotPasswordModalBtn').addEventListener('click', () => {
-            hideModal('loginModal');
-            showModal('forgotPasswordModal');
-        });
-
+        document.getElementById('showForgotPasswordModalBtn').addEventListener('click', () => { hideModal('loginModal'); showModal('forgotPasswordModal'); });
         document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('forgotPasswordEmail').value;
@@ -328,31 +264,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 await auth.sendPasswordResetEmail(email);
                 showToast('Correo de restablecimiento enviado. Revisa tu bandeja de entrada.');
                 hideModal('forgotPasswordModal');
-            } catch (error) {
-                showToast(getFirebaseErrorMessage(error));
-            }
+            } catch (error) { showToast(getFirebaseErrorMessage(error)); }
         });
-
         document.getElementById('registerForm').addEventListener('submit', async e => {
             e.preventDefault();
             const username = e.target.registerUsername.value.trim();
             const email = e.target.registerEmail.value.trim();
             const password = e.target.registerPassword.value;
             if (password !== e.target.registerPasswordConfirm.value) return showToast("Las contraseñas no coinciden.");
-
             try {
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 await db.ref(`users/${userCredential.user.uid}`).set({
                     username: username,
-                    profile: { 
-                        avatar: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(username)}`,
-                        bio: '', interests: []
-                    }
+                    profile: { avatar: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(username)}`, bio: '', interests: [] }
                 });
                 hideModal('registerModal');
             } catch (error) { showToast(getFirebaseErrorMessage(error)); }
         });
-
         document.getElementById('loginForm').addEventListener('submit', async e => {
             e.preventDefault();
             try {
@@ -361,48 +289,30 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) { showToast(getFirebaseErrorMessage(error)); }
         });
     }
-
     function setupAppEventListeners() {
         if(document.body.dataset.appListenersAttached === 'true') return;
-        
         document.getElementById('logoutBtn').addEventListener('click', () => auth.signOut());
         document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
             btn.addEventListener('click', () => triggerView(btn.dataset.view));
         });
-
         document.getElementById('createPostBtn').addEventListener('click', () => showModal('createPostModal'));
-        
         const notificationsBtn = document.getElementById('navNotificationsBtn');
         const notificationsPanel = document.getElementById('notificationsWindow');
-        notificationsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            notificationsPanel.classList.toggle('active');
-        });
+        notificationsBtn.addEventListener('click', (e) => { e.stopPropagation(); notificationsPanel.classList.toggle('active'); });
         document.addEventListener('click', (e) => {
             if (!notificationsPanel.contains(e.target) && !notificationsBtn.contains(e.target)) {
                 notificationsPanel.classList.remove('active');
             }
         });
-
-        new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && !isGalleryLoading && document.getElementById('galleryView').offsetParent !== null) renderCuratedFeed(false);
-        }, { threshold: 0.1 }).observe(document.getElementById('curated-sentinel'));
-        
-        new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && !isFeedLoading && document.getElementById('feedView').offsetParent !== null) renderUserFeed(false);
-        }, { threshold: 0.1 }).observe(document.getElementById('feed-sentinel'));
-
+        new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isGalleryLoading && document.getElementById('galleryView').offsetParent !== null) renderCuratedFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('curated-sentinel'));
+        new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isFeedLoading && document.getElementById('feedView').offsetParent !== null) renderUserFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('feed-sentinel'));
         setupProfileEventListeners();
         setupDetailViewEventListeners();
         setupCreatePostForm();
-
         document.getElementById('searchForm').addEventListener('submit', e => e.preventDefault());
         document.getElementById('searchInput').addEventListener('input', e => renderSearchResults(e.target.value));
-
         document.body.dataset.appListenersAttached = 'true';
     }
-    
-    // El resto de funciones se mantienen igual
     function setupProfileEventListeners() {
         document.getElementById('saveProfileBtn').addEventListener('click', async () => {
             const bio = document.getElementById('profileBio').value;
@@ -448,100 +358,76 @@ document.addEventListener('DOMContentLoaded', () => {
             input.value = '';
         });
     }
-
     function setupDetailViewEventListeners() {
          document.getElementById('detailBackBtn').addEventListener('click', () => closeSlideUpView('detailView'));
          document.getElementById('userProfileBackBtn').addEventListener('click', () => closeSlideUpView('userProfileView'));
-        
         document.getElementById('detailLikeBtn').addEventListener('click', function() {
-            if(!this.dataset.id || !currentUser) return;
+            if (!this.dataset.id || !currentUser) return;
             const ref = db.ref(`likes/${this.dataset.id}/${currentUser.uid}`);
             ref.once('value', snap => ref.set(snap.exists() ? null : true));
         });
-        
         document.getElementById('detailFavoriteBtn').addEventListener('click', function() {
-            if(!this.dataset.id || !currentUser) return;
+            if (!this.dataset.id || !currentUser) return;
             const ref = db.ref(`favorites/${currentUser.uid}/${this.dataset.id}`);
             ref.once('value', snap => ref.set(snap.exists() ? null : true));
         });
-        
         document.getElementById('commentForm').addEventListener('submit', handleCommentSubmit);
         document.getElementById('focusCommentBtn').addEventListener('click', () => document.getElementById('commentText').focus());
         document.getElementById('cancelReplyBtn').addEventListener('click', cancelReply);
     }
-    
     function setupCreatePostForm() {
         document.getElementById('createPostForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const imageUrl = document.getElementById('postImageUrl').value.trim();
             const title = document.getElementById('postTitle').value.trim();
             const tagsInput = document.getElementById('postTags').value.trim();
-            if(!imageUrl || !title) return showToast("La URL y el título son obligatorios.");
-            
+            if (!imageUrl || !title) return showToast("La URL y el título son obligatorios.");
             const tags = tagsInput.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag !== '');
-
             const newPostRef = db.ref('posts').push();
             try {
-                await newPostRef.set({ 
+                await newPostRef.set({
                     id: newPostRef.key, imageUrl, title, tags,
-                    authorUid: currentUser.uid, 
-                    timestamp: firebase.database.ServerValue.TIMESTAMP 
+                    authorUid: currentUser.uid,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
                 document.getElementById('createPostForm').reset();
                 hideModal('createPostModal');
                 showToast("Publicación creada con éxito");
                 triggerView('feedView');
-            } catch (error) {
-                console.error("Error creando post:", error);
-                showToast("No se pudo crear la publicación.");
-            }
+            } catch (error) { console.error("Error creando post:", error); showToast("No se pudo crear la publicación."); }
         });
     }
-    
+
+    // ** Lógica de Vistas Específicas **
     async function showDetailView(id, isPost = false) {
         detachDetailViewListeners();
         navigateTo('detailView');
         document.querySelector('#detailView > main').scrollTop = 0;
-
         const item = isPost ? allPosts.find(p => p.id === id) : allImages.find(i => i.id == id);
-        if (!item) {
-            showToast('Contenido no encontrado.');
-            closeSlideUpView('detailView');
-            return;
-        };
-
+        if (!item) { showToast('Contenido no encontrado.'); closeSlideUpView('detailView'); return; };
         const dbId = String(item.id);
-        const userSnapshot = item.authorUid === ADMIN_USER_DATA.uid ? null : await db.ref(`users/${item.authorUid}`).once('value');
-        const authorData = item.authorUid === ADMIN_USER_DATA.uid ? ADMIN_USER_DATA : userSnapshot.val() || { username: 'Anónimo' };
-        
+        const authorData = await getAuthorData(item.authorUid);
+        const isVerified = item.authorUid === ADMIN_USER_DATA.uid;
         document.getElementById('detailAuthorUsername').textContent = authorData.username;
         document.getElementById('detailAuthorAvatar').src = authorData.profile?.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${authorData.username}`;
-        document.getElementById('detailAuthorInfo').onclick = () => {
-            if (item.authorUid === ADMIN_USER_DATA.uid) return;
-            showUserProfile(item.authorUid);
-        };
-        
+        document.getElementById('detailAuthorVerifiedBadge').innerHTML = isVerified ? '<i class="fas fa-check-circle text-blue-400"></i>' : '';
+        document.getElementById('detailAuthorInfo').onclick = () => { if (item.authorUid !== ADMIN_USER_DATA.uid) showUserProfile(item.authorUid); };
         document.getElementById('detailTitle').textContent = item.title;
         document.getElementById('detailDescription').textContent = item.description || '';
-        
         if (currentViewer) currentViewer.destroy();
         const imageViewer = document.getElementById('imageViewer');
         imageViewer.innerHTML = `<img src="${item.isPost ? item.imageUrl : item.url}" alt="${item.title}" onerror="this.parentElement.innerHTML='<p class=\\'p-4 text-red-400\\'>Error al cargar imagen.</p>';">`;
         currentViewer = new Viewer(imageViewer, { navbar: false, toolbar: false, button: true, title: false });
-
         document.getElementById('detailLikeBtn').dataset.id = dbId;
         document.getElementById('detailFavoriteBtn').dataset.id = dbId;
         document.getElementById('commentForm').dataset.imageId = dbId;
-        
+        delete document.getElementById('commentForm').dataset.replyToPath;
         listenToLikesAndViews(dbId);
         listenToComments(dbId);
-
         if (!isPost) renderSimilarImages(item);
         else document.getElementById('similar-section').classList.add('hidden');
-        
         db.ref(`views/${dbId}/${currentUser.uid}`).set(true);
     }
-
     async function populateProfileView() {
         if (!currentUserData.profile) return;
         navigateTo('profileView');
@@ -552,29 +438,22 @@ document.addEventListener('DOMContentLoaded', () => {
         renderFavorites();
         renderProfileInterests();
     }
-    
     async function showUserProfile(userId) {
         if (userId === ADMIN_USER_DATA.uid) return;
-        
-        const snapshot = await db.ref(`users/${userId}`).once('value');
-        if (!snapshot.exists()) return showToast('Usuario no encontrado');
-        
-        const userData = snapshot.val();
+        navigateTo('userProfileView');
+        const userData = await getAuthorData(userId);
         const profile = userData.profile || {};
-        
         document.getElementById('userProfileHeaderUsername').textContent = `Perfil de ${userData.username}`;
         document.getElementById('userProfileAvatar').src = profile.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${userData.username}`;
         document.getElementById('userProfileUsername').textContent = userData.username;
         document.getElementById('userProfileBio').textContent = profile.bio || 'Este usuario aún no ha escrito una biografía.';
         renderUserPosts(userId, 'visitingUserPostsGrid', 'no-visiting-posts-message');
-
-        navigateTo('userProfileView');
     }
-    
+
+    // ** Lógica de Interacción (Likes, Comentarios, etc.) **
     function listenToLikesAndViews(id) {
         const likesRef = db.ref(`likes/${id}`);
         const viewsRef = db.ref(`views/${id}`);
-
         const likesCallback = likesRef.on('value', snap => {
             const likeCountEl = document.getElementById('detailLikeCount');
             if (!likeCountEl) return;
@@ -586,104 +465,72 @@ document.addEventListener('DOMContentLoaded', () => {
             const viewCountEl = document.getElementById('detailViewCount');
             if (viewCountEl) viewCountEl.textContent = `${Object.keys(snap.val() || {}).length} Vistas`;
         });
-        
         activeDetailListeners.likes = { ref: likesRef, callback: likesCallback };
         activeDetailListeners.views = { ref: viewsRef, callback: viewsCallback };
     }
-
     function listenToComments(imageId) {
         const commentsRef = db.ref(`comments/${imageId}`);
         const commentsCallback = commentsRef.orderByChild('timestamp').on('value', snapshot => {
             const list = document.getElementById('commentsList');
-            if(!list) return;
+            if (!list) return;
             list.innerHTML = '';
             if (!snapshot.exists()) return list.innerHTML = `<p class="text-gray-500 text-center text-sm py-4">Sé el primero en comentar.</p>`;
-            
-            const comments = [];
-            snapshot.forEach(s => comments.push({ id: s.key, ...s.val() }));
-            comments.reverse().forEach(c => list.appendChild(createCommentElement(c)));
+            snapshot.forEach(commentSnapshot => {
+                const commentData = { id: commentSnapshot.key, ...commentSnapshot.val() };
+                const path = `comments/${imageId}/${commentData.id}`;
+                list.prepend(createCommentElement(commentData, path));
+            });
         });
-
         activeDetailListeners.comments = { ref: commentsRef, callback: commentsCallback };
     }
-
-    function createCommentElement(commentData) {
+    function createCommentElement(commentData, path) {
         const li = document.createElement('li');
         li.className = 'comment-item';
-        li.dataset.commentId = commentData.id;
-        li.dataset.authorId = commentData.authorUid; 
+        li.dataset.commentPath = path;
         li.dataset.authorName = commentData.username;
-        const avatar = commentData.userAvatar || `https://api.dicebear.com/8.x/initials/svg?seed=${commentData.username}`;
-        
+        const isVerified = commentData.authorUid === ADMIN_USER_DATA.uid;
         li.innerHTML = `
-            <img src="${avatar}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover cursor-pointer" data-userid="${commentData.authorUid}">
+            <img src="${commentData.userAvatar || ''}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover bg-gray-700 cursor-pointer" data-userid="${commentData.authorUid}">
             <div class="comment-content">
                 <div class="bg-gray-800/50 rounded-lg p-2">
-                    <span class="font-bold text-sm text-white cursor-pointer hover:underline" data-userid="${commentData.authorUid}">${commentData.username}</span>
+                    <span class="font-bold text-sm text-white cursor-pointer hover:underline flex items-center gap-2" data-userid="${commentData.authorUid}">${commentData.username}${isVerified ? '<i class="fas fa-check-circle text-blue-400 text-xs ml-1"></i>' : ''}</span>
                     <p class="text-gray-300 mt-1 break-words">${commentData.text}</p>
                 </div>
                 <div class="text-xs text-gray-500 mt-1 pl-2"><button class="hover:underline reply-btn">Responder</button></div>
+                <div class="replies-container"></div>
             </div>`;
-
         li.querySelector('.reply-btn').addEventListener('click', e => initiateReply(e.currentTarget.closest('li')));
-        li.querySelectorAll('[data-userid]').forEach(el => el.addEventListener('click', e => {
-            e.stopPropagation();
-            if (el.dataset.userid === currentUser.uid) {
-                closeSlideUpView('detailView');
-                setTimeout(() => triggerView('profileView'), 300);
-            } else {
-                showUserProfile(el.dataset.userid);
-            }
-        }));
-
-        if (commentData.replies) {
-            const repliesList = document.createElement('ul');
-            repliesList.className = 'pl-10 mt-3 space-y-3 border-l-2 border-gray-700';
-            Object.values(commentData.replies).sort((a,b) => a.timestamp - b.timestamp).forEach(reply => {
-                const replyAvatar = reply.userAvatar || `https://api.dicebear.com/8.x/initials/svg?seed=${reply.username}`;
-                repliesList.innerHTML += `<li class="comment-item"><img src="${replyAvatar}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover"><div class="comment-content"><div class="bg-gray-800/50 rounded-lg p-2"><strong class="font-bold text-sm text-white">${reply.username}</strong><p class="text-gray-300 mt-1 break-words">${reply.text}</p></div></div></li>`;
+        li.querySelectorAll('[data-userid]').forEach(el => {
+            el.addEventListener('click', e => {
+                e.stopPropagation();
+                if (el.dataset.userid === currentUser.uid) { closeSlideUpView(document.querySelector('.view.slide-up.active').id); setTimeout(() => triggerView('profileView'), 300); }
+                else { showUserProfile(el.dataset.userid); }
             });
-            li.querySelector('.comment-content').appendChild(repliesList);
+        });
+        if (commentData.replies) {
+            const repliesContainer = li.querySelector('.replies-container');
+            Object.entries(commentData.replies).sort((a, b) => a[1].timestamp - b[1].timestamp).forEach(([replyId, replyData]) => {
+                const replyPath = `${path}/replies/${replyId}`;
+                repliesContainer.appendChild(createCommentElement(replyData, replyPath));
+            });
         }
         return li;
     }
-
     async function handleCommentSubmit(e) {
         e.preventDefault();
         const textInput = document.getElementById('commentText');
         const text = textInput.value.trim();
         const imageId = document.getElementById('commentForm').dataset.imageId;
         if (!text || !imageId) return;
-        
-        const replyToCommentId = document.getElementById('commentForm').dataset.replyToCommentId;
-        const commentData = { 
-            text, timestamp: firebase.database.ServerValue.TIMESTAMP, 
-            username: currentUserData.username, authorUid: currentUser.uid, 
-            userAvatar: currentUserData.profile.avatar 
-        };
-
+        const replyToPath = document.getElementById('commentForm').dataset.replyToPath;
+        const commentData = { text, timestamp: firebase.database.ServerValue.TIMESTAMP, username: currentUserData.username, authorUid: currentUser.uid, userAvatar: currentUserData.profile.avatar };
         try {
-            if (replyToCommentId) {
-                await db.ref(`comments/${imageId}/${replyToCommentId}/replies`).push(commentData);
-                sendReplyNotification(document.getElementById('commentForm').dataset.replyToAuthorId, imageId);
-                cancelReply();
-            } else {
-                await db.ref(`comments/${imageId}`).push(commentData);
-            }
+            const refPath = replyToPath ? `${replyToPath}/replies` : `comments/${imageId}`;
+            await db.ref(refPath).push(commentData);
+            cancelReply();
             textInput.value = '';
         } catch (error) { console.error(error); showToast("No se pudo enviar el comentario."); }
     }
-
-    function sendReplyNotification(targetUserId, imageId) {
-        if (targetUserId && targetUserId !== currentUser.uid) {
-            const message = `${currentUserData.username} respondió a tu comentario.`;
-            db.ref(`notifications/${targetUserId}`).push({
-                message, imageId,
-                timestamp: firebase.database.ServerValue.TIMESTAMP, read: false,
-            });
-        }
-    }
-
     function listenToNotifications() {
         if (!currentUser) return;
         const ref = db.ref(`notifications/${currentUser.uid}`);
@@ -696,10 +543,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 badge.classList.add('hidden');
                 return list.innerHTML = `<p class="p-4 text-center text-gray-500">No tienes notificaciones.</p>`;
             }
-
             const notifications = Object.entries(snapshot.val()).map(([id, data]) => ({id, ...data}));
             badge.classList.toggle('hidden', notifications.filter(n => !n.read).length === 0);
-
             notifications.reverse().forEach(n => {
                 const el = document.createElement('div');
                 el.className = `px-4 py-3 hover:bg-gray-700 cursor-pointer ${n.read ? 'opacity-60' : 'font-semibold'}`;
@@ -715,6 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ** Otras funciones auxiliares **
     function renderUserPosts(userId, gridId, messageId) {
         const container = document.getElementById(gridId);
         const message = document.getElementById(messageId);
@@ -723,7 +569,6 @@ document.addEventListener('DOMContentLoaded', () => {
         message.classList.toggle('hidden', userPosts.length > 0);
         if(userPosts.length > 0) appendToImageGrid(container, userPosts); 
     }
-    
     function renderFavorites() {
         listenToUserFavorites((favoriteItems) => {
             const container = document.getElementById('favoritesGrid');
@@ -733,7 +578,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if(favoriteItems.length > 0) appendToImageGrid(container, favoriteItems.reverse());
         });
     }
-
     function listenToUserFavorites(callback) {
         if(!currentUser) return;
         db.ref(`favorites/${currentUser.uid}`).on('value', snap => {
@@ -742,13 +586,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if(callback) callback(favoriteItems);
         });
     }
-    
     function updateAllAvatars(url) {
         document.getElementById('profileAvatar').src = url;
         document.getElementById('navProfileAvatar').src = url;
         document.getElementById('commentFormAvatar').src = url;
     }
-
     async function updateAvatar(url) {
         try {
             await fetch(url, { mode: 'no-cors' });
@@ -757,33 +599,23 @@ document.addEventListener('DOMContentLoaded', () => {
             await db.ref(`users/${currentUser.uid}/profile/avatar`).set(url);
             hideModal('avatarModal');
             showToast("Avatar actualizado");
-        } catch (error) {
-            showToast("La URL de la imagen no parece ser válida.");
-        }
+        } catch (error) { showToast("La URL de la imagen no parece ser válida."); }
     }
-
     function renderSearchResults(query) {
         query = query.toLowerCase().trim();
         const resultsContainer = document.getElementById('searchResults');
         const countEl = document.getElementById('searchResultCount');
         resultsContainer.innerHTML = '';
-
-        if (!query) {
-            countEl.textContent = '';
-            return;
-        }
-
+        if (!query) { countEl.textContent = ''; return; }
         const results = [...allImages, ...allPosts].filter(item => {
             const titleMatch = item.title.toLowerCase().includes(query);
             const tagMatch = (item.tags || []).some(tag => tag.toLowerCase().includes(query));
             return titleMatch || tagMatch;
         });
-
         countEl.textContent = `${results.length} resultado(s) encontrado(s).`;
         if (results.length > 0) appendToImageGrid(resultsContainer, results);
         else resultsContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">No se encontraron resultados.</p>`;
     }
-
     function renderProfileInterests() {
         const container = document.getElementById('profileInterests');
         container.innerHTML = '';
@@ -810,14 +642,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         updateInterestCounter();
     }
-
     function updateInterestCounter() {
         const count = document.querySelectorAll('#profileInterests .bg-indigo-600').length;
         const counterEl = document.getElementById('interestCounter');
         counterEl.textContent = `${count}/${INTEREST_LIMIT}`;
         counterEl.classList.toggle('text-red-500', count >= INTEREST_LIMIT);
     }
-    
     async function renderPopularGallery() {
         const container = document.getElementById('popularGallery');
         container.innerHTML = `<div class="col-span-full text-center p-8"><i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i></div>`;
@@ -830,7 +660,6 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '';
         appendToImageGrid(container, popularContent.slice(0, 24));
     }
-    
     function renderSimilarImages(currentImage) {
         const section = document.getElementById('similar-section');
         const container = document.getElementById('similar-images-grid');
@@ -843,7 +672,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter(img => img.score > 0)
             .sort((a, b) => b.score - a.score)
             .slice(0, 6);
-            
         if (similarImages.length > 0) {
             section.classList.remove('hidden');
             appendToImageGrid(container, similarImages);
@@ -851,5 +679,50 @@ document.addEventListener('DOMContentLoaded', () => {
             section.classList.add('hidden');
         }
     }
+
+    // --- 4. PUNTO DE ENTRADA DE LA APLICACIÓN ---
+    async function initializeApp() {
+        showLoader('galleryLoader', true);
+        appInitialized = true;
+        try {
+            setupAppEventListeners();
+            await loadUserData();
+            await Promise.all([loadCuratedImages(), listenToPosts()]);
+            sortCuratedFeed();
+            renderCuratedFeed(true);
+            listenToUserFavorites();
+            listenToNotifications();
+        } catch (error) {
+            console.error("Error inicializando la app:", error);
+            showToast("Error al cargar la aplicación");
+        } finally {
+            showLoader('galleryLoader', false);
+            triggerView('galleryView');
+        }
+    }
+
+    setupAuthEventListeners();
+    auth.onAuthStateChanged(user => {
+        const authOverlay = document.getElementById('authOverlay');
+        const appContent = document.getElementById('appContent');
+        if (user) {
+            currentUser = user;
+            if (!appInitialized) {
+                initializeApp();
+            }
+            authOverlay.classList.add('opacity-0', 'pointer-events-none');
+            appContent.classList.remove('hidden');
+        } else {
+            currentUser = null;
+            currentUserData = {};
+            appInitialized = false;
+            authOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            appContent.classList.add('hidden');
+            document.querySelectorAll('.modal-container, .notifications-panel').forEach(m => {
+                m.classList.add('hidden');
+                m.classList.remove('active');
+            });
+        }
+    });
 });
 
