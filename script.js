@@ -572,12 +572,63 @@
                 }
             });
             document.getElementById('closeAvatarModal').addEventListener('click', () => document.getElementById('avatarModal').classList.add('hidden'));
+            
+            document.getElementById('searchForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                renderSearchResults(document.getElementById('searchInput').value);
+            });
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                renderSearchResults(e.target.value);
+            });
+            
+            document.getElementById('navNotificationsBtn').addEventListener('click', () => {
+                const notificationsWindow = document.getElementById('notificationsWindow');
+                notificationsWindow.classList.remove('hidden');
+                setTimeout(() => notificationsWindow.querySelector('[data-modal-content]').parentElement.classList.add('active'), 10);
+            });
+            document.getElementById('notificationsCloseBtn').addEventListener('click', () => {
+                const notificationsWindow = document.getElementById('notificationsWindow');
+                 notificationsWindow.classList.remove('active');
+                 setTimeout(() => notificationsWindow.classList.add('hidden'), 300);
+            });
+             document.getElementById('notificationsWindow').addEventListener('click', (e) => {
+                if(e.target.hasAttribute('data-close-modal')) {
+                    const notificationsWindow = document.getElementById('notificationsWindow');
+                    notificationsWindow.classList.remove('active');
+                    setTimeout(() => notificationsWindow.classList.add('hidden'), 300);
+                }
+            });
+            
+            document.getElementById('commentForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const imageId = this.dataset.imageId;
+                const textInput = document.getElementById('commentText');
+                const text = textInput.value.trim();
+                if (!text || !imageId) return;
+                const replyToCommentId = this.dataset.replyToCommentId;
+                const commentData = { text, timestamp: firebase.database.ServerValue.TIMESTAMP, username: currentUserData.username, authorUid: currentUser.uid, userAvatar: currentUserData.profile.avatar };
+
+                if (replyToCommentId) {
+                    await db.ref(`comments/${imageId}/${replyToCommentId}/replies`).push(commentData);
+                    const replyToUsername = this.dataset.replyToUsername;
+                    const targetUserId = this.dataset.replyToAuthorId; 
+                    sendReplyNotification(targetUserId, replyToUsername, imageId);
+                    cancelReply();
+                } else {
+                    await db.ref(`comments/${imageId}`).push(commentData);
+                }
+                textInput.value = '';
+            });
+
+            document.getElementById('focusCommentBtn').addEventListener('click', () => { document.getElementById('commentText').focus(); });
+            document.getElementById('cancelReplyBtn').addEventListener('click', cancelReply);
+            
+            setupNotificationsListener();
 
             document.body.dataset.appListenersAttached = 'true';
         }
         
         // --- FUNCIONES AUXILIARES ---
-        // (El resto de funciones auxiliares que ya tenías)
         function getFirebaseErrorMessage(error) {
             switch (error.code) {
                 case 'auth/invalid-email': return 'El formato del correo electrónico no es válido.';
@@ -599,11 +650,9 @@
             const commentForm = document.getElementById('commentForm');
             const replyingToBanner = document.getElementById('replyingToBanner');
             const commentText = document.getElementById('commentText');
-
             delete commentForm.dataset.replyToCommentId;
             delete commentForm.dataset.replyToUsername;
             delete commentForm.dataset.replyToAuthorId;
-
             replyingToBanner.classList.add('hidden');
             commentText.placeholder = 'Escribe un comentario...';
         }
@@ -634,22 +683,13 @@
                     commentsList.innerHTML = `<p class="text-gray-500 text-center text-sm">Sé el primero en comentar.</p>`;
                     return;
                 }
-
+                const comments = [];
                 snapshot.forEach(commentSnapshot => {
-                    const commentId = commentSnapshot.key;
-                    const comment = commentSnapshot.val();
-                    const li = createCommentElement(commentId, comment, imageId);
-                    
-                    if (comment.replies) {
-                        const repliesList = document.createElement('ul');
-                        repliesList.className = 'pl-6 mt-3 space-y-3';
-                        Object.entries(comment.replies).sort((a,b) => a[1].timestamp - b[1].timestamp).forEach(([replyId, reply]) => {
-                            const replyLi = createCommentElement(replyId, reply, imageId, true, comment.username);
-                            repliesList.appendChild(replyLi);
-                        });
-                        li.querySelector('.comment-content').appendChild(repliesList);
-                    }
-                    commentsList.prepend(li);
+                    comments.push({ id: commentSnapshot.key, ...commentSnapshot.val() });
+                });
+                comments.reverse().forEach(comment => {
+                    const li = createCommentElement(comment.id, comment, imageId);
+                    commentsList.appendChild(li);
                 });
             });
         }
@@ -680,7 +720,75 @@
                     showUserProfile(el.dataset.userid);
                 });
             });
+            if (data.replies) {
+                const repliesList = document.createElement('ul');
+                repliesList.className = 'pl-6 mt-3 space-y-3';
+                Object.entries(data.replies).sort((a,b) => a[1].timestamp - b[1].timestamp).forEach(([replyId, reply]) => {
+                    const replyLi = createCommentElement(replyId, reply, imageId, true, data.username);
+                    repliesList.appendChild(replyLi);
+                });
+                li.querySelector('.comment-content').appendChild(repliesList);
+            }
             return li;
+        }
+        function initiateReply(commentElement) {
+            const commentForm = document.getElementById('commentForm');
+            const replyingToBanner = document.getElementById('replyingToBanner');
+            const replyingToUsername = document.getElementById('replyingToUsername');
+            const commentText = document.getElementById('commentText');
+            const authorName = commentElement.dataset.authorName;
+            const authorId = commentElement.dataset.authorId;
+            const commentId = commentElement.dataset.commentId;
+            commentForm.dataset.replyToCommentId = commentId;
+            commentForm.dataset.replyToUsername = authorName;
+            commentForm.dataset.replyToAuthorId = authorId;
+            replyingToUsername.textContent = authorName;
+            replyingToBanner.classList.remove('hidden');
+            commentText.placeholder = `Respondiendo a ${authorName}...`;
+            commentText.focus();
+        }
+        async function sendReplyNotification(targetUserId, targetUsername, imageId) {
+            if (targetUserId && targetUserId !== currentUser.uid) {
+                const message = `${currentUserData.username} respondió a tu comentario.`;
+                await db.ref(`notifications/${targetUserId}`).push({
+                    message,
+                    imageId,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false,
+                    fromUser: currentUserData.username
+                });
+            }
+        }
+        function setupNotificationsListener() {
+            const notificationsRef = db.ref(`notifications/${currentUser.uid}`);
+            const badge = document.getElementById('navNotificationsBadge');
+            const list = document.getElementById('notificationsList');
+            
+            notificationsRef.on('value', snapshot => {
+                const notifications = snapshot.val() || {};
+                const unreadCount = Object.values(notifications).filter(n => !n.read).length;
+                badge.style.display = unreadCount > 0 ? 'block' : 'none';
+                
+                list.innerHTML = '';
+                if(Object.keys(notifications).length === 0) {
+                    list.innerHTML = '<p class="text-gray-500 text-center">No tienes notificaciones.</p>';
+                    return;
+                }
+
+                Object.entries(notifications).reverse().forEach(([id, n]) => {
+                    const notifEl = document.createElement('div');
+                    notifEl.className = `p-2 rounded-lg hover:bg-gray-700 cursor-pointer ${n.read ? 'opacity-60' : ''}`;
+                    notifEl.innerHTML = `<p>${n.message}</p><p class="text-xs text-gray-500">${new Date(n.timestamp).toLocaleString()}</p>`;
+                    notifEl.onclick = () => {
+                        const notificationsWindow = document.getElementById('notificationsWindow');
+                        notificationsWindow.classList.remove('active');
+                        setTimeout(() => notificationsWindow.classList.add('hidden'), 300);
+                        showDetailView(n.imageId, n.isPost); // Asumiendo que guardas si es post
+                        db.ref(`notifications/${currentUser.uid}/${id}/read`).set(true);
+                    };
+                    list.appendChild(notifEl);
+                });
+            });
         }
     });
 })();
