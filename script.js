@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return { username: 'Anónimo', profile: {} };
     };
-    
+
     // ** Lógica de Datos y Carga **
     async function loadUserData() {
         if (!currentUser) return;
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function triggerView(viewId) {
         switch(viewId) {
-            case 'galleryView': navigateTo(viewId); break;
+            case 'galleryView': navigateTo(viewId); listenToLeaderboard(); break;
             case 'feedView': renderUserFeed(true); navigateTo(viewId); break;
             case 'popularView': renderPopularGallery(); navigateTo(viewId); break;
             case 'profileView': populateProfileView(); break; 
@@ -561,6 +561,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // ** Otras funciones auxiliares **
     function renderUserPosts(userId, gridId, messageId) {
         const container = document.getElementById(gridId);
         const message = document.getElementById(messageId);
@@ -685,12 +687,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const allLikes = snapshot.val() || {};
             const userTopScores = {};
             for (const post of allPosts) {
+                if(post.authorUid === ADMIN_USER_DATA.uid) continue;
                 const likeCount = allLikes[post.id] ? Object.keys(allLikes[post.id]).length : 0;
                 if (!userTopScores[post.authorUid] || likeCount > userTopScores[post.authorUid].topScore) {
-                    userTopScores[post.authorUid] = {
-                        uid: post.authorUid,
-                        topScore: likeCount,
-                    };
+                    userTopScores[post.authorUid] = { uid: post.authorUid, topScore: likeCount };
                 }
             }
             const rankedUsers = Object.values(userTopScores).sort((a, b) => b.topScore - a.topScore);
@@ -720,8 +720,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 4. PUNTO DE ENTRADA DE LA APLICACIÓN ---
-    
-    // **Función de Inicialización Principal**
     async function initializeApp() {
         showLoader('galleryLoader', true);
         appInitialized = true;
@@ -743,10 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Se configuran los listeners de autenticación desde el principio.
     setupAuthEventListeners();
-
-    // El listener de estado de autenticación decide si mostrar la pantalla de bienvenida o la app.
     auth.onAuthStateChanged(user => {
         const authOverlay = document.getElementById('authOverlay');
         const appContent = document.getElementById('appContent');
