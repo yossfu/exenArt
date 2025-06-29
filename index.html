@@ -4,19 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exene</title>
+    
+    <!-- Librerías Externas (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase (versión 8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- Tus archivos locales -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans antialiased">
 
     <!-- ========== PANTALLA DE BIENVENIDA Y BOTONES DE AUTH ========== -->
-    <div id="authOverlay" class="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center p-4 hidden">
+    <div id="authOverlay" class="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center p-4 transition-opacity duration-300">
         <div id="welcomeContainer" class="text-center">
-            <img src="logo.png" alt="Exene" class="h-16 mx-auto mb-4" onerror="this.style.display='none'">
+            <img src="https://raw.githubusercontent.com/eacardenas/recursos-reales/main/logo-exene.png" alt="Exene" class="h-16 mx-auto mb-4" onerror="this.style.display='none'">
             <h1 class="text-3xl font-bold text-white">Bienvenido a Exene</h1>
             <p class="text-gray-400 mt-2">Únete a la comunidad y comparte tu visión.</p>
             <div class="flex flex-col sm:flex-row gap-4 mt-8 w-full max-w-xs mx-auto">
@@ -26,7 +37,7 @@
         </div>
     </div>
 
-    <!-- ========== MODALES SEPARADOS DE AUTH ========== -->
+    <!-- ========== MODALES DE AUTH ========== -->
     <div id="loginModal" class="modal-container hidden">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4 text-center text-white">Iniciar Sesión</h2>
@@ -34,7 +45,7 @@
                 <input type="email" id="loginEmail" placeholder="Correo electrónico" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <input type="password" id="loginPassword" placeholder="Contraseña" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Entrar</button>
-                <button type="button" id="closeLoginModal" class="mt-2 w-full text-gray-400 hover:text-white transition-colors py-2">Cancelar</button>
+                <button type="button" class="mt-2 w-full text-gray-400 hover:text-white transition-colors py-2 close-modal-btn">Cancelar</button>
             </form>
         </div>
     </div>
@@ -48,12 +59,12 @@
                 <input type="password" id="registerPassword" placeholder="Crea una contraseña (mín. 6 caracteres)" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <input type="password" id="registerPasswordConfirm" placeholder="Confirmar contraseña" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Registrarse</button>
-                <button type="button" id="closeRegisterModal" class="mt-2 w-full text-gray-400 hover:text-white transition-colors py-2">Cancelar</button>
+                <button type="button" class="mt-2 w-full text-gray-400 hover:text-white transition-colors py-2 close-modal-btn">Cancelar</button>
             </form>
         </div>
     </div>
     
-    <!-- ========== CONTENIDO PRINCIPAL DE LA APP (VISIBLE DESPUÉS DE LOGIN) ========== -->
+    <!-- ========== CONTENIDO PRINCIPAL DE LA APP (OCULTO INICIALMENTE) ========== -->
     <div id="appContent" class="hidden">
         <!-- MODALES DE LA APP -->
         <div id="avatarModal" class="modal-container hidden">
@@ -67,7 +78,7 @@
                         <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Usar</button>
                     </form>
                 </div>
-                <button id="closeAvatarModal" class="mt-6 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Cerrar</button>
+                <button class="mt-6 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors close-modal-btn">Cerrar</button>
             </div>
         </div>
         
@@ -80,15 +91,25 @@
                     <label for="postTitle" class="block text-sm font-medium text-gray-400 mb-1">Título</label>
                     <input type="text" id="postTitle" placeholder="Un título para tu imagen" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Publicar</button>
-                    <button type="button" id="closeCreatePostModal" class="mt-2 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Cancelar</button>
+                    <button type="button" class="mt-2 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors close-modal-btn">Cancelar</button>
                 </form>
+            </div>
+        </div>
+
+        <div id="notificationsWindow" class="modal-container hidden">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-white">Notificaciones</h3>
+                    <button class="text-xl text-gray-400 close-modal-btn">&times;</button>
+                </div>
+                <div id="notificationsList" class="space-y-3 max-h-80 overflow-y-auto"></div>
             </div>
         </div>
 
         <!-- VISTAS PRINCIPALES -->
         <main id="galleryView" class="view pb-20">
             <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <img src="logo.png" alt="Exene" class="h-8" onerror="this.style.display='none'">
+                <img src="https://raw.githubusercontent.com/eacardenas/recursos-reales/main/logo-exene.png" alt="Exene" class="h-8" onerror="this.style.display='none'">
                 <h2 class="text-lg font-bold text-white">Para ti</h2>
             </header>
             <div class="swiper featured-carousel container mx-auto my-4 rounded-lg overflow-hidden">
@@ -97,8 +118,8 @@
                 <div class="swiper-button-prev"></div>
                 <div class="swiper-button-next"></div>
             </div>
-            <div id="gallery" class="p-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div>
-            <div id="sentinel" class="h-1"></div>
+            <div id="gallery" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+            <div id="sentinel" class="h-10"></div>
             <div id="galleryLoader" class="text-center p-8 hidden">
                 <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
             </div>
@@ -108,7 +129,7 @@
             <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
                 <h2 class="text-lg font-bold text-white">Populares 🔥</h2>
             </header>
-            <div id="popularGallery" class="p-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div>
+            <div id="popularGallery" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
         </main>
 
         <main id="profileView" class="view pb-20 hidden">
@@ -128,14 +149,14 @@
                     <h3 id="profileUsername" class="text-2xl font-bold text-white"></h3>
                 </div>
                 <div class="border-b border-gray-700">
-                    <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <nav class="-mb-px flex space-x-2 sm:space-x-6" aria-label="Tabs">
                         <button id="tab-posts" class="profile-tab tab-active">Publicaciones</button>
                         <button id="tab-favorites" class="profile-tab">Favoritos</button>
                         <button id="tab-settings" class="profile-tab">Ajustes</button>
                     </nav>
                 </div>
-                <div id="content-posts" class="profile-tab-content"><div id="userPostsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div><p id="no-posts-message" class="text-center text-gray-500 hidden">Este usuario aún no tiene publicaciones.</p></div>
-                <div id="content-favorites" class="profile-tab-content hidden"><div id="favoritesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div><p id="no-favorites-message" class="text-center text-gray-500 hidden">Aún no has guardado ninguna imagen.</p></div>
+                <div id="content-posts" class="profile-tab-content"><div id="userPostsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-posts-message" class="text-center text-gray-500 hidden py-8">Aún no has creado ninguna publicación.</p></div>
+                <div id="content-favorites" class="profile-tab-content hidden"><div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-favorites-message" class="text-center text-gray-500 hidden py-8">Aún no has guardado ninguna imagen.</p></div>
                 <div id="content-settings" class="profile-tab-content hidden">
                     <div>
                         <div class="flex justify-between items-center mb-2"><h4 class="text-sm font-medium text-gray-400">Tus intereses</h4><p id="interestCounter" class="text-sm text-gray-500">0/10</p></div>
@@ -148,64 +169,56 @@
             </div>
         </main>
         
-        <main id="userProfileView" class="view hidden fixed inset-0 bg-gray-900 z-30 flex flex-col transform translate-y-full transition-transform duration-300 ease-in-out">
+        <main id="userProfileView" class="view hidden fixed inset-0 bg-gray-900 z-30 flex flex-col slide-up">
             <header class="p-4 flex items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 flex-shrink-0">
-                <button id="userProfileBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors"><i class="fas fa-arrow-left"></i></button>
+                <button id="userProfileBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
                 <h2 id="userProfileHeaderUsername" class="text-lg font-bold text-white mx-auto"></h2>
                  <div class="w-10"></div>
             </header>
             <div class="p-4 space-y-6 overflow-y-auto">
                 <div class="flex flex-col items-center space-y-4"><img id="userProfileAvatar" src="" alt="Avatar" class="w-24 h-24 rounded-full border-2 border-gray-600 object-cover"><h3 id="userProfileUsername" class="text-2xl font-bold text-white"></h3></div>
                 <div><h4 class="block text-sm font-medium text-gray-400 mb-1">Biografía</h4><p id="userProfileBio" class="w-full bg-gray-800 text-gray-300 rounded-md p-3 border border-gray-700 min-h-[6rem]"></p></div>
-                 <div><h4 class="text-sm font-medium text-gray-400 mb-2">Publicaciones</h4><div id="visitingUserPostsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div><p id="no-visiting-posts-message" class="text-center text-gray-500 hidden">Este usuario aún no tiene publicaciones.</p></div>
+                 <div><h4 class="text-sm font-medium text-gray-400 mb-2">Publicaciones</h4><div id="visitingUserPostsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-visiting-posts-message" class="text-center text-gray-500 hidden py-8">Este usuario aún no tiene publicaciones.</p></div>
             </div>
         </main>
 
-        <div id="detailView" class="view hidden fixed inset-0 bg-gray-900 z-20 flex flex-col transform translate-y-full transition-transform duration-300 ease-in-out">
+        <main id="detailView" class="view hidden fixed inset-0 bg-gray-900 z-20 flex flex-col slide-up">
             <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm z-10 flex-shrink-0">
                 <button id="detailBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
-                <div id="detailAuthorInfo" class="flex items-center gap-3 cursor-pointer group flex-1 justify-center">
+                <div id="detailAuthorInfo" class="flex items-center gap-3 cursor-pointer group flex-1 justify-center min-w-0">
                     <img id="detailAuthorAvatar" src="" class="w-9 h-9 rounded-full object-cover border-2 border-gray-700 group-hover:border-indigo-500 transition-colors">
-                    <h3 class="font-bold text-lg text-white group-hover:underline" id="detailAuthorUsername"></h3>
+                    <h3 class="font-bold text-lg text-white group-hover:underline truncate" id="detailAuthorUsername"></h3>
                 </div>
                 <div class="w-10"></div>
             </header>
             <main class="flex-1 overflow-y-auto pb-32">
-                <div id="imageViewer" class="bg-black"></div>
+                <div id="imageViewer" class="bg-black cursor-zoom-in"></div>
                 <div class="p-4 space-y-4">
                     <div><h1 id="detailTitle" class="text-white font-bold text-xl"></h1><p id="detailDescription" class="text-gray-300 mt-1 text-sm leading-relaxed"></p></div>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-6 text-2xl text-gray-400">
-                            <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group"><i class="far fa-heart group-hover:text-pink-500 transition-colors"></i></button>
+                            <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group"><i class="far fa-heart group-hover:text-pink-500 transition-transform transform active:scale-125"></i></button>
                             <button id="focusCommentBtn" class="comment-btn flex items-center space-x-2 group"><i class="far fa-comment group-hover:text-indigo-400 transition-colors"></i></button>
-                            <button id="detailFavoriteBtn" class="favorite-btn flex items-center space-x-2 group"><i class="far fa-bookmark group-hover:text-yellow-400 transition-colors"></i></button>
+                            <button id="detailFavoriteBtn" class="favorite-btn flex items-center space-x-2 group"><i class="far fa-bookmark group-hover:text-yellow-400 transition-transform transform active:scale-125"></i></button>
                         </div>
-                        <div class="text-sm text-gray-400"><span id="detailLikeCount" class="font-semibold text-white cursor-pointer">0 Me gusta</span><span class="text-gray-500 mx-1">•</span><span id="detailViewCount" class="">0 Vistas</span></div>
+                        <div class="text-sm text-gray-400"><span id="detailLikeCount" class="font-semibold text-white">0 Me gusta</span><span class="text-gray-500 mx-1">•</span><span id="detailViewCount" class="">0 Vistas</span></div>
                     </div>
                 </div>
                 <section class="p-4 pt-2 border-t border-gray-800/60"><h2 class="font-bold text-white mb-4">Comentarios</h2><ul id="commentsList" class="space-y-4"></ul></section>
                 <section id="similar-section" class="p-4 pt-6 border-t border-gray-800/60 hidden"><h2 class="font-bold text-white mb-4">Imágenes Similares</h2><div id="similar-images-grid" class="grid grid-cols-3 gap-2"></div></section>
             </main>
-        </div>
+        </main>
 
         <main id="searchView" class="view hidden p-4 pt-4 pb-20">
             <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <form id="searchForm" class="relative w-full">
-                    <input type="search" id="searchInput" placeholder="Buscar..." class="w-full bg-gray-800 text-white border border-gray-700 rounded-full pl-10 pr-12 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <form id="searchForm" class="relative w-full max-w-lg">
+                    <input type="search" id="searchInput" placeholder="Buscar por título o etiqueta..." class="w-full bg-gray-800 text-white border border-gray-700 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                    <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 rounded-full h-8 w-8 flex items-center justify-center"><i class="fas fa-arrow-right"></i></button>
                 </form>
             </header>
             <p id="searchResultCount" class="text-sm text-gray-400 mt-4 px-2"></p>
-            <div id="searchResults" class="mt-2 p-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div>
+            <div id="searchResults" class="mt-2 p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
         </main>
-        
-        <div id="notificationsWindow" class="modal-container hidden" data-close-modal>
-        <div class="bg-gray-800 w-full rounded-t-2xl p-4 transform translate-y-full transition-transform duration-300 ease-in-out absolute bottom-0" data-modal-content>
-                <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold text-white">Notificaciones</h3><button id="notificationsCloseBtn" class="text-xl text-gray-400">&times;</button></div>
-                <div id="notificationsList" class="space-y-3 max-h-60 overflow-y-auto"></div>
-            </div>
-        </div>
         
         <div id="comment-container" class="fixed bottom-16 left-0 right-0 z-30 hidden">
             <div id="replyingToBanner" class="hidden bg-gray-700 p-2 text-sm flex justify-between items-center">
@@ -215,7 +228,7 @@
             <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2 border-t border-gray-700">
                 <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full object-cover">
                 <input type="text" id="commentText" placeholder="Escribe un comentario..." class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <button type="submit" class="btn-comment text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
+                <button type="submit" class="text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
             </form>
         </div>
         
@@ -225,27 +238,22 @@
 
         <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-20">
             <nav class="flex justify-around items-center h-16">
-                <button data-view="galleryView" class="nav-btn text-indigo-400 text-2xl p-3"><i class="fas fa-home"></i></button>
-                <button data-view="searchView" class="nav-btn text-gray-400 hover:text-white transition-colors text-2xl p-3"><i class="fas fa-search"></i></button>
-                <button id="createPostBtn" class="text-gray-400 hover:text-white transition-colors text-2xl p-3"><i class="fas fa-plus-square"></i></button>
-                <button data-view="popularView" class="nav-btn text-gray-400 hover:text-white transition-colors text-2xl p-3"><i class="fas fa-fire"></i></button>
-                <button id="navNotificationsBtn" class="nav-btn relative text-gray-400 hover:text-white transition-colors text-2xl p-3">
+                <button data-view="galleryView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-home"></i></button>
+                <button data-view="popularView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-fire"></i></button>
+                <button id="createPostBtn" class="text-white bg-indigo-600 hover:bg-indigo-700 w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg"><i class="fas fa-plus"></i></button>
+                <button data-view="searchView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-search"></i></button>
+                <button id="navNotificationsBtn" class="nav-btn text-gray-400 text-2xl p-3 relative">
                     <i class="fas fa-bell"></i>
-                    <span id="navNotificationsBadge" class="absolute top-2 right-2 bg-red-500 w-2.5 h-2.5 rounded-full" style="display: none;"></span>
+                    <span id="navNotificationsBadge" class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-800 hidden"></span>
                 </button>
-                <button data-view="profileView" class="nav-btn text-gray-400 hover:text-white transition-colors text-2xl p-3">
-                    <img id="navProfileAvatar" src="" class="w-7 h-7 rounded-full border-2 border-transparent object-cover">
+                <button data-view="profileView" id="navProfileBtn" class="nav-btn text-gray-400 p-2">
+                    <img id="navProfileAvatar" src="" class="w-8 h-8 rounded-full object-cover border-2 border-transparent transition-colors">
                 </button>
             </nav>
         </footer>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.js"></script>
+    <!-- Tu script principal -->
     <script src="script.js"></script>
 </body>
 </html>

@@ -1,193 +1,175 @@
 /* Usamos Inter como fuente principal a través de la clase 'font-sans' de Tailwind */
 body {
     font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent; /* Evita el destello en taps de móviles */
 }
 
-/* ========== ESTILOS PARA MODALES ========== */
+/* ========== ESTILOS PARA MODALES Y PANTALLA DE AUTH ========== */
 .modal-container {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
+    position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.8);
+    z-index: 50; display: flex; align-items: center; justify-content: center;
+    padding: 1rem; opacity: 0; transition: opacity 0.3s ease-in-out; pointer-events: none;
 }
-
-.modal-container.hidden {
-    display: none;
+.modal-container:not(.hidden) { 
+    opacity: 1; 
+    pointer-events: auto; 
 }
-
 .modal-content {
-    background-color: #1f2937; /* bg-gray-800 */
-    padding: 1.5rem;
+    background-color: #1f2937; /* bg-gray-800 */ 
+    padding: 1.5rem; 
     border-radius: 0.5rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    width: 100%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+    width: 100%; 
     max-width: 24rem; /* max-w-sm */
+    transform: scale(0.95); 
+    transition: transform 0.3s ease-in-out;
 }
-
+.modal-container:not(.hidden) .modal-content { 
+    transform: scale(1); 
+}
 
 /* Clases para la navegación entre vistas */
-.view.hidden {
-    display: none;
+.view.hidden { 
+    display: none; 
+}
+.view {
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Animación para la vista de detalle y perfil de usuario */
-#detailView.active, #userProfileView.active {
-    transform: translateY(0%);
+/* Animación para la vista de detalle y perfil de usuario (slide-up) */
+.view.slide-up { 
+    transform: translateY(100%); 
+    transition: transform 0.3s ease-in-out; 
+}
+.view.slide-up.active { 
+    transform: translateY(0%); 
 }
 
-/* Estilo para el botón de like activo */
-.like-btn.liked i {
-    color: #ec4899; /* color-pink-500 */
-    font-weight: 900; /* Icono relleno */
+/* Estilo para los botones de Like y Favorito activos */
+.like-btn.liked i, 
+.favorite-btn.favorited i { 
+    font-weight: 900; /* Icono relleno */ 
 }
-
-/* Estilo para el botón de favorito activo */
-.favorite-btn.favorited i {
-    color: #facc15; /* color-yellow-400 */
-    font-weight: 900; /* Icono relleno */
+.like-btn.liked i { 
+    color: #ec4899; /* text-pink-500 */
+}
+.favorite-btn.favorited i { 
+    color: #facc15; /* text-yellow-400 */
 }
 
 /* Estilos para las pestañas del perfil */
 .profile-tab {
-    border-color: transparent;
-    color: #9ca3af; /* text-gray-400 */
+    border-color: transparent; 
+    color: #9ca3af; /* text-gray-400 */ 
     white-space: nowrap;
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    border-bottom-width: 2px;
-    font-weight: 500;
+    padding: 0.75rem 1rem; 
+    border-bottom-width: 2px; 
+    font-weight: 500; 
     font-size: 0.875rem;
-    transition: all 0.2s;
-    flex: 1;
+    transition: all 0.2s; 
+    flex: 1; 
     text-align: center;
 }
-
-.profile-tab:hover {
-    color: #ffffff;
-    border-color: #4b5563; /* border-gray-500 */
+.profile-tab:hover { 
+    color: #ffffff; 
+    border-color: #4b5563; /* border-gray-500 */ 
 }
-
-.profile-tab.tab-active {
-    border-color: #6366f1; /* border-indigo-500 */
-    color: #818cf8; /* text-indigo-400 */
+.profile-tab.tab-active { 
+    border-color: #6366f1; /* border-indigo-500 */ 
+    color: #818cf8; /* text-indigo-400 */ 
 }
-
 
 /* Personalización del visor de imágenes */
-.viewer-container {
-    background-color: rgba(0, 0, 0, 0.85);
-}
-.viewer-canvas {
-    border-radius: 8px;
+.viewer-container { 
+    background-color: rgba(0, 0, 0, 0.85); 
 }
 .viewer-close:before {
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
+    font-family: "Font Awesome 6 Free"; 
+    font-weight: 900; 
     content: "\f00d"; /* Icono de 'times' de Font Awesome */
-    font-size: 24px;
+    font-size: 24px; 
     color: white;
 }
 
-/* Animación para modales (Notificaciones) */
-#notificationsWindow [data-modal-content] {
-    transition: transform 0.3s ease-in-out;
-}
-#notificationsWindow.active [data-modal-content] {
-    transform: translateY(0);
-}
-
 /* Estilo para imágenes en formato portrait (2:3 aspect ratio) */
-.portrait-aspect {
-    position: relative;
-    width: 100%;
+.portrait-aspect { 
+    position: relative; 
+    width: 100%; 
     padding-bottom: 150%; 
 }
-
-.portrait-aspect img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.portrait-aspect img { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
 }
 
 /* Estilos para la notificación TOAST */
-#toast.show {
-    opacity: 1;
-    transform: translate(-50%, 0);
+#toast { 
+    transition: opacity 0.3s, transform 0.3s; 
+}
+#toast.show { 
+    opacity: 1; 
+    transform: translate(-50%, 0); 
 }
 
 /* Estilo para los comentarios */
-.comment-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
+.comment-item { 
+    display: flex; 
+    align-items: flex-start; 
+    gap: 0.75rem; 
 }
-
-.comment-content {
-    flex: 1;
+.comment-content { 
+    flex: 1; 
 }
 
 /* Estilos para el Carrusel (Swiper.js) */
-.featured-carousel {
-    width: 100%;
+.featured-carousel { 
+    width: 100%; 
     height: 50vw; 
-    max-height: 300px;
+    max-height: 400px; 
+    min-height: 250px;
 }
-
-.featured-carousel .swiper-slide {
-    text-align: center;
-    font-size: 18px;
-    background: #1f2937;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.featured-carousel .swiper-slide { 
+    background: #1f2937; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
 }
-
-.featured-carousel .swiper-slide img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    cursor: pointer;
+.featured-carousel .swiper-slide img { 
+    display: block; 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    cursor: pointer; 
 }
-
-.featured-carousel .swiper-button-next,
-.featured-carousel .swiper-button-prev {
-    color: #fff;
-    background-color: rgba(0, 0, 0, 0.3);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    transition: background-color 0.3s;
+.featured-carousel .swiper-button-next, 
+.featured-carousel .swiper-button-prev { 
+    color: #fff; 
+    background-color: rgba(0, 0, 0, 0.3); 
+    width: 40px; 
+    height: 40px; 
+    border-radius: 50%; 
+    transition: background-color 0.3s; 
 }
-
-.featured-carousel .swiper-button-next:hover,
-.featured-carousel .swiper-button-prev:hover {
-    background-color: rgba(0, 0, 0, 0.5);
+.featured-carousel .swiper-button-next:hover, 
+.featured-carousel .swiper-button-prev:hover { 
+    background-color: rgba(0, 0, 0, 0.5); 
 }
-
-.featured-carousel .swiper-button-next::after,
-.featured-carousel .swiper-button-prev::after {
-    font-size: 18px;
-    font-weight: 900;
+.featured-carousel .swiper-button-next::after, 
+.featured-carousel .swiper-button-prev::after { 
+    font-size: 18px; 
+    font-weight: 900; 
 }
-
-.featured-carousel .swiper-pagination-bullet {
-    background-color: rgba(255, 255, 255, 0.5);
-    width: 10px;
-    height: 10px;
-    opacity: 1;
+.featured-carousel .swiper-pagination-bullet { 
+    background-color: rgba(255, 255, 255, 0.5); 
+    width: 10px; 
+    height: 10px; 
+    opacity: 1; 
 }
-
-.featured-carousel .swiper-pagination-bullet-active {
-    background-color: #6366f1;
+.featured-carousel .swiper-pagination-bullet-active { 
+    background-color: #6366f1; 
 }
 
