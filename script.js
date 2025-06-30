@@ -45,12 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const itemsPerLoad = 12;
     let currentUser = null, currentUserData = {};
     let isCurrentUserAdmin = false;
+    let adminUID = null; // Se usará para identificar al admin por su UID
+    const ADMIN_EMAIL = 'admin@exene.com'; // Email del administrador
     let usersCache = {};
     let currentViewer = null;
     let lastView = 'galleryView';
     let isGalleryLoading = false, isFeedLoading = false;
     let toastTimeout;
-    const ADMIN_USER_DATA = { uid: 'admin_exen', username: 'Exen', profile: { avatar: 'https://files.catbox.moe/n86yjv.png' } };
     const INTEREST_LIMIT = 10;
     let featuredSwiper = null;
     let appInitialized = false;
@@ -109,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getAuthorData = async (uid) => {
-        if (uid === ADMIN_USER_DATA.uid) return ADMIN_USER_DATA;
         if (usersCache[uid]) return usersCache[uid];
         const snapshot = await get(ref(db, `users/${uid}`));
         if (snapshot.exists()) {
@@ -121,7 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadUserData() {
         if (!currentUser) return;
-        isCurrentUserAdmin = currentUser.uid === ADMIN_USER_DATA.uid;
+        
+        isCurrentUserAdmin = currentUser.email === ADMIN_EMAIL;
+        if (isCurrentUserAdmin) {
+            adminUID = currentUser.uid;
+        }
+
         const data = await getAuthorData(currentUser.uid);
         currentUserData = data || { username: currentUser.email.split('@')[0], profile: {} };
         const defaultAvatar = `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(currentUserData.username)}`;
@@ -134,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('imagenes.json');
             if (!response.ok) throw new Error('Network response was not ok');
             const images = await response.json();
-            allImages = images.map(img => ({ ...img, isPost: false, authorUid: ADMIN_USER_DATA.uid }));
+            allImages = images.map(img => ({ ...img, isPost: false, authorUid: adminUID }));
             let allTagsSet = new Set();
             allImages.forEach(img => (img.tags || []).forEach(tag => allTagsSet.add(tag.trim().toLowerCase())));
             window.allTags = Array.from(allTagsSet);
@@ -207,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (item.isPost) {
                 const authorData = await getAuthorData(item.authorUid);
-                const isVerified = item.authorUid === ADMIN_USER_DATA.uid;
+                const isVerified = item.authorUid === adminUID;
                 authorOverlay = `
                     <div class="card-author-overlay">
                         <img src="${authorData.profile?.avatar || ''}" alt="${authorData.username}" class="bg-gray-700">
@@ -221,16 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             card.innerHTML = `${authorOverlay}${adminControls}<img src="${imageUrl}" alt="${item.title}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/400x600/1f2937/a7a7a7?text=Error';" class="transition-transform duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div><h3 class="absolute bottom-0 left-0 p-2 text-white font-semibold text-sm truncate w-full">${item.title}</h3>`;
             
-            card.querySelector('img, h3').addEventListener('click', () => showDetailView(item.id, item.isPost));
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.admin-delete-btn')) return;
+                showDetailView(item.id, item.isPost);
+            });
             
-            const deleteBtn = card.querySelector('.admin-delete-btn');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    handleDeletePost(e.currentTarget.dataset.postId);
-                });
-            }
-
             container.appendChild(card);
         }
     }
@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let slidesHtml = '';
         for (const post of postsForCarousel) {
             const authorData = await getAuthorData(post.authorUid);
-            const isVerified = post.authorUid === ADMIN_USER_DATA.uid;
+            const isVerified = post.authorUid === adminUID;
             slidesHtml += `<div class="swiper-slide"><img src="${post.imageUrl}" alt="${post.title}" data-id="${post.id}" data-is-post="true"><div class="slide-author-overlay"><img src="${authorData.profile?.avatar}" alt="${authorData.username}" class="bg-gray-700"><span class="text-white font-bold">${authorData.username}</span>${isVerified ? '<i class="fas fa-check-circle text-blue-400 ml-1"></i>' : ''}</div></div>`;
         }
         wrapper.innerHTML = slidesHtml;
@@ -320,16 +320,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('registerForm').addEventListener('submit', async e => {
             e.preventDefault();
-            const username = e.target.registerUsername.value.trim();
+            const usernameInput = e.target.registerUsername.value.trim();
             const email = e.target.registerEmail.value.trim();
             const password = e.target.registerPassword.value;
             if (password !== e.target.registerPasswordConfirm.value) return showToast("Las contraseñas no coinciden.");
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await set(ref(db, `users/${userCredential.user.uid}`), {
-                    username: username,
-                    profile: { avatar: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(username)}`, bio: '', interests: [] }
-                });
+                
+                let profileData;
+                if (email === ADMIN_EMAIL) {
+                    profileData = {
+                        username: "Exen",
+                        profile: { avatar: 'https://files.catbox.moe/n86yjv.png', bio: 'Administrador de Exene.', interests: [] }
+                    };
+                } else {
+                    profileData = {
+                        username: usernameInput,
+                        profile: { avatar: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(usernameInput)}`, bio: '', interests: [] }
+                    };
+                }
+                
+                await set(ref(db, `users/${userCredential.user.uid}`), profileData);
                 hideModal('registerModal');
             } catch (error) { showToast(getFirebaseErrorMessage(error)); }
         });
@@ -476,12 +487,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const dbId = String(item.id);
         const authorData = await getAuthorData(item.authorUid);
-        const isVerified = item.authorUid === ADMIN_USER_DATA.uid;
+        const isVerified = item.authorUid === adminUID;
         
         document.getElementById('detailAuthorUsername').textContent = authorData.username;
         document.getElementById('detailAuthorAvatar').src = authorData.profile?.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${authorData.username}`;
         document.getElementById('detailAuthorVerifiedBadge').innerHTML = isVerified ? '<i class="fas fa-check-circle text-blue-400"></i>' : '';
-        document.getElementById('detailAuthorInfo').onclick = () => { if (item.authorUid !== ADMIN_USER_DATA.uid) showUserProfile(item.authorUid); };
+        document.getElementById('detailAuthorInfo').onclick = () => { if (item.authorUid !== adminUID) showUserProfile(item.authorUid); };
         document.getElementById('detailTitle').textContent = item.title;
         document.getElementById('detailDescription').textContent = item.description || '';
         
@@ -523,7 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function showUserProfile(userId) {
-        if (userId === ADMIN_USER_DATA.uid) return;
+        if (userId === adminUID) return; // No mostrar el perfil del admin
         navigateTo('userProfileView');
         const userData = await getAuthorData(userId);
         const profile = userData.profile || {};
@@ -583,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
         li.className = 'comment-item';
         li.dataset.commentPath = path;
         li.dataset.authorName = commentData.username;
-        const isVerified = commentData.authorUid === ADMIN_USER_DATA.uid;
+        const isVerified = commentData.authorUid === adminUID;
 
         const adminDeleteButton = isCurrentUserAdmin ? `<button class="admin-delete-comment-btn" title="Eliminar comentario"><i class="fas fa-trash-alt"></i></button>` : '';
 
@@ -1005,6 +1016,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUser = null;
             currentUserData = {};
             isCurrentUserAdmin = false;
+            adminUID = null;
             appInitialized = false;
             authOverlay.classList.remove('opacity-0', 'pointer-events-none');
             appContent.classList.add('hidden');
