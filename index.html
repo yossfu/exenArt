@@ -14,21 +14,34 @@
     <script src="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase (versión 8) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <!-- Tus archivos locales -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans antialiased">
 
+    <!-- ========== MODAL DE VERIFICACIÓN DE EDAD ========== -->
+    <div id="ageVerificationModal" class="modal-container hidden">
+        <div class="modal-content text-center">
+            <i class="fas fa-exclamation-triangle text-yellow-400 text-4xl mb-4"></i>
+            <h2 class="text-2xl font-bold mb-2 text-white">Contenido para Adultos (18+)</h2>
+            <p class="text-gray-400 text-sm mb-4">
+                Este sitio contiene material explícito para adultos. Debes tener 18 años o más para entrar.
+            </p>
+            <p class="text-gray-500 text-xs mb-6">
+                Exene no se hace responsable por el contenido publicado por los usuarios. Al continuar, confirmas que eres mayor de edad y aceptas nuestros <a href="#" id="ageModalTermsLink" class="underline hover:text-indigo-400">Términos de Servicio</a>.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="confirmAgeBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">Sí, tengo 18 años o más</button>
+                <button id="exitBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">Salir</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ========== PANTALLA DE BIENVENIDA Y BOTONES DE AUTH ========== -->
     <div id="authOverlay" class="fixed inset-0 bg-gray-900 z-50 flex p-4 transition-opacity duration-300">
         <div id="welcomeContainer" class="m-auto text-center">
             <div class="glass-container">
-                <img src="https://raw.githubusercontent.com/eacardenas/recursos-reales/main/logo-exene.png" alt="Exene" class="h-16 mx-auto mb-4" onerror="this.style.display='none'">
+                <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-16 mx-auto mb-4" onerror="this.style.display='none'">
                 <h1 class="text-4xl font-bold text-white">Bienvenido a Exene</h1>
                 <p class="text-gray-300 mt-2">Únete a la comunidad y comparte tu visión.</p>
                 <div class="flex flex-col sm:flex-row gap-4 mt-8 w-full max-w-xs mx-auto">
@@ -63,6 +76,9 @@
                 <input type="email" id="registerEmail" placeholder="Correo electrónico" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <input type="password" id="registerPassword" placeholder="Crea una contraseña (mín. 6 caracteres)" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <input type="password" id="registerPasswordConfirm" placeholder="Confirmar contraseña" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <p class="text-xs text-gray-500 text-center mb-4">
+                    Al registrarte, aceptas nuestros <a href="#" id="registerTermsLink" class="underline hover:text-indigo-400">Términos de Servicio</a> y <a href="#" id="registerPrivacyLink" class="underline hover:text-indigo-400">Política de Privacidad</a>.
+                </p>
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Registrarse</button>
                 <button type="button" class="mt-2 w-full text-gray-400 hover:text-white transition-colors py-2 close-modal-btn">Cancelar</button>
             </form>
@@ -105,27 +121,79 @@
                 <form id="createPostForm" class="space-y-4">
                     <div>
                         <label for="postImageUrl" class="block text-sm font-medium text-gray-400 mb-1">URL de la Imagen</label>
-                        <input type="url" id="postImageUrl" placeholder="https://..." required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="url" id="postImageUrl" name="postImageUrl" placeholder="https://..." required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <p class="text-xs text-gray-500 mt-2">Sube tus fotos en <a href="https://catbox.moe/" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:underline">catbox.moe</a> y pega la URL aquí.</p>
                     </div>
                     <div>
                         <label for="postTitle" class="block text-sm font-medium text-gray-400 mb-1">Título</label>
-                        <input type="text" id="postTitle" placeholder="Un título para tu imagen" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="text" id="postTitle" name="postTitle" placeholder="Un título para tu imagen" required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
                         <label for="postTags" class="block text-sm font-medium text-gray-400 mb-1">Etiquetas (separadas por comas)</label>
-                        <input type="text" id="postTags" placeholder="ej: arte, paisaje, retrato" class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="text" id="postTags" name="postTags" placeholder="ej: arte, paisaje, retrato" class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors !mt-6">Publicar</button>
+                    <p class="text-xs text-gray-500 text-center !mt-6">
+                        Al publicar, aceptas nuestros <a href="#" id="createPostTermsLink" class="underline hover:text-indigo-400">Términos</a> y <a href="#" id="createPostPrivacyLink" class="underline hover:text-indigo-400">Política de Privacidad</a>.
+                    </p>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Publicar</button>
                     <button type="button" class="mt-2 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors close-modal-btn">Cancelar</button>
                 </form>
+            </div>
+        </div>
+        
+        <!-- MODALES LEGALES -->
+        <div id="termsModal" class="modal-container hidden">
+            <div class="modal-content max-w-2xl h-4/5 flex flex-col">
+                <h2 class="text-xl font-bold mb-4 text-center text-white">Términos y Condiciones</h2>
+                <div class="text-gray-300 text-sm space-y-3 overflow-y-auto pr-2">
+                    <p><strong>Última actualización:</strong> 30 de Junio de 2025</p>
+                    <p>Bienvenido a Exene. Estos términos y condiciones describen las reglas y regulaciones para el uso del sitio web de Exene.</p>
+                    <p>Al acceder a este sitio web, asumimos que aceptas estos términos y condiciones. No continúes usando Exene si no estás de acuerdo con todos los términos y condiciones establecidos en esta página.</p>
+                    <h3 class="font-bold text-white pt-2">Cuentas de Usuario</h3>
+                    <p>Cuando creas una cuenta con nosotros, debes proporcionarnos información precisa, completa y actualizada en todo momento. El no hacerlo constituye un incumplimiento de los Términos, lo que puede resultar en la terminación inmediata de tu cuenta en nuestro Servicio.</p>
+                    <h3 class="font-bold text-white pt-2">Contenido Generado por el Usuario</h3>
+                    <p>Nuestro Servicio te permite publicar, enlazar, almacenar, compartir y de otra manera poner a disposición cierta información, texto, gráficos, videos u otro material ("Contenido"). Eres responsable de tu Contenido, incluida su legalidad, fiabilidad y adecuación.</p>
+                    <p>Al publicar Contenido en el Servicio, nos otorgas el derecho y la licencia para usar, modificar, ejecutar públicamente, mostrar públicamente, reproducir y distribuir dicho Contenido en y a través del Servicio. Conservas todos tus derechos sobre cualquier Contenido que envíes, publiques o muestres en o a través del Servicio y eres responsable de proteger esos derechos.</p>
+                    <p>Aceptas que el uso indebido de la plataforma, incluyendo la publicación de contenido ilegal, acoso a otros usuarios o cualquier actividad que viole nuestras normas comunitarias, resultará en la suspensión o eliminación de tu cuenta sin previo aviso.</p>
+                    <h3 class="font-bold text-white pt-2">Descargo de Responsabilidad</h3>
+                    <p>El contenido publicado en Exene es generado por los usuarios. No asumimos ninguna responsabilidad por el material publicado por terceros. Cada usuario es el único responsable de sus publicaciones.</p>
+                </div>
+                <button type="button" class="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors close-modal-btn flex-shrink-0">Cerrar</button>
+            </div>
+        </div>
+
+        <div id="privacyModal" class="modal-container hidden">
+            <div class="modal-content max-w-2xl h-4/5 flex flex-col">
+                <h2 class="text-xl font-bold mb-4 text-center text-white">Política de Privacidad</h2>
+                <div class="text-gray-300 text-sm space-y-3 overflow-y-auto pr-2">
+                     <p><strong>Última actualización:</strong> 30 de Junio de 2025</p>
+                     <p>Tu privacidad es importante para nosotros. Es política de Exene respetar tu privacidad con respecto a cualquier información que podamos recopilar de ti a través de nuestro sitio web.</p>
+                     <p>Solicitamos información personal solo cuando realmente la necesitamos para brindarte un servicio. La recopilamos por medios justos y legales, con tu conocimiento y consentimiento. También te informamos por qué la estamos recopilando y cómo se utilizará.</p>
+                     <h3 class="font-bold text-white pt-2">Datos que Recopilamos</h3>
+                     <p>Recopilamos la información que nos proporcionas directamente, como tu dirección de correo electrónico y nombre de usuario al registrarte. También recopilamos datos sobre tu actividad en la plataforma, como publicaciones, "me gusta", comentarios y favoritos, para poder ofrecerte una experiencia personalizada.</p>
+                     <h3 class="font-bold text-white pt-2">Uso de tus Datos</h3>
+                     <p>Utilizamos la información que recopilamos para operar, mantener y mejorar nuestro servicio, para comunicarnos contigo y para personalizar el contenido que ves.</p>
+                </div>
+                <button type="button" class="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors close-modal-btn flex-shrink-0">Cerrar</button>
+            </div>
+        </div>
+
+        <!-- MODAL DE CONFIRMACIÓN -->
+        <div id="confirmationModal" class="modal-container hidden">
+            <div class="modal-content text-center">
+                <h2 id="confirmationTitle" class="text-xl font-bold mb-4 text-white">¿Estás seguro?</h2>
+                <p id="confirmationMessage" class="text-gray-300 mb-6">Esta acción no se puede deshacer.</p>
+                <div class="flex gap-4">
+                    <button id="confirmActionBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Confirmar</button>
+                    <button id="cancelActionBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Cancelar</button>
+                </div>
             </div>
         </div>
 
         <!-- VISTAS PRINCIPALES -->
         <main id="galleryView" class="view pb-20">
             <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40">
-                <img src="https://raw.githubusercontent.com/eacardenas/recursos-reales/main/logo-exene.png" alt="Exene" class="h-8" onerror="this.style.display='none'">
+                <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-8" onerror="this.style.display='none'">
                 <h2 class="text-lg font-bold text-white">Para ti</h2>
                 <div class="relative">
                     <button id="navNotificationsBtn" class="text-gray-400 hover:text-white text-xl p-2 relative">
@@ -147,10 +215,10 @@
                 <div class="swiper-button-next"></div>
             </div>
             
-            <section id="leaderboard-section" class="px-4 mt-6">
-                <h3 class="text-xl font-bold text-white mb-3">🏆 Top Creadores</h3>
-                <div id="leaderboard" class="space-y-2">
-                    <!-- Los items de la tabla se inyectarán aquí -->
+            <section id="most-voted-section" class="px-4 mt-6">
+                <h3 class="text-xl font-bold text-white mb-3">🔥 Lo más Votado</h3>
+                <div id="leaderboard" class="grid grid-cols-3 gap-2 md:gap-4 mt-4">
+                    <!-- Las publicaciones más votadas se inyectarán aquí -->
                 </div>
             </section>
 
@@ -254,6 +322,7 @@
                         </div>
                         <div class="text-sm text-gray-400"><span id="detailLikeCount" class="font-semibold text-white">0 Me gusta</span><span class="text-gray-500 mx-1">•</span><span id="detailViewCount" class="">0 Vistas</span></div>
                     </div>
+                    <button id="adminDeletePostBtn" class="hidden w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors"><i class="fas fa-trash-alt mr-2"></i>Eliminar Publicación (Admin)</button>
                 </div>
                 <section class="p-4 pt-2 border-t border-gray-800/60">
                     <h2 class="font-bold text-white mb-4">Comentarios</h2>
@@ -291,20 +360,20 @@
 
         <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-40">
             <nav class="flex justify-around items-center h-16">
-                <button data-view="galleryView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-home"></i></button>
-                <button data-view="feedView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-users"></i></button>
-                <button id="createPostBtn" class="text-white bg-indigo-600 hover:bg-indigo-700 w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg"><i class="fas fa-plus"></i></button>
-                <button data-view="popularView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-fire"></i></button>
-                <button data-view="searchView" class="nav-btn text-gray-400 text-2xl p-3"><i class="fas fa-search"></i></button>
-                <button data-view="profileView" id="navProfileBtn" class="nav-btn text-gray-400 p-2">
+                <button data-view="galleryView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Inicio"><i class="fas fa-home"></i></button>
+                <button data-view="feedView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Comunidad"><i class="fas fa-users"></i></button>
+                <button id="createPostBtn" class="text-white bg-indigo-600 hover:bg-indigo-700 w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg" aria-label="Crear Publicación"><i class="fas fa-plus"></i></button>
+                <button data-view="popularView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Populares"><i class="fas fa-fire"></i></button>
+                <button data-view="searchView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Buscar"><i class="fas fa-search"></i></button>
+                <button data-view="profileView" id="navProfileBtn" class="nav-btn text-gray-400 p-2" aria-label="Mi Perfil">
                     <img id="navProfileAvatar" src="" class="w-8 h-8 rounded-full object-cover border-2 border-transparent transition-colors">
                 </button>
             </nav>
         </footer>
     </div>
 
-    <!-- Tu script principal -->
-    <script src="script.js"></script>
+    <!-- Tu script principal (ahora de tipo módulo para imports) -->
+    <script type="module" src="script.js"></script>
 </body>
 </html>
 
