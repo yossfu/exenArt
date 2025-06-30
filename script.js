@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- 1. CONFIGURACIÓN E INICIALIZACIÓN DE FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
         authDomain: "exene-53e6b.firebaseapp.com",
@@ -11,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     firebase.initializeApp(firebaseConfig);
 
-    // --- 2. VARIABLES GLOBALES Y CACHÉ ---
     const db = firebase.database();
     const auth = firebase.auth();
     let allImages = [], allPosts = [], sortedCuratedContent = [];
@@ -29,9 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let appInitialized = false;
     let activeDetailListeners = {};
 
-    // --- 3. DECLARACIÓN DE TODAS LAS FUNCIONES ---
-
-    // ** Funciones Auxiliares y de UI **
     const showModal = (modalId) => document.getElementById(modalId).classList.remove('hidden');
     const hideModal = (modalId) => document.getElementById(modalId).classList.add('hidden');
     const showLoader = (loaderId, show) => document.getElementById(loaderId).classList.toggle('hidden', !show);
@@ -40,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (toastTimeout) clearTimeout(toastTimeout);
         document.getElementById('toastMessage').textContent = message;
         toast.classList.add('show');
-        toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
     };
     const getFirebaseErrorMessage = (error) => {
         switch (error.code) {
@@ -90,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return { username: 'Anónimo', profile: {} };
     };
 
-    // ** Lógica de Datos y Carga **
     async function loadUserData() {
         if (!currentUser) return;
         const data = await getAuthorData(currentUser.uid);
@@ -133,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ** Lógica de Navegación y Vistas **
     function navigateTo(viewId) {
         const currentView = document.querySelector('.view:not(.hidden)');
         if (currentView && !currentView.classList.contains('slide-up')) {
@@ -143,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
         const targetView = document.getElementById(viewId);
-        if(!targetView) return;
+        if (!targetView) return;
         targetView.classList.remove('hidden');
         document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
             btn.classList.toggle('text-indigo-400', btn.dataset.view === viewId);
@@ -166,8 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
-    // ** Lógica de Renderizado **
     async function appendToImageGrid(container, itemsToRender) {
         for (const item of itemsToRender) {
             const card = document.createElement('div');
@@ -253,7 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isFeedLoading = false;
     }
     
-    // ** Lógica de Eventos y Listeners **
     function setupAuthEventListeners() {
         document.getElementById('showLoginModalBtn').addEventListener('click', () => showModal('loginModal'));
         document.getElementById('showRegisterModalBtn').addEventListener('click', () => showModal('registerModal'));
@@ -400,7 +390,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ** Lógica de Vistas Específicas **
     async function showDetailView(id, isPost = false) {
         detachDetailViewListeners();
         navigateTo('detailView');
@@ -452,7 +441,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderUserPosts(userId, 'visitingUserPostsGrid', 'no-visiting-posts-message');
     }
 
-    // ** Lógica de Interacción (Likes, Comentarios, etc.) **
     function listenToLikesAndViews(id) {
         const likesRef = db.ref(`likes/${id}`);
         const viewsRef = db.ref(`views/${id}`);
@@ -562,7 +550,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ** Otras funciones auxiliares **
     function renderUserPosts(userId, gridId, messageId) {
         const container = document.getElementById(gridId);
         const message = document.getElementById(messageId);
@@ -686,40 +673,45 @@ document.addEventListener('DOMContentLoaded', () => {
         likesRef.on('value', async (snapshot) => {
             const allLikes = snapshot.val() || {};
             const userTopScores = {};
+
             for (const post of allPosts) {
-                if(post.authorUid === ADMIN_USER_DATA.uid) continue;
+                if (post.authorUid === ADMIN_USER_DATA.uid) continue;
                 const likeCount = allLikes[post.id] ? Object.keys(allLikes[post.id]).length : 0;
                 if (!userTopScores[post.authorUid] || likeCount > userTopScores[post.authorUid].topScore) {
                     userTopScores[post.authorUid] = { uid: post.authorUid, topScore: likeCount };
                 }
             }
+
             const rankedUsers = Object.values(userTopScores).sort((a, b) => b.topScore - a.topScore);
             const leaderboardContainer = document.getElementById('leaderboard');
             leaderboardContainer.innerHTML = '';
+
             const topUsers = rankedUsers.slice(0, 5);
             if (topUsers.length === 0) {
-                 leaderboardContainer.innerHTML = `<p class="text-center text-gray-500 text-sm">Aún no hay suficientes datos para mostrar un ranking.</p>`;
-                 return;
+                leaderboardContainer.innerHTML = `<p class="text-center text-gray-500 text-sm">Aún no hay suficientes datos para mostrar un ranking.</p>`;
+                return;
             }
+
             for (let i = 0; i < topUsers.length; i++) {
                 const userData = topUsers[i];
                 const authorInfo = await getAuthorData(userData.uid);
                 const isVerified = userData.uid === ADMIN_USER_DATA.uid;
-                let rankIcon;
-                if (i === 0) rankIcon = '<i class="fas fa-medal rank-1"></i>';
-                else if (i === 1) rankIcon = '<i class="fas fa-medal rank-2"></i>';
-                else if (i === 2) rankIcon = '<i class="fas fa-medal rank-3"></i>';
-                else rankIcon = `<span class="text-gray-400">${i + 1}</span>`;
+                let rankIcon = i < 3 ? `<i class="fas fa-medal rank-${i+1}"></i>` : `<span class="text-gray-400">${i+1}</span>`;
+
                 const leaderboardItem = document.createElement('div');
-                leaderboardItem.className = 'leaderboard-item cursor-pointer';
-                leaderboardItem.innerHTML = `<div class="leaderboard-rank">${rankIcon}</div><img src="${authorInfo.profile?.avatar || ''}" alt="${authorInfo.username}" class="w-10 h-10 rounded-full mx-4 bg-gray-700"><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><p class="font-semibold text-white truncate">${authorInfo.username}</p>${isVerified ? '<i class="fas fa-check-circle text-blue-400 text-xs"></i>' : ''}</div><p class="text-sm text-gray-400">Puntuación más alta</p></div><div class="text-right"><p class="font-bold text-white text-lg">${userData.topScore}</p><p class="text-sm text-pink-400">Me gusta</p></div>`;
+                leaderboardItem.className = 'leaderboard-item flex items-center py-2 text-sm cursor-pointer';
+                leaderboardItem.innerHTML = `
+                    <div class="w-6 text-center">${rankIcon}</div>
+                    <img src="${authorInfo.profile?.avatar || ''}" alt="${authorInfo.username}" class="w-6 h-6 rounded-full mx-2 bg-gray-700">
+                    <span class="flex-1 text-white truncate">${authorInfo.username}${isVerified ? '<i class="fas fa-check-circle text-blue-400 text-xs ml-1"></i>' : ''}</span>
+                    <span class="w-12 text-right text-white font-medium">${userData.topScore}</span>
+                `;
                 leaderboardItem.addEventListener('click', () => showUserProfile(userData.uid));
                 leaderboardContainer.appendChild(leaderboardItem);
             }
         });
     }
 
-    // --- 4. PUNTO DE ENTRADA DE LA APLICACIÓN ---
     async function initializeApp() {
         showLoader('galleryLoader', true);
         appInitialized = true;
@@ -765,4 +757,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
