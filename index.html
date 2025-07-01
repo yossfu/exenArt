@@ -16,13 +16,10 @@
     
     <!-- Estilos CSS Integrados -->
     <style>
-        /* Usamos Inter como fuente principal a través de la clase 'font-sans' de Tailwind */
         body {
             font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent; /* Evita el destello en taps de móviles */
+            -webkit-tap-highlight-color: transparent;
         }
-
-        /* ========== PANTALLA DE BIENVENIDA CON FONDO PROFESIONAL ========== */
         #authOverlay {
             background-image: url('https://files.catbox.moe/1zl86j.jpg');
             background-size: cover;
@@ -41,8 +38,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-
-        /* ========== ESTILOS PARA MODALES Y PANELES ========== */
         .modal-container {
             position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.8);
             z-index: 70; display: flex; align-items: center; justify-content: center;
@@ -55,7 +50,6 @@
             transform: scale(0.95); transition: transform 0.3s ease-in-out;
         }
         .modal-container:not(.hidden) .modal-content { transform: scale(1); }
-
         .notifications-panel {
             position: absolute; top: calc(100% + 0.5rem); right: 0;
             width: 90vw; max-width: 360px; background-color: #1f2937;
@@ -67,28 +61,22 @@
         }
         .notifications-panel.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
         .notifications-panel-header { padding: 0.75rem 1rem; border-bottom: 1px solid #374151; }
-
         .view.hidden { display: none; }
         .view { -webkit-overflow-scrolling: touch; }
         .view.slide-up { transform: translateY(100%); transition: transform 0.3s ease-in-out; }
         .view.slide-up.active { transform: translateY(0%); }
-
-        /* ========== COMPONENTES ESPECÍFICOS ========== */
         .like-btn.liked i, .favorite-btn.favorited i { font-weight: 900; }
         .like-btn.liked i { color: #ec4899; }
         .favorite-btn.favorited i { color: #facc15; }
-
         .profile-tab {
             border-color: transparent; color: #9ca3af; white-space: nowrap;
             padding: 0.75rem 1rem; border-bottom-width: 2px; font-weight: 500; font-size: 0.875rem;
             transition: all 0.2s; flex: 1; text-align: center;
         }
         .profile-tab:hover { color: #ffffff; border-color: #4b5563; }
-        .profile-tab.tab-active { border-color: #6366f1; color: #818cf8; }
-
+        .profile-tab.tab-active { color: #e5e7eb; }
         .viewer-container { background-color: rgba(0, 0, 0, 0.85); }
         .viewer-close:before { font-family: "Font Awesome 6 Free"; font-weight: 900; content: "\f00d"; font-size: 24px; color: white; }
-
         .portrait-aspect { position: relative; width: 100%; padding-bottom: 150%; }
         .portrait-aspect img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .portrait-aspect .card-author-overlay {
@@ -103,56 +91,15 @@
             border-radius: 9999px;
             border: 1px solid rgba(255,255,255,0.5);
         }
-
         #toast { transition: opacity 0.3s, transform 0.3s; }
         #toast.show { opacity: 1; transform: translate(-50%, 0); }
-
-        /* ========== NUEVO SISTEMA DE COMENTARIOS ESTILO FACEBOOK ========== */
-        .comment-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem; /* Espacio entre avatar y contenido */
-        }
-        .comment-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .comment-body {
-            background-color: rgba(55, 65, 81, 0.5);
-            border-radius: 0.75rem;
-            padding: 0.5rem 0.75rem;
-        }
-        .comment-actions {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 0.75rem;
-            color: #9ca3af;
-            margin-top: 0.25rem;
-            padding-left: 0.5rem;
-        }
-        .replying-to-text {
-            font-size: 0.75rem;
-            color: #9ca3af;
-            margin-bottom: 0.25rem;
-        }
-        .replying-to-text strong {
-            color: #a5b4fc;
-            font-weight: 500;
-        }
-        /* Contenedor para las respuestas a un comentario */
-        .replies-container {
-            margin-left: calc(2rem + 0.75rem); /* Ancho del avatar (w-8) + gap */
-            padding-left: 1rem;
-            border-left: 2px solid #374151;
-            margin-top: 0.75rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem; /* Espacio entre respuestas */
-        }
-
-        /* ========== SECCIÓN LO MÁS VOTADO ========== */
+        .comment-item { display: flex; align-items: flex-start; gap: 0.75rem; }
+        .comment-content { flex: 1; display: flex; flex-direction: column; }
+        .comment-body { background-color: rgba(55, 65, 81, 0.5); border-radius: 0.75rem; padding: 0.5rem 0.75rem; }
+        .comment-actions { display: flex; align-items: center; gap: 0.75rem; font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem; padding-left: 0.5rem; }
+        .replying-to-text { font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.25rem; }
+        .replying-to-text strong { color: #a5b4fc; font-weight: 500; }
+        .replies-container { margin-left: calc(2rem + 0.75rem); padding-left: 1rem; border-left: 2px solid #374151; margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem; }
         .most-voted-item { position: relative; border-radius: 0.5rem; overflow: hidden; border: 2px solid transparent; }
         .most-voted-item .post-image { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 9 / 16; }
         .most-voted-item .rank-badge { position: absolute; top: 0.5rem; left: 0.5rem; background-color: rgba(0, 0, 0, 0.7); color: white; border-radius: 9999px; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.125rem; border: 1px solid rgba(255, 255, 255, 0.5); z-index: 2; }
@@ -162,13 +109,44 @@
         .most-voted-item.rank-1 { border-color: #facc15; }
         .most-voted-item.rank-2 { border-color: #d1d5db; }
         .most-voted-item.rank-3 { border-color: #d97706; }
-
-        /* Controles de Admin */
         .admin-delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; background-color: rgba(220, 38, 38, 0.7); color: white; width: 2rem; height: 2rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; z-index: 3; opacity: 0; transition: opacity 0.2s; }
         .group:hover .admin-delete-btn { opacity: 1; }
         .admin-delete-btn:hover { background-color: rgba(185, 28, 28, 1); }
         .admin-delete-comment-btn { color: #9ca3af; }
         .admin-delete-comment-btn:hover { color: #ef4444; }
+        .profile-header {
+            padding-bottom: 4rem;
+            border-radius: 0 0 1.5rem 1.5rem;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            transition: background-color 0.3s ease;
+        }
+        .profile-header-content { position: relative; z-index: 1; }
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to top, rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.2));
+            border-radius: inherit;
+        }
+        .profile-avatar-container { margin-top: -3rem; position: relative; }
+        .social-icon-link { color: #9ca3af; transition: color 0.2s ease-in-out; }
+        .social-icon-link:hover { color: #e5e7eb; }
+        .achievement-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: #374151;
+            border-radius: 9999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #d1d5db;
+            border: 1px solid #4b5563;
+        }
+        .achievement-badge .fa-trophy { color: #facc15; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans antialiased">
@@ -422,53 +400,11 @@
         </main>
 
         <main id="profileView" class="view pb-20 hidden">
-            <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <div class="w-10"></div>
-                <h2 class="text-lg font-bold text-white mx-auto">Mi Perfil</h2>
-                <button id="logoutBtn" class="text-gray-400 hover:text-white transition-colors w-10 text-xl" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
-            </header>
-            <div class="p-4 space-y-6">
-                <div class="flex flex-col items-center space-y-4">
-                    <div class="relative">
-                        <img id="profileAvatar" src="" alt="Avatar" class="w-24 h-24 rounded-full border-2 border-indigo-500 object-cover">
-                        <button id="changeAvatarBtn" class="absolute bottom-0 right-0 bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded-full flex items-center justify-center">
-                            <i class="fas fa-pen text-xs"></i>
-                        </button>
-                    </div>
-                    <h3 id="profileUsername" class="text-2xl font-bold text-white"></h3>
-                </div>
-                <div class="border-b border-gray-700">
-                    <nav class="-mb-px flex space-x-2 sm:space-x-6" aria-label="Tabs">
-                        <button id="tab-posts" class="profile-tab tab-active">Publicaciones</button>
-                        <button id="tab-favorites" class="profile-tab">Favoritos</button>
-                        <button id="tab-settings" class="profile-tab">Ajustes</button>
-                    </nav>
-                </div>
-                <div id="content-posts" class="profile-tab-content"><div id="userPostsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-posts-message" class="text-center text-gray-500 hidden py-8">Aún no has creado ninguna publicación.</p></div>
-                <div id="content-favorites" class="profile-tab-content hidden"><div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-favorites-message" class="text-center text-gray-500 hidden py-8">Aún no has guardado ninguna imagen.</p></div>
-                <div id="content-settings" class="profile-tab-content hidden">
-                    <div>
-                        <div class="flex justify-between items-center mb-2"><h4 class="text-sm font-medium text-gray-400">Tus intereses</h4><p id="interestCounter" class="text-sm text-gray-500">0/10</p></div>
-                        <div class="relative mb-2"><input id="interestSearchInput" type="search" placeholder="Buscar intereses..." class="w-full bg-gray-800 text-white rounded-full pl-10 pr-4 py-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i></div>
-                        <div id="profileInterests" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto"></div>
-                    </div>
-                    <div><label for="profileBio" class="block text-sm font-medium text-gray-400 mb-1 mt-4">Tu biografía</label><textarea id="profileBio" rows="3" maxlength="200" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Describe algo sobre ti..."></textarea></div>
-                    <button id="saveProfileBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-md transition-colors mt-4">Guardar Cambios</button>
-                </div>
-            </div>
+            <!-- El contenido del perfil se genera dinámicamente -->
         </main>
         
         <main id="userProfileView" class="view hidden fixed inset-0 bg-gray-900 z-50 flex flex-col slide-up">
-            <header class="p-4 flex items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 flex-shrink-0">
-                <button id="userProfileBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
-                <h2 id="userProfileHeaderUsername" class="text-lg font-bold text-white mx-auto"></h2>
-                 <div class="w-10"></div>
-            </header>
-            <div class="p-4 space-y-6 overflow-y-auto">
-                <div class="flex flex-col items-center space-y-4"><img id="userProfileAvatar" src="" alt="Avatar" class="w-24 h-24 rounded-full border-2 border-gray-600 object-cover"><h3 id="userProfileUsername" class="text-2xl font-bold text-white"></h3></div>
-                <div><h4 class="block text-sm font-medium text-gray-400 mb-1">Biografía</h4><p id="userProfileBio" class="w-full bg-gray-800 text-gray-300 rounded-md p-3 border border-gray-700 min-h-[6rem]"></p></div>
-                 <div><h4 class="text-sm font-medium text-gray-400 mb-2">Publicaciones</h4><div id="visitingUserPostsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-visiting-posts-message" class="text-center text-gray-500 hidden py-8">Este usuario aún no tiene publicaciones.</p></div>
-            </div>
+            <!-- El contenido del perfil de otros usuarios se genera dinámicamente -->
         </main>
 
         <main id="detailView" class="view hidden fixed inset-0 bg-gray-900 z-50 flex flex-col slide-up">
@@ -550,7 +486,6 @@
 
     <!-- Script Principal Integrado -->
     <script type="module">
-        // Script ahora es un módulo para poder usar imports.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getAuth, 
@@ -570,6 +505,7 @@
             get, 
             query, 
             orderByChild,
+            equalTo,
             remove,
             update
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
@@ -591,15 +527,11 @@
             const db = getDatabase(app);
             const auth = getAuth(app);
             
-            // --- CONSTANTES DE LÍMITES ---
+            // --- CONSTANTES Y VARIABLES GLOBALES ---
             const USERNAME_MAX_LENGTH = 20;
-            const POST_TITLE_MAX_LENGTH = 80;
-            const POST_DESC_MAX_LENGTH = 500;
-            const POST_TAGS_MAX_LENGTH = 150;
             const BIO_MAX_LENGTH = 200;
             const INTEREST_LIMIT = 10;
 
-            // Variables globales
             let allImages = [], allPosts = [], sortedCuratedContent = [];
             let loadedCuratedCount = 0, loadedFeedCount = 0;
             const itemsPerLoad = 12;
@@ -607,6 +539,7 @@
             let isCurrentUserAdmin = false;
             let globalAdminUID = null;
             const ADMIN_EMAIL = 'admin@exene.com';
+            const ADMIN_USERNAME = 'Exen';
             let usersCache = {};
             let currentViewer = null;
             let lastView = 'galleryView';
@@ -614,6 +547,12 @@
             let toastTimeout;
             let appInitialized = false;
             let activeDetailListeners = {};
+
+            // Definición de logros
+            const ACHIEVEMENTS = {
+                'first-post': { icon: 'fa-paper-plane', title: 'Primeros Pasos', description: 'Creaste tu primera publicación.' },
+                'popular-post': { icon: 'fa-fire', title: 'En Racha', description: 'Una de tus publicaciones alcanzó 10 Me Gusta.' }
+            };
 
             // --- FUNCIONES AUXILIARES ---
             const showModal = (modalId) => document.getElementById(modalId).classList.remove('hidden');
@@ -626,7 +565,7 @@
                 toast.classList.add('show');
                 toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
             };
-            const getFirebaseErrorMessage = (error) => {
+             const getFirebaseErrorMessage = (error) => {
                 switch (error.code) {
                     case 'auth/invalid-email': return 'El formato del correo es inválido.';
                     case 'auth/user-not-found': return 'No se encontró ningún usuario con este correo.';
@@ -684,12 +623,10 @@
 
             async function loadCuratedImages() {
                 if (!globalAdminUID) {
-                    console.error("Error Crítico: UID de admin no disponible para cargar imágenes curadas.");
-                    showToast("Error crítico al cargar contenido oficial.");
+                    console.error("Error al cargar imágenes curadas: UID de admin no establecido.");
                     return;
                 }
                 try {
-                    // El archivo imagenes.json debe estar en el mismo directorio que este HTML
                     const response = await fetch('imagenes.json');
                     if (!response.ok) throw new Error('Network response was not ok');
                     const images = await response.json();
@@ -697,28 +634,30 @@
                     let allTagsSet = new Set();
                     allImages.forEach(img => (img.tags || []).forEach(tag => allTagsSet.add(tag.trim().toLowerCase())));
                     window.allTags = Array.from(allTagsSet);
-                } catch (error) { console.error("Fallo al cargar imagenes.json:", error); showToast("No se pudieron cargar las imágenes curadas"); }
+                } catch (error) { console.error("Fallo al cargar imagenes.json:", error); showToast("No se pudieron cargar las imágenes oficiales."); }
             }
 
-            function listenToPosts() {
-                return new Promise((resolve) => {
-                    const postsRef = query(ref(db, 'posts'), orderByChild('timestamp'));
-                    onValue(postsRef, snapshot => {
-                        const posts = [];
-                        if (snapshot.exists()) {
-                            snapshot.forEach(childSnapshot => {
-                                posts.push({ ...childSnapshot.val(), id: childSnapshot.key, isPost: true });
-                            });
+            function setupPostsListener() {
+                const postsRef = query(ref(db, 'posts'), orderByChild('timestamp'));
+                onValue(postsRef, snapshot => {
+                    const posts = [];
+                    if (snapshot.exists()) {
+                        snapshot.forEach(childSnapshot => {
+                            posts.push({ ...childSnapshot.val(), id: childSnapshot.key, isPost: true });
+                        });
+                    }
+                    allPosts = posts.reverse();
+                    
+                    if (appInitialized) {
+                        const currentVisibleView = document.querySelector('.view:not(.hidden)');
+                        if (currentVisibleView?.id === 'feedView') renderUserFeed(true);
+                        if (currentVisibleView?.id === 'profileView' || currentVisibleView?.id === 'userProfileView') {
+                            const visibleProfileId = currentVisibleView.dataset.userId;
+                            if (visibleProfileId) {
+                                populateProfileView(visibleProfileId);
+                            }
                         }
-                        allPosts = posts.reverse();
-                        
-                        if (appInitialized) {
-                            const currentVisibleView = document.querySelector('.view:not(.hidden)');
-                            if (currentVisibleView?.id === 'feedView') renderUserFeed(true);
-                            if (currentVisibleView?.id === 'profileView') renderUserPosts(currentUser.uid, 'userPostsGrid', 'no-posts-message');
-                        }
-                        resolve();
-                    }, { onlyOnce: false });
+                    }
                 });
             }
 
@@ -750,7 +689,7 @@
                     case 'galleryView': navigateTo(viewId); break;
                     case 'feedView': renderUserFeed(true); navigateTo(viewId); break;
                     case 'popularView': renderPopularGallery(); navigateTo(viewId); break;
-                    case 'profileView': populateProfileView(); break; 
+                    case 'profileView': populateProfileView(currentUser.uid); break; 
                     case 'searchView': navigateTo(viewId); document.getElementById('searchInput').focus(); break;
                 }
             }
@@ -866,15 +805,31 @@
                         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                         
                         let profileData;
+                        const defaultAvatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(usernameInput || 'user')}`;
+
                         if (email === ADMIN_EMAIL) {
                             profileData = {
-                                username: "Exen",
-                                profile: { avatar: 'https://files.catbox.moe/n86yjv.png', bio: 'Administrador de Exene.', interests: [] }
+                                username: ADMIN_USERNAME,
+                                profile: { 
+                                    avatar: 'https://files.catbox.moe/n86yjv.png', 
+                                    bio: 'Administrador de Exene.', 
+                                    interests: [],
+                                    profileColor: '#1e40af',
+                                    bannerUrl: '',
+                                    socials: {}
+                                }
                             };
                         } else {
                             profileData = {
                                 username: usernameInput,
-                                profile: { avatar: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(usernameInput)}`, bio: '', interests: [] }
+                                profile: { 
+                                    avatar: defaultAvatar, 
+                                    bio: '', 
+                                    interests: [],
+                                    profileColor: '#4f46e5',
+                                    bannerUrl: '',
+                                    socials: {}
+                                }
                             };
                         }
                         
@@ -894,12 +849,18 @@
 
             function setupAppEventListeners() {
                 if(document.body.dataset.appListenersAttached === 'true') return;
-                document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+                
                 document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
                     btn.addEventListener('click', () => triggerView(btn.dataset.view));
                 });
                 document.getElementById('createPostBtn').addEventListener('click', () => showModal('createPostModal'));
                 document.getElementById('adminAddCuratedBtn').addEventListener('click', () => showModal('adminAddCuratedModal'));
+                document.getElementById('avatarUrlForm').addEventListener('submit', e => {
+                    e.preventDefault();
+                    const input = document.getElementById('avatarUrlInput');
+                    if (input.value) updateAvatar(input.value.trim());
+                    input.value = '';
+                });
 
                 const notificationsBtn = document.getElementById('navNotificationsBtn');
                 const notificationsPanel = document.getElementById('notificationsWindow');
@@ -912,7 +873,6 @@
                 new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isGalleryLoading && document.getElementById('galleryView').offsetParent !== null) renderCuratedFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('curated-sentinel'));
                 new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isFeedLoading && document.getElementById('feedView').offsetParent !== null) renderUserFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('feed-sentinel'));
                 
-                setupProfileEventListeners();
                 setupDetailViewEventListeners();
                 setupCreatePostForm();
                 setupAdminToolListeners();
@@ -920,72 +880,12 @@
                 
                 document.getElementById('searchForm').addEventListener('submit', e => e.preventDefault());
                 document.getElementById('searchInput').addEventListener('input', e => renderSearchResults(e.target.value));
+                
                 document.body.dataset.appListenersAttached = 'true';
             }
-
-            function setupProfileEventListeners() {
-                document.getElementById('saveProfileBtn').addEventListener('click', async () => {
-                    const bio = document.getElementById('profileBio').value;
-                    if (bio.length > BIO_MAX_LENGTH) {
-                        return showToast(`La biografía no puede exceder los ${BIO_MAX_LENGTH} caracteres.`);
-                    }
-
-                    const interests = Array.from(document.querySelectorAll('#profileInterests .bg-indigo-600')).map(el => el.dataset.tag);
-                    
-                    try {
-                        const profileUpdates = { bio, interests };
-                        await update(ref(db, `users/${currentUser.uid}/profile`), profileUpdates);
-                        
-                        // No need to call loadUserData, just update local copy
-                        currentUserData.profile.bio = bio;
-                        currentUserData.profile.interests = interests;
-
-                        sortCuratedFeed();
-                        renderCuratedFeed(true);
-                        showToast('Perfil guardado');
-                    } catch (error) { 
-                        console.error("Error al guardar el perfil:", error); 
-                        showToast("Error al guardar el perfil."); 
-                    }
-                });
-
-                document.getElementById('interestSearchInput').addEventListener('input', e => {
-                    const query = e.target.value.toLowerCase();
-                    document.querySelectorAll('#profileInterests button').forEach(btn => {
-                        btn.style.display = btn.textContent.toLowerCase().includes(query) ? '' : 'none';
-                    });
-                });
-                document.querySelectorAll('.profile-tab').forEach(tab => {
-                    tab.addEventListener('click', (e) => {
-                        document.querySelectorAll('.profile-tab').forEach(item => item.classList.remove('tab-active'));
-                        e.target.classList.add('tab-active');
-                        document.querySelectorAll('.profile-tab-content').forEach(content => {
-                            content.classList.toggle('hidden', content.id !== `content-${e.target.id.substring(4)}`);
-                        });
-                    });
-                });
-                document.getElementById('changeAvatarBtn').addEventListener('click', () => {
-                    const selection = document.getElementById('avatarSelection');
-                    selection.innerHTML = '';
-                    for (let i = 0; i < 12; i++) {
-                        const seed = Math.random().toString(36).substring(7);
-                        const avatarUrl = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${seed}`;
-                        selection.innerHTML += `<img src="${avatarUrl}" class="w-16 h-16 rounded-full cursor-pointer hover:ring-2 ring-indigo-500 object-cover" data-url="${avatarUrl}">`;
-                    }
-                    selection.querySelectorAll('img').forEach(img => img.addEventListener('click', (e) => updateAvatar(e.target.dataset.url)));
-                    showModal('avatarModal');
-                });
-                document.getElementById('avatarUrlForm').addEventListener('submit', e => {
-                    e.preventDefault();
-                    const input = document.getElementById('avatarUrlInput');
-                    if (input.value) updateAvatar(input.value.trim());
-                    input.value = '';
-                });
-            }
-
+            
             function setupDetailViewEventListeners() {
                  document.getElementById('detailBackBtn').addEventListener('click', () => closeSlideUpView('detailView'));
-                 document.getElementById('userProfileBackBtn').addEventListener('click', () => closeSlideUpView('userProfileView'));
                 
                 document.getElementById('detailLikeBtn').addEventListener('click', async function() {
                     if (!this.dataset.id || !currentUser) return;
@@ -1017,9 +917,6 @@
                     const description = document.getElementById('postDescription').value.trim();
                     const tagsInput = document.getElementById('postTags').value.trim();
 
-                    if (title.length > POST_TITLE_MAX_LENGTH) return showToast(`El título no puede exceder los ${POST_TITLE_MAX_LENGTH} caracteres.`);
-                    if (description.length > POST_DESC_MAX_LENGTH) return showToast(`La descripción no puede exceder los ${POST_DESC_MAX_LENGTH} caracteres.`);
-                    if (tagsInput.length > POST_TAGS_MAX_LENGTH) return showToast(`Las etiquetas no pueden exceder los ${POST_TAGS_MAX_LENGTH} caracteres.`);
                     if (!imageUrl || !title) return showToast("La URL y el título son obligatorios.");
 
                     const tags = tagsInput.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag !== '');
@@ -1031,6 +928,7 @@
                             authorUid: currentUser.uid,
                             timestamp: serverTimestamp()
                         });
+                        await set(ref(db, `users/${currentUser.uid}/profile/achievements/first-post`), true);
                         document.getElementById('createPostForm').reset();
                         hideModal('createPostModal');
                         showToast("Publicación creada con éxito");
@@ -1054,7 +952,13 @@
                 document.getElementById('detailAuthorUsername').textContent = authorData.username;
                 document.getElementById('detailAuthorAvatar').src = authorData.profile?.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${authorData.username}`;
                 document.getElementById('detailAuthorVerifiedBadge').innerHTML = isVerified ? '<i class="fas fa-check-circle text-blue-400"></i>' : '';
-                document.getElementById('detailAuthorInfo').onclick = () => { if (item.authorUid !== currentUser.uid) showUserProfile(item.authorUid); else triggerView('profileView'); };
+                document.getElementById('detailAuthorInfo').onclick = () => { 
+                    if (item.authorUid === currentUser.uid) {
+                        triggerView('profileView');
+                    } else {
+                        showUserProfile(item.authorUid);
+                    }
+                };
                 document.getElementById('detailTitle').textContent = item.title;
                 
                 const descriptionEl = document.getElementById('detailDescription');
@@ -1078,7 +982,7 @@
                     adminDeleteBtn.classList.add('hidden');
                 }
 
-                listenToLikesAndViews(dbId);
+                listenToLikesAndViews(dbId, item.authorUid);
                 listenToComments(dbId);
                 if (!isPost) renderSimilarImages(item);
                 else document.getElementById('similar-section').classList.add('hidden');
@@ -1086,39 +990,151 @@
                 set(ref(db, `views/${dbId}/${currentUser.uid}`), true);
             }
             
-            async function populateProfileView() {
-                if (!currentUserData.profile) return;
-                navigateTo('profileView');
-                document.getElementById('profileAvatar').src = currentUserData.profile.avatar;
-                document.getElementById('profileUsername').textContent = currentUserData.username;
-                document.getElementById('profileBio').value = currentUserData.profile.bio || '';
-                renderUserPosts(currentUser.uid, 'userPostsGrid', 'no-posts-message');
-                renderFavorites();
-                renderProfileInterests();
-            }
-            
-            async function showUserProfile(userId) {
-                if (userId === globalAdminUID) return;
-                navigateTo('userProfileView');
+            async function populateProfileView(userId) {
+                const isOwnProfile = userId === currentUser.uid;
+                const viewId = isOwnProfile ? 'profileView' : 'userProfileView';
+                const viewContainer = document.getElementById(viewId);
+                
+                if (!isOwnProfile) {
+                    navigateTo(viewId);
+                } else {
+                    navigateTo('profileView');
+                }
+                viewContainer.dataset.userId = userId;
+
                 const userData = await getAuthorData(userId);
                 const profile = userData.profile || {};
-                document.getElementById('userProfileHeaderUsername').textContent = `Perfil de ${userData.username}`;
-                document.getElementById('userProfileAvatar').src = profile.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${userData.username}`;
-                document.getElementById('userProfileUsername').textContent = userData.username;
-                document.getElementById('userProfileBio').textContent = profile.bio || 'Este usuario aún no ha escrito una biografía.';
-                renderUserPosts(userId, 'visitingUserPostsGrid', 'no-visiting-posts-message');
+                const accentColor = profile.profileColor || '#4f46e5';
+                const bannerStyle = profile.bannerUrl 
+                    ? `background-image: url('${profile.bannerUrl}')` 
+                    : `background-color: ${accentColor}`;
+
+                viewContainer.innerHTML = `
+                    <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+                        ${isOwnProfile ? '<div class="w-10"></div>' : '<button id="userProfileBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>'}
+                        <h2 class="text-lg font-bold text-white mx-auto">${isOwnProfile ? 'Mi Perfil' : `Perfil de ${userData.username}`}</h2>
+                        ${isOwnProfile ? '<button id="logoutBtn" class="text-gray-400 hover:text-white transition-colors w-10 text-xl" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>' : '<div class="w-10"></div>'}
+                    </header>
+                    <div class="overflow-y-auto pb-20">
+                        <div class="profile-header" style="${bannerStyle}"></div>
+                        <div class="p-4">
+                            <div class="profile-avatar-container flex flex-col items-center space-y-2">
+                                <div class="relative">
+                                    <img src="${profile.avatar || ''}" alt="Avatar" class="w-24 h-24 rounded-full border-4 object-cover bg-gray-700" style="border-color: ${accentColor};">
+                                    ${isOwnProfile ? '<button id="changeAvatarBtn" class="absolute bottom-0 right-0 bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-gray-900"><i class="fas fa-pen text-xs"></i></button>' : ''}
+                                </div>
+                                <h3 class="text-2xl font-bold text-white">${userData.username}</h3>
+                                <p class="text-gray-400 text-center text-sm max-w-md">${profile.bio || 'Sin biografía.'}</p>
+                                <div id="profileSocials" class="flex items-center gap-4 text-xl mt-2"></div>
+                            </div>
+
+                            <div class="mt-6 bg-gray-800/50 p-4 rounded-lg shadow-md">
+                                <h4 class="text-sm font-bold text-gray-400 mb-3 text-center uppercase tracking-wider">Logros</h4>
+                                <div id="profileAchievements" class="flex flex-wrap justify-center gap-3"></div>
+                            </div>
+                            
+                            <div class="mt-6 border-b border-gray-700">
+                                <nav class="-mb-px flex space-x-2 sm:space-x-6" aria-label="Tabs">
+                                    <button data-tab="posts" class="profile-tab tab-active" style="border-color: ${accentColor}; color: white;">Publicaciones</button>
+                                    <button data-tab="favorites" class="profile-tab">Favoritos</button>
+                                    ${isOwnProfile ? '<button data-tab="settings" class="profile-tab">Ajustes</button>' : ''}
+                                </nav>
+                            </div>
+
+                            <div data-content="posts" class="profile-tab-content mt-4"><div id="userPostsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-posts-message" class="text-center text-gray-500 hidden py-8">No hay publicaciones.</p></div>
+                            <div data-content="favorites" class="profile-tab-content mt-4 hidden"><div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-favorites-message" class="text-center text-gray-500 hidden py-8">No ha guardado ninguna imagen.</p></div>
+                            ${isOwnProfile ? `
+                            <div data-content="settings" class="profile-tab-content mt-4 hidden space-y-6">
+                                <div>
+                                    <h4 class="text-lg font-bold text-white mb-2">Personalización</h4>
+                                    <label for="profileBannerUrl" class="block text-sm font-medium text-gray-400 mb-1">URL del Banner de Perfil</label>
+                                    <input type="url" id="profileBannerUrl" value="${profile.bannerUrl || ''}" placeholder="https://..." class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <label for="profileColorPicker" class="block text-sm font-medium text-gray-400 mt-3 mb-1">Color de Acento</label>
+                                    <input type="color" id="profileColorPicker" value="${accentColor}" class="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md cursor-pointer">
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-bold text-white mb-2">Redes Sociales</h4>
+                                    <div class="space-y-3">
+                                        <div><label for="socialTwitter" class="block text-sm font-medium text-gray-400 mb-1">Twitter (URL)</label><input type="url" id="socialTwitter" value="${profile.socials?.twitter || ''}" placeholder="https://twitter.com/usuario" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
+                                        <div><label for="socialInstagram" class="block text-sm font-medium text-gray-400 mb-1">Instagram (URL)</label><input type="url" id="socialInstagram" value="${profile.socials?.instagram || ''}" placeholder="https://instagram.com/usuario" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
+                                        <div><label for="socialWebsite" class="block text-sm font-medium text-gray-400 mb-1">Sitio Web (URL)</label><input type="url" id="socialWebsite" value="${profile.socials?.website || ''}" placeholder="https://mi-pagina.com" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-bold text-white mb-2">Intereses</h4>
+                                    <div class="flex justify-between items-center mb-2"><p class="text-sm font-medium text-gray-400">Tus intereses</p><p id="interestCounter" class="text-sm text-gray-500">0/10</p></div>
+                                    <div class="relative mb-2"><input id="interestSearchInput" type="search" placeholder="Buscar intereses..." class="w-full bg-gray-800 text-white rounded-full pl-10 pr-4 py-2 border border-gray-700"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i></div>
+                                    <div id="profileInterests" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto"></div>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-bold text-white mb-2">Biografía</h4>
+                                    <textarea id="profileBioInput" rows="3" maxlength="200" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700" placeholder="Describe algo sobre ti...">${profile.bio || ''}</textarea>
+                                </div>
+                                <button id="saveProfileBtn" class="w-full text-white font-bold py-3 px-4 rounded-md transition-colors mt-4" style="background-color: ${accentColor};">Guardar Cambios</button>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                renderUserPosts(userId, 'userPostsGrid', 'no-posts-message');
+                renderPublicFavorites(userId, 'favoritesGrid', 'no-favorites-message');
+                renderSocials(profile.socials, 'profileSocials');
+                checkAndRenderAchievements(userId, 'profileAchievements');
+
+                if (isOwnProfile) {
+                    renderProfileInterests();
+                    document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+                    document.getElementById('changeAvatarBtn').addEventListener('click', () => showModal('avatarModal'));
+                    document.getElementById('saveProfileBtn').addEventListener('click', saveProfileChanges);
+                    document.getElementById('interestSearchInput').addEventListener('input', e => {
+                        const query = e.target.value.toLowerCase();
+                        document.querySelectorAll('#profileInterests button').forEach(btn => {
+                            btn.style.display = btn.textContent.toLowerCase().includes(query) ? '' : 'none';
+                        });
+                    });
+                } else {
+                    document.getElementById('userProfileBackBtn').addEventListener('click', () => closeSlideUpView('userProfileView'));
+                }
+
+                viewContainer.querySelectorAll('.profile-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        const activeTab = e.currentTarget;
+                        viewContainer.querySelectorAll('.profile-tab').forEach(item => {
+                            item.classList.remove('tab-active');
+                            item.style.borderColor = 'transparent';
+                            item.style.color = '#9ca3af';
+                        });
+                        activeTab.classList.add('tab-active');
+                        activeTab.style.borderColor = accentColor;
+                        activeTab.style.color = 'white';
+                        viewContainer.querySelectorAll('.profile-tab-content').forEach(content => {
+                            content.classList.toggle('hidden', content.dataset.content !== activeTab.dataset.tab);
+                        });
+                    });
+                });
             }
 
-            function listenToLikesAndViews(id) {
+            async function showUserProfile(userId) {
+                await populateProfileView(userId);
+            }
+
+            function listenToLikesAndViews(id, authorUid) {
                 const likesRef = ref(db, `likes/${id}`);
                 const viewsRef = ref(db, `views/${id}`);
                 
                 const likesUnsubscribe = onValue(likesRef, snap => {
-                    const likeCountEl = document.getElementById('detailLikeCount');
-                    if (!likeCountEl) return;
                     const data = snap.val() || {};
-                    likeCountEl.textContent = `${Object.keys(data).length} Me gusta`;
-                    document.getElementById('detailLikeBtn').classList.toggle('liked', !!(currentUser && data[currentUser.uid]));
+                    const likeCount = Object.keys(data).length;
+                    
+                    const likeCountEl = document.getElementById('detailLikeCount');
+                    if (likeCountEl) likeCountEl.textContent = `${likeCount} Me gusta`;
+                    
+                    const detailLikeBtn = document.getElementById('detailLikeBtn');
+                    if(detailLikeBtn) detailLikeBtn.classList.toggle('liked', !!(currentUser && data[currentUser.uid]));
+
+                    if (likeCount >= 10) {
+                        set(ref(db, `users/${authorUid}/profile/achievements/popular-post`), true);
+                    }
                 });
                 
                 const viewsUnsubscribe = onValue(viewsRef, snap => {
@@ -1280,25 +1296,27 @@
             function renderUserPosts(userId, gridId, messageId) {
                 const container = document.getElementById(gridId);
                 const message = document.getElementById(messageId);
+                if(!container || !message) return;
                 container.innerHTML = '';
                 const userPosts = allPosts.filter(p => p.authorUid === userId);
                 message.classList.toggle('hidden', userPosts.length > 0);
                 if(userPosts.length > 0) appendToImageGrid(container, userPosts); 
             }
             
-            function renderFavorites() {
-                listenToUserFavorites((favoriteItems) => {
-                    const container = document.getElementById('favoritesGrid');
-                    const message = document.getElementById('no-favorites-message');
+            function renderPublicFavorites(userId, gridId, messageId) {
+                listenToUserFavorites(userId, (favoriteItems) => {
+                    const container = document.getElementById(gridId);
+                    const message = document.getElementById(messageId);
+                    if(!container || !message) return;
                     container.innerHTML = '';
                     message.classList.toggle('hidden', favoriteItems.length > 0);
                     if(favoriteItems.length > 0) appendToImageGrid(container, favoriteItems.reverse());
                 });
             }
             
-            function listenToUserFavorites(callback) {
-                if(!currentUser) return;
-                onValue(ref(db, `favorites/${currentUser.uid}`), snap => {
+            function listenToUserFavorites(userId, callback) {
+                if(!userId) return;
+                onValue(ref(db, `favorites/${userId}`), snap => {
                     const favoriteIds = Object.keys(snap.val() || {});
                     const favoriteItems = [...allImages, ...allPosts].filter(item => favoriteIds.includes(String(item.id)));
                     if(callback) callback(favoriteItems);
@@ -1319,7 +1337,8 @@
             }
             
             function updateAllAvatars(url) {
-                document.getElementById('profileAvatar').src = url;
+                const profileAvatar = document.getElementById('profileAvatar');
+                if (profileAvatar) profileAvatar.src = url;
                 document.getElementById('navProfileAvatar').src = url;
                 document.getElementById('commentFormAvatar').src = url;
             }
@@ -1342,6 +1361,9 @@
 
             function renderProfileInterests() {
                 const container = document.getElementById('profileInterests');
+                const counterEl = document.getElementById('interestCounter');
+                if(!container || !counterEl) return;
+
                 container.innerHTML = '';
                 const userInterests = new Set(currentUserData.profile?.interests || []);
                 (window.allTags || []).forEach(tag => {
@@ -1368,10 +1390,95 @@
             }
             
             function updateInterestCounter() {
-                const count = document.querySelectorAll('#profileInterests .bg-indigo-600').length;
+                const container = document.getElementById('profileInterests');
                 const counterEl = document.getElementById('interestCounter');
+                if(!container || !counterEl) return;
+                const count = container.querySelectorAll('.bg-indigo-600').length;
                 counterEl.textContent = `${count}/${INTEREST_LIMIT}`;
                 counterEl.classList.toggle('text-red-500', count >= INTEREST_LIMIT);
+            }
+
+            // --- NUEVAS FUNCIONES DE PERSONALIZACIÓN DE PERFIL ---
+            function renderSocials(socials, containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                container.innerHTML = '';
+                if (!socials) return;
+
+                const socialMap = {
+                    twitter: { icon: 'fab fa-twitter', color: 'text-blue-400' },
+                    instagram: { icon: 'fab fa-instagram', color: 'text-pink-500' },
+                    website: { icon: 'fas fa-globe', color: 'text-gray-400' }
+                };
+
+                for (const [key, url] of Object.entries(socials)) {
+                    if (url && socialMap[key]) {
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.className = `social-icon-link hover:${socialMap[key].color}`;
+                        link.innerHTML = `<i class="${socialMap[key].icon}"></i>`;
+                        container.appendChild(link);
+                    }
+                }
+            }
+
+            async function checkAndRenderAchievements(userId, containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                
+                const userAchievementsSnapshot = await get(ref(db, `users/${userId}/profile/achievements`));
+                const userAchievements = userAchievementsSnapshot.val() || {};
+                
+                let earnedAchievements = [];
+                for (const key in userAchievements) {
+                    if (userAchievements[key] && ACHIEVEMENTS[key]) {
+                        earnedAchievements.push(ACHIEVEMENTS[key]);
+                    }
+                }
+                
+                container.innerHTML = '';
+                if (earnedAchievements.length > 0) {
+                    earnedAchievements.forEach(ach => {
+                        const badge = document.createElement('div');
+                        badge.className = 'achievement-badge';
+                        badge.title = ach.description;
+                        badge.innerHTML = `<i class="fas ${ach.icon}"></i> <span>${ach.title}</span>`;
+                        container.appendChild(badge);
+                    });
+                } else {
+                    container.innerHTML = `<p class="text-gray-500 text-xs">No hay logros aún.</p>`;
+                }
+            }
+
+            async function saveProfileChanges() {
+                const bio = document.getElementById('profileBioInput').value;
+                if (bio.length > BIO_MAX_LENGTH) {
+                    return showToast(`La biografía no puede exceder los ${BIO_MAX_LENGTH} caracteres.`);
+                }
+
+                const interests = Array.from(document.querySelectorAll('#profileInterests .bg-indigo-600')).map(el => el.dataset.tag);
+                const profileColor = document.getElementById('profileColorPicker').value;
+                const bannerUrl = document.getElementById('profileBannerUrl').value.trim();
+                const socials = {
+                    twitter: document.getElementById('socialTwitter').value.trim(),
+                    instagram: document.getElementById('socialInstagram').value.trim(),
+                    website: document.getElementById('socialWebsite').value.trim()
+                };
+
+                try {
+                    const profileUpdates = { bio, interests, profileColor, bannerUrl, socials };
+                    await update(ref(db, `users/${currentUser.uid}/profile`), profileUpdates);
+                    
+                    currentUserData.profile = { ...currentUserData.profile, ...profileUpdates };
+                    
+                    showToast('Perfil guardado');
+                    populateProfileView(currentUser.uid);
+                } catch (error) { 
+                    console.error("Error al guardar el perfil:", error); 
+                    showToast("Error al guardar el perfil."); 
+                }
             }
             
             async function renderPopularGallery() {
@@ -1410,14 +1517,11 @@
                 }
             }
 
-            // --- FUNCIÓN CORREGIDA ---
             function renderMostVotedSection() {
                 const likesRef = ref(db, 'likes');
                 onValue(likesRef, async (snapshot) => {
                     const allLikes = snapshot.val() || {};
                     const container = document.getElementById('leaderboard');
-                    
-                    // Limpiar el contenedor al inicio de cada renderizado
                     container.innerHTML = '';
 
                     if (!allPosts || allPosts.length === 0) {
@@ -1432,7 +1536,6 @@
                         }))
                         .sort((a, b) => b.likeCount - a.likeCount);
 
-                    // Filtrar para obtener publicaciones con imágenes únicas
                     const uniquePosts = [];
                     const seenImageUrls = new Set();
                     for (const post of rankedPosts) {
@@ -1598,28 +1701,44 @@
             async function initializeAppForUser(user) {
                 showLoader('galleryLoader', true);
                 
-                // 1. Cargar datos del usuario y establecer variables globales
                 isCurrentUserAdmin = user.email === ADMIN_EMAIL;
-                if (isCurrentUserAdmin) {
-                    globalAdminUID = user.uid;
-                }
                 document.getElementById('adminAddCuratedBtn').classList.toggle('hidden', !isCurrentUserAdmin);
                 const userData = await getAuthorData(user.uid);
                 currentUserData = userData || { username: user.email.split('@')[0], profile: {} };
-                const defaultAvatar = `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(currentUserData.username)}`;
+                const defaultAvatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(currentUserData.username || 'user')}`;
                 currentUserData.profile.avatar = currentUserData.profile.avatar || defaultAvatar;
                 updateAllAvatars(currentUserData.profile.avatar);
 
-                // 2. Cargar contenido ahora que el UID del admin está disponible
-                await Promise.all([
-                    loadCuratedImages(),
-                    listenToPosts()
-                ]);
+                try {
+                    const usersRef = ref(db, 'users');
+                    const q = query(usersRef, orderByChild('username'), equalTo(ADMIN_USERNAME));
+                    const adminSnapshot = await get(q);
+
+                    if (adminSnapshot.exists()) {
+                        globalAdminUID = Object.keys(adminSnapshot.val())[0];
+                    } else {
+                        throw new Error("La cuenta del administrador ('Exen') no se encontró en la base de datos.");
+                    }
+                } catch (error) {
+                    console.error("Error crítico al buscar al admin:", error);
+                    showToast("Error: No se pudo cargar el contenido oficial.");
+                }
+
+                // Cargar datos iniciales y luego configurar listeners
+                const initialPostsSnapshot = await get(query(ref(db, 'posts'), orderByChild('timestamp')));
+                const posts = [];
+                if (initialPostsSnapshot.exists()) {
+                    initialPostsSnapshot.forEach(childSnapshot => {
+                        posts.push({ ...childSnapshot.val(), id: childSnapshot.key, isPost: true });
+                    });
+                }
+                allPosts = posts.reverse();
+
+                await loadCuratedImages();
+                setupPostsListener(); // Configurar listener para actualizaciones en tiempo real
                 
-                // 3. Renderizar la UI
                 sortCuratedFeed();
                 renderCuratedFeed(true);
-                listenToUserFavorites();
                 listenToNotifications();
                 renderMostVotedSection();
 
