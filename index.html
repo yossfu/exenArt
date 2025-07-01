@@ -330,6 +330,17 @@
                         <label for="postTags" class="block text-sm font-medium text-gray-400 mb-1">Etiquetas (separadas por comas)</label>
                         <input type="text" id="postTags" name="postTags" placeholder="ej: arte, paisaje, retrato" maxlength="150" class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
+                    <!-- NUEVO: Checkbox y campo para prompt de IA -->
+                    <div class="!mt-5">
+                        <label for="includePromptCheckbox" class="flex items-center space-x-2 cursor-pointer text-sm text-gray-400">
+                            <input type="checkbox" id="includePromptCheckbox" name="includePromptCheckbox" class="rounded bg-gray-600 border-gray-500 text-indigo-500 focus:ring-indigo-600">
+                            <span>Incluir prompt de IA</span>
+                        </label>
+                    </div>
+                    <div id="promptContainer" class="hidden !mt-3">
+                        <label for="postPrompt" class="block text-sm font-medium text-gray-400 mb-1">Prompt de IA (opcional)</label>
+                        <textarea id="postPrompt" name="postPrompt" placeholder="El prompt que usaste para generar la imagen..." rows="4" maxlength="1000" class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
                     <p class="text-xs text-gray-500 text-center !mt-6">
                         Al publicar, aceptas nuestros <a href="#" id="createPostTermsLink" class="underline hover:text-indigo-400">Términos</a> y <a href="#" id="createPostPrivacyLink" class="underline hover:text-indigo-400">Política de Privacidad</a>.
                     </p>
@@ -490,7 +501,10 @@
                       <span id="detailAuthorVerifiedBadge"></span>
                     </div>
                 </div>
-                <div class="w-10"></div>
+                <!-- NUEVO: Contenedor para el botón de seguir -->
+                <div class="w-28 flex justify-end">
+                    <button id="detailFollowBtn" data-user-id="" class="hidden px-4 py-1.5 text-sm font-bold rounded-full transition-colors"></button>
+                </div>
             </header>
             <main class="flex-1 overflow-y-auto pb-20">
                 <div id="imageViewer" class="bg-black cursor-zoom-in"></div>
@@ -505,6 +519,17 @@
                         <div class="text-sm text-gray-400"><span id="detailLikeCount" class="font-semibold text-white">0 Me gusta</span><span class="text-gray-500 mx-1">•</span><span id="detailViewCount" class="">0 Vistas</span></div>
                     </div>
                     <button id="adminDeletePostBtn" class="hidden w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors"><i class="fas fa-trash-alt mr-2"></i>Eliminar Publicación (Admin)</button>
+                    
+                    <!-- NUEVO: Contenedor para mostrar el prompt de IA -->
+                    <div id="detailPromptContainer" class="hidden space-y-2 pt-4 border-t border-gray-800/60">
+                        <h2 class="font-bold text-white text-base">Prompt de IA</h2>
+                        <div class="relative bg-gray-800 rounded-lg p-3">
+                            <pre id="detailPromptText" class="text-gray-300 text-sm whitespace-pre-wrap font-sans"></pre>
+                            <button id="copyPromptBtn" class="absolute top-2 right-2 text-gray-400 hover:text-white" title="Copiar prompt">
+                                <i class="far fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <section class="p-4 pt-2 border-t border-gray-800/60">
                     <h2 class="font-bold text-white mb-4">Comentarios</h2>
@@ -627,6 +652,7 @@
             const POST_TITLE_MAX_LENGTH = 80;
             const POST_DESC_MAX_LENGTH = 500;
             const POST_TAGS_MAX_LENGTH = 150;
+            const POST_PROMPT_MAX_LENGTH = 1000; // NUEVO
             const COMMENT_MAX_LENGTH = 300;
             const URL_MAX_LENGTH = 500;
             const SOCIAL_URL_MAX_LENGTH = 255;
@@ -670,19 +696,22 @@
                 toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
             };
              const getFirebaseErrorMessage = (error) => {
-                switch (error.code) {
-                    case 'auth/invalid-email': return 'El formato del correo es inválido.';
-                    case 'auth/user-not-found': return 'No se encontró ningún usuario con este correo.';
-                    case 'auth/wrong-password': return 'Correo o contraseña incorrectos.';
-                    case 'auth/email-already-in-use': return 'Este correo ya está registrado.';
-                    case 'auth/weak-password': return 'La contraseña debe tener al menos 6 caracteres.';
-                    default: console.error(error); return 'Ha ocurrido un error inesperado.';
-                }
+                 switch (error.code) {
+                     case 'auth/invalid-email': return 'El formato del correo es inválido.';
+                     case 'auth/user-not-found': return 'No se encontró ningún usuario con este correo.';
+                     case 'auth/wrong-password': return 'Correo o contraseña incorrectos.';
+                     case 'auth/email-already-in-use': return 'Este correo ya está registrado.';
+                     case 'auth/weak-password': return 'La contraseña debe tener al menos 6 caracteres.';
+                     default: console.error(error); return 'Ha ocurrido un error inesperado.';
+                 }
             };
             const closeSlideUpView = (viewId) => {
                 const view = document.getElementById(viewId);
                 view.classList.remove('active');
-                if (viewId === 'detailView') detachDetailViewListeners();
+                if (viewId === 'detailView') {
+                    detachDetailViewListeners();
+                    document.getElementById('detailFollowBtn').classList.add('hidden'); // Limpiar botón de seguir
+                }
                 setTimeout(() => triggerView(lastView || 'galleryView'), 300);
             };
             const cancelReply = () => {
@@ -1013,6 +1042,11 @@
                     input.value = '';
                 });
 
+                // NUEVO: Listener para el checkbox del prompt
+                document.getElementById('includePromptCheckbox').addEventListener('change', (e) => {
+                    document.getElementById('promptContainer').classList.toggle('hidden', !e.target.checked);
+                });
+
                 const notificationsBtn = document.getElementById('navNotificationsBtn');
                 const notificationsPanel = document.getElementById('notificationsWindow');
                 notificationsBtn.addEventListener('click', (e) => { e.stopPropagation(); notificationsPanel.classList.toggle('active'); });
@@ -1089,22 +1123,34 @@
                     const title = document.getElementById('postTitle').value.trim();
                     const description = document.getElementById('postDescription').value.trim();
                     const tagsInput = document.getElementById('postTags').value.trim();
+                    
+                    // NUEVO: Obtener datos del prompt
+                    const includePrompt = document.getElementById('includePromptCheckbox').checked;
+                    const prompt = document.getElementById('postPrompt').value.trim();
 
                     if (!imageUrl || !title) return showToast("La URL y el título son obligatorios.");
                     if (imageUrl.length > URL_MAX_LENGTH) return showToast(`La URL de la imagen no puede exceder los ${URL_MAX_LENGTH} caracteres.`);
                     if (title.length > POST_TITLE_MAX_LENGTH) return showToast(`El título no puede exceder los ${POST_TITLE_MAX_LENGTH} caracteres.`);
                     if (description.length > POST_DESC_MAX_LENGTH) return showToast(`La descripción no puede exceder los ${POST_DESC_MAX_LENGTH} caracteres.`);
                     if (tagsInput.length > POST_TAGS_MAX_LENGTH) return showToast(`Las etiquetas no pueden exceder los ${POST_TAGS_MAX_LENGTH} caracteres.`);
+                    if (prompt.length > POST_PROMPT_MAX_LENGTH) return showToast(`El prompt no puede exceder los ${POST_PROMPT_MAX_LENGTH} caracteres.`);
 
                     const tags = tagsInput.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag !== '');
                     
                     const newPostRef = push(ref(db, 'posts'));
                     try {
-                        await set(newPostRef, {
+                        const newPostData = {
                             id: newPostRef.key, imageUrl, title, description, tags,
                             authorUid: currentUser.uid,
                             timestamp: serverTimestamp()
-                        });
+                        };
+
+                        // NUEVO: Añadir prompt si existe
+                        if (includePrompt && prompt) {
+                            newPostData.prompt = prompt;
+                        }
+
+                        await set(newPostRef, newPostData);
                         
                         await set(ref(db, `users/${currentUser.uid}/profile/achievements/first-post`), true);
 
@@ -1115,6 +1161,7 @@
                         }
 
                         document.getElementById('createPostForm').reset();
+                        document.getElementById('promptContainer').classList.add('hidden'); // Ocultar campo de prompt
                         hideModal('createPostModal');
                         showToast("Publicación creada con éxito");
                         triggerView('feedView');
@@ -1134,6 +1181,18 @@
                 const authorData = await getAuthorData(item.authorUid);
                 const isVerified = item.authorUid === globalAdminUID;
                 
+                // NUEVO: Lógica para el botón de seguir en la vista de detalle
+                const detailFollowBtn = document.getElementById('detailFollowBtn');
+                if (item.isPost && item.authorUid !== currentUser.uid) {
+                    detailFollowBtn.classList.remove('hidden');
+                    detailFollowBtn.dataset.userId = item.authorUid;
+                    updateDetailFollowButton(item.authorUid);
+                    detailFollowBtn.onclick = () => toggleFollow(item.authorUid);
+                } else {
+                    detailFollowBtn.classList.add('hidden');
+                    detailFollowBtn.onclick = null;
+                }
+
                 document.getElementById('detailAuthorUsername').textContent = authorData.username;
                 document.getElementById('detailAuthorAvatar').src = authorData.profile?.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${authorData.username}`;
                 document.getElementById('detailAuthorVerifiedBadge').innerHTML = isVerified ? '<i class="fas fa-check-circle text-blue-400"></i>' : '';
@@ -1149,6 +1208,31 @@
                 const descriptionEl = document.getElementById('detailDescription');
                 descriptionEl.innerHTML = linkify(item.description);
                 
+                // NUEVO: Lógica para mostrar el prompt de IA
+                const promptContainer = document.getElementById('detailPromptContainer');
+                if (item.prompt) {
+                    promptContainer.classList.remove('hidden');
+                    const promptTextEl = document.getElementById('detailPromptText');
+                    promptTextEl.textContent = item.prompt;
+                    document.getElementById('copyPromptBtn').onclick = () => {
+                        const textArea = document.createElement("textarea");
+                        textArea.value = promptTextEl.textContent;
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        try {
+                            document.execCommand('copy');
+                            showToast('Prompt copiado al portapapeles');
+                        } catch (err) {
+                            console.error('Error al copiar:', err);
+                            showToast('No se pudo copiar el prompt.');
+                        }
+                        document.body.removeChild(textArea);
+                    };
+                } else {
+                    promptContainer.classList.add('hidden');
+                }
+
                 if (currentViewer) currentViewer.destroy();
                 const imageViewer = document.getElementById('imageViewer');
                 imageViewer.innerHTML = `<img src="${item.isPost ? item.imageUrl : item.url}" alt="${item.title}" onerror="this.parentElement.innerHTML='<p class=\\'p-4 text-red-400\\'>Error al cargar imagen.</p>';">`;
@@ -1846,6 +1930,7 @@
                     await set(followerRef, true);
                 }
                 updateFollowButton(userIdToFollow);
+                updateDetailFollowButton(userIdToFollow); // NUEVO: Actualizar botón en detalle
                 updateFollowCounts(userIdToFollow);
             }
 
@@ -1863,6 +1948,27 @@
                     followBtn.className = 'mt-4 px-6 py-2 text-sm font-bold rounded-full transition-colors bg-indigo-600 text-white hover:bg-indigo-500';
                 }
             }
+            
+            // NUEVA FUNCIÓN: Actualizar botón de seguir en la vista de detalle
+            async function updateDetailFollowButton(userId) {
+                const followBtn = document.getElementById('detailFollowBtn');
+                if (!followBtn || followBtn.dataset.userId !== userId) return;
+
+                const followingRef = ref(db, `following/${currentUser.uid}/${userId}`);
+                const snapshot = await get(followingRef);
+                
+                // Usamos las mismas clases que en el perfil, pero asegurándonos de que no esté oculto
+                const baseClasses = 'px-4 py-1.5 text-sm font-bold rounded-full transition-colors';
+                if (snapshot.exists()) {
+                    followBtn.textContent = 'Siguiendo';
+                    followBtn.className = `${baseClasses} bg-gray-700 text-white hover:bg-gray-600`;
+                } else {
+                    followBtn.textContent = 'Seguir';
+                    followBtn.className = `${baseClasses} bg-indigo-600 text-white hover:bg-indigo-500`;
+                }
+                followBtn.classList.remove('hidden');
+            }
+
 
             function updateFollowCounts(userId) {
                 const followersRef = ref(db, `followers/${userId}`);
@@ -2098,4 +2204,3 @@
     </script>
 </body>
 </html>
-
