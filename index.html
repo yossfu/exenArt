@@ -79,7 +79,7 @@
         .profile-tab {
             border-color: transparent; color: #9ca3af; white-space: nowrap;
             padding: 0.75rem 1rem; border-bottom-width: 2px; font-weight: 500; font-size: 0.875rem;
-            transition: all 0.2s; flex: 1; text-align: center;
+            transition: all 0.2s; flex-grow: 1; text-align: center;
         }
         .profile-tab:hover { color: #ffffff; border-color: #4b5563; }
         .profile-tab.tab-active { color: #e5e7eb; }
@@ -173,7 +173,7 @@
             padding: 0.5rem 0;
         }
         .nav-btn i {
-            font-size: 1.5rem; /* Iconos más grandes */
+            font-size: 1.25rem; /* Iconos ajustados */
             margin-bottom: 0.125rem;
         }
         .nav-btn span {
@@ -235,7 +235,8 @@
     <div id="authOverlay" class="fixed inset-0 bg-gray-900 z-50 flex p-4 transition-opacity duration-300">
         <div id="welcomeContainer" class="m-auto text-center">
             <div class="glass-container">
-                <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-16 mx-auto mb-4" onerror="this.style.display='none'">
+                <!-- ICONO REDONDO -->
+                <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-16 w-16 mx-auto mb-4 rounded-full object-cover" onerror="this.style.display='none'">
                 <h1 class="text-4xl font-bold text-white">Bienvenido a Exene</h1>
                 <p class="text-gray-300 mt-2">Únete a la comunidad y comparte tu visión.</p>
                 <div class="flex flex-col sm:flex-row gap-4 mt-8 w-full max-w-xs mx-auto">
@@ -330,7 +331,6 @@
                         <label for="postTags" class="block text-sm font-medium text-gray-400 mb-1">Etiquetas (separadas por comas)</label>
                         <input type="text" id="postTags" name="postTags" placeholder="ej: arte, paisaje, retrato" maxlength="150" class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
-                    <!-- NUEVO: Checkbox y campo para prompt de IA -->
                     <div class="!mt-5">
                         <label for="includePromptCheckbox" class="flex items-center space-x-2 cursor-pointer text-sm text-gray-400">
                             <input type="checkbox" id="includePromptCheckbox" name="includePromptCheckbox" class="rounded bg-gray-600 border-gray-500 text-indigo-500 focus:ring-indigo-600">
@@ -423,7 +423,8 @@
         <!-- VISTAS PRINCIPALES -->
         <main id="galleryView" class="view pb-20 active">
             <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40">
-                <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-8" onerror="this.style.display='none'">
+                <!-- ICONO REDONDO -->
+                <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-8 w-8 rounded-full object-cover" onerror="this.style.display='none'">
                 <h2 class="text-lg font-bold text-white">Para ti</h2>
                 <div class="relative">
                     <button id="navNotificationsBtn" class="text-gray-400 hover:text-white text-xl p-2 relative">
@@ -465,24 +466,29 @@
             </div>
         </main>
 
-        <main id="followingView" class="view pb-20 hidden">
+        <!-- NUEVA VISTA: Prompts Populares -->
+        <main id="promptsView" class="view pb-20 hidden">
             <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <h2 class="text-lg font-bold text-white">Siguiendo</h2>
+                <h2 class="text-lg font-bold text-white">Prompts Populares</h2>
             </header>
-            <div id="followingGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-            <div id="following-sentinel" class="h-10"></div>
-             <div id="followingLoader" class="text-center p-8 hidden">
+            <div id="promptsList" class="p-4 space-y-4">
+                <!-- Lista de prompts se inyectará aquí -->
+            </div>
+        </main>
+
+        <!-- VISTA RENOMBRADA: De Siguiendo a Actividad -->
+        <main id="activityView" class="view pb-20 hidden">
+            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+                <h2 class="text-lg font-bold text-white">Actividad</h2>
+            </header>
+            <div id="activityFeed" class="p-4 space-y-4">
+                 <!-- El feed de actividad se inyectará aquí -->
+            </div>
+             <div id="activityLoader" class="text-center p-8 hidden">
                 <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
             </div>
         </main>
         
-        <main id="popularView" class="view pb-20 hidden">
-            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <h2 class="text-lg font-bold text-white">Populares 🔥</h2>
-            </header>
-            <div id="popularGallery" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-        </main>
-
         <main id="profileView" class="view pb-20 hidden">
             <!-- El contenido del perfil se genera dinámicamente -->
         </main>
@@ -501,7 +507,6 @@
                       <span id="detailAuthorVerifiedBadge"></span>
                     </div>
                 </div>
-                <!-- NUEVO: Contenedor para el botón de seguir -->
                 <div class="w-28 flex justify-end">
                     <button id="detailFollowBtn" data-user-id="" class="hidden px-4 py-1.5 text-sm font-bold rounded-full transition-colors"></button>
                 </div>
@@ -515,12 +520,13 @@
                             <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group"><i class="far fa-heart group-hover:text-pink-500 transition-transform transform active:scale-125"></i></button>
                             <button id="focusCommentBtn" class="comment-btn flex items-center space-x-2 group"><i class="far fa-comment group-hover:text-indigo-400 transition-colors"></i></button>
                             <button id="detailFavoriteBtn" class="favorite-btn flex items-center space-x-2 group"><i class="far fa-bookmark group-hover:text-yellow-400 transition-transform transform active:scale-125"></i></button>
+                            <!-- NUEVO: Botón para guardar en colección -->
+                            <button id="saveToCollectionBtn" class="flex items-center space-x-2 group"><i class="far fa-layer-group group-hover:text-green-400 transition-colors"></i></button>
                         </div>
                         <div class="text-sm text-gray-400"><span id="detailLikeCount" class="font-semibold text-white">0 Me gusta</span><span class="text-gray-500 mx-1">•</span><span id="detailViewCount" class="">0 Vistas</span></div>
                     </div>
                     <button id="adminDeletePostBtn" class="hidden w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors"><i class="fas fa-trash-alt mr-2"></i>Eliminar Publicación (Admin)</button>
                     
-                    <!-- NUEVO: Contenedor para mostrar el prompt de IA -->
                     <div id="detailPromptContainer" class="hidden space-y-2 pt-4 border-t border-gray-800/60">
                         <h2 class="font-bold text-white text-base">Prompt de IA</h2>
                         <div class="relative bg-gray-800 rounded-lg p-3">
@@ -578,7 +584,7 @@
         </div>
 
         <footer class="fixed bottom-0 left-0 right-0 z-40">
-            <div id="createPostBtnContainer">
+            <div id="createPostBtnContainer" class="hidden"> <!-- Oculto por defecto, se muestra solo en vistas relevantes -->
                  <button id="createPostBtn" aria-label="Crear Publicación"><i class="fas fa-plus"></i></button>
             </div>
             <nav class="main-nav flex justify-around items-center h-16">
@@ -590,10 +596,15 @@
                     <i class="fas fa-users"></i>
                     <span class="nav-text">Comunidad</span>
                 </button>
-                <div class="w-16 h-16"></div> <!-- Espacio para el botón flotante -->
-                <button data-view="followingView" class="nav-btn" aria-label="Siguiendo">
-                    <i class="fas fa-user-friends"></i>
-                    <span class="nav-text">Siguiendo</span>
+                <!-- NUEVO: Botón de Prompts -->
+                <button data-view="promptsView" class="nav-btn" aria-label="Prompts">
+                    <i class="fas fa-lightbulb"></i>
+                    <span class="nav-text">Prompts</span>
+                </button>
+                <!-- BOTÓN ACTUALIZADO: De Siguiendo a Actividad -->
+                <button data-view="activityView" class="nav-btn" aria-label="Actividad">
+                    <i class="fas fa-stream"></i>
+                    <span class="nav-text">Actividad</span>
                 </button>
                 <button data-view="profileView" id="navProfileBtn" class="nav-btn" aria-label="Mi Perfil">
                     <img id="navProfileAvatar" src="" class="w-8 h-8 rounded-full object-cover border-2 border-transparent transition-colors">
@@ -652,13 +663,13 @@
             const POST_TITLE_MAX_LENGTH = 80;
             const POST_DESC_MAX_LENGTH = 500;
             const POST_TAGS_MAX_LENGTH = 150;
-            const POST_PROMPT_MAX_LENGTH = 1000; // NUEVO
+            const POST_PROMPT_MAX_LENGTH = 1000;
             const COMMENT_MAX_LENGTH = 300;
             const URL_MAX_LENGTH = 500;
             const SOCIAL_URL_MAX_LENGTH = 255;
 
             let allImages = [], allPosts = [], sortedCuratedContent = [];
-            let loadedCuratedCount = 0, loadedFeedCount = 0, loadedFollowingCount = 0;
+            let loadedCuratedCount = 0, loadedFeedCount = 0, loadedActivityCount = 0;
             const itemsPerLoad = 12;
             let currentUser = null, currentUserData = {};
             let isCurrentUserAdmin = false;
@@ -668,7 +679,7 @@
             let usersCache = {};
             let currentViewer = null;
             let lastView = 'galleryView';
-            let isGalleryLoading = false, isFeedLoading = false, isFollowingLoading = false;
+            let isGalleryLoading = false, isFeedLoading = false, isActivityLoading = false;
             let toastTimeout;
             let appInitialized = false;
             let activeDetailListeners = {};
@@ -784,7 +795,7 @@
                     if (appInitialized) {
                         const currentVisibleView = document.querySelector('.view:not(.hidden)');
                         if (currentVisibleView?.id === 'feedView') renderUserFeed(true);
-                        if (currentVisibleView?.id === 'followingView') renderFollowingFeed(true);
+                        if (currentVisibleView?.id === 'activityView') renderActivityFeed(); // Actualizar feed de actividad
                         if (currentVisibleView?.id === 'profileView' || currentVisibleView?.id === 'userProfileView') {
                             const visibleProfileId = currentVisibleView.dataset.userId;
                             if (visibleProfileId) {
@@ -821,6 +832,11 @@
                 });
                 document.getElementById('navProfileAvatar').closest('.nav-btn').classList.toggle('active', viewId === 'profileView');
                 
+                // Mostrar u ocultar el botón de crear post
+                const createBtnContainer = document.getElementById('createPostBtnContainer');
+                const viewsWithCreateButton = ['galleryView', 'feedView', 'activityView', 'promptsView'];
+                createBtnContainer.classList.toggle('hidden', !viewsWithCreateButton.includes(viewId));
+
                 if (targetView.classList.contains('slide-up')) {
                     setTimeout(() => targetView.classList.add('active'), 10);
                 }
@@ -830,8 +846,8 @@
                 switch(viewId) {
                     case 'galleryView': navigateTo(viewId); break;
                     case 'feedView': renderUserFeed(true); navigateTo(viewId); break;
-                    case 'followingView': renderFollowingFeed(true); navigateTo(viewId); break;
-                    case 'popularView': renderPopularGallery(); navigateTo(viewId); break;
+                    case 'activityView': renderActivityFeed(); navigateTo(viewId); break;
+                    case 'promptsView': renderPromptsWall(); navigateTo(viewId); break;
                     case 'profileView': populateProfileView(currentUser.uid); break; 
                     case 'searchView': 
                         navigateTo(viewId); 
@@ -917,37 +933,6 @@
                 }
                 showLoader('feedLoader', false);
                 isFeedLoading = false;
-            }
-
-            async function renderFollowingFeed(reset = false) {
-                if (isFollowingLoading) return;
-                isFollowingLoading = true;
-                showLoader('followingLoader', true);
-                const followingContainer = document.getElementById('followingGrid');
-                if (reset) { followingContainer.innerHTML = ''; loadedFollowingCount = 0; }
-                
-                const followingSnapshot = await get(ref(db, `following/${currentUser.uid}`));
-                const followingIds = Object.keys(followingSnapshot.val() || {});
-
-                if (followingIds.length === 0) {
-                    followingContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Aún no sigues a nadie. ¡Explora la comunidad!</p>`;
-                    showLoader('followingLoader', false);
-                    isFollowingLoading = false;
-                    return;
-                }
-
-                const postsFromFollowing = allPosts.filter(post => followingIds.includes(post.authorUid));
-                
-                const nextItems = postsFromFollowing.slice(loadedFollowingCount, loadedFollowingCount + itemsPerLoad);
-
-                if (nextItems.length > 0) {
-                    appendToImageGrid(followingContainer, nextItems);
-                    loadedFollowingCount += nextItems.length;
-                } else if (reset && postsFromFollowing.length === 0) {
-                    followingContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Las personas que sigues no han publicado nada nuevo.</p>`;
-                }
-                showLoader('followingLoader', false);
-                isFollowingLoading = false;
             }
 
             // --- EVENT LISTENERS ---
@@ -1042,7 +1027,6 @@
                     input.value = '';
                 });
 
-                // NUEVO: Listener para el checkbox del prompt
                 document.getElementById('includePromptCheckbox').addEventListener('change', (e) => {
                     document.getElementById('promptContainer').classList.toggle('hidden', !e.target.checked);
                 });
@@ -1057,7 +1041,6 @@
                 });
                 new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isGalleryLoading && document.getElementById('galleryView').offsetParent !== null) renderCuratedFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('curated-sentinel'));
                 new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isFeedLoading && document.getElementById('feedView').offsetParent !== null) renderUserFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('feed-sentinel'));
-                new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isFollowingLoading && document.getElementById('followingView').offsetParent !== null) renderFollowingFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('following-sentinel'));
                 
                 setupDetailViewEventListeners();
                 setupCreatePostForm();
@@ -1124,7 +1107,6 @@
                     const description = document.getElementById('postDescription').value.trim();
                     const tagsInput = document.getElementById('postTags').value.trim();
                     
-                    // NUEVO: Obtener datos del prompt
                     const includePrompt = document.getElementById('includePromptCheckbox').checked;
                     const prompt = document.getElementById('postPrompt').value.trim();
 
@@ -1145,7 +1127,6 @@
                             timestamp: serverTimestamp()
                         };
 
-                        // NUEVO: Añadir prompt si existe
                         if (includePrompt && prompt) {
                             newPostData.prompt = prompt;
                         }
@@ -1161,7 +1142,7 @@
                         }
 
                         document.getElementById('createPostForm').reset();
-                        document.getElementById('promptContainer').classList.add('hidden'); // Ocultar campo de prompt
+                        document.getElementById('promptContainer').classList.add('hidden');
                         hideModal('createPostModal');
                         showToast("Publicación creada con éxito");
                         triggerView('feedView');
@@ -1181,7 +1162,6 @@
                 const authorData = await getAuthorData(item.authorUid);
                 const isVerified = item.authorUid === globalAdminUID;
                 
-                // NUEVO: Lógica para el botón de seguir en la vista de detalle
                 const detailFollowBtn = document.getElementById('detailFollowBtn');
                 if (item.isPost && item.authorUid !== currentUser.uid) {
                     detailFollowBtn.classList.remove('hidden');
@@ -1208,7 +1188,6 @@
                 const descriptionEl = document.getElementById('detailDescription');
                 descriptionEl.innerHTML = linkify(item.description);
                 
-                // NUEVO: Lógica para mostrar el prompt de IA
                 const promptContainer = document.getElementById('detailPromptContainer');
                 if (item.prompt) {
                     promptContainer.classList.remove('hidden');
@@ -1310,14 +1289,16 @@
                             </div>
                             
                             <div class="mt-6 border-b border-gray-700">
-                                <nav class="-mb-px flex space-x-2 sm:space-x-6" aria-label="Tabs">
+                                <nav class="-mb-px flex overflow-x-auto" aria-label="Tabs">
                                     <button data-tab="posts" class="profile-tab tab-active" style="border-color: ${accentColor}; color: white;">Publicaciones</button>
+                                    <button data-tab="collections" class="profile-tab">Colecciones</button>
                                     <button data-tab="favorites" class="profile-tab">Favoritos</button>
                                     ${isOwnProfile ? '<button data-tab="settings" class="profile-tab">Ajustes</button>' : ''}
                                 </nav>
                             </div>
 
                             <div data-content="posts" class="profile-tab-content mt-4"><div id="userPostsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-posts-message" class="text-center text-gray-500 hidden py-8">No hay publicaciones.</p></div>
+                            <div data-content="collections" class="profile-tab-content mt-4 hidden"><div id="collectionsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-collections-message" class="text-center text-gray-500 hidden py-8">No hay colecciones.</p></div>
                             <div data-content="favorites" class="profile-tab-content mt-4 hidden"><div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-favorites-message" class="text-center text-gray-500 hidden py-8">No ha guardado ninguna imagen.</p></div>
                             ${isOwnProfile ? `
                             <div data-content="settings" class="profile-tab-content mt-4 hidden space-y-6">
@@ -1930,7 +1911,7 @@
                     await set(followerRef, true);
                 }
                 updateFollowButton(userIdToFollow);
-                updateDetailFollowButton(userIdToFollow); // NUEVO: Actualizar botón en detalle
+                updateDetailFollowButton(userIdToFollow);
                 updateFollowCounts(userIdToFollow);
             }
 
@@ -1949,7 +1930,6 @@
                 }
             }
             
-            // NUEVA FUNCIÓN: Actualizar botón de seguir en la vista de detalle
             async function updateDetailFollowButton(userId) {
                 const followBtn = document.getElementById('detailFollowBtn');
                 if (!followBtn || followBtn.dataset.userId !== userId) return;
@@ -1957,7 +1937,6 @@
                 const followingRef = ref(db, `following/${currentUser.uid}/${userId}`);
                 const snapshot = await get(followingRef);
                 
-                // Usamos las mismas clases que en el perfil, pero asegurándonos de que no esté oculto
                 const baseClasses = 'px-4 py-1.5 text-sm font-bold rounded-full transition-colors';
                 if (snapshot.exists()) {
                     followBtn.textContent = 'Siguiendo';
