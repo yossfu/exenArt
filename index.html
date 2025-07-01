@@ -147,6 +147,7 @@
             border: 1px solid #4b5563;
         }
         .achievement-badge .fa-trophy { color: #facc15; }
+        .achievement-badge .fa-star { color: #facc15; } /* Color para el logro de admin */
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans antialiased">
@@ -239,7 +240,7 @@
                 <div class="mt-6 border-t border-gray-700 pt-4">
                     <h4 class="text-sm font-medium text-gray-400 mb-2">O pega una URL de imagen</h4>
                     <form id="avatarUrlForm" class="flex items-center gap-2">
-                        <input type="url" id="avatarUrlInput" placeholder="https://..." required class="flex-1 w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="url" id="avatarUrlInput" placeholder="https://..." required maxlength="500" class="flex-1 w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Usar</button>
                     </form>
                 </div>
@@ -253,7 +254,7 @@
                 <form id="createPostForm" class="space-y-4">
                     <div>
                         <label for="postImageUrl" class="block text-sm font-medium text-gray-400 mb-1">URL de la Imagen</label>
-                        <input type="url" id="postImageUrl" name="postImageUrl" placeholder="https://..." required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="url" id="postImageUrl" name="postImageUrl" placeholder="https://..." required maxlength="500" class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <p class="text-xs text-gray-500 mt-2">Sube tus fotos en <a href="https://catbox.moe/" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:underline">catbox.moe</a> y pega la URL aquí.</p>
                     </div>
                     <div>
@@ -283,7 +284,7 @@
                 <form id="adminAddCuratedForm" class="space-y-4">
                     <div>
                         <label for="adminPostUrl" class="block text-sm font-medium text-gray-400 mb-1">URL Imagen</label>
-                        <input type="url" id="adminPostUrl" placeholder="https://..." required class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="url" id="adminPostUrl" placeholder="https://..." required maxlength="500" class="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
                         <label for="adminPostTitle" class="block text-sm font-medium text-gray-400 mb-1">Título</label>
@@ -391,6 +392,17 @@
                 <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
             </div>
         </main>
+
+        <main id="followingView" class="view pb-20 hidden">
+            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+                <h2 class="text-lg font-bold text-white">Siguiendo</h2>
+            </header>
+            <div id="followingGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+            <div id="following-sentinel" class="h-10"></div>
+             <div id="followingLoader" class="text-center p-8 hidden">
+                <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
+            </div>
+        </main>
         
         <main id="popularView" class="view pb-20 hidden">
             <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
@@ -442,7 +454,7 @@
                         </div>
                         <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2">
                             <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full object-cover">
-                            <input type="text" id="commentText" placeholder="Escribe un comentario..." class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <input type="text" id="commentText" placeholder="Escribe un comentario..." maxlength="300" class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <button type="submit" class="text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
                         </form>
                     </div>
@@ -452,15 +464,27 @@
             </main>
         </main>
 
-        <main id="searchView" class="view hidden p-4 pt-4 pb-20">
+        <main id="searchView" class="view hidden p-4 pt-4 pb-20 overflow-y-auto">
             <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
                 <form id="searchForm" class="relative w-full max-w-lg">
-                    <input type="search" id="searchInput" placeholder="Buscar por título o etiqueta..." class="w-full bg-gray-800 text-white border border-gray-700 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="search" id="searchInput" placeholder="Buscar usuarios, títulos o etiquetas..." class="w-full bg-gray-800 text-white border border-gray-700 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
                 </form>
             </header>
             <p id="searchResultCount" class="text-sm text-gray-400 mt-4 px-2"></p>
-            <div id="searchResults" class="mt-2 p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+            <div id="searchResultsContainer" class="mt-2 px-2 space-y-6">
+                <section id="userResultsSection" class="hidden">
+                    <h2 class="text-lg font-bold text-white mb-3">Usuarios</h2>
+                    <div id="userResults" class="space-y-2"></div>
+                </section>
+                <section id="postResultsSection" class="hidden">
+                    <h2 class="text-lg font-bold text-white mb-3">Publicaciones</h2>
+                    <div id="postResults" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+                </section>
+                <div id="noResultsMessage" class="text-center text-gray-500 py-8 hidden">
+                    <p>No se encontraron resultados para tu búsqueda.</p>
+                </div>
+            </div>
         </main>
         
         <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg z-[100] transition-all duration-300 opacity-0 transform translate-y-4">
@@ -470,12 +494,11 @@
         <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-40">
             <nav class="flex justify-around items-center h-16">
                 <button data-view="galleryView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Inicio"><i class="fas fa-home"></i></button>
-                <button data-view="feedView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Comunidad"><i class="fas fa-users"></i></button>
+                <button data-view="followingView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Siguiendo"><i class="fas fa-user-friends"></i></button>
                 <div class="relative flex items-center gap-2">
-                    <button id="adminAddCuratedBtn" class="hidden text-white bg-blue-600 hover:bg-blue-700 w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg" aria-label="Añadir Contenido Oficial"><i class="fas fa-star"></i></button>
                     <button id="createPostBtn" class="text-white bg-indigo-600 hover:bg-indigo-700 w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg" aria-label="Crear Publicación"><i class="fas fa-plus"></i></button>
                 </div>
-                <button data-view="popularView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Populares"><i class="fas fa-fire"></i></button>
+                <button data-view="feedView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Comunidad"><i class="fas fa-users"></i></button>
                 <button data-view="searchView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Buscar"><i class="fas fa-search"></i></button>
                 <button data-view="profileView" id="navProfileBtn" class="nav-btn text-gray-400 p-2" aria-label="Mi Perfil">
                     <img id="navProfileAvatar" src="" class="w-8 h-8 rounded-full object-cover border-2 border-transparent transition-colors">
@@ -531,9 +554,15 @@
             const USERNAME_MAX_LENGTH = 20;
             const BIO_MAX_LENGTH = 200;
             const INTEREST_LIMIT = 10;
+            const POST_TITLE_MAX_LENGTH = 80;
+            const POST_DESC_MAX_LENGTH = 500;
+            const POST_TAGS_MAX_LENGTH = 150;
+            const COMMENT_MAX_LENGTH = 300;
+            const URL_MAX_LENGTH = 500;
+            const SOCIAL_URL_MAX_LENGTH = 255;
 
             let allImages = [], allPosts = [], sortedCuratedContent = [];
-            let loadedCuratedCount = 0, loadedFeedCount = 0;
+            let loadedCuratedCount = 0, loadedFeedCount = 0, loadedFollowingCount = 0;
             const itemsPerLoad = 12;
             let currentUser = null, currentUserData = {};
             let isCurrentUserAdmin = false;
@@ -543,7 +572,7 @@
             let usersCache = {};
             let currentViewer = null;
             let lastView = 'galleryView';
-            let isGalleryLoading = false, isFeedLoading = false;
+            let isGalleryLoading = false, isFeedLoading = false, isFollowingLoading = false;
             let toastTimeout;
             let appInitialized = false;
             let activeDetailListeners = {};
@@ -551,7 +580,12 @@
             // Definición de logros
             const ACHIEVEMENTS = {
                 'first-post': { icon: 'fa-paper-plane', title: 'Primeros Pasos', description: 'Creaste tu primera publicación.' },
-                'popular-post': { icon: 'fa-fire', title: 'En Racha', description: 'Una de tus publicaciones alcanzó 10 Me Gusta.' }
+                'popular-post': { icon: 'fa-fire', title: 'En Racha', description: 'Una de tus publicaciones alcanzó 10 Me Gusta.' },
+                'five-posts': { icon: 'fa-images', title: 'Creador Constante', description: 'Has creado 5 publicaciones.' },
+                'first-comment': { icon: 'fa-comment-dots', title: 'Rompiendo el Hielo', description: 'Escribiste tu primer comentario.' },
+                'prolific-commenter': { icon: 'fa-comments', title: 'Socialité', description: 'Has realizado 25 comentarios.' },
+                'first-favorite': { icon: 'fa-bookmark', title: 'Digno de Guardar', description: 'Guardaste tu primera imagen en favoritos.' },
+                'admin-favorite': { icon: 'fa-star', title: 'Selección del Editor', description: 'Un administrador guardó tu publicación en favoritos.' }
             };
 
             // --- FUNCIONES AUXILIARES ---
@@ -651,12 +685,22 @@
                     if (appInitialized) {
                         const currentVisibleView = document.querySelector('.view:not(.hidden)');
                         if (currentVisibleView?.id === 'feedView') renderUserFeed(true);
+                        if (currentVisibleView?.id === 'followingView') renderFollowingFeed(true);
                         if (currentVisibleView?.id === 'profileView' || currentVisibleView?.id === 'userProfileView') {
                             const visibleProfileId = currentVisibleView.dataset.userId;
                             if (visibleProfileId) {
                                 populateProfileView(visibleProfileId);
                             }
                         }
+                    }
+                });
+            }
+
+            function setupUsersListener() {
+                const usersRef = ref(db, 'users');
+                onValue(usersRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        usersCache = snapshot.val();
                     }
                 });
             }
@@ -688,9 +732,14 @@
                 switch(viewId) {
                     case 'galleryView': navigateTo(viewId); break;
                     case 'feedView': renderUserFeed(true); navigateTo(viewId); break;
+                    case 'followingView': renderFollowingFeed(true); navigateTo(viewId); break;
                     case 'popularView': renderPopularGallery(); navigateTo(viewId); break;
                     case 'profileView': populateProfileView(currentUser.uid); break; 
-                    case 'searchView': navigateTo(viewId); document.getElementById('searchInput').focus(); break;
+                    case 'searchView': 
+                        navigateTo(viewId); 
+                        document.getElementById('searchInput').focus(); 
+                        renderSearchResults(document.getElementById('searchInput').value);
+                        break;
                 }
             }
 
@@ -772,6 +821,37 @@
                 isFeedLoading = false;
             }
 
+            async function renderFollowingFeed(reset = false) {
+                if (isFollowingLoading) return;
+                isFollowingLoading = true;
+                showLoader('followingLoader', true);
+                const followingContainer = document.getElementById('followingGrid');
+                if (reset) { followingContainer.innerHTML = ''; loadedFollowingCount = 0; }
+                
+                const followingSnapshot = await get(ref(db, `following/${currentUser.uid}`));
+                const followingIds = Object.keys(followingSnapshot.val() || {});
+
+                if (followingIds.length === 0) {
+                    followingContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Aún no sigues a nadie. ¡Explora la comunidad!</p>`;
+                    showLoader('followingLoader', false);
+                    isFollowingLoading = false;
+                    return;
+                }
+
+                const postsFromFollowing = allPosts.filter(post => followingIds.includes(post.authorUid));
+                
+                const nextItems = postsFromFollowing.slice(loadedFollowingCount, loadedFollowingCount + itemsPerLoad);
+
+                if (nextItems.length > 0) {
+                    appendToImageGrid(followingContainer, nextItems);
+                    loadedFollowingCount += nextItems.length;
+                } else if (reset && postsFromFollowing.length === 0) {
+                    followingContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Las personas que sigues no han publicado nada nuevo.</p>`;
+                }
+                showLoader('followingLoader', false);
+                isFollowingLoading = false;
+            }
+
             // --- EVENT LISTENERS ---
             function setupAuthEventListeners() {
                 document.getElementById('showLoginModalBtn').addEventListener('click', () => showModal('loginModal'));
@@ -816,7 +896,8 @@
                                     interests: [],
                                     profileColor: '#1e40af',
                                     bannerUrl: '',
-                                    socials: {}
+                                    socials: {},
+                                    commentCount: 0
                                 }
                             };
                         } else {
@@ -828,7 +909,8 @@
                                     interests: [],
                                     profileColor: '#4f46e5',
                                     bannerUrl: '',
-                                    socials: {}
+                                    socials: {},
+                                    commentCount: 0
                                 }
                             };
                         }
@@ -854,7 +936,7 @@
                     btn.addEventListener('click', () => triggerView(btn.dataset.view));
                 });
                 document.getElementById('createPostBtn').addEventListener('click', () => showModal('createPostModal'));
-                document.getElementById('adminAddCuratedBtn').addEventListener('click', () => showModal('adminAddCuratedModal'));
+                document.getElementById('adminAddCuratedBtn')?.addEventListener('click', () => showModal('adminAddCuratedModal'));
                 document.getElementById('avatarUrlForm').addEventListener('submit', e => {
                     e.preventDefault();
                     const input = document.getElementById('avatarUrlInput');
@@ -872,6 +954,7 @@
                 });
                 new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isGalleryLoading && document.getElementById('galleryView').offsetParent !== null) renderCuratedFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('curated-sentinel'));
                 new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isFeedLoading && document.getElementById('feedView').offsetParent !== null) renderUserFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('feed-sentinel'));
+                new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isFollowingLoading && document.getElementById('followingView').offsetParent !== null) renderFollowingFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('following-sentinel'));
                 
                 setupDetailViewEventListeners();
                 setupCreatePostForm();
@@ -885,7 +968,7 @@
             }
             
             function setupDetailViewEventListeners() {
-                 document.getElementById('detailBackBtn').addEventListener('click', () => closeSlideUpView('detailView'));
+                document.getElementById('detailBackBtn').addEventListener('click', () => closeSlideUpView('detailView'));
                 
                 document.getElementById('detailLikeBtn').addEventListener('click', async function() {
                     if (!this.dataset.id || !currentUser) return;
@@ -896,9 +979,30 @@
 
                 document.getElementById('detailFavoriteBtn').addEventListener('click', async function() {
                     if (!this.dataset.id || !currentUser) return;
-                    const favRef = ref(db, `favorites/${currentUser.uid}/${this.dataset.id}`);
+                    const dbId = this.dataset.id;
+                    const favRef = ref(db, `favorites/${currentUser.uid}/${dbId}`);
                     const snap = await get(favRef);
-                    set(favRef, snap.exists() ? null : true);
+
+                    if (snap.exists()) {
+                        set(favRef, null); // Unfavoriting
+                    } else {
+                        // Favoriting
+                        await set(favRef, true);
+                        await set(ref(db, `users/${currentUser.uid}/profile/achievements/first-favorite`), true);
+                        if (isCurrentUserAdmin) {
+                            const item = [...allPosts, ...allImages].find(i => String(i.id) === String(dbId));
+                            if (item && item.authorUid !== currentUser.uid) {
+                                await set(ref(db, `users/${item.authorUid}/profile/achievements/admin-favorite`), true);
+                                const notificationRef = push(ref(db, `notifications/${item.authorUid}`));
+                                await set(notificationRef, {
+                                    message: `¡A ${currentUserData.username} le ha encantado tu publicación! Has ganado un logro.`,
+                                    imageId: item.id,
+                                    timestamp: serverTimestamp(),
+                                    read: false
+                                });
+                            }
+                        }
+                    }
                 });
 
                 document.getElementById('commentForm').addEventListener('submit', handleCommentSubmit);
@@ -918,6 +1022,10 @@
                     const tagsInput = document.getElementById('postTags').value.trim();
 
                     if (!imageUrl || !title) return showToast("La URL y el título son obligatorios.");
+                    if (imageUrl.length > URL_MAX_LENGTH) return showToast(`La URL de la imagen no puede exceder los ${URL_MAX_LENGTH} caracteres.`);
+                    if (title.length > POST_TITLE_MAX_LENGTH) return showToast(`El título no puede exceder los ${POST_TITLE_MAX_LENGTH} caracteres.`);
+                    if (description.length > POST_DESC_MAX_LENGTH) return showToast(`La descripción no puede exceder los ${POST_DESC_MAX_LENGTH} caracteres.`);
+                    if (tagsInput.length > POST_TAGS_MAX_LENGTH) return showToast(`Las etiquetas no pueden exceder los ${POST_TAGS_MAX_LENGTH} caracteres.`);
 
                     const tags = tagsInput.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag !== '');
                     
@@ -928,7 +1036,15 @@
                             authorUid: currentUser.uid,
                             timestamp: serverTimestamp()
                         });
+                        
                         await set(ref(db, `users/${currentUser.uid}/profile/achievements/first-post`), true);
+
+                        const userPostsQuery = query(ref(db, 'posts'), orderByChild('authorUid'), equalTo(currentUser.uid));
+                        const userPostsSnapshot = await get(userPostsQuery);
+                        if (userPostsSnapshot.exists() && Object.keys(userPostsSnapshot.val()).length >= 5) {
+                            await set(ref(db, `users/${currentUser.uid}/profile/achievements/five-posts`), true);
+                        }
+
                         document.getElementById('createPostForm').reset();
                         hideModal('createPostModal');
                         showToast("Publicación creada con éxito");
@@ -1023,9 +1139,16 @@
                                     <img src="${profile.avatar || ''}" alt="Avatar" class="w-24 h-24 rounded-full border-4 object-cover bg-gray-700" style="border-color: ${accentColor};">
                                     ${isOwnProfile ? '<button id="changeAvatarBtn" class="absolute bottom-0 right-0 bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-gray-900"><i class="fas fa-pen text-xs"></i></button>' : ''}
                                 </div>
-                                <h3 class="text-2xl font-bold text-white">${userData.username}</h3>
-                                <p class="text-gray-400 text-center text-sm max-w-md">${profile.bio || 'Sin biografía.'}</p>
+                                <div class="text-center">
+                                    <h3 class="text-2xl font-bold text-white">${userData.username}</h3>
+                                    <div class="flex justify-center items-center gap-4 mt-2 text-sm text-gray-400">
+                                        <span id="followerCount"><strong>0</strong> Seguidores</span>
+                                        <span id="followingCount"><strong>0</strong> Siguiendo</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-400 text-center text-sm max-w-md pt-2">${profile.bio || 'Sin biografía.'}</p>
                                 <div id="profileSocials" class="flex items-center gap-4 text-xl mt-2"></div>
+                                ${!isOwnProfile ? `<button id="followBtn" data-user-id="${userId}" class="mt-4 px-6 py-2 text-sm font-bold rounded-full transition-colors"></button>` : ''}
                             </div>
 
                             <div class="mt-6 bg-gray-800/50 p-4 rounded-lg shadow-md">
@@ -1048,16 +1171,16 @@
                                 <div>
                                     <h4 class="text-lg font-bold text-white mb-2">Personalización</h4>
                                     <label for="profileBannerUrl" class="block text-sm font-medium text-gray-400 mb-1">URL del Banner de Perfil</label>
-                                    <input type="url" id="profileBannerUrl" value="${profile.bannerUrl || ''}" placeholder="https://..." class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <input type="url" id="profileBannerUrl" value="${profile.bannerUrl || ''}" placeholder="https://..." maxlength="${URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
                                     <label for="profileColorPicker" class="block text-sm font-medium text-gray-400 mt-3 mb-1">Color de Acento</label>
                                     <input type="color" id="profileColorPicker" value="${accentColor}" class="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md cursor-pointer">
                                 </div>
                                 <div>
                                     <h4 class="text-lg font-bold text-white mb-2">Redes Sociales</h4>
                                     <div class="space-y-3">
-                                        <div><label for="socialTwitter" class="block text-sm font-medium text-gray-400 mb-1">Twitter (URL)</label><input type="url" id="socialTwitter" value="${profile.socials?.twitter || ''}" placeholder="https://twitter.com/usuario" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
-                                        <div><label for="socialInstagram" class="block text-sm font-medium text-gray-400 mb-1">Instagram (URL)</label><input type="url" id="socialInstagram" value="${profile.socials?.instagram || ''}" placeholder="https://instagram.com/usuario" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
-                                        <div><label for="socialWebsite" class="block text-sm font-medium text-gray-400 mb-1">Sitio Web (URL)</label><input type="url" id="socialWebsite" value="${profile.socials?.website || ''}" placeholder="https://mi-pagina.com" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
+                                        <div><label for="socialTwitter" class="block text-sm font-medium text-gray-400 mb-1">Twitter (URL)</label><input type="url" id="socialTwitter" value="${profile.socials?.twitter || ''}" placeholder="https://twitter.com/usuario" maxlength="${SOCIAL_URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
+                                        <div><label for="socialInstagram" class="block text-sm font-medium text-gray-400 mb-1">Instagram (URL)</label><input type="url" id="socialInstagram" value="${profile.socials?.instagram || ''}" placeholder="https://instagram.com/usuario" maxlength="${SOCIAL_URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
+                                        <div><label for="socialWebsite" class="block text-sm font-medium text-gray-400 mb-1">Sitio Web (URL)</label><input type="url" id="socialWebsite" value="${profile.socials?.website || ''}" placeholder="https://mi-pagina.com" maxlength="${SOCIAL_URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
                                     </div>
                                 </div>
                                 <div>
@@ -1068,14 +1191,15 @@
                                 </div>
                                 <div>
                                     <h4 class="text-lg font-bold text-white mb-2">Biografía</h4>
-                                    <textarea id="profileBioInput" rows="3" maxlength="200" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700" placeholder="Describe algo sobre ti...">${profile.bio || ''}</textarea>
+                                    <textarea id="profileBioInput" rows="3" maxlength="${BIO_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700" placeholder="Describe algo sobre ti...">${profile.bio || ''}</textarea>
                                 </div>
                                 <button id="saveProfileBtn" class="w-full text-white font-bold py-3 px-4 rounded-md transition-colors mt-4" style="background-color: ${accentColor};">Guardar Cambios</button>
                             </div>` : ''}
                         </div>
                     </div>
                 `;
-
+                
+                updateFollowCounts(userId);
                 renderUserPosts(userId, 'userPostsGrid', 'no-posts-message');
                 renderPublicFavorites(userId, 'favoritesGrid', 'no-favorites-message');
                 renderSocials(profile.socials, 'profileSocials');
@@ -1094,6 +1218,9 @@
                     });
                 } else {
                     document.getElementById('userProfileBackBtn').addEventListener('click', () => closeSlideUpView('userProfileView'));
+                    const followBtn = document.getElementById('followBtn');
+                    followBtn.addEventListener('click', () => toggleFollow(userId));
+                    updateFollowButton(userId);
                 }
 
                 viewContainer.querySelectorAll('.profile-tab').forEach(tab => {
@@ -1238,7 +1365,9 @@
                 const textInput = document.getElementById('commentText');
                 const text = textInput.value.trim();
                 const imageId = document.getElementById('commentForm').dataset.imageId;
+                
                 if (!text || !imageId) return;
+                if (text.length > COMMENT_MAX_LENGTH) return showToast(`El comentario no puede exceder los ${COMMENT_MAX_LENGTH} caracteres.`);
                 
                 const replyToPath = document.getElementById('commentForm').dataset.replyToPath;
                 const authorName = document.getElementById('commentForm').dataset.authorName;
@@ -1258,6 +1387,20 @@
                 try {
                     const refPath = replyToPath ? `${replyToPath}/replies` : `comments/${imageId}`;
                     await set(push(ref(db, refPath)), commentData);
+
+                    const userRef = ref(db, `users/${currentUser.uid}/profile`);
+                    const newCount = (currentUserData.profile.commentCount || 0) + 1;
+                    
+                    const updates = {};
+                    updates.commentCount = newCount;
+                    if (!currentUserData.profile?.achievements?.['first-comment']) {
+                        updates['achievements/first-comment'] = true;
+                    }
+                    if (newCount >= 25) {
+                        updates['achievements/prolific-commenter'] = true;
+                    }
+                    await update(userRef, updates);
+
                     cancelReply();
                     textInput.value = '';
                 } catch (error) { console.error(error); showToast("No se pudo enviar el comentario."); }
@@ -1324,6 +1467,7 @@
             }
 
             async function updateAvatar(url) {
+                if (url.length > URL_MAX_LENGTH) return showToast(`La URL del avatar no puede exceder los ${URL_MAX_LENGTH} caracteres.`);
                 try {
                     const validUrl = /^(https?:\/\/[^\s$.?#].[^\s]*)$/i.test(url);
                     if (!validUrl) throw new Error("URL no válida");
@@ -1337,7 +1481,7 @@
             }
             
             function updateAllAvatars(url) {
-                const profileAvatar = document.getElementById('profileAvatar');
+                const profileAvatar = document.querySelector('#profileView img, #userProfileView img');
                 if (profileAvatar) profileAvatar.src = url;
                 document.getElementById('navProfileAvatar').src = url;
                 document.getElementById('commentFormAvatar').src = url;
@@ -1345,18 +1489,62 @@
             
             function renderSearchResults(query) {
                 query = query.toLowerCase().trim();
-                const resultsContainer = document.getElementById('searchResults');
+                const postResultsContainer = document.getElementById('postResults');
+                const userResultsContainer = document.getElementById('userResults');
                 const countEl = document.getElementById('searchResultCount');
-                resultsContainer.innerHTML = '';
-                if (!query) { countEl.textContent = ''; return; }
-                const results = [...allImages, ...allPosts].filter(item => {
+                const userSection = document.getElementById('userResultsSection');
+                const postSection = document.getElementById('postResultsSection');
+                const noResultsMsg = document.getElementById('noResultsMessage');
+
+                postResultsContainer.innerHTML = '';
+                userResultsContainer.innerHTML = '';
+
+                if (!query) {
+                    countEl.textContent = '';
+                    userSection.classList.add('hidden');
+                    postSection.classList.add('hidden');
+                    noResultsMsg.classList.add('hidden');
+                    return;
+                }
+
+                const postResults = [...allImages, ...allPosts].filter(item => {
                     const titleMatch = item.title.toLowerCase().includes(query);
                     const tagMatch = (item.tags || []).some(tag => tag.toLowerCase().includes(query));
                     return titleMatch || tagMatch;
                 });
-                countEl.textContent = `${results.length} resultado(s) encontrado(s).`;
-                if (results.length > 0) appendToImageGrid(resultsContainer, results);
-                else resultsContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">No se encontraron resultados.</p>`;
+
+                const userResults = Object.entries(usersCache)
+                    .map(([uid, data]) => ({ uid, ...data }))
+                    .filter(user => user.username.toLowerCase().includes(query));
+
+                const totalResults = postResults.length + userResults.length;
+                countEl.textContent = `${totalResults} resultado(s) encontrado(s).`;
+
+                if (userResults.length > 0) {
+                    userSection.classList.remove('hidden');
+                    userResults.forEach(user => {
+                        const userCard = document.createElement('div');
+                        userCard.className = 'flex items-center p-2 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors';
+                        userCard.innerHTML = `
+                            <img src="${user.profile?.avatar || ''}" alt="${user.username}" class="w-10 h-10 rounded-full object-cover mr-3 bg-gray-700">
+                            <span class="font-semibold text-white">${user.username}</span>
+                            <i class="fas fa-chevron-right text-gray-500 ml-auto"></i>
+                        `;
+                        userCard.addEventListener('click', () => showUserProfile(user.uid));
+                        userResultsContainer.appendChild(userCard);
+                    });
+                } else {
+                    userSection.classList.add('hidden');
+                }
+
+                if (postResults.length > 0) {
+                    postSection.classList.remove('hidden');
+                    appendToImageGrid(postResultsContainer, postResults);
+                } else {
+                    postSection.classList.add('hidden');
+                }
+
+                noResultsMsg.classList.toggle('hidden', totalResults > 0);
             }
 
             function renderProfileInterests() {
@@ -1398,7 +1586,6 @@
                 counterEl.classList.toggle('text-red-500', count >= INTEREST_LIMIT);
             }
 
-            // --- NUEVAS FUNCIONES DE PERSONALIZACIÓN DE PERFIL ---
             function renderSocials(socials, containerId) {
                 const container = document.getElementById(containerId);
                 if (!container) return;
@@ -1454,12 +1641,6 @@
 
             async function saveProfileChanges() {
                 const bio = document.getElementById('profileBioInput').value;
-                if (bio.length > BIO_MAX_LENGTH) {
-                    return showToast(`La biografía no puede exceder los ${BIO_MAX_LENGTH} caracteres.`);
-                }
-
-                const interests = Array.from(document.querySelectorAll('#profileInterests .bg-indigo-600')).map(el => el.dataset.tag);
-                const profileColor = document.getElementById('profileColorPicker').value;
                 const bannerUrl = document.getElementById('profileBannerUrl').value.trim();
                 const socials = {
                     twitter: document.getElementById('socialTwitter').value.trim(),
@@ -1467,6 +1648,15 @@
                     website: document.getElementById('socialWebsite').value.trim()
                 };
 
+                if (bio.length > BIO_MAX_LENGTH) return showToast(`La biografía no puede exceder los ${BIO_MAX_LENGTH} caracteres.`);
+                if (bannerUrl.length > URL_MAX_LENGTH) return showToast(`La URL del banner no puede exceder los ${URL_MAX_LENGTH} caracteres.`);
+                if (socials.twitter.length > SOCIAL_URL_MAX_LENGTH) return showToast(`La URL de Twitter no puede exceder los ${SOCIAL_URL_MAX_LENGTH} caracteres.`);
+                if (socials.instagram.length > SOCIAL_URL_MAX_LENGTH) return showToast(`La URL de Instagram no puede exceder los ${SOCIAL_URL_MAX_LENGTH} caracteres.`);
+                if (socials.website.length > SOCIAL_URL_MAX_LENGTH) return showToast(`La URL del sitio web no puede exceder los ${SOCIAL_URL_MAX_LENGTH} caracteres.`);
+
+                const interests = Array.from(document.querySelectorAll('#profileInterests .bg-indigo-600')).map(el => el.dataset.tag);
+                const profileColor = document.getElementById('profileColorPicker').value;
+                
                 try {
                     const profileUpdates = { bio, interests, profileColor, bannerUrl, socials };
                     await update(ref(db, `users/${currentUser.uid}/profile`), profileUpdates);
@@ -1573,6 +1763,55 @@
                 });
             }
 
+            // --- LÓGICA DE SEGUIMIENTO (FOLLOW) ---
+            async function toggleFollow(userIdToFollow) {
+                const followingRef = ref(db, `following/${currentUser.uid}/${userIdToFollow}`);
+                const followerRef = ref(db, `followers/${userIdToFollow}/${currentUser.uid}`);
+                const snapshot = await get(followingRef);
+
+                if (snapshot.exists()) {
+                    await remove(followingRef);
+                    await remove(followerRef);
+                } else {
+                    await set(followingRef, true);
+                    await set(followerRef, true);
+                }
+                updateFollowButton(userIdToFollow);
+                updateFollowCounts(userIdToFollow);
+            }
+
+            async function updateFollowButton(userId) {
+                const followBtn = document.getElementById('followBtn');
+                if (!followBtn || followBtn.dataset.userId !== userId) return;
+
+                const followingRef = ref(db, `following/${currentUser.uid}/${userId}`);
+                const snapshot = await get(followingRef);
+                if (snapshot.exists()) {
+                    followBtn.textContent = 'Siguiendo';
+                    followBtn.className = 'mt-4 px-6 py-2 text-sm font-bold rounded-full transition-colors bg-gray-700 text-white hover:bg-gray-600';
+                } else {
+                    followBtn.textContent = 'Seguir';
+                    followBtn.className = 'mt-4 px-6 py-2 text-sm font-bold rounded-full transition-colors bg-indigo-600 text-white hover:bg-indigo-500';
+                }
+            }
+
+            function updateFollowCounts(userId) {
+                const followersRef = ref(db, `followers/${userId}`);
+                const followingRef = ref(db, `following/${userId}`);
+
+                onValue(followersRef, (snap) => {
+                    const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+                    const el = document.getElementById('followerCount');
+                    if(el) el.innerHTML = `<strong>${count}</strong> Seguidores`;
+                });
+                onValue(followingRef, (snap) => {
+                    const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+                    const el = document.getElementById('followingCount');
+                    if(el) el.innerHTML = `<strong>${count}</strong> Siguiendo`;
+                });
+            }
+
+
             // --- LÓGICA DE ADVERTENCIAS Y LEGALES ---
             function setupLegalModalsListeners() {
                 const links = [
@@ -1614,6 +1853,7 @@
             // --- LÓGICA DE ADMINISTRACIÓN ---
             function setupAdminToolListeners() {
                 const form = document.getElementById('adminAddCuratedForm');
+                if(!form) return;
                 form.addEventListener('submit', (e) => {
                     e.preventDefault();
                     const url = document.getElementById('adminPostUrl').value.trim();
@@ -1702,7 +1942,9 @@
                 showLoader('galleryLoader', true);
                 
                 isCurrentUserAdmin = user.email === ADMIN_EMAIL;
-                document.getElementById('adminAddCuratedBtn').classList.toggle('hidden', !isCurrentUserAdmin);
+                const adminBtn = document.getElementById('adminAddCuratedBtn');
+                if (adminBtn) adminBtn.classList.toggle('hidden', !isCurrentUserAdmin);
+
                 const userData = await getAuthorData(user.uid);
                 currentUserData = userData || { username: user.email.split('@')[0], profile: {} };
                 const defaultAvatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(currentUserData.username || 'user')}`;
@@ -1735,7 +1977,8 @@
                 allPosts = posts.reverse();
 
                 await loadCuratedImages();
-                setupPostsListener(); // Configurar listener para actualizaciones en tiempo real
+                setupPostsListener();
+                setupUsersListener(); 
                 
                 sortCuratedFeed();
                 renderCuratedFeed(true);
