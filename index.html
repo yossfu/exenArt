@@ -61,8 +61,16 @@
         }
         .notifications-panel.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
         .notifications-panel-header { padding: 0.75rem 1rem; border-bottom: 1px solid #374151; }
-        .view.hidden { display: none; }
-        .view { -webkit-overflow-scrolling: touch; }
+        .view {
+            transition: opacity 0.2s ease-in-out;
+        }
+        .view.hidden {
+            display: none;
+            opacity: 0;
+        }
+        .view.active {
+            opacity: 1;
+        }
         .view.slide-up { transform: translateY(100%); transition: transform 0.3s ease-in-out; }
         .view.slide-up.active { transform: translateY(0%); }
         .like-btn.liked i, .favorite-btn.favorited i { font-weight: 900; }
@@ -147,7 +155,60 @@
             border: 1px solid #4b5563;
         }
         .achievement-badge .fa-trophy { color: #facc15; }
-        .achievement-badge .fa-star { color: #facc15; } /* Color para el logro de admin */
+        .achievement-badge .fa-star { color: #facc15; }
+        
+        /* Estilos de App Móvil */
+        .main-nav {
+            background-color: #111827;
+            border-top: 1px solid #374151;
+        }
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            transition: color 0.2s ease-in-out;
+            padding: 0.5rem 0;
+        }
+        .nav-btn i {
+            font-size: 1.5rem; /* Iconos más grandes */
+            margin-bottom: 0.125rem;
+        }
+        .nav-btn span {
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        .nav-btn.active {
+            color: #818cf8; /* Indigo-400 */
+        }
+        #createPostBtnContainer {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 1.5rem; /* Sube el botón */
+            z-index: 50;
+        }
+        #createPostBtn {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 9999px;
+            background-color: #4f46e5; /* Indigo-600 */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease-in-out;
+        }
+        #createPostBtn:hover {
+            transform: scale(1.05);
+            background-color: #4338ca; /* Indigo-700 */
+        }
+        #createPostBtn i {
+            font-size: 1.75rem;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans antialiased">
@@ -349,7 +410,7 @@
         </div>
 
         <!-- VISTAS PRINCIPALES -->
-        <main id="galleryView" class="view pb-20">
+        <main id="galleryView" class="view pb-20 active">
             <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40">
                 <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-8" onerror="this.style.display='none'">
                 <h2 class="text-lg font-bold text-white">Para ti</h2>
@@ -491,16 +552,25 @@
             <p id="toastMessage"></p>
         </div>
 
-        <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-40">
-            <nav class="flex justify-around items-center h-16">
-                <button data-view="galleryView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Inicio"><i class="fas fa-home"></i></button>
-                <button data-view="followingView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Siguiendo"><i class="fas fa-user-friends"></i></button>
-                <div class="relative flex items-center gap-2">
-                    <button id="createPostBtn" class="text-white bg-indigo-600 hover:bg-indigo-700 w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg" aria-label="Crear Publicación"><i class="fas fa-plus"></i></button>
-                </div>
-                <button data-view="feedView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Comunidad"><i class="fas fa-users"></i></button>
-                <button data-view="searchView" class="nav-btn text-gray-400 text-2xl p-3" aria-label="Buscar"><i class="fas fa-search"></i></button>
-                <button data-view="profileView" id="navProfileBtn" class="nav-btn text-gray-400 p-2" aria-label="Mi Perfil">
+        <footer class="fixed bottom-0 left-0 right-0 z-40">
+            <div id="createPostBtnContainer">
+                 <button id="createPostBtn" aria-label="Crear Publicación"><i class="fas fa-plus"></i></button>
+            </div>
+            <nav class="main-nav flex justify-around items-center h-16">
+                <button data-view="galleryView" class="nav-btn active" aria-label="Inicio">
+                    <i class="fas fa-home"></i>
+                    <span class="nav-text">Inicio</span>
+                </button>
+                <button data-view="feedView" class="nav-btn" aria-label="Comunidad">
+                    <i class="fas fa-users"></i>
+                    <span class="nav-text">Comunidad</span>
+                </button>
+                <div class="w-16 h-16"></div> <!-- Espacio para el botón flotante -->
+                <button data-view="followingView" class="nav-btn" aria-label="Siguiendo">
+                    <i class="fas fa-user-friends"></i>
+                    <span class="nav-text">Siguiendo</span>
+                </button>
+                <button data-view="profileView" id="navProfileBtn" class="nav-btn" aria-label="Mi Perfil">
                     <img id="navProfileAvatar" src="" class="w-8 h-8 rounded-full object-cover border-2 border-transparent transition-colors">
                 </button>
             </nav>
@@ -707,22 +777,21 @@
 
             // --- NAVEGACIÓN Y RENDERIZADO ---
             function navigateTo(viewId) {
-                const currentView = document.querySelector('.view:not(.hidden)');
-                if (currentView && !currentView.classList.contains('slide-up')) {
-                    lastView = currentView.id;
-                } else if (currentView && currentView.classList.contains('slide-up') && document.querySelectorAll('.slide-up.active').length <= 1) {
-                    lastView = document.querySelector('.view:not(.hidden):not(.slide-up)')?.id || 'galleryView';
-                }
-                document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+                document.querySelectorAll('.view').forEach(v => {
+                    v.classList.add('hidden');
+                    v.classList.remove('active');
+                });
                 const targetView = document.getElementById(viewId);
                 if (!targetView) return;
+
                 targetView.classList.remove('hidden');
-                document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
-                    btn.classList.toggle('text-indigo-400', btn.dataset.view === viewId);
-                    btn.classList.toggle('text-gray-400', btn.dataset.view !== viewId);
+                setTimeout(() => targetView.classList.add('active'), 10); // Para la transición de opacidad
+
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.view === viewId);
                 });
-                document.getElementById('navProfileAvatar').classList.toggle('border-indigo-500', viewId === 'profileView');
-                document.getElementById('navProfileAvatar').classList.toggle('border-transparent', viewId !== 'profileView');
+                document.getElementById('navProfileAvatar').closest('.nav-btn').classList.toggle('active', viewId === 'profileView');
+                
                 if (targetView.classList.contains('slide-up')) {
                     setTimeout(() => targetView.classList.add('active'), 10);
                 }
