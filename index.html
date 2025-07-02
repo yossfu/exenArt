@@ -2,54 +2,37 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exene</title>
     
     <!-- Librerías Externas (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.css">
     <script src="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Estilos CSS Integrados -->
     <style>
-        :root {
-            --background: #020617; /* slate-950 */
-            --card-bg: #1e293b; /* slate-800 */
-            --border-color: #334155; /* slate-700 */
-            --primary-text: #f1f5f9; /* slate-100 */
-            --secondary-text: #94a3b8; /* slate-400 */
-            --accent: #818cf8; /* indigo-400 */
-            --accent-dark: #4f46e5; /* indigo-600 */
-        }
-        html {
-            overscroll-behavior: none;
-        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--background);
-            color: var(--primary-text);
             -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: contain;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .app-container {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
         }
         #authOverlay {
             background-image: url('https://files.catbox.moe/1zl86j.jpg');
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
+            min-height: 100vh; 
+            align-items: center;
+            justify-content: center;
         }
         .glass-container {
-            background: rgba(17, 24, 39, 0.6);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: rgba(17, 24, 39, 0.5);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
             border-radius: 1.5rem;
             padding: 2.5rem 2rem;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -62,149 +45,193 @@
         }
         .modal-container:not(.hidden) { opacity: 1; pointer-events: auto; }
         .modal-content {
-            background-color: var(--card-bg); padding: 1.5rem; border-radius: 1rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); width: 100%; max-width: 26rem;
-            transform: translateY(20px) scale(0.95);
-            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease-in-out;
+            background-color: #1f2937; padding: 1.5rem; border-radius: 0.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 100%; max-width: 24rem;
+            transform: scale(0.95); transition: transform 0.3s ease-in-out;
         }
-        .modal-container:not(.hidden) .modal-content { transform: translateY(0) scale(1); }
+        .modal-container:not(.hidden) .modal-content { transform: scale(1); }
         .notifications-panel {
             position: absolute; top: calc(100% + 0.5rem); right: 0;
-            width: 90vw; max-width: 360px; background-color: var(--card-bg);
-            border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border-color); z-index: 50; opacity: 0;
+            width: 90vw; max-width: 360px; background-color: #1f2937;
+            border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #374151; z-index: 50; opacity: 0;
             transform: translateY(-10px) scale(0.95); transform-origin: top right;
             transition: transform 0.2s ease-out, opacity 0.2s ease-out;
             pointer-events: none; overflow: hidden;
         }
         .notifications-panel.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .notifications-panel-header { padding: 0.75rem 1rem; border-bottom: 1px solid #374151; }
         .view {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            opacity: 0;
             transition: opacity 0.2s ease-in-out;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 5rem; /* Space for nav bar */
         }
-        .view:not(.active) { display: none; }
-        .view.active { opacity: 1; }
-        .view.slide-up { transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+        .view.hidden {
+            display: none;
+            opacity: 0;
+        }
+        .view.active {
+            opacity: 1;
+        }
+        .view.slide-up { transform: translateY(100%); transition: transform 0.3s ease-in-out; }
         .view.slide-up.active { transform: translateY(0%); }
         .like-btn.liked i, .favorite-btn.favorited i { font-weight: 900; }
         .like-btn.liked i { color: #ec4899; }
         .favorite-btn.favorited i { color: #facc15; }
-        .portrait-aspect {
-            position: relative;
-            width: 100%;
-            padding-bottom: 150%; /* 2:3 aspect ratio */
-            background-color: var(--card-bg);
-            border-radius: 0.75rem;
-            overflow: hidden;
+        .profile-tabs-container {
+            overflow-x: auto;
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
         }
-        .portrait-aspect img {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
-            transition: transform 0.3s ease;
+        .profile-tabs-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, and Opera */
         }
-        .group:hover .portrait-aspect img { transform: scale(1.05); }
+        .profile-tab {
+            border-color: transparent; color: #9ca3af; white-space: nowrap;
+            padding: 0.75rem 1rem; border-bottom-width: 2px; font-weight: 500; font-size: 0.875rem;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .profile-tab:hover { color: #ffffff; border-color: #4b5563; }
+        .profile-tab.tab-active { color: #e5e7eb; }
+        .viewer-container { background-color: rgba(0, 0, 0, 0.85); }
+        .viewer-close:before { font-family: "Font Awesome 6 Free"; font-weight: 900; content: "\f00d"; font-size: 24px; color: white; }
+        .portrait-aspect { position: relative; width: 100%; padding-bottom: 150%; }
+        .portrait-aspect img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .portrait-aspect .card-author-overlay {
+            position: absolute; top: 0; left: 0; right: 0;
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.5rem;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+        }
+        .portrait-aspect .card-author-overlay img {
+            position: static;
+            width: 1.5rem; height: 1.5rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
         #toast { transition: opacity 0.3s, transform 0.3s; }
         #toast.show { opacity: 1; transform: translate(-50%, 0); }
-        .comment-item {
-            display: flex; align-items: flex-start; gap: 0.75rem;
-            padding: 0.75rem;
-            background-color: rgba(30, 41, 59, 0.5);
-            border-radius: 0.75rem;
-        }
-        .comment-body { background-color: transparent; border-radius: 0; padding: 0; }
+        .comment-item { display: flex; align-items: flex-start; gap: 0.75rem; }
+        .comment-content { flex: 1; display: flex; flex-direction: column; }
+        .comment-body { background-color: rgba(55, 65, 81, 0.5); border-radius: 0.75rem; padding: 0.5rem 0.75rem; }
+        .comment-actions { display: flex; align-items: center; gap: 0.75rem; font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem; padding-left: 0.5rem; }
+        .replying-to-text { font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.25rem; }
+        .replying-to-text strong { color: #a5b4fc; font-weight: 500; }
+        .replies-container { margin-left: calc(2rem + 0.75rem); padding-left: 1rem; border-left: 2px solid #374151; margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .most-voted-item { position: relative; border-radius: 0.5rem; overflow: hidden; border: 2px solid transparent; }
+        .most-voted-item .post-image { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 9 / 16; }
+        .most-voted-item .rank-badge { position: absolute; top: 0.5rem; left: 0.5rem; background-color: rgba(0, 0, 0, 0.7); color: white; border-radius: 9999px; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.125rem; border: 1px solid rgba(255, 255, 255, 0.5); z-index: 2; }
+        .most-voted-item .author-overlay { position: absolute; bottom: 0; left: 0; right: 0; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); z-index: 2; }
+        .most-voted-item .author-overlay img { width: 1.5rem; height: 1.5rem; border-radius: 9999px; object-fit: cover; background-color: #374151; }
+        .most-voted-item .author-overlay span { font-size: 0.75rem; font-weight: 600; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+        .most-voted-item.rank-1 { border-color: #facc15; }
+        .most-voted-item.rank-2 { border-color: #d1d5db; }
+        .most-voted-item.rank-3 { border-color: #d97706; }
+        .admin-delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; background-color: rgba(220, 38, 38, 0.7); color: white; width: 2rem; height: 2rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; z-index: 3; opacity: 0; transition: opacity 0.2s; }
+        .group:hover .admin-delete-btn { opacity: 1; }
+        .admin-delete-btn:hover { background-color: rgba(185, 28, 28, 1); }
+        .admin-delete-comment-btn { color: #9ca3af; }
+        .admin-delete-comment-btn:hover { color: #ef4444; }
         .profile-header {
-            padding-bottom: 4.5rem;
+            padding-bottom: 4rem;
+            border-radius: 0 0 1.5rem 1.5rem;
             position: relative;
             background-size: cover;
             background-position: center;
+            transition: background-color 0.3s ease;
         }
+        .profile-header-content { position: relative; z-index: 1; }
         .profile-header::before {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(to top, var(--background) 10%, rgba(15, 23, 42, 0.5) 50%, rgba(15, 23, 42, 0.2) 100%);
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to top, rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.2));
+            border-radius: inherit;
         }
-        .profile-avatar-container { margin-top: -4rem; }
+        .profile-avatar-container { margin-top: -3rem; position: relative; }
+        .social-icon-link { color: #9ca3af; transition: color 0.2s ease-in-out; }
+        .social-icon-link:hover { color: #e5e7eb; }
+        .achievement-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: #374151;
+            border-radius: 9999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #d1d5db;
+            border: 1px solid #4b5563;
+        }
+        .achievement-badge .fa-trophy { color: #facc15; }
+        .achievement-badge .fa-star { color: #facc15; }
+        
+        /* Estilos de App Móvil */
         .main-nav {
-            background-color: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-top: 1px solid var(--border-color);
+            background-color: #111827;
+            border-top: 1px solid #374151;
         }
         .nav-btn {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--secondary-text); transition: color 0.2s ease-in-out; padding: 0.5rem 0;
-        }
-        .nav-btn i { font-size: 1.25rem; margin-bottom: 0.125rem; }
-        .nav-btn span { font-size: 0.65rem; font-weight: 500; }
-        .nav-btn.active { color: var(--accent); }
-        .collection-card-name { text-shadow: 1px 1px 5px rgba(0,0,0,0.7); }
-
-        /* Story-like leaderboard */
-        #leaderboard-container {
-            overflow-x: auto;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE and Edge */
-        }
-        #leaderboard-container::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, and Opera */
-        }
-        .story-item {
-            flex-shrink: 0;
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 80px;
+            justify-content: center;
+            color: #9ca3af;
+            transition: color 0.2s ease-in-out;
+            padding: 0.5rem 0;
         }
-        .story-avatar-wrapper {
+        .nav-btn i {
+            font-size: 1.25rem; /* Iconos ajustados */
+            margin-bottom: 0.125rem;
+        }
+        .nav-btn span {
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        .nav-btn.active {
+            color: #818cf8; /* Indigo-400 */
+        }
+        .collection-card {
             position: relative;
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            padding: 3px;
-        }
-        .story-avatar-wrapper.rank-1 { background: linear-gradient(45deg, #ffd700, #f0b90b); }
-        .story-avatar-wrapper.rank-2 { background: linear-gradient(45deg, #c0c0c0, #a9a9a9); }
-        .story-avatar-wrapper.rank-3 { background: linear-gradient(45deg, #cd7f32, #a0522d); }
-        .story-avatar {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--background);
-        }
-        .story-trophy {
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            background-color: var(--card-bg);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            aspect-ratio: 1 / 1;
+            background-color: #374151;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            border: 1px solid var(--border-color);
         }
-        .story-trophy.rank-1 { color: #ffd700; }
-        .story-trophy.rank-2 { color: #c0c0c0; }
-        .story-trophy.rank-3 { color: #cd7f32; }
-        .story-username {
-            font-size: 0.75rem;
-            font-weight: 500;
-            margin-top: 0.25rem;
-            color: var(--secondary-text);
+        .collection-card-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .collection-card:hover .collection-card-bg {
+            transform: scale(1.05);
+        }
+        .collection-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 0.5rem;
             text-align: center;
-            width: 100%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        }
+        .collection-card-name {
+            font-weight: 600;
+            color: white;
+        }
+        .collection-card-count {
+            font-size: 0.75rem;
+            color: #d1d5db;
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased">
+<body class="bg-gray-900 text-gray-200 font-sans antialiased">
 
     <!-- ========== MODAL DE VERIFICACIÓN DE EDAD ========== -->
     <div id="ageVerificationModal" class="modal-container hidden">
@@ -285,7 +312,7 @@
     </div>
     
     <!-- ========== CONTENIDO PRINCIPAL DE LA APP ========== -->
-    <div id="appContent" class="hidden app-container">
+    <div id="appContent" class="hidden">
         <!-- MODALES DE LA APP -->
         <div id="avatarModal" class="modal-container hidden">
             <div class="modal-content">
@@ -429,179 +456,184 @@
                 </div>
             </div>
         </div>
+
+        <!-- VISTAS PRINCIPALES -->
+        <main id="galleryView" class="view pb-20 active">
+            <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40">
+                <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-8 w-8 rounded-full object-cover" onerror="this.style.display='none'">
+                <h2 class="text-lg font-bold text-white">Para ti</h2>
+                <div class="flex items-center gap-2">
+                    <button id="createPostBtn" class="text-gray-400 hover:text-white text-xl p-2"><i class="fas fa-plus"></i></button>
+                    <div class="relative">
+                        <button id="navNotificationsBtn" class="text-gray-400 hover:text-white text-xl p-2 relative">
+                            <i class="fas fa-bell"></i>
+                            <span id="navNotificationsBadge" class="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900 hidden"></span>
+                        </button>
+                        <div id="notificationsWindow" class="notifications-panel">
+                            <div class="notifications-panel-header">
+                                <h3 class="text-lg font-bold text-white">Notificaciones</h3>
+                            </div>
+                            <div id="notificationsList" class="space-y-1 max-h-80 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <section id="most-voted-section" class="px-4 mt-6">
+                <h3 class="text-xl font-bold text-white mb-3">🔥 Lo más Votado</h3>
+                <div id="leaderboard" class="grid grid-cols-3 gap-2 md:gap-4 mt-4">
+                    <!-- Las publicaciones más votadas se inyectarán aquí -->
+                </div>
+            </section>
+
+            <h3 class="px-4 text-xl font-bold text-white mt-6 mb-2">Contenido Oficial</h3>
+            <div id="gallery" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+            <div id="curated-sentinel" class="h-10"></div>
+            <div id="galleryLoader" class="text-center p-8 hidden">
+                <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
+            </div>
+        </main>
+
+        <main id="feedView" class="view pb-20 hidden">
+            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+                <h2 class="text-lg font-bold text-white">Comunidad</h2>
+            </header>
+            <div id="feedGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+            <div id="feed-sentinel" class="h-10"></div>
+             <div id="feedLoader" class="text-center p-8 hidden">
+                <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
+            </div>
+        </main>
+
+        <main id="followingView" class="view pb-20 hidden">
+            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+                <h2 class="text-lg font-bold text-white">Siguiendo</h2>
+            </header>
+            <div id="followingGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+            <div id="following-sentinel" class="h-10"></div>
+             <div id="followingLoader" class="text-center p-8 hidden">
+                <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
+            </div>
+        </main>
         
-        <div class="relative flex-1 overflow-hidden">
-            <!-- VISTAS PRINCIPALES -->
-            <main id="galleryView" class="view active">
-                <header class="p-4 flex justify-between items-center bg-slate-950/80 backdrop-blur-sm sticky top-0 z-40">
-                    <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-8 w-8 rounded-full object-cover" onerror="this.style.display='none'">
-                    <h1 class="text-lg font-bold text-white">Exene</h1>
+        <main id="popularView" class="view pb-20 hidden">
+            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+                <h2 class="text-lg font-bold text-white">Populares 🔥</h2>
+            </header>
+            <div id="popularGallery" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+        </main>
+
+        <main id="profileView" class="view pb-20 hidden">
+            <!-- El contenido del perfil se genera dinámicamente -->
+        </main>
+        
+        <main id="userProfileView" class="view hidden fixed inset-0 bg-gray-900 z-50 flex flex-col slide-up">
+            <!-- El contenido del perfil de otros usuarios se genera dinámicamente -->
+        </main>
+
+        <main id="detailView" class="view hidden fixed inset-0 bg-gray-900 z-50 flex flex-col slide-up">
+            <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm z-10 flex-shrink-0">
+                <button id="detailBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
+                <div id="detailAuthorInfo" class="flex items-center gap-3 cursor-pointer group flex-1 justify-center min-w-0">
+                    <img id="detailAuthorAvatar" src="" class="w-9 h-9 rounded-full object-cover border-2 border-gray-700 group-hover:border-indigo-500 transition-colors">
                     <div class="flex items-center gap-2">
-                        <button id="createPostBtn" class="text-slate-400 hover:text-white text-xl p-2"><i class="fas fa-plus"></i></button>
-                        <div class="relative">
-                            <button id="navNotificationsBtn" class="text-slate-400 hover:text-white text-xl p-2 relative">
-                                <i class="fas fa-bell"></i>
-                                <span id="navNotificationsBadge" class="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-900 hidden"></span>
+                      <h3 class="font-bold text-lg text-white group-hover:underline truncate" id="detailAuthorUsername"></h3>
+                      <span id="detailAuthorVerifiedBadge"></span>
+                    </div>
+                </div>
+                <div class="w-28 flex justify-end">
+                    <button id="detailFollowBtn" data-user-id="" class="hidden px-4 py-1.5 text-sm font-bold rounded-full transition-colors"></button>
+                </div>
+            </header>
+            <main class="flex-1 overflow-y-auto pb-20">
+                <div id="imageViewer" class="bg-black cursor-zoom-in"></div>
+                <div class="p-4 space-y-4">
+                    <div><h1 id="detailTitle" class="text-white font-bold text-xl"></h1><p id="detailDescription" class="text-gray-300 mt-1 text-sm leading-relaxed"></p></div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-6 text-2xl text-gray-400">
+                            <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group"><i class="far fa-heart group-hover:text-pink-500 transition-transform transform active:scale-125"></i></button>
+                            <button id="focusCommentBtn" class="comment-btn flex items-center space-x-2 group"><i class="far fa-comment group-hover:text-indigo-400 transition-colors"></i></button>
+                            <button id="detailFavoriteBtn" class="favorite-btn flex items-center space-x-2 group"><i class="far fa-bookmark group-hover:text-yellow-400 transition-transform transform active:scale-125"></i></button>
+                            <button id="saveToCollectionBtn" class="flex items-center space-x-2 group" title="Guardar en Colección"><i class="fa-solid fa-layer-group group-hover:text-green-400 transition-colors"></i></button>
+                        </div>
+                        <div class="text-sm text-gray-400"><span id="detailLikeCount" class="font-semibold text-white">0 Me gusta</span><span class="text-gray-500 mx-1">•</span><span id="detailViewCount" class="">0 Vistas</span></div>
+                    </div>
+                    <button id="adminDeletePostBtn" class="hidden w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors"><i class="fas fa-trash-alt mr-2"></i>Eliminar Publicación (Admin)</button>
+                    
+                    <div id="detailPromptContainer" class="hidden space-y-2 pt-4 border-t border-gray-800/60">
+                        <h2 class="font-bold text-white text-base">Prompt de IA</h2>
+                        <div class="relative bg-gray-800 rounded-lg p-3">
+                            <pre id="detailPromptText" class="text-gray-300 text-sm whitespace-pre-wrap font-sans"></pre>
+                            <button id="copyPromptBtn" class="absolute top-2 right-2 text-gray-400 hover:text-white" title="Copiar prompt">
+                                <i class="far fa-copy"></i>
                             </button>
-                            <div id="notificationsWindow" class="notifications-panel">
-                                <div class="notifications-panel-header">
-                                    <h3 class="text-lg font-bold text-white">Notificaciones</h3>
-                                </div>
-                                <div id="notificationsList" class="space-y-1 max-h-80 overflow-y-auto"></div>
-                            </div>
                         </div>
                     </div>
-                </header>
-                
-                <section id="most-voted-section" class="py-4">
-                    <h2 class="px-4 text-sm font-bold uppercase tracking-wider text-slate-400 mb-3">Destacados de la Semana</h2>
-                    <div id="leaderboard-container" class="flex gap-4 px-4">
-                        <!-- Las historias de los más votados se inyectarán aquí -->
+                </div>
+                <section class="p-4 pt-2 border-t border-gray-800/60">
+                    <h2 class="font-bold text-white mb-4">Comentarios</h2>
+                    <div id="comment-container" class="my-4">
+                        <div id="replyingToBanner" class="hidden bg-gray-700 p-2 text-sm flex justify-between items-center rounded-t-md">
+                            <span class="text-gray-300">Respondiendo a <strong id="replyingToUsername" class="text-white"></strong></span>
+                            <button id="cancelReplyBtn" class="text-xs text-gray-400 hover:text-white font-bold">&times; Cancelar</button>
+                        </div>
+                        <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2">
+                            <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full object-cover">
+                            <input type="text" id="commentText" placeholder="Escribe un comentario..." maxlength="300" class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <button type="submit" class="text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
+                        </form>
                     </div>
+                    <ul id="commentsList" class="space-y-4"></ul>
                 </section>
+                <section id="similar-section" class="p-4 pt-6 border-t border-gray-800/60 hidden"><h2 class="font-bold text-white mb-4">Imágenes Similares</h2><div id="similar-images-grid" class="grid grid-cols-3 gap-2"></div></section>
+            </main>
+        </main>
 
-                <h2 class="px-4 text-sm font-bold uppercase tracking-wider text-slate-400 mt-4 mb-2">Contenido Oficial</h2>
-                <div id="gallery" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-                <div id="curated-sentinel" class="h-10"></div>
-                <div id="galleryLoader" class="text-center p-8 hidden">
-                    <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
-                </div>
-            </main>
-
-            <main id="feedView" class="view">
-                <header class="p-4 flex justify-center items-center bg-slate-950/80 backdrop-blur-sm sticky top-0 z-10">
-                    <h1 class="text-lg font-bold text-white">Comunidad</h1>
-                </header>
-                <div id="feedGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-                <div id="feed-sentinel" class="h-10"></div>
-                 <div id="feedLoader" class="text-center p-8 hidden">
-                    <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
-                </div>
-            </main>
-
-            <main id="followingView" class="view">
-                <header class="p-4 flex justify-center items-center bg-slate-950/80 backdrop-blur-sm sticky top-0 z-10">
-                    <h1 class="text-lg font-bold text-white">Siguiendo</h1>
-                </header>
-                <div id="followingGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-                <div id="following-sentinel" class="h-10"></div>
-                 <div id="followingLoader" class="text-center p-8 hidden">
-                    <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
-                </div>
-            </main>
-            
-            <main id="profileView" class="view">
-                <!-- El contenido del perfil se genera dinámicamente -->
-            </main>
-            
-            <main id="userProfileView" class="view slide-up">
-                <!-- El contenido del perfil de otros usuarios se genera dinámicamente -->
-            </main>
-
-            <main id="detailView" class="view slide-up">
-                <header class="p-4 flex justify-between items-center bg-slate-950/80 backdrop-blur-sm z-10 flex-shrink-0 sticky top-0">
-                    <button id="detailBackBtn" class="text-xl text-slate-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
-                    <div id="detailAuthorInfo" class="flex items-center gap-3 cursor-pointer group flex-1 justify-center min-w-0">
-                        <img id="detailAuthorAvatar" src="" class="w-9 h-9 rounded-full object-cover border-2 border-slate-700 group-hover:border-indigo-500 transition-colors">
-                        <div class="flex items-center gap-2">
-                          <h3 class="font-bold text-lg text-white group-hover:underline truncate" id="detailAuthorUsername"></h3>
-                          <span id="detailAuthorVerifiedBadge"></span>
-                        </div>
-                    </div>
-                    <div class="w-10 flex justify-end">
-                        <button id="detailFollowBtn" data-user-id="" class="hidden px-4 py-1.5 text-sm font-bold rounded-full transition-colors"></button>
-                    </div>
-                </header>
-                <main class="flex-1 overflow-y-auto pb-20">
-                    <div id="imageViewer" class="bg-black cursor-zoom-in"></div>
-                    <div class="p-4 space-y-4">
-                        <div><h1 id="detailTitle" class="text-white font-bold text-xl"></h1><p id="detailDescription" class="text-gray-300 mt-1 text-sm leading-relaxed"></p></div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-6 text-2xl text-gray-400">
-                                <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group"><i class="far fa-heart group-hover:text-pink-500 transition-transform transform active:scale-125"></i></button>
-                                <button id="focusCommentBtn" class="comment-btn flex items-center space-x-2 group"><i class="far fa-comment group-hover:text-indigo-400 transition-colors"></i></button>
-                                <button id="detailFavoriteBtn" class="favorite-btn flex items-center space-x-2 group"><i class="far fa-bookmark group-hover:text-yellow-400 transition-transform transform active:scale-125"></i></button>
-                                <button id="saveToCollectionBtn" class="flex items-center space-x-2 group" title="Guardar en Colección"><i class="fa-solid fa-layer-group group-hover:text-green-400 transition-colors"></i></button>
-                            </div>
-                            <div class="text-sm text-gray-400"><span id="detailLikeCount" class="font-semibold text-white">0 Me gusta</span><span class="text-gray-500 mx-1">•</span><span id="detailViewCount" class="">0 Vistas</span></div>
-                        </div>
-                        <button id="adminDeletePostBtn" class="hidden w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors"><i class="fas fa-trash-alt mr-2"></i>Eliminar Publicación (Admin)</button>
-                        
-                        <div id="detailPromptContainer" class="hidden space-y-2 pt-4 border-t border-gray-800/60">
-                            <h2 class="font-bold text-white text-base">Prompt de IA</h2>
-                            <div class="relative bg-gray-800 rounded-lg p-3">
-                                <pre id="detailPromptText" class="text-gray-300 text-sm whitespace-pre-wrap font-sans"></pre>
-                                <button id="copyPromptBtn" class="absolute top-2 right-2 text-gray-400 hover:text-white" title="Copiar prompt">
-                                    <i class="far fa-copy"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <section class="p-4 pt-2 border-t border-gray-800/60">
-                        <h2 class="font-bold text-white mb-4">Comentarios</h2>
-                        <div id="comment-container" class="my-4">
-                            <div id="replyingToBanner" class="hidden bg-gray-700 p-2 text-sm flex justify-between items-center rounded-t-md">
-                                <span class="text-gray-300">Respondiendo a <strong id="replyingToUsername" class="text-white"></strong></span>
-                                <button id="cancelReplyBtn" class="text-xs text-gray-400 hover:text-white font-bold">&times; Cancelar</button>
-                            </div>
-                            <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2">
-                                <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full object-cover">
-                                <input type="text" id="commentText" placeholder="Escribe un comentario..." maxlength="300" class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <button type="submit" class="text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
-                            </form>
-                        </div>
-                        <ul id="commentsList" class="space-y-4"></ul>
+        <main id="searchView" class="view hidden pb-20">
+             <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+                 <form id="searchForm" class="relative w-full max-w-lg">
+                     <input type="search" id="searchInput" placeholder="Buscar usuarios, títulos o etiquetas..." class="w-full bg-gray-800 text-white border border-gray-700 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                 </form>
+             </header>
+             <div class="overflow-y-auto p-4">
+                <p id="searchResultCount" class="text-sm text-gray-400 mb-4 px-2"></p>
+                <div id="searchResultsContainer" class="px-2 space-y-6">
+                    <section id="userResultsSection" class="hidden">
+                        <h2 class="text-lg font-bold text-white mb-3">Usuarios</h2>
+                        <div id="userResults" class="space-y-2"></div>
                     </section>
-                    <section id="similar-section" class="p-4 pt-6 border-t border-gray-800/60 hidden"><h2 class="font-bold text-white mb-4">Imágenes Similares</h2><div id="similar-images-grid" class="grid grid-cols-3 gap-2"></div></section>
-                </main>
-            </main>
-
-            <main id="searchView" class="view">
-                 <header class="p-4 flex justify-center items-center bg-slate-950/80 backdrop-blur-sm sticky top-0 z-10">
-                     <form id="searchForm" class="relative w-full max-w-lg">
-                         <input type="search" id="searchInput" placeholder="Buscar usuarios, títulos o etiquetas..." class="w-full bg-gray-800 text-white border border-gray-700 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                     </form>
-                 </header>
-                 <div class="overflow-y-auto p-4">
-                    <p id="searchResultCount" class="text-sm text-gray-400 mb-4 px-2"></p>
-                    <div id="searchResultsContainer" class="px-2 space-y-6">
-                        <section id="userResultsSection" class="hidden">
-                            <h2 class="text-lg font-bold text-white mb-3">Usuarios</h2>
-                            <div id="userResults" class="space-y-2"></div>
-                        </section>
-                        <section id="postResultsSection" class="hidden">
-                            <h2 class="text-lg font-bold text-white mb-3">Publicaciones</h2>
-                            <div id="postResults" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-                        </section>
-                        <div id="noResultsMessage" class="text-center text-gray-500 py-8 hidden">
-                            <p>No se encontraron resultados para tu búsqueda.</p>
-                        </div>
+                    <section id="postResultsSection" class="hidden">
+                        <h2 class="text-lg font-bold text-white mb-3">Publicaciones</h2>
+                        <div id="postResults" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+                    </section>
+                    <div id="noResultsMessage" class="text-center text-gray-500 py-8 hidden">
+                        <p>No se encontraron resultados para tu búsqueda.</p>
                     </div>
                 </div>
-            </main>
+            </div>
+        </main>
 
-            <!-- VISTA DE COLECCIÓN INDIVIDUAL -->
-            <main id="collectionView" class="view slide-up">
-                <header class="p-4 flex justify-between items-center bg-slate-950/80 backdrop-blur-sm z-10 flex-shrink-0 sticky top-0">
-                    <button id="collectionBackBtn" class="text-xl text-slate-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
-                    <h2 id="collectionNameHeader" class="text-lg font-bold text-white truncate">Colección</h2>
-                    <div class="w-10"></div>
-                </header>
-                <div class="overflow-y-auto pb-20">
-                    <div id="collectionImageGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-                    <div id="no-collection-posts-message" class="text-center text-gray-500 hidden py-8">
-                        <p>Esta colección está vacía.</p>
-                    </div>
+        <!-- VISTA DE COLECCIÓN INDIVIDUAL -->
+        <main id="collectionView" class="view hidden fixed inset-0 bg-gray-900 z-50 flex flex-col slide-up">
+            <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm z-10 flex-shrink-0">
+                <button id="collectionBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
+                <h2 id="collectionNameHeader" class="text-lg font-bold text-white truncate">Colección</h2>
+                <div class="w-10"></div>
+            </header>
+            <div class="overflow-y-auto pb-20">
+                <div id="collectionImageGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+                <div id="no-collection-posts-message" class="text-center text-gray-500 hidden py-8">
+                    <p>Esta colección está vacía.</p>
                 </div>
-            </main>
-        </div>
+            </div>
+        </main>
         
         <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg z-[100] transition-all duration-300 opacity-0 transform translate-y-4">
             <p id="toastMessage"></p>
         </div>
 
-        <footer class="relative z-50">
+        <footer class="fixed bottom-0 left-0 right-0 z-40">
             <nav class="main-nav flex justify-around items-center h-16">
                 <button data-view="galleryView" class="nav-btn active" aria-label="Inicio">
                     <i class="fas fa-home"></i>
@@ -746,7 +778,7 @@
                         // Default back action if no callback is provided
                         triggerView(lastView || 'galleryView');
                     }
-                }, 350); // Must match CSS transition duration
+                }, 300); // Must match CSS transition duration
             };
             const cancelReply = () => {
                 const form = document.getElementById('commentForm');
@@ -817,7 +849,7 @@
                     
                     // Re-render any visible post grids when post data changes.
                     if (appInitialized) {
-                        const currentVisibleView = document.querySelector('.view.active');
+                        const currentVisibleView = document.querySelector('.view:not(.hidden)');
                         if (!currentVisibleView) return;
 
                         if (currentVisibleView.id === 'feedView') renderUserFeed(true);
@@ -846,7 +878,8 @@
             // --- NAVEGACIÓN Y RENDERIZADO ---
             function navigateTo(viewId) {
                 document.querySelectorAll('.view').forEach(v => {
-                    if (v.id !== viewId) {
+                    // Hide all non-slide-up views when navigating to any view
+                    if (!v.classList.contains('slide-up')) {
                         v.classList.add('hidden');
                         v.classList.remove('active');
                     }
@@ -858,6 +891,7 @@
                 targetView.classList.remove('hidden');
                 setTimeout(() => targetView.classList.add('active'), 10);
 
+                // If the target is a main view, update the nav bar and lastView
                 if (!targetView.classList.contains('slide-up')) {
                     lastView = viewId;
                     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -1328,10 +1362,10 @@
                     : `background-color: ${accentColor}`;
 
                 viewContainer.innerHTML = `
-                    <header class="p-4 flex justify-between items-center bg-slate-950/80 backdrop-blur-sm sticky top-0 z-10">
-                        ${isOwnProfile ? '<div class="w-10"></div>' : `<button id="${prefix}backBtn" class="text-xl text-slate-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>`}
+                    <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+                        ${isOwnProfile ? '<div class="w-10"></div>' : `<button id="${prefix}backBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>`}
                         <h2 class="text-lg font-bold text-white mx-auto">${isOwnProfile ? 'Mi Perfil' : `Perfil de ${userData.username}`}</h2>
-                        ${isOwnProfile ? `<button id="${prefix}logoutBtn" class="text-slate-400 hover:text-white transition-colors w-10 text-xl" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>` : '<div class="w-10"></div>'}
+                        ${isOwnProfile ? `<button id="${prefix}logoutBtn" class="text-gray-400 hover:text-white transition-colors w-10 text-xl" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>` : '<div class="w-10"></div>'}
                     </header>
                     <div class="overflow-y-auto pb-20">
                         <div class="profile-header" style="${bannerStyle}"></div>
@@ -1454,10 +1488,10 @@
                 activeDetailListeners.views = { unsubscribe: viewsUnsubscribe };
             }
             
-            async function listenToComments(imageId) {
+            function listenToComments(imageId) {
                 const commentsQuery = query(ref(db, `comments/${imageId}`), orderByChild('timestamp'));
                 
-                const commentsUnsubscribe = onValue(commentsQuery, async (snapshot) => {
+                const commentsUnsubscribe = onValue(commentsQuery, snapshot => {
                     const list = document.getElementById('commentsList');
                     if (!list) return;
                     list.innerHTML = '';
@@ -1466,29 +1500,40 @@
                         return;
                     }
                     
-                    const commentPromises = [];
                     snapshot.forEach(parentCommentSnapshot => {
-                        commentPromises.push(createCommentElement(parentCommentSnapshot, imageId));
-                    });
+                        const parentData = { id: parentCommentSnapshot.key, ...parentCommentSnapshot.val() };
+                        const parentPath = `comments/${imageId}/${parentData.id}`;
+                        const parentElement = createCommentElement(parentData, parentPath);
 
-                    const commentElements = await Promise.all(commentPromises);
-                    commentElements.sort((a,b) => b.dataset.timestamp - a.dataset.timestamp).forEach(el => list.appendChild(el));
+                        if (parentCommentSnapshot.hasChild('replies')) {
+                            const repliesContainer = document.createElement('div');
+                            repliesContainer.className = 'replies-container';
+
+                            const replies = Object.entries(parentCommentSnapshot.child('replies').val()).map(([key, value]) => ({...value, id: key}));
+                            replies.sort((a, b) => a.timestamp - b.timestamp);
+
+                            replies.forEach(replyData => {
+                                const replyPath = `${parentPath}/replies/${replyData.id}`;
+                                const replyElement = createCommentElement(replyData, replyPath);
+                                repliesContainer.appendChild(replyElement);
+                            });
+                            
+                            parentElement.querySelector('.comment-content').appendChild(repliesContainer);
+                        }
+                        
+                        list.appendChild(parentElement);
+                    });
                 });
                 
                 activeDetailListeners.comments = { unsubscribe: commentsUnsubscribe };
             }
             
-            async function createCommentElement(commentSnapshot, imageId) {
-                const commentData = { id: commentSnapshot.key, ...commentSnapshot.val() };
-                const path = `comments/${imageId}/${commentData.id}`;
+            function createCommentElement(commentData, path) {
                 const li = document.createElement('li');
                 li.className = 'comment-item';
                 li.dataset.commentPath = path;
                 li.dataset.authorName = commentData.username;
-                li.dataset.timestamp = commentData.timestamp;
-
-                const author = await getAuthorData(commentData.authorUid);
-                const isVerified = author.profile?.isAdmin;
+                const isVerified = commentData.authorUid === globalAdminUID;
 
                 const adminDeleteButton = isCurrentUserAdmin ? `<button class="admin-delete-comment-btn" title="Eliminar comentario"><i class="fas fa-trash-alt"></i></button>` : '';
                 
@@ -1509,18 +1554,6 @@
                             ${adminDeleteButton}
                         </div>
                     </div>`;
-
-                if (commentSnapshot.hasChild('replies')) {
-                    const repliesContainer = document.createElement('div');
-                    repliesContainer.className = 'replies-container';
-                    const replyPromises = [];
-                    commentSnapshot.child('replies').forEach(replySnapshot => {
-                        replyPromises.push(createCommentElement(replySnapshot, imageId));
-                    });
-                    const replyElements = await Promise.all(replyPromises);
-                    replyElements.sort((a,b) => a.dataset.timestamp - b.dataset.timestamp).forEach(el => repliesContainer.appendChild(el));
-                    li.querySelector('.comment-content').appendChild(repliesContainer);
-                }
                 
                 li.querySelector('.reply-btn').addEventListener('click', e => initiateReply(e.currentTarget.closest('li')));
                 
@@ -1557,7 +1590,7 @@
                 if (text.length > COMMENT_MAX_LENGTH) return showToast(`El comentario no puede exceder los ${COMMENT_MAX_LENGTH} caracteres.`);
                 
                 const replyToPath = document.getElementById('commentForm').dataset.replyToPath;
-                const replyingToUsername = document.getElementById('commentForm').dataset.authorName;
+                const authorName = document.getElementById('commentForm').dataset.authorName;
                 
                 const commentData = { 
                     text, 
@@ -1567,42 +1600,13 @@
                     userAvatar: currentUserData.profile.avatar 
                 };
 
-                if (replyToPath && replyingToUsername) {
-                    commentData.replyToUsername = replyingToUsername;
+                if (replyToPath && authorName) {
+                    commentData.replyToUsername = authorName;
                 }
 
                 try {
                     const refPath = replyToPath ? `${replyToPath}/replies` : `comments/${imageId}`;
                     await set(push(ref(db, refPath)), commentData);
-
-                    // --- START NOTIFICATION LOGIC ---
-                    let recipientUid;
-                    let message;
-                    const post = allPosts.find(p => p.id === imageId);
-
-                    if (replyToPath) {
-                        // It's a reply
-                        const parentCommentSnapshot = await get(ref(db, replyToPath));
-                        if(parentCommentSnapshot.exists()) {
-                            recipientUid = parentCommentSnapshot.val().authorUid;
-                            message = `${currentUserData.username} respondió a tu comentario.`;
-                        }
-                    } else if (post) {
-                        // It's a top-level comment
-                        recipientUid = post.authorUid;
-                        message = `${currentUserData.username} comentó en tu publicación: "${post.title}"`;
-                    }
-                    
-                    if (recipientUid && recipientUid !== currentUser.uid) {
-                        const notificationRef = push(ref(db, `notifications/${recipientUid}`));
-                        await set(notificationRef, {
-                            message,
-                            imageId,
-                            timestamp: serverTimestamp(),
-                            read: false
-                        });
-                    }
-                    // --- END NOTIFICATION LOGIC ---
 
                     const userRef = ref(db, `users/${currentUser.uid}/profile`);
                     const newCount = (currentUserData.profile.commentCount || 0) + 1;
@@ -1927,11 +1931,11 @@
                 const likesRef = ref(db, 'likes');
                 onValue(likesRef, async (snapshot) => {
                     const allLikes = snapshot.val() || {};
-                    const container = document.getElementById('leaderboard-container');
+                    const container = document.getElementById('leaderboard');
                     container.innerHTML = '';
 
                     if (!allPosts || allPosts.length === 0) {
-                         container.innerHTML = `<p class="text-center text-slate-500 text-sm px-4">Aún no hay publicaciones para mostrar.</p>`;
+                         container.innerHTML = `<p class="text-center text-gray-500 text-sm col-span-3">Aún no hay publicaciones para mostrar.</p>`;
                          return;
                     }
 
@@ -1951,10 +1955,10 @@
                         }
                     }
 
-                    const topPosts = uniquePosts.slice(0, 10);
+                    const topPosts = uniquePosts.slice(0, 3);
 
                     if (topPosts.length === 0 || topPosts[0].likeCount === 0) {
-                        container.innerHTML = `<p class="text-center text-slate-500 text-sm px-4">Aún no hay publicaciones populares. ¡Vota por tus favoritas!</p>`;
+                        container.innerHTML = `<p class="text-center text-gray-500 text-sm col-span-3">Aún no hay publicaciones populares. ¡Vota por tus favoritas!</p>`;
                         return;
                     }
 
@@ -1964,13 +1968,14 @@
                         const authorInfo = await getAuthorData(post.authorUid);
 
                         const item = document.createElement('div');
-                        item.className = 'story-item cursor-pointer';
+                        item.className = `most-voted-item rank-${rank} cursor-pointer group`;
                         item.innerHTML = `
-                            <div class="story-avatar-wrapper rank-${rank}">
-                                <img src="${post.imageUrl}" class="story-avatar" onerror="this.src='https://placehold.co/64x64/1e293b/94a3b8?text=??'"/>
-                                <div class="story-trophy rank-${rank}"><i class="fas fa-trophy"></i></div>
+                            <img src="${post.imageUrl}" alt="${post.title}" class="post-image transition-transform duration-300 group-hover:scale-105" onerror="this.onerror=null;this.src='https://placehold.co/300x500/1f2937/a7a7a7?text=Error';">
+                            <div class="rank-badge">${rank}</div>
+                            <div class="author-overlay">
+                                <img src="${authorInfo.profile?.avatar || ''}" alt="${authorInfo.username}">
+                                <span class="truncate">${authorInfo.username}</span>
                             </div>
-                            <span class="story-username">${authorInfo.username}</span>
                         `;
                         item.addEventListener('click', () => showDetailView(post.id, true));
                         container.appendChild(item);
