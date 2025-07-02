@@ -2,37 +2,54 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Exene</title>
     
     <!-- Librerías Externas (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.css">
     <script src="https://cdn.jsdelivr.net/npm/viewerjs@1.11.1/dist/viewer.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Estilos CSS Integrados -->
     <style>
+        :root {
+            --background: #020617; /* slate-950 */
+            --card-bg: #1e293b; /* slate-800 */
+            --border-color: #334155; /* slate-700 */
+            --primary-text: #f1f5f9; /* slate-100 */
+            --secondary-text: #94a3b8; /* slate-400 */
+            --accent: #818cf8; /* indigo-400 */
+            --accent-dark: #4f46e5; /* indigo-600 */
+        }
+        html {
+            overscroll-behavior: none;
+        }
         body {
             font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--primary-text);
             -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .app-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
         #authOverlay {
             background-image: url('https://files.catbox.moe/1zl86j.jpg');
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
-            min-height: 100vh; 
-            align-items: center;
-            justify-content: center;
         }
         .glass-container {
-            background: rgba(17, 24, 39, 0.5);
-            -webkit-backdrop-filter: blur(12px);
-            backdrop-filter: blur(12px);
+            background: rgba(17, 24, 39, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: 1.5rem;
             padding: 2.5rem 2rem;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -45,173 +62,149 @@
         }
         .modal-container:not(.hidden) { opacity: 1; pointer-events: auto; }
         .modal-content {
-            background-color: #1f2937; padding: 1.5rem; border-radius: 0.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 100%; max-width: 24rem;
-            transform: scale(0.95); transition: transform 0.3s ease-in-out;
+            background-color: var(--card-bg); padding: 1.5rem; border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); width: 100%; max-width: 26rem;
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease-in-out;
         }
-        .modal-container:not(.hidden) .modal-content { transform: scale(1); }
+        .modal-container:not(.hidden) .modal-content { transform: translateY(0) scale(1); }
         .notifications-panel {
             position: absolute; top: calc(100% + 0.5rem); right: 0;
-            width: 90vw; max-width: 360px; background-color: #1f2937;
-            border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border: 1px solid #374151; z-index: 50; opacity: 0;
+            width: 90vw; max-width: 360px; background-color: var(--card-bg);
+            border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color); z-index: 50; opacity: 0;
             transform: translateY(-10px) scale(0.95); transform-origin: top right;
             transition: transform 0.2s ease-out, opacity 0.2s ease-out;
             pointer-events: none; overflow: hidden;
         }
         .notifications-panel.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-        .notifications-panel-header { padding: 0.75rem 1rem; border-bottom: 1px solid #374151; }
         .view {
-            transition: opacity 0.2s ease-in-out;
-        }
-        .view.hidden {
-            display: none;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 5rem; /* Space for nav bar */
         }
-        .view.active {
-            opacity: 1;
-        }
-        .view.slide-up { transform: translateY(100%); transition: transform 0.3s ease-in-out; }
+        .view:not(.active) { display: none; }
+        .view.active { opacity: 1; }
+        .view.slide-up { transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
         .view.slide-up.active { transform: translateY(0%); }
         .like-btn.liked i, .favorite-btn.favorited i { font-weight: 900; }
         .like-btn.liked i { color: #ec4899; }
         .favorite-btn.favorited i { color: #facc15; }
-        .profile-tab {
-            border-color: transparent; color: #9ca3af; white-space: nowrap;
-            padding: 0.75rem 1rem; border-bottom-width: 2px; font-weight: 500; font-size: 0.875rem;
-            transition: all 0.2s; flex-grow: 1; text-align: center;
+        .portrait-aspect {
+            position: relative;
+            width: 100%;
+            padding-bottom: 150%; /* 2:3 aspect ratio */
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            overflow: hidden;
         }
-        .profile-tab:hover { color: #ffffff; border-color: #4b5563; }
-        .profile-tab.tab-active { color: #e5e7eb; }
-        .viewer-container { background-color: rgba(0, 0, 0, 0.85); }
-        .viewer-close:before { font-family: "Font Awesome 6 Free"; font-weight: 900; content: "\f00d"; font-size: 24px; color: white; }
-        .portrait-aspect { position: relative; width: 100%; padding-bottom: 150%; }
-        .portrait-aspect img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .portrait-aspect .card-author-overlay {
-            position: absolute; top: 0; left: 0; right: 0;
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.5rem;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+        .portrait-aspect img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.3s ease;
         }
-        .portrait-aspect .card-author-overlay img {
-            position: static;
-            width: 1.5rem; height: 1.5rem;
-            border-radius: 9999px;
-            border: 1px solid rgba(255,255,255,0.5);
-        }
+        .group:hover .portrait-aspect img { transform: scale(1.05); }
         #toast { transition: opacity 0.3s, transform 0.3s; }
         #toast.show { opacity: 1; transform: translate(-50%, 0); }
-        .comment-item { display: flex; align-items: flex-start; gap: 0.75rem; }
-        .comment-content { flex: 1; display: flex; flex-direction: column; }
-        .comment-body { background-color: rgba(55, 65, 81, 0.5); border-radius: 0.75rem; padding: 0.5rem 0.75rem; }
-        .comment-actions { display: flex; align-items: center; gap: 0.75rem; font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem; padding-left: 0.5rem; }
-        .replying-to-text { font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.25rem; }
-        .replying-to-text strong { color: #a5b4fc; font-weight: 500; }
-        .replies-container { margin-left: calc(2rem + 0.75rem); padding-left: 1rem; border-left: 2px solid #374151; margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem; }
-        .most-voted-item { position: relative; border-radius: 0.5rem; overflow: hidden; border: 2px solid transparent; }
-        .most-voted-item .post-image { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 9 / 16; }
-        .most-voted-item .rank-badge { position: absolute; top: 0.5rem; left: 0.5rem; background-color: rgba(0, 0, 0, 0.7); color: white; border-radius: 9999px; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.125rem; border: 1px solid rgba(255, 255, 255, 0.5); z-index: 2; }
-        .most-voted-item .author-overlay { position: absolute; bottom: 0; left: 0; right: 0; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); z-index: 2; }
-        .most-voted-item .author-overlay img { width: 1.5rem; height: 1.5rem; border-radius: 9999px; object-fit: cover; background-color: #374151; }
-        .most-voted-item .author-overlay span { font-size: 0.75rem; font-weight: 600; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
-        .most-voted-item.rank-1 { border-color: #facc15; }
-        .most-voted-item.rank-2 { border-color: #d1d5db; }
-        .most-voted-item.rank-3 { border-color: #d97706; }
-        .admin-delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; background-color: rgba(220, 38, 38, 0.7); color: white; width: 2rem; height: 2rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; z-index: 3; opacity: 0; transition: opacity 0.2s; }
-        .group:hover .admin-delete-btn { opacity: 1; }
-        .admin-delete-btn:hover { background-color: rgba(185, 28, 28, 1); }
-        .admin-delete-comment-btn { color: #9ca3af; }
-        .admin-delete-comment-btn:hover { color: #ef4444; }
+        .comment-item {
+            display: flex; align-items: flex-start; gap: 0.75rem;
+            padding: 0.75rem;
+            background-color: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+        }
+        .comment-body { background-color: transparent; border-radius: 0; padding: 0; }
         .profile-header {
-            padding-bottom: 4rem;
-            border-radius: 0 0 1.5rem 1.5rem;
+            padding-bottom: 4.5rem;
             position: relative;
             background-size: cover;
             background-position: center;
-            transition: background-color 0.3s ease;
         }
-        .profile-header-content { position: relative; z-index: 1; }
         .profile-header::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to top, rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.2));
-            border-radius: inherit;
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to top, var(--background) 10%, rgba(15, 23, 42, 0.5) 50%, rgba(15, 23, 42, 0.2) 100%);
         }
-        .profile-avatar-container { margin-top: -3rem; position: relative; }
-        .social-icon-link { color: #9ca3af; transition: color 0.2s ease-in-out; }
-        .social-icon-link:hover { color: #e5e7eb; }
-        .achievement-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            background-color: #374151;
-            border-radius: 9999px;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: #d1d5db;
-            border: 1px solid #4b5563;
-        }
-        .achievement-badge .fa-trophy { color: #facc15; }
-        .achievement-badge .fa-star { color: #facc15; }
-        
-        /* Estilos de App Móvil */
+        .profile-avatar-container { margin-top: -4rem; }
         .main-nav {
-            background-color: #111827;
-            border-top: 1px solid #374151;
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
         }
         .nav-btn {
-            flex: 1;
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--secondary-text); transition: color 0.2s ease-in-out; padding: 0.5rem 0;
+        }
+        .nav-btn i { font-size: 1.25rem; margin-bottom: 0.125rem; }
+        .nav-btn span { font-size: 0.65rem; font-weight: 500; }
+        .nav-btn.active { color: var(--accent); }
+        .collection-card-name { text-shadow: 1px 1px 5px rgba(0,0,0,0.7); }
+
+        /* Story-like leaderboard */
+        #leaderboard-container {
+            overflow-x: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        #leaderboard-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, and Opera */
+        }
+        .story-item {
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            color: #9ca3af;
-            transition: color 0.2s ease-in-out;
-            padding: 0.5rem 0;
+            width: 80px;
         }
-        .nav-btn i {
-            font-size: 1.25rem; /* Iconos ajustados */
-            margin-bottom: 0.125rem;
+        .story-avatar-wrapper {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            padding: 3px;
         }
-        .nav-btn span {
-            font-size: 0.65rem;
-            font-weight: 500;
+        .story-avatar-wrapper.rank-1 { background: linear-gradient(45deg, #ffd700, #f0b90b); }
+        .story-avatar-wrapper.rank-2 { background: linear-gradient(45deg, #c0c0c0, #a9a9a9); }
+        .story-avatar-wrapper.rank-3 { background: linear-gradient(45deg, #cd7f32, #a0522d); }
+        .story-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--background);
         }
-        .nav-btn.active {
-            color: #818cf8; /* Indigo-400 */
-        }
-        #createPostBtnContainer {
+        .story-trophy {
             position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: 1.5rem; /* Sube el botón */
-            z-index: 50;
-        }
-        #createPostBtn {
-            width: 4rem;
-            height: 4rem;
-            border-radius: 9999px;
-            background-color: #4f46e5; /* Indigo-600 */
-            color: white;
+            bottom: -5px;
+            right: -5px;
+            background-color: var(--card-bg);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease-in-out;
+            font-size: 12px;
+            border: 1px solid var(--border-color);
         }
-        #createPostBtn:hover {
-            transform: scale(1.05);
-            background-color: #4338ca; /* Indigo-700 */
-        }
-        #createPostBtn i {
-            font-size: 1.75rem;
+        .story-trophy.rank-1 { color: #ffd700; }
+        .story-trophy.rank-2 { color: #c0c0c0; }
+        .story-trophy.rank-3 { color: #cd7f32; }
+        .story-username {
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.25rem;
+            color: var(--secondary-text);
+            text-align: center;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200 font-sans antialiased">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
 
     <!-- ========== MODAL DE VERIFICACIÓN DE EDAD ========== -->
     <div id="ageVerificationModal" class="modal-container hidden">
@@ -235,7 +228,6 @@
     <div id="authOverlay" class="fixed inset-0 bg-gray-900 z-50 flex p-4 transition-opacity duration-300">
         <div id="welcomeContainer" class="m-auto text-center">
             <div class="glass-container">
-                <!-- ICONO REDONDO -->
                 <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-16 w-16 mx-auto mb-4 rounded-full object-cover" onerror="this.style.display='none'">
                 <h1 class="text-4xl font-bold text-white">Bienvenido a Exene</h1>
                 <p class="text-gray-300 mt-2">Únete a la comunidad y comparte tu visión.</p>
@@ -293,7 +285,7 @@
     </div>
     
     <!-- ========== CONTENIDO PRINCIPAL DE LA APP ========== -->
-    <div id="appContent" class="hidden">
+    <div id="appContent" class="hidden app-container">
         <!-- MODALES DE LA APP -->
         <div id="avatarModal" class="modal-container hidden">
             <div class="modal-content">
@@ -381,12 +373,30 @@
             </div>
         </div>
 
+        <!-- MODAL PARA GUARDAR EN COLECCIÓN -->
+        <div id="saveToCollectionModal" class="modal-container hidden">
+            <div class="modal-content">
+                <h2 class="text-xl font-bold mb-4 text-white">Guardar en Colección</h2>
+                <div id="userCollectionsList" class="space-y-2 max-h-48 overflow-y-auto mb-4 pr-2">
+                    <!-- Lista de colecciones del usuario -->
+                </div>
+                <div class="border-t border-gray-700 pt-4">
+                     <h3 class="text-lg font-semibold mb-2 text-white">Crear nueva colección</h3>
+                     <form id="newCollectionForm" class="flex items-center gap-2">
+                         <input type="text" id="newCollectionName" placeholder="Nombre de la colección" required maxlength="50" class="flex-1 w-full bg-gray-800 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                         <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-md transition-colors">Crear y Añadir</button>
+                     </form>
+                </div>
+                 <button type="button" class="mt-4 w-full text-gray-400 hover:text-white transition-colors py-2 close-modal-btn">Cancelar</button>
+            </div>
+        </div>
+
         <!-- MODALES LEGALES -->
         <div id="termsModal" class="modal-container hidden">
             <div class="modal-content max-w-2xl h-4/5 flex flex-col">
                 <h2 class="text-xl font-bold mb-4 text-center text-white">Términos y Condiciones</h2>
                 <div class="text-gray-300 text-sm space-y-3 overflow-y-auto pr-2">
-                    <p><strong>Última actualización:</strong> 30 de Junio de 2025</p>
+                    <p><strong>Última actualización:</strong> 1 de Julio de 2025</p>
                     <p>Bienvenido a Exene. Estos términos y condiciones describen las reglas y regulaciones para el uso del sitio web de Exene.</p>
                     <h3 class="font-bold text-white pt-2">Cuentas y Contenido</h3>
                     <p>Eres responsable de tu cuenta y de todo el contenido que publiques. No se permite contenido ilegal, acoso, spam o cualquier actividad que viole nuestras normas comunitarias. Nos reservamos el derecho de eliminar contenido y suspender cuentas que infrinjan estos términos.</p>
@@ -401,7 +411,7 @@
             <div class="modal-content max-w-2xl h-4/5 flex flex-col">
                 <h2 class="text-xl font-bold mb-4 text-center text-white">Política de Privacidad</h2>
                 <div class="text-gray-300 text-sm space-y-3 overflow-y-auto pr-2">
-                     <p><strong>Última actualización:</strong> 30 de Junio de 2025</p>
+                     <p><strong>Última actualización:</strong> 1 de Julio de 2025</p>
                      <p>Recopilamos la información que nos proporcionas (correo, nombre de usuario) y datos de tu actividad (publicaciones, likes) para operar y mejorar el servicio. No compartimos tu información personal con terceros, excepto para cumplir con la ley.</p>
                 </div>
                 <button type="button" class="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors close-modal-btn flex-shrink-0">Cerrar</button>
@@ -419,174 +429,179 @@
                 </div>
             </div>
         </div>
-
-        <!-- VISTAS PRINCIPALES -->
-        <main id="galleryView" class="view pb-20 active">
-            <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40">
-                <!-- ICONO REDONDO -->
-                <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-8 w-8 rounded-full object-cover" onerror="this.style.display='none'">
-                <h2 class="text-lg font-bold text-white">Para ti</h2>
-                <div class="relative">
-                    <button id="navNotificationsBtn" class="text-gray-400 hover:text-white text-xl p-2 relative">
-                        <i class="fas fa-bell"></i>
-                        <span id="navNotificationsBadge" class="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900 hidden"></span>
-                    </button>
-                    <div id="notificationsWindow" class="notifications-panel">
-                        <div class="notifications-panel-header">
-                            <h3 class="text-lg font-bold text-white">Notificaciones</h3>
-                        </div>
-                        <div id="notificationsList" class="space-y-1 max-h-80 overflow-y-auto"></div>
-                    </div>
-                </div>
-            </header>
-            
-            <section id="most-voted-section" class="px-4 mt-6">
-                <h3 class="text-xl font-bold text-white mb-3">🔥 Lo más Votado</h3>
-                <div id="leaderboard" class="grid grid-cols-3 gap-2 md:gap-4 mt-4">
-                    <!-- Las publicaciones más votadas se inyectarán aquí -->
-                </div>
-            </section>
-
-            <h3 class="px-4 text-xl font-bold text-white mt-6 mb-2">Contenido Oficial</h3>
-            <div id="gallery" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-            <div id="curated-sentinel" class="h-10"></div>
-            <div id="galleryLoader" class="text-center p-8 hidden">
-                <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
-            </div>
-        </main>
-
-        <main id="feedView" class="view pb-20 hidden">
-            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <h2 class="text-lg font-bold text-white">Comunidad</h2>
-            </header>
-            <div id="feedGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-            <div id="feed-sentinel" class="h-10"></div>
-             <div id="feedLoader" class="text-center p-8 hidden">
-                <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
-            </div>
-        </main>
-
-        <!-- NUEVA VISTA: Prompts Populares -->
-        <main id="promptsView" class="view pb-20 hidden">
-            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <h2 class="text-lg font-bold text-white">Prompts Populares</h2>
-            </header>
-            <div id="promptsList" class="p-4 space-y-4">
-                <!-- Lista de prompts se inyectará aquí -->
-            </div>
-        </main>
-
-        <!-- VISTA RENOMBRADA: De Siguiendo a Actividad -->
-        <main id="activityView" class="view pb-20 hidden">
-            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <h2 class="text-lg font-bold text-white">Actividad</h2>
-            </header>
-            <div id="activityFeed" class="p-4 space-y-4">
-                 <!-- El feed de actividad se inyectará aquí -->
-            </div>
-             <div id="activityLoader" class="text-center p-8 hidden">
-                <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
-            </div>
-        </main>
         
-        <main id="profileView" class="view pb-20 hidden">
-            <!-- El contenido del perfil se genera dinámicamente -->
-        </main>
-        
-        <main id="userProfileView" class="view hidden fixed inset-0 bg-gray-900 z-50 flex flex-col slide-up">
-            <!-- El contenido del perfil de otros usuarios se genera dinámicamente -->
-        </main>
-
-        <main id="detailView" class="view hidden fixed inset-0 bg-gray-900 z-50 flex flex-col slide-up">
-            <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm z-10 flex-shrink-0">
-                <button id="detailBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
-                <div id="detailAuthorInfo" class="flex items-center gap-3 cursor-pointer group flex-1 justify-center min-w-0">
-                    <img id="detailAuthorAvatar" src="" class="w-9 h-9 rounded-full object-cover border-2 border-gray-700 group-hover:border-indigo-500 transition-colors">
+        <div class="relative flex-1 overflow-hidden">
+            <!-- VISTAS PRINCIPALES -->
+            <main id="galleryView" class="view active">
+                <header class="p-4 flex justify-between items-center bg-slate-950/80 backdrop-blur-sm sticky top-0 z-40">
+                    <img src="https://files.catbox.moe/n86yjv.png" alt="Exene" class="h-8 w-8 rounded-full object-cover" onerror="this.style.display='none'">
+                    <h1 class="text-lg font-bold text-white">Exene</h1>
                     <div class="flex items-center gap-2">
-                      <h3 class="font-bold text-lg text-white group-hover:underline truncate" id="detailAuthorUsername"></h3>
-                      <span id="detailAuthorVerifiedBadge"></span>
-                    </div>
-                </div>
-                <div class="w-28 flex justify-end">
-                    <button id="detailFollowBtn" data-user-id="" class="hidden px-4 py-1.5 text-sm font-bold rounded-full transition-colors"></button>
-                </div>
-            </header>
-            <main class="flex-1 overflow-y-auto pb-20">
-                <div id="imageViewer" class="bg-black cursor-zoom-in"></div>
-                <div class="p-4 space-y-4">
-                    <div><h1 id="detailTitle" class="text-white font-bold text-xl"></h1><p id="detailDescription" class="text-gray-300 mt-1 text-sm leading-relaxed"></p></div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-6 text-2xl text-gray-400">
-                            <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group"><i class="far fa-heart group-hover:text-pink-500 transition-transform transform active:scale-125"></i></button>
-                            <button id="focusCommentBtn" class="comment-btn flex items-center space-x-2 group"><i class="far fa-comment group-hover:text-indigo-400 transition-colors"></i></button>
-                            <button id="detailFavoriteBtn" class="favorite-btn flex items-center space-x-2 group"><i class="far fa-bookmark group-hover:text-yellow-400 transition-transform transform active:scale-125"></i></button>
-                            <!-- NUEVO: Botón para guardar en colección -->
-                            <button id="saveToCollectionBtn" class="flex items-center space-x-2 group"><i class="far fa-layer-group group-hover:text-green-400 transition-colors"></i></button>
-                        </div>
-                        <div class="text-sm text-gray-400"><span id="detailLikeCount" class="font-semibold text-white">0 Me gusta</span><span class="text-gray-500 mx-1">•</span><span id="detailViewCount" class="">0 Vistas</span></div>
-                    </div>
-                    <button id="adminDeletePostBtn" class="hidden w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors"><i class="fas fa-trash-alt mr-2"></i>Eliminar Publicación (Admin)</button>
-                    
-                    <div id="detailPromptContainer" class="hidden space-y-2 pt-4 border-t border-gray-800/60">
-                        <h2 class="font-bold text-white text-base">Prompt de IA</h2>
-                        <div class="relative bg-gray-800 rounded-lg p-3">
-                            <pre id="detailPromptText" class="text-gray-300 text-sm whitespace-pre-wrap font-sans"></pre>
-                            <button id="copyPromptBtn" class="absolute top-2 right-2 text-gray-400 hover:text-white" title="Copiar prompt">
-                                <i class="far fa-copy"></i>
+                        <button id="createPostBtn" class="text-slate-400 hover:text-white text-xl p-2"><i class="fas fa-plus"></i></button>
+                        <div class="relative">
+                            <button id="navNotificationsBtn" class="text-slate-400 hover:text-white text-xl p-2 relative">
+                                <i class="fas fa-bell"></i>
+                                <span id="navNotificationsBadge" class="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-900 hidden"></span>
                             </button>
+                            <div id="notificationsWindow" class="notifications-panel">
+                                <div class="notifications-panel-header">
+                                    <h3 class="text-lg font-bold text-white">Notificaciones</h3>
+                                </div>
+                                <div id="notificationsList" class="space-y-1 max-h-80 overflow-y-auto"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <section class="p-4 pt-2 border-t border-gray-800/60">
-                    <h2 class="font-bold text-white mb-4">Comentarios</h2>
-                    <div id="comment-container" class="my-4">
-                        <div id="replyingToBanner" class="hidden bg-gray-700 p-2 text-sm flex justify-between items-center rounded-t-md">
-                            <span class="text-gray-300">Respondiendo a <strong id="replyingToUsername" class="text-white"></strong></span>
-                            <button id="cancelReplyBtn" class="text-xs text-gray-400 hover:text-white font-bold">&times; Cancelar</button>
-                        </div>
-                        <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2">
-                            <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full object-cover">
-                            <input type="text" id="commentText" placeholder="Escribe un comentario..." maxlength="300" class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <button type="submit" class="text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
-                        </form>
+                </header>
+                
+                <section id="most-voted-section" class="py-4">
+                    <h2 class="px-4 text-sm font-bold uppercase tracking-wider text-slate-400 mb-3">Destacados de la Semana</h2>
+                    <div id="leaderboard-container" class="flex gap-4 px-4">
+                        <!-- Las historias de los más votados se inyectarán aquí -->
                     </div>
-                    <ul id="commentsList" class="space-y-4"></ul>
                 </section>
-                <section id="similar-section" class="p-4 pt-6 border-t border-gray-800/60 hidden"><h2 class="font-bold text-white mb-4">Imágenes Similares</h2><div id="similar-images-grid" class="grid grid-cols-3 gap-2"></div></section>
-            </main>
-        </main>
 
-        <main id="searchView" class="view hidden p-4 pt-4 pb-20 overflow-y-auto">
-            <header class="p-4 flex justify-center items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <form id="searchForm" class="relative w-full max-w-lg">
-                    <input type="search" id="searchInput" placeholder="Buscar usuarios, títulos o etiquetas..." class="w-full bg-gray-800 text-white border border-gray-700 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                </form>
-            </header>
-            <p id="searchResultCount" class="text-sm text-gray-400 mt-4 px-2"></p>
-            <div id="searchResultsContainer" class="mt-2 px-2 space-y-6">
-                <section id="userResultsSection" class="hidden">
-                    <h2 class="text-lg font-bold text-white mb-3">Usuarios</h2>
-                    <div id="userResults" class="space-y-2"></div>
-                </section>
-                <section id="postResultsSection" class="hidden">
-                    <h2 class="text-lg font-bold text-white mb-3">Publicaciones</h2>
-                    <div id="postResults" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
-                </section>
-                <div id="noResultsMessage" class="text-center text-gray-500 py-8 hidden">
-                    <p>No se encontraron resultados para tu búsqueda.</p>
+                <h2 class="px-4 text-sm font-bold uppercase tracking-wider text-slate-400 mt-4 mb-2">Contenido Oficial</h2>
+                <div id="gallery" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+                <div id="curated-sentinel" class="h-10"></div>
+                <div id="galleryLoader" class="text-center p-8 hidden">
+                    <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
                 </div>
-            </div>
-        </main>
+            </main>
+
+            <main id="feedView" class="view">
+                <header class="p-4 flex justify-center items-center bg-slate-950/80 backdrop-blur-sm sticky top-0 z-10">
+                    <h1 class="text-lg font-bold text-white">Comunidad</h1>
+                </header>
+                <div id="feedGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+                <div id="feed-sentinel" class="h-10"></div>
+                 <div id="feedLoader" class="text-center p-8 hidden">
+                    <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
+                </div>
+            </main>
+
+            <main id="followingView" class="view">
+                <header class="p-4 flex justify-center items-center bg-slate-950/80 backdrop-blur-sm sticky top-0 z-10">
+                    <h1 class="text-lg font-bold text-white">Siguiendo</h1>
+                </header>
+                <div id="followingGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+                <div id="following-sentinel" class="h-10"></div>
+                 <div id="followingLoader" class="text-center p-8 hidden">
+                    <i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i>
+                </div>
+            </main>
+            
+            <main id="profileView" class="view">
+                <!-- El contenido del perfil se genera dinámicamente -->
+            </main>
+            
+            <main id="userProfileView" class="view slide-up">
+                <!-- El contenido del perfil de otros usuarios se genera dinámicamente -->
+            </main>
+
+            <main id="detailView" class="view slide-up">
+                <header class="p-4 flex justify-between items-center bg-slate-950/80 backdrop-blur-sm z-10 flex-shrink-0 sticky top-0">
+                    <button id="detailBackBtn" class="text-xl text-slate-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
+                    <div id="detailAuthorInfo" class="flex items-center gap-3 cursor-pointer group flex-1 justify-center min-w-0">
+                        <img id="detailAuthorAvatar" src="" class="w-9 h-9 rounded-full object-cover border-2 border-slate-700 group-hover:border-indigo-500 transition-colors">
+                        <div class="flex items-center gap-2">
+                          <h3 class="font-bold text-lg text-white group-hover:underline truncate" id="detailAuthorUsername"></h3>
+                          <span id="detailAuthorVerifiedBadge"></span>
+                        </div>
+                    </div>
+                    <div class="w-10 flex justify-end">
+                        <button id="detailFollowBtn" data-user-id="" class="hidden px-4 py-1.5 text-sm font-bold rounded-full transition-colors"></button>
+                    </div>
+                </header>
+                <main class="flex-1 overflow-y-auto pb-20">
+                    <div id="imageViewer" class="bg-black cursor-zoom-in"></div>
+                    <div class="p-4 space-y-4">
+                        <div><h1 id="detailTitle" class="text-white font-bold text-xl"></h1><p id="detailDescription" class="text-gray-300 mt-1 text-sm leading-relaxed"></p></div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-6 text-2xl text-gray-400">
+                                <button id="detailLikeBtn" class="like-btn flex items-center space-x-2 group"><i class="far fa-heart group-hover:text-pink-500 transition-transform transform active:scale-125"></i></button>
+                                <button id="focusCommentBtn" class="comment-btn flex items-center space-x-2 group"><i class="far fa-comment group-hover:text-indigo-400 transition-colors"></i></button>
+                                <button id="detailFavoriteBtn" class="favorite-btn flex items-center space-x-2 group"><i class="far fa-bookmark group-hover:text-yellow-400 transition-transform transform active:scale-125"></i></button>
+                                <button id="saveToCollectionBtn" class="flex items-center space-x-2 group" title="Guardar en Colección"><i class="fa-solid fa-layer-group group-hover:text-green-400 transition-colors"></i></button>
+                            </div>
+                            <div class="text-sm text-gray-400"><span id="detailLikeCount" class="font-semibold text-white">0 Me gusta</span><span class="text-gray-500 mx-1">•</span><span id="detailViewCount" class="">0 Vistas</span></div>
+                        </div>
+                        <button id="adminDeletePostBtn" class="hidden w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors"><i class="fas fa-trash-alt mr-2"></i>Eliminar Publicación (Admin)</button>
+                        
+                        <div id="detailPromptContainer" class="hidden space-y-2 pt-4 border-t border-gray-800/60">
+                            <h2 class="font-bold text-white text-base">Prompt de IA</h2>
+                            <div class="relative bg-gray-800 rounded-lg p-3">
+                                <pre id="detailPromptText" class="text-gray-300 text-sm whitespace-pre-wrap font-sans"></pre>
+                                <button id="copyPromptBtn" class="absolute top-2 right-2 text-gray-400 hover:text-white" title="Copiar prompt">
+                                    <i class="far fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <section class="p-4 pt-2 border-t border-gray-800/60">
+                        <h2 class="font-bold text-white mb-4">Comentarios</h2>
+                        <div id="comment-container" class="my-4">
+                            <div id="replyingToBanner" class="hidden bg-gray-700 p-2 text-sm flex justify-between items-center rounded-t-md">
+                                <span class="text-gray-300">Respondiendo a <strong id="replyingToUsername" class="text-white"></strong></span>
+                                <button id="cancelReplyBtn" class="text-xs text-gray-400 hover:text-white font-bold">&times; Cancelar</button>
+                            </div>
+                            <form id="commentForm" class="bg-gray-800 p-2 flex items-center space-x-2">
+                                <img id="commentFormAvatar" src="" class="w-8 h-8 rounded-full object-cover">
+                                <input type="text" id="commentText" placeholder="Escribe un comentario..." maxlength="300" class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <button type="submit" class="text-indigo-400 hover:text-indigo-300 text-xl p-2"><i class="fas fa-paper-plane"></i></button>
+                            </form>
+                        </div>
+                        <ul id="commentsList" class="space-y-4"></ul>
+                    </section>
+                    <section id="similar-section" class="p-4 pt-6 border-t border-gray-800/60 hidden"><h2 class="font-bold text-white mb-4">Imágenes Similares</h2><div id="similar-images-grid" class="grid grid-cols-3 gap-2"></div></section>
+                </main>
+            </main>
+
+            <main id="searchView" class="view">
+                 <header class="p-4 flex justify-center items-center bg-slate-950/80 backdrop-blur-sm sticky top-0 z-10">
+                     <form id="searchForm" class="relative w-full max-w-lg">
+                         <input type="search" id="searchInput" placeholder="Buscar usuarios, títulos o etiquetas..." class="w-full bg-gray-800 text-white border border-gray-700 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                     </form>
+                 </header>
+                 <div class="overflow-y-auto p-4">
+                    <p id="searchResultCount" class="text-sm text-gray-400 mb-4 px-2"></p>
+                    <div id="searchResultsContainer" class="px-2 space-y-6">
+                        <section id="userResultsSection" class="hidden">
+                            <h2 class="text-lg font-bold text-white mb-3">Usuarios</h2>
+                            <div id="userResults" class="space-y-2"></div>
+                        </section>
+                        <section id="postResultsSection" class="hidden">
+                            <h2 class="text-lg font-bold text-white mb-3">Publicaciones</h2>
+                            <div id="postResults" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+                        </section>
+                        <div id="noResultsMessage" class="text-center text-gray-500 py-8 hidden">
+                            <p>No se encontraron resultados para tu búsqueda.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- VISTA DE COLECCIÓN INDIVIDUAL -->
+            <main id="collectionView" class="view slide-up">
+                <header class="p-4 flex justify-between items-center bg-slate-950/80 backdrop-blur-sm z-10 flex-shrink-0 sticky top-0">
+                    <button id="collectionBackBtn" class="text-xl text-slate-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
+                    <h2 id="collectionNameHeader" class="text-lg font-bold text-white truncate">Colección</h2>
+                    <div class="w-10"></div>
+                </header>
+                <div class="overflow-y-auto pb-20">
+                    <div id="collectionImageGrid" class="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+                    <div id="no-collection-posts-message" class="text-center text-gray-500 hidden py-8">
+                        <p>Esta colección está vacía.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
         
         <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg z-[100] transition-all duration-300 opacity-0 transform translate-y-4">
             <p id="toastMessage"></p>
         </div>
 
-        <footer class="fixed bottom-0 left-0 right-0 z-40">
-            <div id="createPostBtnContainer" class="hidden"> <!-- Oculto por defecto, se muestra solo en vistas relevantes -->
-                 <button id="createPostBtn" aria-label="Crear Publicación"><i class="fas fa-plus"></i></button>
-            </div>
+        <footer class="relative z-50">
             <nav class="main-nav flex justify-around items-center h-16">
                 <button data-view="galleryView" class="nav-btn active" aria-label="Inicio">
                     <i class="fas fa-home"></i>
@@ -596,15 +611,13 @@
                     <i class="fas fa-users"></i>
                     <span class="nav-text">Comunidad</span>
                 </button>
-                <!-- NUEVO: Botón de Prompts -->
-                <button data-view="promptsView" class="nav-btn" aria-label="Prompts">
-                    <i class="fas fa-lightbulb"></i>
-                    <span class="nav-text">Prompts</span>
+                <button data-view="searchView" class="nav-btn" aria-label="Buscar">
+                    <i class="fas fa-search"></i>
+                    <span class="nav-text">Buscar</span>
                 </button>
-                <!-- BOTÓN ACTUALIZADO: De Siguiendo a Actividad -->
-                <button data-view="activityView" class="nav-btn" aria-label="Actividad">
-                    <i class="fas fa-stream"></i>
-                    <span class="nav-text">Actividad</span>
+                <button data-view="followingView" class="nav-btn" aria-label="Siguiendo">
+                    <i class="fas fa-user-friends"></i>
+                    <span class="nav-text">Siguiendo</span>
                 </button>
                 <button data-view="profileView" id="navProfileBtn" class="nav-btn" aria-label="Mi Perfil">
                     <img id="navProfileAvatar" src="" class="w-8 h-8 rounded-full object-cover border-2 border-transparent transition-colors">
@@ -646,7 +659,7 @@
                 authDomain: "exene-53e6b.firebaseapp.com",
                 databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
                 projectId: "exene-53e6b",
-                storageBucket: "exene-53e6b.firebasestorage.app",
+                storageBucket: "exene-53e6b.appspot.com",
                 messagingSenderId: "481369419867",
                 appId: "1:481369419867:web:ac5db24c436344262c8f7e"
             };
@@ -667,9 +680,10 @@
             const COMMENT_MAX_LENGTH = 300;
             const URL_MAX_LENGTH = 500;
             const SOCIAL_URL_MAX_LENGTH = 255;
+            const COLLECTION_NAME_MAX_LENGTH = 50;
 
             let allImages = [], allPosts = [], sortedCuratedContent = [];
-            let loadedCuratedCount = 0, loadedFeedCount = 0, loadedActivityCount = 0;
+            let loadedCuratedCount = 0, loadedFeedCount = 0, loadedFollowingCount = 0;
             const itemsPerLoad = 12;
             let currentUser = null, currentUserData = {};
             let isCurrentUserAdmin = false;
@@ -679,7 +693,7 @@
             let usersCache = {};
             let currentViewer = null;
             let lastView = 'galleryView';
-            let isGalleryLoading = false, isFeedLoading = false, isActivityLoading = false;
+            let isGalleryLoading = false, isFeedLoading = false, isFollowingLoading = false;
             let toastTimeout;
             let appInitialized = false;
             let activeDetailListeners = {};
@@ -716,14 +730,23 @@
                      default: console.error(error); return 'Ha ocurrido un error inesperado.';
                  }
             };
-            const closeSlideUpView = (viewId) => {
+            const closeSlideUpView = (viewId, onClosedCallback) => {
                 const view = document.getElementById(viewId);
+                if (!view) return;
                 view.classList.remove('active');
                 if (viewId === 'detailView') {
                     detachDetailViewListeners();
-                    document.getElementById('detailFollowBtn').classList.add('hidden'); // Limpiar botón de seguir
+                    document.getElementById('detailFollowBtn').classList.add('hidden');
                 }
-                setTimeout(() => triggerView(lastView || 'galleryView'), 300);
+                setTimeout(() => {
+                    view.classList.add('hidden');
+                    if (onClosedCallback) {
+                        onClosedCallback();
+                    } else {
+                        // Default back action if no callback is provided
+                        triggerView(lastView || 'galleryView');
+                    }
+                }, 350); // Must match CSS transition duration
             };
             const cancelReply = () => {
                 const form = document.getElementById('commentForm');
@@ -771,7 +794,7 @@
                     return;
                 }
                 try {
-                    const response = await fetch('imagenes.json');
+                    const response = await fetch('https://files.catbox.moe/1zzq0n.json');
                     if (!response.ok) throw new Error('Network response was not ok');
                     const images = await response.json();
                     allImages = images.map(img => ({ ...img, isPost: false, authorUid: globalAdminUID }));
@@ -792,14 +815,19 @@
                     }
                     allPosts = posts.reverse();
                     
+                    // Re-render any visible post grids when post data changes.
                     if (appInitialized) {
-                        const currentVisibleView = document.querySelector('.view:not(.hidden)');
-                        if (currentVisibleView?.id === 'feedView') renderUserFeed(true);
-                        if (currentVisibleView?.id === 'activityView') renderActivityFeed(); // Actualizar feed de actividad
-                        if (currentVisibleView?.id === 'profileView' || currentVisibleView?.id === 'userProfileView') {
+                        const currentVisibleView = document.querySelector('.view.active');
+                        if (!currentVisibleView) return;
+
+                        if (currentVisibleView.id === 'feedView') renderUserFeed(true);
+                        if (currentVisibleView.id === 'followingView') renderFollowingFeed(true);
+
+                        if (currentVisibleView.id === 'profileView' || currentVisibleView.id === 'userProfileView') {
                             const visibleProfileId = currentVisibleView.dataset.userId;
                             if (visibleProfileId) {
-                                populateProfileView(visibleProfileId);
+                                const prefix = currentVisibleView.id === 'profileView' ? 'my-profile-' : 'user-profile-';
+                                renderUserPosts(visibleProfileId, `${prefix}userPostsGrid`, `${prefix}no-posts-message`);
                             }
                         }
                     }
@@ -818,27 +846,24 @@
             // --- NAVEGACIÓN Y RENDERIZADO ---
             function navigateTo(viewId) {
                 document.querySelectorAll('.view').forEach(v => {
-                    v.classList.add('hidden');
-                    v.classList.remove('active');
+                    if (v.id !== viewId) {
+                        v.classList.add('hidden');
+                        v.classList.remove('active');
+                    }
                 });
+
                 const targetView = document.getElementById(viewId);
                 if (!targetView) return;
 
                 targetView.classList.remove('hidden');
-                setTimeout(() => targetView.classList.add('active'), 10); // Para la transición de opacidad
+                setTimeout(() => targetView.classList.add('active'), 10);
 
-                document.querySelectorAll('.nav-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.view === viewId);
-                });
-                document.getElementById('navProfileAvatar').closest('.nav-btn').classList.toggle('active', viewId === 'profileView');
-                
-                // Mostrar u ocultar el botón de crear post
-                const createBtnContainer = document.getElementById('createPostBtnContainer');
-                const viewsWithCreateButton = ['galleryView', 'feedView', 'activityView', 'promptsView'];
-                createBtnContainer.classList.toggle('hidden', !viewsWithCreateButton.includes(viewId));
-
-                if (targetView.classList.contains('slide-up')) {
-                    setTimeout(() => targetView.classList.add('active'), 10);
+                if (!targetView.classList.contains('slide-up')) {
+                    lastView = viewId;
+                    document.querySelectorAll('.nav-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.view === viewId);
+                    });
+                    document.getElementById('navProfileAvatar').closest('.nav-btn').classList.toggle('active', viewId === 'profileView');
                 }
             }
             
@@ -846,8 +871,8 @@
                 switch(viewId) {
                     case 'galleryView': navigateTo(viewId); break;
                     case 'feedView': renderUserFeed(true); navigateTo(viewId); break;
-                    case 'activityView': renderActivityFeed(); navigateTo(viewId); break;
-                    case 'promptsView': renderPromptsWall(); navigateTo(viewId); break;
+                    case 'followingView': renderFollowingFeed(true); navigateTo(viewId); break;
+                    case 'popularView': renderPopularGallery(); navigateTo(viewId); break;
                     case 'profileView': populateProfileView(currentUser.uid); break; 
                     case 'searchView': 
                         navigateTo(viewId); 
@@ -935,6 +960,36 @@
                 isFeedLoading = false;
             }
 
+            function renderFollowingFeed(reset = false) {
+                if (isFollowingLoading) return;
+                isFollowingLoading = true;
+                showLoader('followingLoader', true);
+                const followingContainer = document.getElementById('followingGrid');
+                if (reset) { followingContainer.innerHTML = ''; loadedFollowingCount = 0; }
+                
+                const followingIds = Object.keys(currentUserData.following || {});
+
+                if (followingIds.length === 0) {
+                    followingContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Aún no sigues a nadie. ¡Explora la comunidad!</p>`;
+                    showLoader('followingLoader', false);
+                    isFollowingLoading = false;
+                    return;
+                }
+
+                const postsFromFollowing = allPosts.filter(post => followingIds.includes(post.authorUid));
+                
+                const nextItems = postsFromFollowing.slice(loadedFollowingCount, loadedFollowingCount + itemsPerLoad);
+
+                if (nextItems.length > 0) {
+                    appendToImageGrid(followingContainer, nextItems);
+                    loadedFollowingCount += nextItems.length;
+                } else if (reset && postsFromFollowing.length === 0) {
+                    followingContainer.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Las personas que sigues no han publicado nada nuevo.</p>`;
+                }
+                showLoader('followingLoader', false);
+                isFollowingLoading = false;
+            }
+
             // --- EVENT LISTENERS ---
             function setupAuthEventListeners() {
                 document.getElementById('showLoginModalBtn').addEventListener('click', () => showModal('loginModal'));
@@ -980,7 +1035,8 @@
                                     profileColor: '#1e40af',
                                     bannerUrl: '',
                                     socials: {},
-                                    commentCount: 0
+                                    commentCount: 0,
+                                    isAdmin: true
                                 }
                             };
                         } else {
@@ -1019,7 +1075,10 @@
                     btn.addEventListener('click', () => triggerView(btn.dataset.view));
                 });
                 document.getElementById('createPostBtn').addEventListener('click', () => showModal('createPostModal'));
-                document.getElementById('adminAddCuratedBtn')?.addEventListener('click', () => showModal('adminAddCuratedModal'));
+                
+                const adminBtn = document.getElementById('adminAddCuratedBtn');
+                if(adminBtn) adminBtn.addEventListener('click', () => showModal('adminAddCuratedBtn'));
+
                 document.getElementById('avatarUrlForm').addEventListener('submit', e => {
                     e.preventDefault();
                     const input = document.getElementById('avatarUrlInput');
@@ -1041,11 +1100,13 @@
                 });
                 new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isGalleryLoading && document.getElementById('galleryView').offsetParent !== null) renderCuratedFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('curated-sentinel'));
                 new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isFeedLoading && document.getElementById('feedView').offsetParent !== null) renderUserFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('feed-sentinel'));
+                new IntersectionObserver(entries => { if (entries[0].isIntersecting && !isFollowingLoading && document.getElementById('followingView').offsetParent !== null) renderFollowingFeed(false); }, { threshold: 0.1 }).observe(document.getElementById('following-sentinel'));
                 
                 setupDetailViewEventListeners();
                 setupCreatePostForm();
                 setupAdminToolListeners();
                 setupLegalModalsListeners();
+                setupCollectionEventListeners();
                 
                 document.getElementById('searchForm').addEventListener('submit', e => e.preventDefault());
                 document.getElementById('searchInput').addEventListener('input', e => renderSearchResults(e.target.value));
@@ -1097,6 +1158,11 @@
                 document.getElementById('adminDeletePostBtn').addEventListener('click', function() {
                     handleDeletePost(this.dataset.postId);
                 });
+                document.getElementById('saveToCollectionBtn').addEventListener('click', function() {
+                    if (this.dataset.id) {
+                        openCollectionModal(this.dataset.id, this.dataset.isPost === 'true');
+                    }
+                });
             }
             
             function setupCreatePostForm() {
@@ -1142,7 +1208,7 @@
                         }
 
                         document.getElementById('createPostForm').reset();
-                        document.getElementById('promptContainer').classList.add('hidden');
+                        document.getElementById('promptContainer').classList.add('hidden'); // Ocultar campo de prompt
                         hideModal('createPostModal');
                         showToast("Publicación creada con éxito");
                         triggerView('feedView');
@@ -1176,13 +1242,18 @@
                 document.getElementById('detailAuthorUsername').textContent = authorData.username;
                 document.getElementById('detailAuthorAvatar').src = authorData.profile?.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${authorData.username}`;
                 document.getElementById('detailAuthorVerifiedBadge').innerHTML = isVerified ? '<i class="fas fa-check-circle text-blue-400"></i>' : '';
-                document.getElementById('detailAuthorInfo').onclick = () => { 
-                    if (item.authorUid === currentUser.uid) {
-                        triggerView('profileView');
-                    } else {
-                        showUserProfile(item.authorUid);
-                    }
+                
+                document.getElementById('detailAuthorInfo').onclick = () => {
+                    const targetUserId = item.authorUid;
+                    closeSlideUpView('detailView', () => {
+                        if (targetUserId === currentUser.uid) {
+                            triggerView('profileView');
+                        } else {
+                            populateProfileView(targetUserId);
+                        }
+                    });
                 };
+                
                 document.getElementById('detailTitle').textContent = item.title;
                 
                 const descriptionEl = document.getElementById('detailDescription');
@@ -1219,6 +1290,8 @@
                 
                 document.getElementById('detailLikeBtn').dataset.id = dbId;
                 document.getElementById('detailFavoriteBtn').dataset.id = dbId;
+                document.getElementById('saveToCollectionBtn').dataset.id = dbId;
+                document.getElementById('saveToCollectionBtn').dataset.isPost = isPost;
                 document.getElementById('commentForm').dataset.imageId = dbId;
                 delete document.getElementById('commentForm').dataset.replyToPath;
                 
@@ -1242,12 +1315,9 @@
                 const isOwnProfile = userId === currentUser.uid;
                 const viewId = isOwnProfile ? 'profileView' : 'userProfileView';
                 const viewContainer = document.getElementById(viewId);
+                const prefix = isOwnProfile ? 'my-profile-' : 'user-profile-';
                 
-                if (!isOwnProfile) {
-                    navigateTo(viewId);
-                } else {
-                    navigateTo('profileView');
-                }
+                navigateTo(viewId);
                 viewContainer.dataset.userId = userId;
 
                 const userData = await getAuthorData(userId);
@@ -1258,10 +1328,10 @@
                     : `background-color: ${accentColor}`;
 
                 viewContainer.innerHTML = `
-                    <header class="p-4 flex justify-between items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                        ${isOwnProfile ? '<div class="w-10"></div>' : '<button id="userProfileBackBtn" class="text-xl text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>'}
+                    <header class="p-4 flex justify-between items-center bg-slate-950/80 backdrop-blur-sm sticky top-0 z-10">
+                        ${isOwnProfile ? '<div class="w-10"></div>' : `<button id="${prefix}backBtn" class="text-xl text-slate-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>`}
                         <h2 class="text-lg font-bold text-white mx-auto">${isOwnProfile ? 'Mi Perfil' : `Perfil de ${userData.username}`}</h2>
-                        ${isOwnProfile ? '<button id="logoutBtn" class="text-gray-400 hover:text-white transition-colors w-10 text-xl" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>' : '<div class="w-10"></div>'}
+                        ${isOwnProfile ? `<button id="${prefix}logoutBtn" class="text-slate-400 hover:text-white transition-colors w-10 text-xl" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>` : '<div class="w-10"></div>'}
                     </header>
                     <div class="overflow-y-auto pb-20">
                         <div class="profile-header" style="${bannerStyle}"></div>
@@ -1269,80 +1339,57 @@
                             <div class="profile-avatar-container flex flex-col items-center space-y-2">
                                 <div class="relative">
                                     <img src="${profile.avatar || ''}" alt="Avatar" class="w-24 h-24 rounded-full border-4 object-cover bg-gray-700" style="border-color: ${accentColor};">
-                                    ${isOwnProfile ? '<button id="changeAvatarBtn" class="absolute bottom-0 right-0 bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-gray-900"><i class="fas fa-pen text-xs"></i></button>' : ''}
+                                    ${isOwnProfile ? `<button id="${prefix}changeAvatarBtn" class="absolute bottom-0 right-0 bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-gray-900"><i class="fas fa-pen text-xs"></i></button>` : ''}
                                 </div>
                                 <div class="text-center">
                                     <h3 class="text-2xl font-bold text-white">${userData.username}</h3>
                                     <div class="flex justify-center items-center gap-4 mt-2 text-sm text-gray-400">
-                                        <span id="followerCount"><strong>0</strong> Seguidores</span>
-                                        <span id="followingCount"><strong>0</strong> Siguiendo</span>
+                                        <span id="${prefix}followerCount"><strong>0</strong> Seguidores</span>
+                                        <span id="${prefix}followingCount"><strong>0</strong> Siguiendo</span>
                                     </div>
                                 </div>
                                 <p class="text-gray-400 text-center text-sm max-w-md pt-2">${profile.bio || 'Sin biografía.'}</p>
-                                <div id="profileSocials" class="flex items-center gap-4 text-xl mt-2"></div>
-                                ${!isOwnProfile ? `<button id="followBtn" data-user-id="${userId}" class="mt-4 px-6 py-2 text-sm font-bold rounded-full transition-colors"></button>` : ''}
+                                <div id="${prefix}profileSocials" class="flex items-center gap-4 text-xl mt-2"></div>
+                                ${!isOwnProfile ? `<button id="${prefix}followBtn" data-user-id="${userId}" class="mt-4 px-6 py-2 text-sm font-bold rounded-full transition-colors"></button>` : ''}
                             </div>
-
                             <div class="mt-6 bg-gray-800/50 p-4 rounded-lg shadow-md">
                                 <h4 class="text-sm font-bold text-gray-400 mb-3 text-center uppercase tracking-wider">Logros</h4>
-                                <div id="profileAchievements" class="flex flex-wrap justify-center gap-3"></div>
+                                <div id="${prefix}profileAchievements" class="flex flex-wrap justify-center gap-3"></div>
                             </div>
-                            
                             <div class="mt-6 border-b border-gray-700">
-                                <nav class="-mb-px flex overflow-x-auto" aria-label="Tabs">
+                                <nav class="profile-tabs-container -mb-px flex" aria-label="Tabs">
                                     <button data-tab="posts" class="profile-tab tab-active" style="border-color: ${accentColor}; color: white;">Publicaciones</button>
                                     <button data-tab="collections" class="profile-tab">Colecciones</button>
                                     <button data-tab="favorites" class="profile-tab">Favoritos</button>
                                     ${isOwnProfile ? '<button data-tab="settings" class="profile-tab">Ajustes</button>' : ''}
                                 </nav>
                             </div>
-
-                            <div data-content="posts" class="profile-tab-content mt-4"><div id="userPostsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-posts-message" class="text-center text-gray-500 hidden py-8">No hay publicaciones.</p></div>
-                            <div data-content="collections" class="profile-tab-content mt-4 hidden"><div id="collectionsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-collections-message" class="text-center text-gray-500 hidden py-8">No hay colecciones.</p></div>
-                            <div data-content="favorites" class="profile-tab-content mt-4 hidden"><div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="no-favorites-message" class="text-center text-gray-500 hidden py-8">No ha guardado ninguna imagen.</p></div>
+                            <div data-content="posts" class="profile-tab-content mt-4"><div id="${prefix}userPostsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="${prefix}no-posts-message" class="text-center text-gray-500 hidden py-8">No hay publicaciones.</p></div>
+                            <div data-content="collections" class="profile-tab-content mt-4 hidden"><div id="${prefix}collectionsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="${prefix}no-collections-message" class="text-center text-gray-500 hidden py-8">No hay colecciones.</p></div>
+                            <div data-content="favorites" class="profile-tab-content mt-4 hidden"><div id="${prefix}favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div><p id="${prefix}no-favorites-message" class="text-center text-gray-500 hidden py-8">No ha guardado ninguna imagen.</p></div>
                             ${isOwnProfile ? `
                             <div data-content="settings" class="profile-tab-content mt-4 hidden space-y-6">
-                                <div>
-                                    <h4 class="text-lg font-bold text-white mb-2">Personalización</h4>
-                                    <label for="profileBannerUrl" class="block text-sm font-medium text-gray-400 mb-1">URL del Banner de Perfil</label>
-                                    <input type="url" id="profileBannerUrl" value="${profile.bannerUrl || ''}" placeholder="https://..." maxlength="${URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
-                                    <label for="profileColorPicker" class="block text-sm font-medium text-gray-400 mt-3 mb-1">Color de Acento</label>
-                                    <input type="color" id="profileColorPicker" value="${accentColor}" class="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md cursor-pointer">
-                                </div>
-                                <div>
-                                    <h4 class="text-lg font-bold text-white mb-2">Redes Sociales</h4>
-                                    <div class="space-y-3">
-                                        <div><label for="socialTwitter" class="block text-sm font-medium text-gray-400 mb-1">Twitter (URL)</label><input type="url" id="socialTwitter" value="${profile.socials?.twitter || ''}" placeholder="https://twitter.com/usuario" maxlength="${SOCIAL_URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
-                                        <div><label for="socialInstagram" class="block text-sm font-medium text-gray-400 mb-1">Instagram (URL)</label><input type="url" id="socialInstagram" value="${profile.socials?.instagram || ''}" placeholder="https://instagram.com/usuario" maxlength="${SOCIAL_URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
-                                        <div><label for="socialWebsite" class="block text-sm font-medium text-gray-400 mb-1">Sitio Web (URL)</label><input type="url" id="socialWebsite" value="${profile.socials?.website || ''}" placeholder="https://mi-pagina.com" maxlength="${SOCIAL_URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 class="text-lg font-bold text-white mb-2">Intereses</h4>
-                                    <div class="flex justify-between items-center mb-2"><p class="text-sm font-medium text-gray-400">Tus intereses</p><p id="interestCounter" class="text-sm text-gray-500">0/10</p></div>
-                                    <div class="relative mb-2"><input id="interestSearchInput" type="search" placeholder="Buscar intereses..." class="w-full bg-gray-800 text-white rounded-full pl-10 pr-4 py-2 border border-gray-700"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i></div>
-                                    <div id="profileInterests" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto"></div>
-                                </div>
-                                <div>
-                                    <h4 class="text-lg font-bold text-white mb-2">Biografía</h4>
-                                    <textarea id="profileBioInput" rows="3" maxlength="${BIO_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700" placeholder="Describe algo sobre ti...">${profile.bio || ''}</textarea>
-                                </div>
+                                <div><h4 class="text-lg font-bold text-white mb-2">Personalización</h4><label for="profileBannerUrl" class="block text-sm font-medium text-gray-400 mb-1">URL del Banner de Perfil</label><input type="url" id="profileBannerUrl" value="${profile.bannerUrl || ''}" placeholder="https://..." maxlength="${URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700 focus:ring-indigo-500 focus:border-indigo-500"><label for="profileColorPicker" class="block text-sm font-medium text-gray-400 mt-3 mb-1">Color de Acento</label><input type="color" id="profileColorPicker" value="${accentColor}" class="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md cursor-pointer"></div>
+                                <div><h4 class="text-lg font-bold text-white mb-2">Redes Sociales</h4><div class="space-y-3"><div><label for="socialTwitter" class="block text-sm font-medium text-gray-400 mb-1">Twitter (URL)</label><input type="url" id="socialTwitter" value="${profile.socials?.twitter || ''}" placeholder="https://twitter.com/usuario" maxlength="${SOCIAL_URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div><div><label for="socialInstagram" class="block text-sm font-medium text-gray-400 mb-1">Instagram (URL)</label><input type="url" id="socialInstagram" value="${profile.socials?.instagram || ''}" placeholder="https://instagram.com/usuario" maxlength="${SOCIAL_URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div><div><label for="socialWebsite" class="block text-sm font-medium text-gray-400 mb-1">Sitio Web (URL)</label><input type="url" id="socialWebsite" value="${profile.socials?.website || ''}" placeholder="https://mi-pagina.com" maxlength="${SOCIAL_URL_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700"></div></div></div>
+                                <div><h4 class="text-lg font-bold text-white mb-2">Intereses</h4><div class="flex justify-between items-center mb-2"><p class="text-sm font-medium text-gray-400">Tus intereses</p><p id="interestCounter" class="text-sm text-gray-500">0/10</p></div><div class="relative mb-2"><input id="interestSearchInput" type="search" placeholder="Buscar intereses..." class="w-full bg-gray-800 text-white rounded-full pl-10 pr-4 py-2 border border-gray-700"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i></div><div id="profileInterests" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto"></div></div>
+                                <div><h4 class="text-lg font-bold text-white mb-2">Biografía</h4><textarea id="profileBioInput" rows="3" maxlength="${BIO_MAX_LENGTH}" class="w-full bg-gray-800 text-white rounded-md p-2 border border-gray-700" placeholder="Describe algo sobre ti...">${profile.bio || ''}</textarea></div>
                                 <button id="saveProfileBtn" class="w-full text-white font-bold py-3 px-4 rounded-md transition-colors mt-4" style="background-color: ${accentColor};">Guardar Cambios</button>
                             </div>` : ''}
                         </div>
                     </div>
                 `;
                 
-                updateFollowCounts(userId);
-                renderUserPosts(userId, 'userPostsGrid', 'no-posts-message');
-                renderPublicFavorites(userId, 'favoritesGrid', 'no-favorites-message');
-                renderSocials(profile.socials, 'profileSocials');
-                checkAndRenderAchievements(userId, 'profileAchievements');
+                updateFollowCounts(userId, prefix);
+                renderUserPosts(userId, `${prefix}userPostsGrid`, `${prefix}no-posts-message`);
+                renderUserCollections(userId, prefix);
+                renderPublicFavorites(userId, `${prefix}favoritesGrid`, `${prefix}no-favorites-message`);
+                renderSocials(profile.socials, `${prefix}profileSocials`);
+                checkAndRenderAchievements(userId, `${prefix}profileAchievements`);
 
                 if (isOwnProfile) {
                     renderProfileInterests();
-                    document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
-                    document.getElementById('changeAvatarBtn').addEventListener('click', () => showModal('avatarModal'));
+                    document.getElementById(`${prefix}logoutBtn`).addEventListener('click', () => signOut(auth));
+                    document.getElementById(`${prefix}changeAvatarBtn`).addEventListener('click', () => showModal('avatarModal'));
                     document.getElementById('saveProfileBtn').addEventListener('click', saveProfileChanges);
                     document.getElementById('interestSearchInput').addEventListener('input', e => {
                         const query = e.target.value.toLowerCase();
@@ -1351,10 +1398,10 @@
                         });
                     });
                 } else {
-                    document.getElementById('userProfileBackBtn').addEventListener('click', () => closeSlideUpView('userProfileView'));
-                    const followBtn = document.getElementById('followBtn');
+                    document.getElementById(`${prefix}backBtn`).addEventListener('click', () => closeSlideUpView(viewId));
+                    const followBtn = document.getElementById(`${prefix}followBtn`);
                     followBtn.addEventListener('click', () => toggleFollow(userId));
-                    updateFollowButton(userId);
+                    updateFollowButton(userId, prefix);
                 }
 
                 viewContainer.querySelectorAll('.profile-tab').forEach(tab => {
@@ -1407,10 +1454,10 @@
                 activeDetailListeners.views = { unsubscribe: viewsUnsubscribe };
             }
             
-            function listenToComments(imageId) {
+            async function listenToComments(imageId) {
                 const commentsQuery = query(ref(db, `comments/${imageId}`), orderByChild('timestamp'));
                 
-                const commentsUnsubscribe = onValue(commentsQuery, snapshot => {
+                const commentsUnsubscribe = onValue(commentsQuery, async (snapshot) => {
                     const list = document.getElementById('commentsList');
                     if (!list) return;
                     list.innerHTML = '';
@@ -1419,40 +1466,29 @@
                         return;
                     }
                     
+                    const commentPromises = [];
                     snapshot.forEach(parentCommentSnapshot => {
-                        const parentData = { id: parentCommentSnapshot.key, ...parentCommentSnapshot.val() };
-                        const parentPath = `comments/${imageId}/${parentData.id}`;
-                        const parentElement = createCommentElement(parentData, parentPath);
-
-                        if (parentCommentSnapshot.hasChild('replies')) {
-                            const repliesContainer = document.createElement('div');
-                            repliesContainer.className = 'replies-container';
-
-                            const replies = Object.entries(parentCommentSnapshot.child('replies').val()).map(([key, value]) => ({...value, id: key}));
-                            replies.sort((a, b) => a.timestamp - b.timestamp);
-
-                            replies.forEach(replyData => {
-                                const replyPath = `${parentPath}/replies/${replyData.id}`;
-                                const replyElement = createCommentElement(replyData, replyPath);
-                                repliesContainer.appendChild(replyElement);
-                            });
-                            
-                            parentElement.querySelector('.comment-content').appendChild(repliesContainer);
-                        }
-                        
-                        list.appendChild(parentElement);
+                        commentPromises.push(createCommentElement(parentCommentSnapshot, imageId));
                     });
+
+                    const commentElements = await Promise.all(commentPromises);
+                    commentElements.sort((a,b) => b.dataset.timestamp - a.dataset.timestamp).forEach(el => list.appendChild(el));
                 });
                 
                 activeDetailListeners.comments = { unsubscribe: commentsUnsubscribe };
             }
             
-            function createCommentElement(commentData, path) {
+            async function createCommentElement(commentSnapshot, imageId) {
+                const commentData = { id: commentSnapshot.key, ...commentSnapshot.val() };
+                const path = `comments/${imageId}/${commentData.id}`;
                 const li = document.createElement('li');
                 li.className = 'comment-item';
                 li.dataset.commentPath = path;
                 li.dataset.authorName = commentData.username;
-                const isVerified = commentData.authorUid === globalAdminUID;
+                li.dataset.timestamp = commentData.timestamp;
+
+                const author = await getAuthorData(commentData.authorUid);
+                const isVerified = author.profile?.isAdmin;
 
                 const adminDeleteButton = isCurrentUserAdmin ? `<button class="admin-delete-comment-btn" title="Eliminar comentario"><i class="fas fa-trash-alt"></i></button>` : '';
                 
@@ -1473,6 +1509,18 @@
                             ${adminDeleteButton}
                         </div>
                     </div>`;
+
+                if (commentSnapshot.hasChild('replies')) {
+                    const repliesContainer = document.createElement('div');
+                    repliesContainer.className = 'replies-container';
+                    const replyPromises = [];
+                    commentSnapshot.child('replies').forEach(replySnapshot => {
+                        replyPromises.push(createCommentElement(replySnapshot, imageId));
+                    });
+                    const replyElements = await Promise.all(replyPromises);
+                    replyElements.sort((a,b) => a.dataset.timestamp - b.dataset.timestamp).forEach(el => repliesContainer.appendChild(el));
+                    li.querySelector('.comment-content').appendChild(repliesContainer);
+                }
                 
                 li.querySelector('.reply-btn').addEventListener('click', e => initiateReply(e.currentTarget.closest('li')));
                 
@@ -1482,12 +1530,17 @@
                 li.querySelectorAll('[data-userid]').forEach(el => {
                     el.addEventListener('click', e => {
                         e.stopPropagation();
-                        if (el.dataset.userid === currentUser.uid) { 
-                            const activeSlideUp = document.querySelector('.view.slide-up.active');
-                            if(activeSlideUp) closeSlideUpView(activeSlideUp.id); 
-                            setTimeout(() => triggerView('profileView'), 300); 
+                        const targetUserId = el.dataset.userid;
+                        const activeSlideUp = document.querySelector('.view.slide-up.active');
+                        if (activeSlideUp) {
+                            closeSlideUpView(activeSlideUp.id, () => {
+                                if (targetUserId === currentUser.uid) {
+                                    triggerView('profileView');
+                                } else {
+                                    populateProfileView(targetUserId);
+                                }
+                            });
                         }
-                        else { showUserProfile(el.dataset.userid); }
                     });
                 });
 
@@ -1504,7 +1557,7 @@
                 if (text.length > COMMENT_MAX_LENGTH) return showToast(`El comentario no puede exceder los ${COMMENT_MAX_LENGTH} caracteres.`);
                 
                 const replyToPath = document.getElementById('commentForm').dataset.replyToPath;
-                const authorName = document.getElementById('commentForm').dataset.authorName;
+                const replyingToUsername = document.getElementById('commentForm').dataset.authorName;
                 
                 const commentData = { 
                     text, 
@@ -1514,13 +1567,42 @@
                     userAvatar: currentUserData.profile.avatar 
                 };
 
-                if (replyToPath && authorName) {
-                    commentData.replyToUsername = authorName;
+                if (replyToPath && replyingToUsername) {
+                    commentData.replyToUsername = replyingToUsername;
                 }
 
                 try {
                     const refPath = replyToPath ? `${replyToPath}/replies` : `comments/${imageId}`;
                     await set(push(ref(db, refPath)), commentData);
+
+                    // --- START NOTIFICATION LOGIC ---
+                    let recipientUid;
+                    let message;
+                    const post = allPosts.find(p => p.id === imageId);
+
+                    if (replyToPath) {
+                        // It's a reply
+                        const parentCommentSnapshot = await get(ref(db, replyToPath));
+                        if(parentCommentSnapshot.exists()) {
+                            recipientUid = parentCommentSnapshot.val().authorUid;
+                            message = `${currentUserData.username} respondió a tu comentario.`;
+                        }
+                    } else if (post) {
+                        // It's a top-level comment
+                        recipientUid = post.authorUid;
+                        message = `${currentUserData.username} comentó en tu publicación: "${post.title}"`;
+                    }
+                    
+                    if (recipientUid && recipientUid !== currentUser.uid) {
+                        const notificationRef = push(ref(db, `notifications/${recipientUid}`));
+                        await set(notificationRef, {
+                            message,
+                            imageId,
+                            timestamp: serverTimestamp(),
+                            read: false
+                        });
+                    }
+                    // --- END NOTIFICATION LOGIC ---
 
                     const userRef = ref(db, `users/${currentUser.uid}/profile`);
                     const newCount = (currentUserData.profile.commentCount || 0) + 1;
@@ -1615,8 +1697,8 @@
             }
             
             function updateAllAvatars(url) {
-                const profileAvatar = document.querySelector('#profileView img, #userProfileView img');
-                if (profileAvatar) profileAvatar.src = url;
+                const profileAvatarInView = document.querySelector('#profileView img[alt="Avatar"], #userProfileView img[alt="Avatar"]');
+                if (profileAvatarInView) profileAvatarInView.src = url;
                 document.getElementById('navProfileAvatar').src = url;
                 document.getElementById('commentFormAvatar').src = url;
             }
@@ -1845,11 +1927,11 @@
                 const likesRef = ref(db, 'likes');
                 onValue(likesRef, async (snapshot) => {
                     const allLikes = snapshot.val() || {};
-                    const container = document.getElementById('leaderboard');
+                    const container = document.getElementById('leaderboard-container');
                     container.innerHTML = '';
 
                     if (!allPosts || allPosts.length === 0) {
-                         container.innerHTML = `<p class="text-center text-gray-500 text-sm col-span-3">Aún no hay publicaciones para mostrar.</p>`;
+                         container.innerHTML = `<p class="text-center text-slate-500 text-sm px-4">Aún no hay publicaciones para mostrar.</p>`;
                          return;
                     }
 
@@ -1869,10 +1951,10 @@
                         }
                     }
 
-                    const topPosts = uniquePosts.slice(0, 3);
+                    const topPosts = uniquePosts.slice(0, 10);
 
                     if (topPosts.length === 0 || topPosts[0].likeCount === 0) {
-                        container.innerHTML = `<p class="text-center text-gray-500 text-sm col-span-3">Aún no hay publicaciones populares. ¡Vota por tus favoritas!</p>`;
+                        container.innerHTML = `<p class="text-center text-slate-500 text-sm px-4">Aún no hay publicaciones populares. ¡Vota por tus favoritas!</p>`;
                         return;
                     }
 
@@ -1882,14 +1964,13 @@
                         const authorInfo = await getAuthorData(post.authorUid);
 
                         const item = document.createElement('div');
-                        item.className = `most-voted-item rank-${rank} cursor-pointer group`;
+                        item.className = 'story-item cursor-pointer';
                         item.innerHTML = `
-                            <img src="${post.imageUrl}" alt="${post.title}" class="post-image transition-transform duration-300 group-hover:scale-105" onerror="this.onerror=null;this.src='https://placehold.co/300x500/1f2937/a7a7a7?text=Error';">
-                            <div class="rank-badge">${rank}</div>
-                            <div class="author-overlay">
-                                <img src="${authorInfo.profile?.avatar || ''}" alt="${authorInfo.username}">
-                                <span class="truncate">${authorInfo.username}</span>
+                            <div class="story-avatar-wrapper rank-${rank}">
+                                <img src="${post.imageUrl}" class="story-avatar" onerror="this.src='https://placehold.co/64x64/1e293b/94a3b8?text=??'"/>
+                                <div class="story-trophy rank-${rank}"><i class="fas fa-trophy"></i></div>
                             </div>
+                            <span class="story-username">${authorInfo.username}</span>
                         `;
                         item.addEventListener('click', () => showDetailView(post.id, true));
                         container.appendChild(item);
@@ -1899,29 +1980,46 @@
 
             // --- LÓGICA DE SEGUIMIENTO (FOLLOW) ---
             async function toggleFollow(userIdToFollow) {
-                const followingRef = ref(db, `following/${currentUser.uid}/${userIdToFollow}`);
-                const followerRef = ref(db, `followers/${userIdToFollow}/${currentUser.uid}`);
-                const snapshot = await get(followingRef);
+                const followingUserRef = ref(db, `users/${currentUser.uid}/following/${userIdToFollow}`);
+                const followedUserFollowerRef = ref(db, `followers/${userIdToFollow}/${currentUser.uid}`);
+                
+                const isCurrentlyFollowing = !!(currentUserData.following && currentUserData.following[userIdToFollow]);
 
-                if (snapshot.exists()) {
-                    await remove(followingRef);
-                    await remove(followerRef);
-                } else {
-                    await set(followingRef, true);
-                    await set(followerRef, true);
+                try {
+                    if (isCurrentlyFollowing) {
+                        // Unfollow
+                        await remove(followingUserRef);
+                        await remove(followedUserFollowerRef);
+                        if (currentUserData.following) {
+                            delete currentUserData.following[userIdToFollow];
+                        }
+                    } else {
+                        // Follow
+                        await set(followingUserRef, true);
+                        await set(followedUserFollowerRef, true);
+                        if (!currentUserData.following) {
+                            currentUserData.following = {};
+                        }
+                        currentUserData.following[userIdToFollow] = true;
+                    }
+
+                    const prefix = document.getElementById('userProfileView').dataset.userId === userIdToFollow ? 'user-profile-' : 'my-profile-';
+                    updateFollowButton(userIdToFollow, prefix);
+                    updateDetailFollowButton(userIdToFollow);
+                    updateFollowCounts(userIdToFollow, prefix);
+                } catch (error) {
+                    console.error("Error toggling follow:", error);
+                    showToast("No se pudo realizar la acción.");
                 }
-                updateFollowButton(userIdToFollow);
-                updateDetailFollowButton(userIdToFollow);
-                updateFollowCounts(userIdToFollow);
             }
 
-            async function updateFollowButton(userId) {
-                const followBtn = document.getElementById('followBtn');
+            function updateFollowButton(userId, prefix) {
+                const followBtn = document.getElementById(`${prefix}followBtn`);
                 if (!followBtn || followBtn.dataset.userId !== userId) return;
 
-                const followingRef = ref(db, `following/${currentUser.uid}/${userId}`);
-                const snapshot = await get(followingRef);
-                if (snapshot.exists()) {
+                const isFollowing = !!(currentUserData.following && currentUserData.following[userId]);
+
+                if (isFollowing) {
                     followBtn.textContent = 'Siguiendo';
                     followBtn.className = 'mt-4 px-6 py-2 text-sm font-bold rounded-full transition-colors bg-gray-700 text-white hover:bg-gray-600';
                 } else {
@@ -1930,15 +2028,14 @@
                 }
             }
             
-            async function updateDetailFollowButton(userId) {
+            function updateDetailFollowButton(userId) {
                 const followBtn = document.getElementById('detailFollowBtn');
                 if (!followBtn || followBtn.dataset.userId !== userId) return;
 
-                const followingRef = ref(db, `following/${currentUser.uid}/${userId}`);
-                const snapshot = await get(followingRef);
+                const isFollowing = !!(currentUserData.following && currentUserData.following[userId]);
                 
                 const baseClasses = 'px-4 py-1.5 text-sm font-bold rounded-full transition-colors';
-                if (snapshot.exists()) {
+                if (isFollowing) {
                     followBtn.textContent = 'Siguiendo';
                     followBtn.className = `${baseClasses} bg-gray-700 text-white hover:bg-gray-600`;
                 } else {
@@ -1949,22 +2046,146 @@
             }
 
 
-            function updateFollowCounts(userId) {
+            function updateFollowCounts(userId, prefix) {
                 const followersRef = ref(db, `followers/${userId}`);
-                const followingRef = ref(db, `following/${userId}`);
+                const followingRef = ref(db, `users/${userId}/following`);
 
                 onValue(followersRef, (snap) => {
                     const count = snap.exists() ? Object.keys(snap.val()).length : 0;
-                    const el = document.getElementById('followerCount');
+                    const el = document.getElementById(`${prefix}followerCount`);
                     if(el) el.innerHTML = `<strong>${count}</strong> Seguidores`;
                 });
                 onValue(followingRef, (snap) => {
                     const count = snap.exists() ? Object.keys(snap.val()).length : 0;
-                    const el = document.getElementById('followingCount');
+                    const el = document.getElementById(`${prefix}followingCount`);
                     if(el) el.innerHTML = `<strong>${count}</strong> Siguiendo`;
                 });
             }
 
+            // --- LÓGICA DE COLECCIONES ---
+            function setupCollectionEventListeners() {
+                document.getElementById('collectionBackBtn').addEventListener('click', () => closeSlideUpView('collectionView'));
+            }
+
+            async function openCollectionModal(postId, isPost) {
+                const modal = document.getElementById('saveToCollectionModal');
+                const listContainer = modal.querySelector('#userCollectionsList');
+                const form = modal.querySelector('#newCollectionForm');
+
+                listContainer.innerHTML = `<div class="text-center"><i class="fas fa-spinner fa-spin text-indigo-400"></i></div>`;
+                showModal('saveToCollectionModal');
+
+                const collectionsRef = ref(db, `collections/${currentUser.uid}`);
+                const snapshot = await get(collectionsRef);
+                const collections = snapshot.val() || {};
+
+                listContainer.innerHTML = '';
+                if (Object.keys(collections).length === 0) {
+                    listContainer.innerHTML = `<p class="text-center text-gray-500 text-sm">No tienes colecciones.</p>`;
+                } else {
+                    for (const [id, data] of Object.entries(collections)) {
+                        const item = document.createElement('button');
+                        item.className = 'w-full text-left p-2 rounded-md hover:bg-gray-700 transition-colors';
+                        item.textContent = data.name;
+                        item.onclick = () => addPostToCollection(postId, isPost, id);
+                        listContainer.appendChild(item);
+                    }
+                }
+
+                form.onsubmit = async (e) => {
+                    e.preventDefault();
+                    const nameInput = document.getElementById('newCollectionName');
+                    const name = nameInput.value.trim();
+                    if (!name) return;
+                    if (name.length > COLLECTION_NAME_MAX_LENGTH) {
+                        return showToast(`El nombre no puede exceder los ${COLLECTION_NAME_MAX_LENGTH} caracteres.`);
+                    }
+
+                    const newCollectionRef = push(collectionsRef);
+                    await set(newCollectionRef, {
+                        name: name,
+                        createdAt: serverTimestamp(),
+                        owner: currentUser.uid
+                    });
+                    
+                    await addPostToCollection(postId, isPost, newCollectionRef.key);
+                    nameInput.value = '';
+                };
+            }
+
+            async function addPostToCollection(postId, isPost, collectionId) {
+                const item = (isPost ? allPosts : allImages).find(p => String(p.id) === String(postId));
+                if (!item) return showToast("Error: no se encontró la imagen.");
+
+                const collectionPostRef = ref(db, `collection_posts/${collectionId}/${postId}`);
+                await set(collectionPostRef, true);
+                
+                const collectionRef = ref(db, `collections/${currentUser.uid}/${collectionId}`);
+                await update(collectionRef, { coverImageUrl: isPost ? item.imageUrl : item.url });
+
+                hideModal('saveToCollectionModal');
+                showToast("Guardado en la colección.");
+            }
+
+            function renderUserCollections(userId, prefix) {
+                const container = document.getElementById(`${prefix}collectionsGrid`);
+                const message = document.getElementById(`${prefix}no-collections-message`);
+                if (!container || !message) return;
+
+                const collectionsRef = ref(db, `collections/${userId}`);
+                onValue(collectionsRef, (snapshot) => {
+                    container.innerHTML = '';
+                    const collections = snapshot.val() || {};
+                    const collectionEntries = Object.entries(collections);
+
+                    message.classList.toggle('hidden', collectionEntries.length > 0);
+
+                    if (collectionEntries.length > 0) {
+                        collectionEntries.forEach(([id, data]) => {
+                            const card = document.createElement('div');
+                            card.className = 'collection-card';
+                            
+                            const coverImg = data.coverImageUrl 
+                                ? `<img src="${data.coverImageUrl}" class="collection-card-bg" onerror="this.style.display='none'">`
+                                : '';
+
+                            card.innerHTML = `
+                                ${coverImg}
+                                <div class="collection-card-overlay">
+                                    <span class="collection-card-name">${data.name}</span>
+                                </div>
+                            `;
+                            card.addEventListener('click', () => showCollectionView(id, data.name));
+                            container.appendChild(card);
+                        });
+                    }
+                });
+            }
+
+            async function showCollectionView(collectionId, collectionName) {
+                navigateTo('collectionView');
+                const view = document.getElementById('collectionView');
+                const grid = view.querySelector('#collectionImageGrid');
+                const message = view.querySelector('#no-collection-posts-message');
+                const header = view.querySelector('#collectionNameHeader');
+
+                header.textContent = collectionName;
+                grid.innerHTML = `<div class="col-span-full text-center p-8"><i class="fas fa-spinner fa-spin text-3xl text-indigo-400"></i></div>`;
+                message.classList.add('hidden');
+
+                const postsRef = ref(db, `collection_posts/${collectionId}`);
+                const snapshot = await get(postsRef);
+                const postIds = Object.keys(snapshot.val() || {});
+
+                grid.innerHTML = '';
+                if (postIds.length === 0) {
+                    message.classList.remove('hidden');
+                    return;
+                }
+
+                const itemsInCollection = [...allPosts, ...allImages].filter(item => postIds.includes(String(item.id)));
+                appendToImageGrid(grid, itemsInCollection.reverse());
+            }
 
             // --- LÓGICA DE ADVERTENCIAS Y LEGALES ---
             function setupLegalModalsListeners() {
@@ -2095,12 +2316,16 @@
             async function initializeAppForUser(user) {
                 showLoader('galleryLoader', true);
                 
-                isCurrentUserAdmin = user.email === ADMIN_EMAIL;
+                const userDataSnapshot = await get(ref(db, `users/${user.uid}`));
+                currentUserData = userDataSnapshot.val() || { username: user.email.split('@')[0], profile: {} };
+                if (!currentUserData.following) {
+                    currentUserData.following = {};
+                }
+                isCurrentUserAdmin = !!currentUserData.profile?.isAdmin;
+
                 const adminBtn = document.getElementById('adminAddCuratedBtn');
                 if (adminBtn) adminBtn.classList.toggle('hidden', !isCurrentUserAdmin);
 
-                const userData = await getAuthorData(user.uid);
-                currentUserData = userData || { username: user.email.split('@')[0], profile: {} };
                 const defaultAvatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(currentUserData.username || 'user')}`;
                 currentUserData.profile.avatar = currentUserData.profile.avatar || defaultAvatar;
                 updateAllAvatars(currentUserData.profile.avatar);
