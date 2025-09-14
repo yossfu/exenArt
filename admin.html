@@ -3,203 +3,535 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administración de Cajeros</title>
+    <title>exen-E - Panel de Administración</title>
+    <!-- Librerías gratuitas -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #e9ecef;
-            padding: 1.25rem;
-        }
-        .container {
-            max-width: 37.5rem;
-            margin: 0 auto;
-            background: #fff;
-            padding: 1.25rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 0.125rem 0.625rem rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 1.25rem;
-        }
-        .form-group {
-            margin-bottom: 0.9375rem;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.3125rem;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ced4da;
-            border-radius: 0.25rem;
-            font-size: 1rem;
-        }
-        .btn {
-            padding: 0.625rem 1.25rem;
-            border: none;
-            border-radius: 0.25rem;
-            cursor: pointer;
-            font-size: 1rem;
-            background: #007bff;
-            color: white;
-            touch-action: manipulation;
-        }
-        .btn:hover {
-            background: #0056b3;
-        }
-        .btn-danger {
-            background: #dc3545;
-        }
-        .btn-danger:hover {
-            background: #c82333;
-        }
-        .user-list {
-            margin-top: 1.25rem;
-        }
-        .user-item {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.625rem;
-            border-bottom: 1px solid #dee2e6;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px;
         }
-        @media (max-width: 600px) {
-            body {
-                padding: 0.625rem;
+        #admin-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+            background: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: animate__fadeIn 0.5s ease;
+        }
+        #admin-pass, #search-images {
+            width: 100%;
+            padding: 12px;
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-family: 'Inter', sans-serif;
+        }
+        #admin-form, #login-form, #edit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        #admin-form input, #admin-form textarea, #edit-form input, #edit-form textarea {
+            padding: 12px;
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+        }
+        #admin-form textarea, #edit-form textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        button {
+            padding: 12px;
+            background: linear-gradient(135deg, #333, #444);
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #444, #555);
+            transform: scale(1.02);
+        }
+        .action-btn {
+            padding: 8px;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+        .delete-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+        }
+        .delete-btn:hover {
+            background: linear-gradient(135deg, #ff8e8e, #ff6b6b);
+        }
+        .edit-btn {
+            background: linear-gradient(135deg, #4caf50, #66bb6a);
+        }
+        .edit-btn:hover {
+            background: linear-gradient(135deg, #66bb6a, #4caf50);
+        }
+        #error-message, #success-message {
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+            display: none;
+            font-family: 'Inter', sans-serif;
+        }
+        #error-message {
+            color: #ff6b6b;
+            background: rgba(255, 75, 75, 0.1);
+            border-radius: 6px;
+        }
+        #success-message {
+            color: #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 6px;
+        }
+        header {
+            background: linear-gradient(135deg, #1e1e1e, #0a0a0a);
+            padding: 15px 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        header h1 {
+            font-size: 1.8em;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            font-weight: 600;
+        }
+        footer {
+            background: linear-gradient(135deg, #1e1e1e, #0a0a0a);
+            padding: 20px;
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: auto;
+            font-family: 'Inter', sans-serif;
+        }
+        #disclaimer {
+            background: #1e1e1e;
+            padding: 15px;
+            margin: 10px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6b6b;
+            font-size: 0.8em;
+            line-height: 1.4;
+            color: #ccc;
+        }
+        #disclaimer i {
+            color: #ff6b6b;
+            margin-right: 5px;
+        }
+        #image-list {
+            margin-top: 20px;
+            display: none;
+        }
+        #image-list.show {
+            display: block;
+        }
+        #image-list h2 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+        #image-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #2a2a2a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #image-table th, #image-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #555;
+        }
+        #image-table th {
+            background: #333;
+            font-weight: 600;
+        }
+        #image-table td img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        #image-table td button {
+            margin: 0 5px;
+        }
+        #edit-form {
+            display: none;
+            margin-top: 20px;
+        }
+        #edit-form.show {
+            display: flex;
+        }
+        #search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        #search-images {
+            flex: 1;
+        }
+        #search-btn {
+            background: linear-gradient(135deg, #333, #444);
+        }
+        #search-btn:hover {
+            background: linear-gradient(135deg, #444, #555);
+        }
+        @media (max-width: 768px) {
+            #admin-container {
+                width: 90%;
             }
-            .btn {
-                padding: 0.5rem 1rem;
-                font-size: 0.875rem;
+            header h1 {
+                font-size: 1.5em;
+            }
+            #image-table {
+                font-size: 14px;
+            }
+            #image-table td img {
+                width: 40px;
+                height: 40px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Administración de Cajeros</h1>
-        <div class="form-group">
-            <label for="username">Usuario:</label>
-            <input type="text" id="username" placeholder="Ingrese usuario">
+    <!-- Header -->
+    <header>
+        <h1><i class="fas fa-images"></i> exen-E - Administración</h1>
+    </header>
+
+    <!-- Contenedor de Administración -->
+    <div id="admin-container">
+        <div id="login-form">
+            <input type="password" id="admin-pass" placeholder="Contraseña de Administrador">
+            <button onclick="checkAdmin()"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+            <div id="error-message">Contraseña incorrecta</div>
         </div>
-        <div class="form-group">
-            <label for="password">Contraseña:</label>
-            <input type="password" id="password" placeholder="Ingrese contraseña">
+        <div id="admin-content" style="display: none;">
+            <form id="admin-form">
+                <h2><i class="fas fa-upload"></i> Agregar Nueva Imagen</h2>
+                <input type="url" id="img-url" placeholder="URL de la Imagen (https://...)" required>
+                <input type="text" id="img-title" placeholder="Título" required>
+                <textarea id="img-desc" placeholder="Descripción" required></textarea>
+                <input type="text" id="img-tags" placeholder="Tags (separados por comas, ej. arte, fanart)" required>
+                <button type="submit"><i class="fas fa-plus"></i> Añadir Imagen</button>
+                <div id="success-message">Imagen añadida con éxito</div>
+                <div id="error-message">Error al añadir la imagen</div>
+            </form>
+            <div id="image-list">
+                <h2><i class="fas fa-list"></i> Lista de Imágenes</h2>
+                <div id="search-container">
+                    <input type="text" id="search-images" placeholder="Buscar por título o tags...">
+                    <button id="search-btn"><i class="fas fa-search"></i> Buscar</button>
+                </div>
+                <table id="image-table">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Título</th>
+                            <th>Tags</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="image-table-body"></tbody>
+                </table>
+            </div>
+            <form id="edit-form">
+                <h2><i class="fas fa-edit"></i> Editar Imagen</h2>
+                <input type="hidden" id="edit-img-id">
+                <input type="url" id="edit-img-url" placeholder="URL de la Imagen (https://...)" required>
+                <input type="text" id="edit-img-title" placeholder="Título" required>
+                <textarea id="edit-img-desc" placeholder="Descripción" required></textarea>
+                <input type="text" id="edit-img-tags" placeholder="Tags (separados por comas, ej. arte, fanart)" required>
+                <button type="submit"><i class="fas fa-save"></i> Guardar Cambios</button>
+                <button type="button" onclick="cancelEdit()"><i class="fas fa-times"></i> Cancelar</button>
+            </form>
         </div>
-        <button class="btn" id="addUserBtn">Agregar Cajero</button>
-        <div class="user-list" id="userList"></div>
     </div>
 
-    <script type="module">
-        let firebaseApp, db, ref, push, onValue, remove;
-        const firebaseConfig = {
-            apiKey: "AIzaSyCU9meIionjsLxtKH-q_k64dHsmRgHPKrk",
-            authDomain: "posventa-9168b.firebaseapp.com",
-            projectId: "posventa-9168b",
-            storageBucket: "posventa-9168b.firebasestorage.app",
-            messagingSenderId: "602077008054",
-            appId: "1:602077008054:web:ca857c7566a9ce0945d617",
-            measurementId: "G-W5L6995VDE",
-            databaseURL: "https://posventa-9168b-default-rtdb.firebaseio.com/"
-        };
+    <!-- Footer con Disclaimer -->
+    <footer>
+        <div id="disclaimer">
+            <i class="fas fa-info-circle"></i>
+            <strong>Descargo de Responsabilidades:</strong> Este sitio contiene fanarts y contenido creativo compartido sin fines de lucro. Todos los derechos de autor pertenecen a sus respectivos creadores originales. No se promueve ni distribuye material con intención comercial. Si ves algo que te pertenece, contáctanos para removerlo.
+        </div>
+        <p>&copy; 2025 exen-E. Diseñado en la oscuridad.</p>
+    </footer>
 
-        async function loadFirebase() {
-            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js');
-            const { getDatabase, ref: dbRef, push: dbPush, onValue: dbOnValue, remove: dbRemove } = await import('https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js');
-            firebaseApp = initializeApp(firebaseConfig);
-            db = getDatabase(firebaseApp);
-            ref = dbRef;
-            push = dbPush;
-            onValue = dbOnValue;
-            remove = dbRemove;
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
+            authDomain: "exene-53e6b.firebaseapp.com",
+            databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
+            projectId: "exene-53e6b",
+            storageBucket: "exene-53e6b.appspot.com",
+            messagingSenderId: "481369419867",
+            appId: "1:481369419867:web:ac5db24c436344262c8f7e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Generar ID único
+        function generateUniqueId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let id = '';
+            for (let i = 0; i < 10; i++) {
+                id += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return `img_${id}`;
         }
 
-        async function addUser() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
+        // Mostrar mensajes
+        function showMessage(elementId, message, isSuccess = false) {
+            const element = document.querySelector(`#${elementId}`);
+            element.textContent = message;
+            element.style.display = 'block';
+            element.style.color = isSuccess ? '#4caf50' : '#ff6b6b';
+            element.style.background = isSuccess ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 75, 75, 0.1)';
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 3000);
+        }
 
-            if (!username || !password) {
-                alert('Por favor, complete todos los campos');
+        // Validar URL
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        // Normalizar texto para búsqueda
+        function normalize(text) {
+            return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
+        }
+
+        // Verificar contraseña
+        function checkAdmin() {
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === 'admin123') { // Cambiar por contraseña segura en producción
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                document.getElementById('image-list').classList.add('show');
+                loadImages();
+            } else {
+                showMessage('error-message', 'Contraseña incorrecta');
+            }
+        }
+
+        // Cargar lista de imágenes
+        function loadImages(query = '') {
+            db.ref('images').once('value', (snapshot) => {
+                const images = [];
+                snapshot.forEach((child) => {
+                    const data = child.val();
+                    images.push({ id: child.key, ...data });
+                });
+                const filteredImages = query ? images.filter(img => 
+                    normalize(img.title).includes(normalize(query)) ||
+                    (img.tags && img.tags.some(tag => normalize(tag).includes(normalize(query))))
+                ) : images;
+                displayImages(filteredImages);
+            }).catch((error) => {
+                showMessage('error-message', 'Error al cargar imágenes: ' + error.message);
+            });
+        }
+
+        // Mostrar imágenes en la tabla
+        function displayImages(images) {
+            const tableBody = document.getElementById('image-table-body');
+            tableBody.innerHTML = '';
+            if (images.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No se encontraron imágenes.</td></tr>';
+                return;
+            }
+            images.forEach(img => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><img src="${img.url}" alt="${img.title}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlPC90ZXh0Pjwvc3ZnPg=='"></td>
+                    <td>${img.title}</td>
+                    <td>${img.tags ? img.tags.join(', ') : ''}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editImage('${img.id}')"><i class="fas fa-edit"></i> Editar</button>
+                        <button class="action-btn delete-btn" onclick="deleteImage('${img.id}')"><i class="fas fa-trash"></i> Eliminar</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Manejar envío del formulario para añadir imagen
+        document.getElementById('admin-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const url = document.getElementById('img-url').value.trim();
+            const title = document.getElementById('img-title').value.trim();
+            const desc = document.getElementById('img-desc').value.trim();
+            const tags = document.getElementById('img-tags').value.split(',').map(t => t.trim()).filter(t => t);
+            const id = generateUniqueId();
+
+            // Validaciones
+            if (!isValidUrl(url)) {
+                showMessage('error-message', 'URL de imagen inválida');
+                return;
+            }
+            if (!title) {
+                showMessage('error-message', 'El título es obligatorio');
+                return;
+            }
+            if (!desc) {
+                showMessage('error-message', 'La descripción es obligatoria');
+                return;
+            }
+            if (tags.length === 0) {
+                showMessage('error-message', 'Debe incluir al menos un tag');
                 return;
             }
 
-            await loadFirebase();
-            const usersRef = ref(db, 'users');
-            onValue(usersRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const users = snapshot.val();
-                    const userExists = Object.values(users).some(u => u.username === username);
-                    if (userExists) {
-                        alert('El usuario ya existe');
-                        return;
-                    }
-                }
-
-                push(usersRef, { username, password })
-                    .then(() => {
-                        alert('Cajero agregado exitosamente');
-                        document.getElementById('username').value = '';
-                        document.getElementById('password').value = '';
-                    })
-                    .catch(error => {
-                        console.error('Error al agregar cajero:', error);
-                        alert('Error al agregar cajero: ' + error.message);
-                    });
-            }, { onlyOnce: true });
-        }
-
-        async function displayUsers() {
-            await loadFirebase();
-            const userList = document.getElementById('userList');
-            const usersRef = ref(db, 'users');
-            onValue(usersRef, (snapshot) => {
-                userList.innerHTML = '';
-                if (snapshot.exists()) {
-                    const users = snapshot.val();
-                    Object.entries(users).forEach(([key, user]) => {
-                        const div = document.createElement('div');
-                        div.className = 'user-item';
-                        div.innerHTML = `
-                            <span>${user.username}</span>
-                            <button class="btn btn-danger" data-key="${key}">Eliminar</button>
-                        `;
-                        userList.appendChild(div);
-                    });
-                    setupDeleteListeners();
-                } else {
-                    userList.innerHTML = '<p>No hay cajeros registrados</p>';
-                }
-            }, (error) => {
-                console.error('Error al cargar usuarios:', error);
-                userList.innerHTML = '<p>Error al cargar cajeros</p>';
-            });
-        }
-
-        function setupDeleteListeners() {
-            document.querySelectorAll('.btn-danger').forEach(button => {
-                button.addEventListener('click', () => {
-                    const key = button.getAttribute('data-key');
-                    deleteUser(key);
-                });
-            });
-        }
-
-        async function deleteUser(key) {
-            await loadFirebase();
-            const userRef = ref(db, `users/${key}`);
-            remove(userRef)
+            // Guardar en Firebase
+            const data = { url, title, desc, tags };
+            db.ref('images/' + id).set(data)
                 .then(() => {
-                    alert('Cajero eliminado exitosamente');
+                    showMessage('success-message', 'Imagen añadida con éxito', true);
+                    e.target.reset();
+                    loadImages();
+                    console.log('Imagen añadida:', { id, ...data });
                 })
-                .catch(error => {
-                    console.error('Error al eliminar cajero:', error);
-                    alert('Error al eliminar cajero: ' + error.message);
+                .catch((error) => {
+                    showMessage('error-message', 'Error al añadir la imagen: ' + error.message);
+                    console.error('Error:', error);
                 });
+        });
+
+        // Editar imagen
+        function editImage(id) {
+            db.ref(`images/${id}`).once('value', (snapshot) => {
+                const img = snapshot.val();
+                if (img) {
+                    document.getElementById('edit-img-id').value = id;
+                    document.getElementById('edit-img-url').value = img.url;
+                    document.getElementById('edit-img-title').value = img.title;
+                    document.getElementById('edit-img-desc').value = img.desc;
+                    document.getElementById('edit-img-tags').value = img.tags ? img.tags.join(', ') : '';
+                    document.getElementById('edit-form').classList.add('show');
+                    document.getElementById('admin-form').style.display = 'none';
+                    document.getElementById('image-list').style.display = 'none';
+                }
+            }).catch((error) => {
+                showMessage('error-message', 'Error al cargar la imagen: ' + error.message);
+            });
         }
 
-        document.getElementById('addUserBtn').addEventListener('click', addUser);
-        displayUsers();
+        // Guardar cambios de edición
+        document.getElementById('edit-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-img-id').value;
+            const url = document.getElementById('edit-img-url').value.trim();
+            const title = document.getElementById('edit-img-title').value.trim();
+            const desc = document.getElementById('edit-img-desc').value.trim();
+            const tags = document.getElementById('edit-img-tags').value.split(',').map(t => t.trim()).filter(t => t);
+
+            // Validaciones
+            if (!isValidUrl(url)) {
+                showMessage('error-message', 'URL de imagen inválida');
+                return;
+            }
+            if (!title) {
+                showMessage('error-message', 'El título es obligatorio');
+                return;
+            }
+            if (!desc) {
+                showMessage('error-message', 'La descripción es obligatoria');
+                return;
+            }
+            if (tags.length === 0) {
+                showMessage('error-message', 'Debe incluir al menos un tag');
+                return;
+            }
+
+            // Actualizar en Firebase
+            const data = { url, title, desc, tags };
+            db.ref('images/' + id).set(data)
+                .then(() => {
+                    showMessage('success-message', 'Imagen actualizada con éxito', true);
+                    document.getElementById('edit-form').classList.remove('show');
+                    document.getElementById('admin-form').style.display = 'flex';
+                    document.getElementById('image-list').style.display = 'block';
+                    loadImages();
+                })
+                .catch((error) => {
+                    showMessage('error-message', 'Error al actualizar la imagen: ' + error.message);
+                });
+        });
+
+        // Cancelar edición
+        function cancelEdit() {
+            document.getElementById('edit-form').classList.remove('show');
+            document.getElementById('admin-form').style.display = 'flex';
+            document.getElementById('image-list').style.display = 'block';
+        }
+
+        // Eliminar imagen
+        function deleteImage(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta imagen?')) {
+                db.ref(`images/${id}`).remove()
+                    .then(() => {
+                        showMessage('success-message', 'Imagen eliminada con éxito', true);
+                        loadImages();
+                    })
+                    .catch((error) => {
+                        showMessage('error-message', 'Error al eliminar la imagen: ' + error.message);
+                    });
+            }
+        }
+
+        // Búsqueda de imágenes
+        document.getElementById('search-btn').addEventListener('click', () => {
+            const query = document.getElementById('search-images').value;
+            loadImages(query);
+        });
+
+        // Restaurar lista al limpiar búsqueda
+        document.getElementById('search-images').addEventListener('input', (e) => {
+            if (!e.target.value) {
+                loadImages();
+            }
+        });
     </script>
 </body>
 </html>
