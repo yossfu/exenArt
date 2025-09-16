@@ -202,7 +202,6 @@
                             </button>
                         </div>
                     </div>
-                </div>
 
 
                 <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-4 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
@@ -257,7 +256,6 @@
         if(!profileIcon){profileIcon=profileIcons[Math.floor(Math.random()*profileIcons.length)];localStorage.setItem('profileIcon',profileIcon);}
         updateUserProfile();
         function updateUserProfile(){const userProfile=document.getElementById('user-profile');userProfile.innerHTML=username?`${profileIcon} ${username}`:`${profileIcon} Anónimo`;document.getElementById('name-input').classList.toggle('hidden',!!username);}
-        function showError(message){console.error('Error:',message);const errorDiv=document.getElementById('error-message');errorDiv.textContent=message;errorDiv.style.display='block';}
         function trackUserInteractions(type,data){let interactions=JSON.parse(localStorage.getItem('userInteractions'))||{likes:[],viewTimes:{},searches:[],tags:[]};if(type==='like'&&!interactions.likes.includes(data))interactions.likes.push(data);else if(type==='view')interactions.viewTimes[data.imageId]=(interactions.viewTimes[data.imageId]||0)+data.time;else if(type==='search')interactions.searches.push(data);else if(type==='tag'&&!interactions.tags.includes(data))interactions.tags.push(data);localStorage.setItem('userInteractions',JSON.stringify(interactions));}
 
         /**
@@ -314,7 +312,59 @@
         }
 
         function loadInitialImages(){document.getElementById('loader').style.display='block';db.ref('images').once('value').then(snapshot=>{document.getElementById('loader').style.display='none';if(!snapshot.exists())return showError('No se encontraron imágenes en Firebase.');const images=[];snapshot.forEach(child=>{const data=child.val();if(data.url&&data.title){images.push({id:child.key,...data});lastImageKey=child.key;}});if(images.length===0)return showError('No se encontraron imágenes válidas.');allImages=images;displayedImages=sortImagesByPreference(allImages);displayImages(displayedImages.slice(0,imagesPerLoad));loadTopLikedImages();loadForYouImages();}).catch(error=>{document.getElementById('loader').style.display='none';showError('Error al conectar con Firebase: '+error.message);});}
-        function initBattleSection(){db.ref('battle').once('value').then(snap=>{const battle=snap.val()||{};const now=new Date();const monthEnd=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59);if(!battle.images||!battle.expiry||battle.expiry<now.getTime()){const eligibleImages=allImages.filter(img=>!img.tags||!img.tags.includes('battle_winner'));let img1,img2;if(eligibleImages.length>=2){img1=eligibleImages[Math.floor(Math.random()*eligibleImages.length)];do{img2=eligibleImages[Math.floor(Math.random()*eligibleImages.length)];}while(img2.id===img1.id);}else{img1=allImages[Math.floor(Math.random()*allImages.length)];do{img2=allImages[Math.floor(Math.random()*allImages.length)];}while(img2.id===img1.id);}db.ref('battle').set({images:[img1.id,img2.id],votes:{[img1.id]:0,[img2.id]:0},expiry:monthEnd.getTime(),users:{}}).then(()=>displayBattle([img1,img2],monthEnd)).catch(e=>console.error('Error initializing battle:',e));}else{const battleImages=battle.images.map(id=>allImages.find(i=>i.id===id)).filter(Boolean);if(battleImages.length===2){displayBattle(battleImages,new Date(battle.expiry));}else{console.error("Battle images not found");}}}).catch(e=>console.error('Error loading battle:',e));loadPreviousBattleWinner();}
+        
+        /**
+         * Lógica de batalla modificada para usar la duración desde Firebase.
+         */
+        function initBattleSection(){
+            db.ref('battle').once('value').then(snap=>{
+                const battle=snap.val()||{};
+                const now=Date.now();
+
+                // === NUEVA LÓGICA CORREGIDA ===
+                // El problema está en que el timestamp de expiración es muy lejano.
+                // La duración en Firebase se usa para crear una nueva batalla, no para la cuenta regresiva.
+                
+                // 1. Obtener el timestamp de expiración de Firebase.
+                // Si no existe, se crea una nueva batalla.
+                const expiryTimestamp = battle.expiry;
+                
+                if(!battle.images || !expiryTimestamp || expiryTimestamp < now){
+                    // Si no hay batalla o ha expirado, creamos una nueva.
+                    const eligibleImages=allImages.filter(img=>!img.tags||!img.tags.includes('battle_winner'));
+                    let img1,img2;
+                    if(eligibleImages.length>=2){
+                        img1=eligibleImages[Math.floor(Math.random()*eligibleImages.length)];
+                        do{img2=eligibleImages[Math.floor(Math.random()*eligibleImages.length)];}while(img2.id===img1.id);
+                    }else{
+                        img1=allImages[Math.floor(Math.random()*allImages.length)];
+                        do{img2=allImages[Math.floor(Math.random()*allImages.length)];}while(img2.id===img1.id);
+                    }
+                    
+                    // La duración de la batalla la definimos aquí, si no existe en Firebase usamos 7 días por defecto
+                    const battleDurationMs = battle.durationMs || (7 * 24 * 60 * 60 * 1000);
+                    const newExpiry = now + battleDurationMs;
+
+                    // 3. Crear una nueva batalla con la duración establecida en Firebase
+                    db.ref('battle').set({
+                        images:[img1.id,img2.id],
+                        votes:{[img1.id]:0,[img2.id]:0},
+                        expiry: newExpiry, // Usamos la nueva marca de tiempo
+                        durationMs: battleDurationMs, // Guardamos la duración para referencia
+                        users:{}
+                    }).then(()=>displayBattle([img1,img2], newExpiry)).catch(e=>console.error('Error initializing battle:',e));
+                } else {
+                    // Si ya hay una batalla, solo la mostramos con el timestamp que ya existe.
+                    const battleImages=battle.images.map(id=>allImages.find(i=>i.id===id)).filter(Boolean);
+                    if(battleImages.length===2){
+                        displayBattle(battleImages, expiryTimestamp);
+                    }else{
+                        console.error("Battle images not found");
+                    }
+                }
+            }).catch(e=>console.error('Error loading battle:',e));
+            loadPreviousBattleWinner();
+        }
         function updateBattleHalo(){db.ref('battle').once('value').then(snap=>{const battle=snap.val();if(!battle||!battle.images||!battle.votes)return;const[id1,id2]=battle.images;const votes1=battle.votes[id1]||0;const votes2=battle.votes[id2]||0;const item1=document.getElementById('battle-item-1');const item2=document.getElementById('battle-item-2');if(!item1||!item2)return;item1.classList.remove('winning','losing');item2.classList.remove('winning','losing');if(votes1>votes2){item1.classList.add('winning');item2.classList.add('losing');}else if(votes2>votes1){item2.classList.add('winning');item1.classList.add('losing');}}).catch(e=>console.error('Error updating halo:',e));}
         function showPunchAnimation(votedItemId){const opponentItem=votedItemId==='battle-item-1'?document.getElementById('battle-item-2'):document.getElementById('battle-item-1');const punch=document.createElement('span');punch.className='punch-animation';punch.textContent='🥊';opponentItem.appendChild(punch);setTimeout(()=>punch.remove(),500);}
         function displayBattle(images,expiry){const[img1,img2]=images;const grid=document.getElementById('battle-grid');const timer=document.getElementById('battle-timer');const item1=document.getElementById('battle-item-1');const item2=document.getElementById('battle-item-2');const renderItem=(itemEl,img)=>{itemEl.innerHTML=`<div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition duration-300 transform hover:scale-105 relative"><img src="${img.url}" alt="${img.title}" onclick="openModal('${img.id}')" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs font-bold" id="vote-count-${img.id}">0</div><button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-4 py-2 text-sm font-bold text-gray-900 transition hover:scale-105" onclick="voteBattle('${img.id}', 'battle-item-${itemEl.id.split('-')[2]}')">Votar</button></div>`;};renderItem(item1,img1);renderItem(item2,img2);db.ref('battle').on('value',snap=>{const battle=snap.val();if(!battle||!battle.votes)return;document.getElementById(`vote-count-${img1.id}`).textContent=battle.votes[img1.id]||0;document.getElementById(`vote-count-${img2.id}`).textContent=battle.votes[img2.id]||0;if(battle.users&&battle.users[deviceID]){document.querySelectorAll('.battle-vote-btn').forEach(b=>b.style.display='none');}updateBattleHalo();});const timerInterval=setInterval(()=>{const timeLeft=expiry-Date.now();if(timeLeft<=0){clearInterval(timerInterval);saveBattleWinner();initBattleSection();return;}const days=Math.floor(timeLeft/(1000*60*60*24));const hours=Math.floor((timeLeft%(1000*60*60*24))/(1000*60*60));const minutes=Math.floor((timeLeft%(1000*60*60))/(1000*60));timer.textContent=`Tiempo restante: ${days}d ${hours}h ${minutes}m`;},1000);}
@@ -322,7 +372,67 @@
         function saveBattleWinner(){db.ref('battle').once('value').then(snap=>{const battle=snap.val();if(!battle||!battle.images)return;const[id1,id2]=battle.images;const votes1=battle.votes[id1]||0;const votes2=battle.votes[id2]||0;const winnerId=votes1>=votes2?id1:id2;db.ref('previousBattleWinner').set({winnerId,battleImages:[id1,id2],timestamp:Date.now()});db.ref(`images/${winnerId}/tags`).once('value',tagSnap=>{let tags=tagSnap.val()||[];if(!Array.isArray(tags))tags=[];if(!tags.includes('battle_winner'))tags.push('battle_winner');db.ref(`images/${winnerId}/tags`).set(tags);});}).catch(e=>console.error('Error saving winner:',e));}
         function loadPreviousBattleWinner(){db.ref('previousBattleWinner').once('value').then(snap=>{const data=snap.val();if(!data)return;const winner=allImages.find(i=>i.id===data.winnerId);const img1=allImages.find(i=>i.id===data.battleImages[0]);const img2=allImages.find(i=>i.id===data.battleImages[1]);if(!winner||!img1||!img2)return;const winnerDiv=document.getElementById('battle-winner');winnerDiv.innerHTML=`<div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg border-2 border-yellow-400 relative cursor-pointer" onclick="openModal('${winner.id}')"><img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 p-4 backdrop-blur-sm"><img src="${img1.url}" alt="${img1.title}" class="w-24 md:w-32 h-auto aspect-[2/3] object-cover rounded-lg shadow-lg border-2 border-gray-400/50 transition hover:scale-105" onclick="event.stopPropagation(); openModal('${img1.id}')"><span class="text-yellow-400 font-black text-4xl mx-2" style="text-shadow: 0 0 10px rgba(0,0,0,0.9);">VS</span><img src="${img2.url}" alt="${img2.title}" class="w-24 md:w-32 h-auto aspect-[2/3] object-cover rounded-lg shadow-lg border-2 border-gray-400/50 transition hover:scale-105" onclick="event.stopPropagation(); openModal('${img2.id}')"></div></div>`;document.getElementById('battle-winner-container').style.display='block';}).catch(e=>console.error('Error loading previous winner:',e));}
         function loadTopLikedImages(){db.ref('reactions').once('value').then(snap=>{const reactions=snap.val()||{};const imageLikes=Object.fromEntries(allImages.map(img=>[img.id,0]));Object.entries(reactions).forEach(([imageId,likes])=>{if(imageLikes[imageId]!==undefined)imageLikes[imageId]=Object.keys(likes).length;});const sortedImages=allImages.map(img=>({...img,likeCount:imageLikes[img.id]})).sort((a,b)=>b.likeCount-a.likeCount).slice(0,6);const grid=document.getElementById('top-liked-grid');grid.innerHTML='';sortedImages.forEach((img,index)=>{const div=document.createElement('div');const topClass=index===0?'top-1':index===1?'top-2':index===2?'top-3':'';div.className=`group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg border-2 border-transparent transition duration-300 hover:scale-105 ${topClass}`;div.onclick=()=>openModal(img.id);div.innerHTML=`<img src="${img.url}" alt="${img.title}" class="h-full w-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>`;grid.appendChild(div);}).catch(e=>console.error('Error loading top liked images:',e));});}
-        function loadForYouImages(){const interactions=JSON.parse(localStorage.getItem('userInteractions'))||{likes:[],viewTimes:{},searches:[],tags:[]};const likedTags=new Set();interactions.likes.forEach(likedId=>{const img=allImages.find(i=>i.id===likedId);if(img&&img.tags)img.tags.forEach(t=>likedTags.add(t));});const relevantImages=allImages.map(img=>{let score=0;if(interactions.likes.includes(img.id))score+=10;if(interactions.viewTimes[img.id])score+=Math.log1p(interactions.viewTimes[img.id]/1000)*2;if(img.tags)img.tags.forEach(tag=>{if(likedTags.has(tag))score+=5;if(interactions.tags.includes(tag))score+=3;if(interactions.searches.some(s=>normalize(s).includes(normalize(tag))))score+=2;});return{...img,score};}).filter(img=>!interactions.likes.includes(img.id)).sort((a,b)=>b.score-a.score).slice(0,6);const grid=document.getElementById('for-you-grid');grid.innerHTML='';relevantImages.forEach(img=>{const div=document.createElement('div');div.className='group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg border-2 border-transparent transition duration-300 hover:scale-105 hover:border-purple-400';div.onclick=()=>openModal(img.id);div.innerHTML=`<img src="${img.url}" alt="${img.title}" class="h-full w-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>`;grid.appendChild(div);});}
+
+        let lastVisitedImageTags = [];
+
+        function loadForYouImages() {
+            const grid = document.getElementById('for-you-grid');
+            grid.innerHTML = '';
+            
+            // Si el usuario acaba de visitar una imagen con tags, usamos esos tags como prioridad
+            if (lastVisitedImageTags.length >= 2) {
+                const primaryTag = lastVisitedImageTags[0];
+                const secondaryTag = lastVisitedImageTags[1];
+                const filteredImages = allImages.filter(img => 
+                    img.id !== currentImageId &&
+                    img.tags && 
+                    img.tags.includes(primaryTag) && 
+                    img.tags.includes(secondaryTag)
+                );
+
+                if (filteredImages.length > 0) {
+                    displayForYouImages(filteredImages.sort(() => 0.5 - Math.random()).slice(0, 6));
+                    return;
+                }
+            }
+
+            // Si no hay tags prioritarios o no hay suficientes resultados, volvemos a la lógica de puntuación
+            const interactions = JSON.parse(localStorage.getItem('userInteractions')) || { likes: [], viewTimes: {}, searches: [], tags: [] };
+            const likedTags = new Set();
+            interactions.likes.forEach(likedId => {
+                const img = allImages.find(i => i.id === likedId);
+                if (img && img.tags) img.tags.forEach(t => likedTags.add(t));
+            });
+            const relevantImages = allImages.map(img => {
+                let score = 0;
+                if (interactions.likes.includes(img.id)) score += 10;
+                if (interactions.viewTimes[img.id]) score += Math.log1p(interactions.viewTimes[img.id] / 1000) * 2;
+                if (img.tags) img.tags.forEach(tag => {
+                    if (likedTags.has(tag)) score += 5;
+                    if (interactions.tags.includes(tag)) score += 3;
+                    if (interactions.searches.some(s => normalize(s).includes(normalize(tag)))) score += 2;
+                });
+                return { ...img, score };
+            }).filter(img => !interactions.likes.includes(img.id)).sort((a, b) => b.score - a.score).slice(0, 6);
+            
+            displayForYouImages(relevantImages);
+        }
+
+        function displayForYouImages(images) {
+            const grid = document.getElementById('for-you-grid');
+            if (images.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-gray-500">No hay imágenes que coincidan con tus intereses.</p>';
+            } else {
+                images.forEach(img => {
+                    const div = document.createElement('div');
+                    div.className = 'group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg border-2 border-transparent transition duration-300 hover:scale-105 hover:border-purple-400';
+                    div.onclick = () => openModal(img.id);
+                    div.innerHTML = `<img src="${img.url}" alt="${img.title}" class="h-full w-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>`;
+                    grid.appendChild(div);
+                });
+            }
+        }
+
         function loadMoreImages(){if(isLoading)return;isLoading=true;document.getElementById('loader').style.display='block';setTimeout(()=>{const grid=document.getElementById('grid');const currentCount=grid.children.length;const newImages=displayedImages.slice(currentCount,currentCount+imagesPerLoad);if(newImages.length>0){displayImages(newImages,true);}document.getElementById('loader').style.display='none';isLoading=false;},500);}
         let scrollTimeout;window.addEventListener('scroll',()=>{clearTimeout(scrollTimeout);scrollTimeout=setTimeout(()=>{if(window.innerHeight+window.scrollY>=document.body.offsetHeight-200&&document.getElementById('search-results').style.display==='none'){loadMoreImages();}},100);});
         function normalize(text){return text?text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase():'';}
@@ -333,7 +443,28 @@
         document.getElementById('search').addEventListener('input',e=>{if(!e.target.value){const mainContent=document.getElementById('main-content-sections');const gallery=document.getElementById('gallery');const searchResults=document.getElementById('search-results');searchResults.style.display='none';mainContent.style.display='block';gallery.style.display='block';}});
 
         // Cambio: Se elimina la lógica de history.pushState para evitar cambios en la URL
-        function openModal(id){const img=allImages.find(i=>i.id===id);if(!img)return;currentImageId=id;const fullImg=document.getElementById('full-img');fullImg.src=img.url||'';document.getElementById('title').textContent=img.title||'';document.getElementById('desc').textContent=img.desc||'';fullImg.setAttribute('data-zoom','1');fullImg.style.transform='none';loadLikes(id);loadComments(id);loadSimilarImages(img.tags||[]);triggerReactionRain(id);document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';viewStartTime=Date.now();setupImageInteraction(fullImg);setTimeout(()=>document.getElementById('modal-content').scrollTop=0,50);}
+        function openModal(id){
+            const img=allImages.find(i=>i.id===id);
+            if(!img)return;
+            currentImageId=id;
+            // Aquí capturamos las etiquetas de la imagen visitada
+            lastVisitedImageTags = img.tags && img.tags.length > 0 ? img.tags.slice(0, 2) : [];
+            const fullImg=document.getElementById('full-img');
+            fullImg.src=img.url||'';
+            document.getElementById('title').textContent=img.title||'';
+            document.getElementById('desc').textContent=img.desc||'';
+            fullImg.setAttribute('data-zoom','1');
+            fullImg.style.transform='none';
+            loadLikes(id);
+            loadComments(id);
+            loadSimilarImages(img.tags||[]);
+            triggerReactionRain(id);
+            document.getElementById('modal').style.display='block';
+            document.body.style.overflow='hidden';
+            viewStartTime=Date.now();
+            setupImageInteraction(fullImg);
+            setTimeout(()=>document.getElementById('modal-content').scrollTop=0,50);
+        }
         document.getElementById('close-modal').addEventListener('click',()=>{document.getElementById('modal').style.display='none';document.body.style.overflow='auto';if(viewStartTime&&currentImageId){trackUserInteractions('view',{imageId:currentImageId,time:Date.now()-viewStartTime});loadForYouImages();}window.location.hash = '';});
         document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal')){document.getElementById('close-modal').click();}});
         function setupImageInteraction(img){let scale=1,translateX=0,translateY=0,isDragging=false,startX,startY,lastTap=0;img.style.transform=`scale(1)`;img.className="h-auto max-h-[75vh] w-full object-contain transition-transform duration-300 cursor-zoom-in";const handleDoubleTap=()=>{const now=(new Date).getTime();const timeSince=now-lastTap;if(timeSince<400&&timeSince>0){if(scale>1){scale=1;translateX=0;translateY=0;img.style.transform=`scale(${scale})`;img.classList.remove("cursor-grab");img.classList.add("cursor-zoom-in")}else{scale=2;img.style.transform=`scale(${scale})`;img.classList.add("cursor-grab");img.classList.remove("cursor-zoom-in")}}lastTap=now};img.addEventListener("click",handleDoubleTap);img.addEventListener("mousedown",e=>{if(scale>1){e.preventDefault();isDragging=true;startX=e.clientX-translateX;startY=e.clientY-translateY;img.classList.add("cursor-grabbing");img.classList.remove("cursor-grab")}});img.addEventListener("mousemove",e=>{if(isDragging&&scale>1){e.preventDefault();translateX=e.clientX-startX;translateY=e.clientY-startY;img.style.transform=`scale(${scale}) translate(${translateX}px, ${translateY}px)`}});const endDrag=()=>{isDragging=false;if(scale>1){img.classList.remove("cursor-grabbing");img.classList.add("cursor-grab")}};img.addEventListener("mouseup",endDrag);img.addEventListener("mouseleave",endDrag)}
@@ -348,7 +479,7 @@
         document.addEventListener('click',()=>document.getElementById('reaction-circle-container').classList.remove('open'));
         
         // AJUSTE: Lógica de comentarios reestructurada para evitar anidamiento excesivo.
-        function loadComments(id) { db.ref(`comments/${id}`).orderByChild('timestamp').on('value', snap => { const commentsObj = snap.val() || {}; const commentContainer = document.getElementById('comments'); commentContainer.innerHTML = ''; const commentTree = []; const commentMap = {}; Object.entries(commentsObj).forEach(([commentId, commentData]) => { commentData.id = commentId; commentData.children = []; commentMap[commentId] = commentData; if (commentData.parentId) { if (commentMap[commentData.parentId]) { commentMap[commentData.parentId].children.push(commentData); } } else { commentTree.push(commentData); } }); commentTree.sort((a, b) => b.timestamp - a.timestamp); commentTree.forEach(comment => { const commentEl = renderCommentWithReplies(comment, id); commentContainer.appendChild(commentEl); }); }); }
+        function loadComments(id) { db.ref(`comments/${id}`).orderByChild('timestamp').on('value', snap => { const commentsObj = snap.val() || {}; const commentContainer = document.getElementById('comments'); commentContainer.innerHTML = ''; const commentTree = []; const commentMap = {}; Object.entries(commentsObj).forEach(([commentId, commentData]) => { commentData.id = commentId; commentData.children = []; commentMap[commentId] = commentData; if (commentData.parentId) { if (commentMap[commentData.parentId]) { commentMap[commentData.parentId].children.push(commentData); } else { console.error("Comment with parentId not found:", commentData.parentId); } } else { commentTree.push(commentData); } }); commentTree.sort((a, b) => b.timestamp - a.timestamp); commentTree.forEach(comment => { const commentEl = renderCommentWithReplies(comment, id); commentContainer.appendChild(commentEl); }); }); }
         
         function renderCommentWithReplies(comment, imageId) {
             const fragment = document.createDocumentFragment();
@@ -419,3 +550,4 @@
     </script>
 </body>
 </html>
+
