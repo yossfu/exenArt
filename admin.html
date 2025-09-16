@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         * {
@@ -23,7 +24,7 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
         }
         #admin-container {
             width: 100%;
@@ -34,8 +35,9 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             animation: animate__fadeIn 0.5s ease;
+            overflow-x: auto;
         }
-        #admin-pass, #search-images {
+        #admin-pass, #search-images, #search-comments {
             width: 100%;
             padding: 12px;
             background: #333;
@@ -94,10 +96,10 @@
         .delete-btn:hover {
             background: linear-gradient(135deg, #ff8e8e, #ff6b6b);
         }
-        .edit-btn {
+        .edit-btn, .approve-btn {
             background: linear-gradient(135deg, #4caf50, #66bb6a);
         }
-        .edit-btn:hover {
+        .edit-btn:hover, .approve-btn:hover {
             background: linear-gradient(135deg, #66bb6a, #4caf50);
         }
         #error-message, #success-message {
@@ -123,6 +125,7 @@
             text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
             margin-bottom: 20px;
+            border-radius: 8px;
         }
         header h1 {
             font-size: 1.8em;
@@ -153,30 +156,32 @@
             color: #ff6b6b;
             margin-right: 5px;
         }
-        #image-list {
+        #image-list, #comment-list {
             margin-top: 20px;
             display: none;
         }
-        #image-list.show {
+        #image-list.show, #comment-list.show {
             display: block;
         }
-        #image-list h2 {
+        #image-list h2, #comment-list h2 {
             font-size: 1.5em;
             margin-bottom: 15px;
         }
-        #image-table {
+        #image-table, #comment-table {
             width: 100%;
             border-collapse: collapse;
             background: #2a2a2a;
             border-radius: 8px;
             overflow: hidden;
+            margin-bottom: 20px;
         }
-        #image-table th, #image-table td {
+        #image-table th, #image-table td, #comment-table th, #comment-table td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #555;
+            white-space: nowrap;
         }
-        #image-table th {
+        #image-table th, #comment-table th {
             background: #333;
             font-weight: 600;
         }
@@ -186,8 +191,10 @@
             object-fit: cover;
             border-radius: 4px;
         }
-        #image-table td button {
+        #image-table td button, #comment-table td button {
             margin: 0 5px;
+            padding: 6px 10px;
+            font-size: 12px;
         }
         #edit-form {
             display: none;
@@ -196,33 +203,57 @@
         #edit-form.show {
             display: flex;
         }
-        #search-container {
+        #search-container, #comment-search-container {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }
-        #search-images {
+        #search-images, #search-comments {
             flex: 1;
+            min-width: 200px;
         }
-        #search-btn {
+        #search-btn, #comment-search-btn {
             background: linear-gradient(135deg, #333, #444);
+            flex-shrink: 0;
         }
-        #search-btn:hover {
+        #search-btn:hover, #comment-search-btn:hover {
             background: linear-gradient(135deg, #444, #555);
         }
         @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
             #admin-container {
-                width: 90%;
+                padding: 15px;
+                width: 100%;
             }
             header h1 {
                 font-size: 1.5em;
             }
-            #image-table {
+            #image-table, #comment-table {
                 font-size: 14px;
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            #image-table th, #image-table td, #comment-table th, #comment-table td {
+                padding: 8px;
             }
             #image-table td img {
                 width: 40px;
                 height: 40px;
+            }
+            #search-container, #comment-search-container {
+                flex-direction: column;
+            }
+            #search-btn, #comment-search-btn {
+                width: 100%;
+            }
+            .action-btn {
+                padding: 6px 8px;
+                font-size: 12px;
+                margin: 2px;
             }
         }
     </style>
@@ -269,6 +300,25 @@
                     <tbody id="image-table-body"></tbody>
                 </table>
             </div>
+            <div id="comment-list">
+                <h2><i class="fas fa-comments"></i> Lista de Comentarios</h2>
+                <div id="comment-search-container">
+                    <input type="text" id="search-comments" placeholder="Buscar por texto o nombre...">
+                    <button id="comment-search-btn"><i class="fas fa-search"></i> Buscar</button>
+                </div>
+                <table id="comment-table">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Texto</th>
+                            <th>Nombre</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comment-table-body"></tbody>
+                </table>
+            </div>
             <form id="edit-form">
                 <h2><i class="fas fa-edit"></i> Editar Imagen</h2>
                 <input type="hidden" id="edit-img-id">
@@ -304,6 +354,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
 
         // Generar ID único
         function generateUniqueId() {
@@ -342,33 +393,77 @@
             return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
         }
 
-        // Verificar contraseña
-        function checkAdmin() {
-            const pass = document.getElementById('admin-pass').value;
-            if (pass === 'admin123') { // Cambiar por contraseña segura en producción
-                document.getElementById('login-form').style.display = 'none';
-                document.getElementById('admin-content').style.display = 'block';
-                document.getElementById('image-list').classList.add('show');
-                loadImages();
+        // Verificar estado de autenticación
+        auth.onAuthStateChanged(user => {
+            if (user && user.isAnonymous) {
+                // Usuarios anónimos no ven el panel de admin
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('admin-content').style.display = 'none';
+            } else if (user) {
+                // Verificar si es el usuario admin (admin123@exene.com)
+                if (user.email === 'admin123@exene.com') {
+                    console.log('Email autenticado: ' + user.email); // Log para depurar
+                    document.getElementById('login-form').style.display = 'none';
+                    document.getElementById('admin-content').style.display = 'block';
+                    document.getElementById('image-list').classList.add('show');
+                    document.getElementById('comment-list').classList.add('show');
+                    loadImages();
+                    loadComments();
+                } else {
+                    showMessage('error-message', 'No tienes permisos de administrador');
+                    auth.signOut();
+                }
             } else {
-                showMessage('error-message', 'Contraseña incorrecta');
+                // No hay usuario, iniciar sesión anónima
+                auth.signInAnonymously().catch(error => {
+                    showMessage('error-message', 'Error al iniciar sesión anónima: ' + error.message);
+                });
             }
+        });
+
+        // Login de administrador
+        function checkAdmin() {
+            const email = document.getElementById('admin-pass').value + '@exene.com';
+            const password = document.getElementById('admin-pass').value;
+            auth.signInWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    // Refrescar el token para asegurar que las reglas reconozcan el email
+                    userCredential.user.reload().then(() => {
+                        // Verificar si es el usuario admin
+                        if (userCredential.user.email === 'admin123@exene.com') {
+                            console.log('Login exitoso - Email: ' + userCredential.user.email); // Log para depurar
+                            document.getElementById('login-form').style.display = 'none';
+                            document.getElementById('admin-content').style.display = 'block';
+                            document.getElementById('image-list').classList.add('show');
+                            document.getElementById('comment-list').classList.add('show');
+                            loadImages();
+                            loadComments();
+                        } else {
+                            showMessage('error-message', 'No tienes permisos de administrador');
+                            auth.signOut();
+                        }
+                    });
+                })
+                .catch(error => {
+                    showMessage('error-message', 'Error al iniciar sesión: ' + error.message);
+                    console.error('Error de autenticación:', error);
+                });
         }
 
         // Cargar lista de imágenes
         function loadImages(query = '') {
-            db.ref('images').once('value', (snapshot) => {
+            db.ref('images').once('value', snapshot => {
                 const images = [];
-                snapshot.forEach((child) => {
+                snapshot.forEach(child => {
                     const data = child.val();
                     images.push({ id: child.key, ...data });
                 });
-                const filteredImages = query ? images.filter(img => 
+                const filteredImages = query ? images.filter(img =>
                     normalize(img.title).includes(normalize(query)) ||
                     (img.tags && img.tags.some(tag => normalize(tag).includes(normalize(query))))
                 ) : images;
                 displayImages(filteredImages);
-            }).catch((error) => {
+            }).catch(error => {
                 showMessage('error-message', 'Error al cargar imágenes: ' + error.message);
             });
         }
@@ -396,8 +491,56 @@
             });
         }
 
+        // Cargar lista de comentarios
+        function loadComments(query = '') {
+            db.ref('comments').once('value', snapshot => {
+                const comments = [];
+                snapshot.forEach(imageSnapshot => {
+                    const imageId = imageSnapshot.key;
+                    imageSnapshot.forEach(commentSnapshot => {
+                        const data = commentSnapshot.val();
+                        comments.push({ imageId, commentId: commentSnapshot.key, ...data });
+                    });
+                });
+                const filteredComments = query ? comments.filter(comment =>
+                    normalize(comment.text).includes(normalize(query)) ||
+                    (comment.name && normalize(comment.name).includes(normalize(query)))
+                ) : comments;
+                displayComments(filteredComments);
+            }).catch(error => {
+                showMessage('error-message', 'Error al cargar comentarios: ' + error.message);
+            });
+        }
+
+        // Mostrar comentarios en la tabla
+        function displayComments(comments) {
+            const tableBody = document.getElementById('comment-table-body');
+            tableBody.innerHTML = '';
+            if (comments.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No se encontraron comentarios.</td></tr>';
+                return;
+            }
+            comments.forEach(comment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${comment.imageId}</td>
+                    <td>${comment.text}</td>
+                    <td>${comment.name || 'Anónimo'}</td>
+                    <td>${comment.approved === false ? 'No aprobado' : 'Aprobado'}</td>
+                    <td>
+                        <button class="action-btn ${comment.approved === false ? 'approve-btn' : 'delete-btn'}" onclick="toggleCommentApproval('${comment.imageId}', '${comment.commentId}', ${comment.approved === false})">
+                            <i class="fas fa-${comment.approved === false ? 'check' : 'ban'}"></i>
+                            ${comment.approved === false ? 'Aprobar' : 'Desaprobar'}
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteComment('${comment.imageId}', '${comment.commentId}')"><i class="fas fa-trash"></i> Eliminar</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
         // Manejar envío del formulario para añadir imagen
-        document.getElementById('admin-form').addEventListener('submit', (e) => {
+        document.getElementById('admin-form').addEventListener('submit', e => {
             e.preventDefault();
             const url = document.getElementById('img-url').value.trim();
             const title = document.getElementById('img-title').value.trim();
@@ -430,17 +573,15 @@
                     showMessage('success-message', 'Imagen añadida con éxito', true);
                     e.target.reset();
                     loadImages();
-                    console.log('Imagen añadida:', { id, ...data });
                 })
-                .catch((error) => {
+                .catch(error => {
                     showMessage('error-message', 'Error al añadir la imagen: ' + error.message);
-                    console.error('Error:', error);
                 });
         });
 
         // Editar imagen
         function editImage(id) {
-            db.ref(`images/${id}`).once('value', (snapshot) => {
+            db.ref(`images/${id}`).once('value', snapshot => {
                 const img = snapshot.val();
                 if (img) {
                     document.getElementById('edit-img-id').value = id;
@@ -451,14 +592,15 @@
                     document.getElementById('edit-form').classList.add('show');
                     document.getElementById('admin-form').style.display = 'none';
                     document.getElementById('image-list').style.display = 'none';
+                    document.getElementById('comment-list').style.display = 'none';
                 }
-            }).catch((error) => {
+            }).catch(error => {
                 showMessage('error-message', 'Error al cargar la imagen: ' + error.message);
             });
         }
 
         // Guardar cambios de edición
-        document.getElementById('edit-form').addEventListener('submit', (e) => {
+        document.getElementById('edit-form').addEventListener('submit', e => {
             e.preventDefault();
             const id = document.getElementById('edit-img-id').value;
             const url = document.getElementById('edit-img-url').value.trim();
@@ -492,9 +634,10 @@
                     document.getElementById('edit-form').classList.remove('show');
                     document.getElementById('admin-form').style.display = 'flex';
                     document.getElementById('image-list').style.display = 'block';
+                    document.getElementById('comment-list').style.display = 'block';
                     loadImages();
                 })
-                .catch((error) => {
+                .catch(error => {
                     showMessage('error-message', 'Error al actualizar la imagen: ' + error.message);
                 });
         });
@@ -504,6 +647,7 @@
             document.getElementById('edit-form').classList.remove('show');
             document.getElementById('admin-form').style.display = 'flex';
             document.getElementById('image-list').style.display = 'block';
+            document.getElementById('comment-list').style.display = 'block';
         }
 
         // Eliminar imagen
@@ -514,8 +658,34 @@
                         showMessage('success-message', 'Imagen eliminada con éxito', true);
                         loadImages();
                     })
-                    .catch((error) => {
+                    .catch(error => {
                         showMessage('error-message', 'Error al eliminar la imagen: ' + error.message);
+                    });
+            }
+        }
+
+        // Aprobar/Desaprobar comentario
+        function toggleCommentApproval(imageId, commentId, approve) {
+            db.ref(`comments/${imageId}/${commentId}`).update({ approved: approve })
+                .then(() => {
+                    showMessage('success-message', `Comentario ${approve ? 'aprobado' : 'desaprobado'} con éxito`, true);
+                    loadComments();
+                })
+                .catch(error => {
+                    showMessage('error-message', `Error al ${approve ? 'aprobar' : 'desaprobar'} el comentario: ${error.message}`);
+                });
+        }
+
+        // Eliminar comentario
+        function deleteComment(imageId, commentId) {
+            if (confirm('¿Estás seguro de que deseas eliminar este comentario?')) {
+                db.ref(`comments/${imageId}/${commentId}`).remove()
+                    .then(() => {
+                        showMessage('success-message', 'Comentario eliminado con éxito', true);
+                        loadComments();
+                    })
+                    .catch(error => {
+                        showMessage('error-message', 'Error al eliminar el comentario: ' + error.message);
                     });
             }
         }
@@ -526,10 +696,23 @@
             loadImages(query);
         });
 
-        // Restaurar lista al limpiar búsqueda
-        document.getElementById('search-images').addEventListener('input', (e) => {
+        // Restaurar lista de imágenes al limpiar búsqueda
+        document.getElementById('search-images').addEventListener('input', e => {
             if (!e.target.value) {
                 loadImages();
+            }
+        });
+
+        // Búsqueda de comentarios
+        document.getElementById('comment-search-btn').addEventListener('click', () => {
+            const query = document.getElementById('search-comments').value;
+            loadComments(query);
+        });
+
+        // Restaurar lista de comentarios al limpiar búsqueda
+        document.getElementById('search-comments').addEventListener('input', e => {
+            if (!e.target.value) {
+                loadComments();
             }
         });
     </script>
