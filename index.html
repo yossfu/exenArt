@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>exen-E | Galería Premium</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Google Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    
+
     <!-- Estilos Personalizados y Mejoras -->
     <style>
         :root {
@@ -32,11 +32,13 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: #111827; /* bg-gray-900 */
             color: #f3f4f6; /* text-gray-200 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-        
+
         /* Clases para efectos dinámicos de JS */
         .winning { box-shadow: 0 0 20px 5px var(--halo-green); }
         .losing { box-shadow: 0 0 20px 5px var(--halo-red); }
@@ -47,7 +49,7 @@
         /* Animaciones */
         @keyframes loadImage { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .image-item-animation { animation: loadImage 0.4s ease forwards; }
-        
+
         @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
         .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; animation: punch 0.5s ease forwards; pointer-events: none; }
 
@@ -116,7 +118,7 @@
             </button>
         </div>
 
-        <div id="search-results" class="grid grid-cols-3 gap-2 md:gap-4" style="display: none;"></div>
+        <div id="search-results" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4" style="display: none;"></div>
 
         <div id="main-content-sections">
             <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
@@ -137,12 +139,12 @@
             <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
             <section id="top-liked-section">
                 <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-2xl font-bold"><i class="fas fa-trophy text-yellow-400"></i> Más Gustadas</h3>
-                <div id="top-liked-grid" class="grid grid-cols-3 gap-2 md:gap-4"></div>
+                <div id="top-liked-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div>
             </section>
             <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
             <section id="for-you-section">
                 <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-2xl font-bold"><i class="fas fa-star text-purple-400"></i> Para Ti</h3>
-                <div id="for-you-grid" class="grid grid-cols-3 gap-2 md:gap-4"></div>
+                <div id="for-you-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div>
             </section>
             <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
         </div>
@@ -150,7 +152,7 @@
         <!-- ========== MAIN GALLERY ========== -->
         <section id="gallery">
             <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
-            <div id="grid" class="grid grid-cols-3 gap-2 md:gap-4"></div>
+            <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div>
             <div id="loader" class="py-8 text-center text-gray-400" style="display: none;"><i class="fas fa-spinner fa-spin text-2xl"></i> Cargando...</div>
         </section>
     </main>
@@ -159,7 +161,7 @@
     <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/80 backdrop-blur-md" style="display: none;">
         <div id="modal-content" class="h-full w-full overflow-y-auto">
             <div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4">
-                
+
                 <header id="modal-header" class="flex items-center justify-between">
                     <h2 id="title" class="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2>
                     <button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90">
@@ -176,7 +178,7 @@
                         <div class="relative flex items-center justify-center">
                             <!-- AJUSTE: Fondo desenfocado para reacciones -->
                             <div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div>
-                            
+
                             <!-- AJUSTE: Más reacciones y nuevas posiciones -->
                             <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);">
                                 <span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="like">❤️</span>
@@ -211,9 +213,9 @@
 
                 <section id="similar-section" class="mt-4">
                     <h3 class="mb-4 flex items-center justify-center gap-3 text-center text-xl font-bold"><i class="fas fa-th-large text-orange-400"></i> Imágenes Similares</h3>
-                    <div id="similar-grid" class="grid grid-cols-3 sm:grid-cols-6 gap-2 md:gap-4"></div>
+                    <div id="similar-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div>
                 </section>
-                
+
                 <section id="comments-section" class="mt-4">
                     <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row">
                         <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 sm:w-1/4">
@@ -261,7 +263,7 @@
         const imagesPerLoad = 12;
         let allImages = [], displayedImages = [], lastImageKey = null, isLoading = false, currentImageId = '', viewStartTime = null;
         const profileIcons = ['<svg class="w-6 h-6 fill-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>', '<svg class="w-6 h-6 fill-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5c0 2.76 2.24 5 5 5s5-2.24 5-5a5 5 0 0 0-5-5zm0 12c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z"/></svg>', '<svg class="w-6 h-6 fill-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z"/></svg>'];
-        
+
         function acceptWarning() {
             localStorage.setItem('adultConsent', 'true');
             document.getElementById('warning-overlay').style.display = 'none';
@@ -390,7 +392,7 @@
                 showError('Error al conectar con Firebase: ' + error.message);
             });
         }
-        
+
         function initBattleSection() {
             db.ref('battle').once('value').then(snap => {
                 const battle = snap.val() || {};
@@ -557,10 +559,10 @@
             if (lastVisitedImageTags.length >= 2) {
                 const primaryTag = lastVisitedImageTags[0];
                 const secondaryTag = lastVisitedImageTags[1];
-                const filteredImages = allImages.filter(img => 
+                const filteredImages = allImages.filter(img =>
                     img.id !== currentImageId &&
-                    img.tags && 
-                    img.tags.includes(primaryTag) && 
+                    img.tags &&
+                    img.tags.includes(primaryTag) &&
                     img.tags.includes(secondaryTag)
                 );
                 if (filteredImages.length > 0) {
@@ -644,7 +646,7 @@
             if (!append) grid.innerHTML = '';
             document.getElementById('error-message').style.display = 'none';
             if (images.length === 0 && !append) {
-                grid.innerHTML = '<div class="col-span-3 text-center py-8 text-gray-400">No hay imágenes disponibles.</div>';
+                grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400">No hay imágenes disponibles.</div>';
                 return;
             }
             images.forEach((img, index) => {
@@ -666,7 +668,7 @@
             const gallery = document.getElementById('gallery');
             searchResults.innerHTML = '';
             if (images.length === 0) {
-                searchResults.innerHTML = '<div class="col-span-3 text-center py-8 text-gray-400">No se encontraron resultados.</div>';
+                searchResults.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400">No se encontraron resultados.</div>';
             } else {
                 images.forEach((img, index) => {
                     const div = document.createElement('div');
@@ -819,7 +821,7 @@
                 });
             }).catch(error => console.error('Error loading reactions for rain:', error));
         }
-        
+
         function loadSimilarImages(tags) {
             const grid = document.getElementById('similar-grid');
             if (!tags || tags.length === 0) {
@@ -852,7 +854,7 @@
                 grid.appendChild(div);
             });
         }
-        
+
         function loadLikes(id) {
             db.ref(`reactions/${id}`).on('value', snap => {
                 const reactions = snap.val() || {};
@@ -901,7 +903,7 @@
             });
         });
         document.addEventListener('click', () => document.getElementById('reaction-circle-container').classList.remove('open'));
-        
+
         function loadComments(id) {
             db.ref(`comments/${id}`).orderByChild('timestamp').on('value', snap => {
                 const commentsObj = snap.val() || {};
@@ -930,7 +932,7 @@
                 });
             });
         }
-        
+
         function renderCommentWithReplies(comment, imageId) {
             const fragment = document.createDocumentFragment();
             const mainCommentEl = renderComment(comment, imageId, false);
@@ -1014,3 +1016,4 @@
     </script>
 </body>
 </html>
+
