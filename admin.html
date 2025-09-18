@@ -322,6 +322,7 @@
             <form id="edit-form">
                 <h2><i class="fas fa-edit"></i> Editar Imagen</h2>
                 <input type="hidden" id="edit-img-id">
+                <input type="hidden" id="edit-img-timestamp">
                 <input type="url" id="edit-img-url" placeholder="URL de la Imagen (https://...)" required>
                 <input type="text" id="edit-img-title" placeholder="Título" required>
                 <textarea id="edit-img-desc" placeholder="Descripción" required></textarea>
@@ -452,12 +453,13 @@
 
         // Cargar lista de imágenes
         function loadImages(query = '') {
-            db.ref('images').once('value', snapshot => {
+            db.ref('images').orderByChild('timestamp').once('value', snapshot => {
                 const images = [];
                 snapshot.forEach(child => {
                     const data = child.val();
                     images.push({ id: child.key, ...data });
                 });
+                images.reverse(); // Mostrar las más nuevas primero
                 const filteredImages = query ? images.filter(img =>
                     normalize(img.title).includes(normalize(query)) ||
                     (img.tags && img.tags.some(tag => normalize(tag).includes(normalize(query))))
@@ -567,7 +569,7 @@
             }
 
             // Guardar en Firebase
-            const data = { url, title, desc, tags };
+            const data = { url, title, desc, tags, timestamp: Date.now() }; // <-- CORRECCIÓN: Añadir timestamp
             db.ref('images/' + id).set(data)
                 .then(() => {
                     showMessage('success-message', 'Imagen añadida con éxito', true);
@@ -589,6 +591,7 @@
                     document.getElementById('edit-img-title').value = img.title;
                     document.getElementById('edit-img-desc').value = img.desc;
                     document.getElementById('edit-img-tags').value = img.tags ? img.tags.join(', ') : '';
+                    document.getElementById('edit-img-timestamp').value = img.timestamp || ''; // <-- CORRECCIÓN: Guardar timestamp
                     document.getElementById('edit-form').classList.add('show');
                     document.getElementById('admin-form').style.display = 'none';
                     document.getElementById('image-list').style.display = 'none';
@@ -607,6 +610,7 @@
             const title = document.getElementById('edit-img-title').value.trim();
             const desc = document.getElementById('edit-img-desc').value.trim();
             const tags = document.getElementById('edit-img-tags').value.split(',').map(t => t.trim()).filter(t => t);
+            const timestamp = document.getElementById('edit-img-timestamp').value;
 
             // Validaciones
             if (!isValidUrl(url)) {
@@ -627,7 +631,7 @@
             }
 
             // Actualizar en Firebase
-            const data = { url, title, desc, tags };
+            const data = { url, title, desc, tags, timestamp: parseInt(timestamp) || Date.now() }; // <-- CORRECCIÓN: Incluir timestamp
             db.ref('images/' + id).set(data)
                 .then(() => {
                     showMessage('success-message', 'Imagen actualizada con éxito', true);
