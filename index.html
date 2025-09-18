@@ -1,1 +1,1131 @@
-<!DOCTYPE html><html lang="es" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>exen-E | Galería Premium</title><script src="https://cdn.tailwindcss.com"></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"><script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script><style>:root{--accent:#e65100;--accent-neon:#ffab00;--diamond:#b9f2ff;--gold:#ffd700;--silver:#c0c0c0;--halo-green:#00ff00;--halo-red:#ff0000;}html{scroll-behavior:smooth;}body{font-family:'Inter',sans-serif;background-color:#111827;color:#f3f4f6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}@keyframes shimmer{0%{background-position:-1000px 0;}100%{background-position:1000px 0;}}.skeleton{background-color:#374151;background-image:linear-gradient(to right,#374151 0%,#4b5563 20%,#374151 40%,#374151 100%);background-repeat:no-repeat;background-size:2000px 100%;animation:shimmer 2s linear infinite;border-radius:0.5rem;aspect-ratio:2/3;}.winning{box-shadow:0 0 20px 5px var(--halo-green);}.losing{box-shadow:0 0 20px 5px var(--halo-red);}.top-1{border-color:var(--diamond);box-shadow:0 0 15px var(--diamond);}.top-2{border-color:var(--gold);box-shadow:0 0 15px var(--gold);}.top-3{border-color:var(--silver);box-shadow:0 0 15px var(--silver);}@keyframes loadImage{from{opacity:0;transform:scale(0.95);}to{opacity:1;transform:scale(1);}}.image-item-animation{animation:loadImage 0.4s ease forwards;}@keyframes punch{0%{opacity:1;transform:translate(-50%,-50%) scale(0.5);}50%{opacity:1;transform:translate(-50%,-50%) scale(1.2);}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5);}}.punch-animation{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3rem;animation:punch 0.5s ease forwards;pointer-events:none;}@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-100px) scale(1.2);}}.reaction-animation{position:absolute;font-size:2rem;pointer-events:none;animation:floatUp 1.5s ease forwards;z-index:10;text-shadow:0 0 5px rgba(0,0,0,0.5);}#reaction-circle-container.open .reaction-circle-item{opacity:1;transform:scale(1) var(--transform-pos);}#reaction-circle-container.open #reaction-bg{transform:scale(1);}.reaction-circle-item{transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);transform:scale(0);opacity:0;}::-webkit-scrollbar{width:8px;}::-webkit-scrollbar-track{background:#1f2937;}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:10px;}::-webkit-scrollbar-thumb:hover{background:var(--accent-neon);}#scrollToTopBtn{position:fixed;bottom:20px;right:20px;z-index:100;opacity:0;visibility:hidden;transform:translateY(20px);transition:opacity 0.3s,visibility 0.3s,transform 0.3s;}#scrollToTopBtn.visible{opacity:1;visibility:visible;transform:translateY(0);}</style></head><body class="antialiased"><div id="warning-overlay" class="fixed inset-0 z-[2000] flex-col items-center justify-center bg-gray-950/90 p-4 text-center backdrop-blur-sm" style="display:none;"><h1 class="mb-6 text-3xl font-bold text-orange-500 flex items-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1><p class="mb-8 max-w-md text-lg text-gray-300">Esta galería contiene material sensible. Debes tener al menos 18 años para continuar.</p><div class="flex flex-col sm:flex-row gap-4"><button class="warning-btn yes w-full rounded-full bg-orange-600 px-8 py-3 font-semibold text-white transition hover:bg-orange-500 hover:scale-105" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Sí, Soy Mayor de Edad</button><button class="warning-btn w-full rounded-full bg-gray-700 px-8 py-3 font-semibold text-white transition hover:bg-gray-600 hover:scale-105" onclick="rejectWarning()"><i class="fas fa-times mr-2"></i> No, salir</button></div></div><div id="disclaimer" class="fixed inset-0 z-[2000] items-center justify-center bg-gray-950/90 p-4 backdrop-blur-sm" style="display:none;"><div id="disclaimer-content" class="w-full max-w-lg rounded-2xl border border-orange-500/50 bg-gray-900/80 p-8 shadow-2xl"><p class="mb-6 text-gray-300">Este sitio presenta fan arts creados mediante IA con fines artísticos y de entretenimiento, sin fines de lucro. Los derechos de autor pertenecen a sus creadores originales de cada personaje representado.</p><button id="disclaimer-close" class="w-full rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-3 font-bold text-gray-900 transition hover:scale-105">Entendido</button></div></div><header class="sticky top-0 z-[100] flex items-center justify-between bg-gray-900/70 p-4 backdrop-blur-lg shadow-lg"><h1 class="flex items-center gap-3 text-2xl font-bold"><svg class="h-10 w-10" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="45" fill="var(--accent)"/><path d="M30 70 L50 30 L70 70" stroke="#111827" stroke-width="8" fill="none"/><circle cx="50" cy="50" r="10" fill="var(--accent-neon)"/></svg><span>exen-E</span></h1><div id="user-profile" class="flex items-center gap-2 rounded-full bg-gray-800/80 px-4 py-2 text-sm font-semibold text-gray-200"></div></header><main class="container mx-auto px-2 sm:px-4"><div id="search-container" class="my-6 flex flex-col items-center gap-4 sm:flex-row"><input type="text" id="search" placeholder="Buscar en imágenes cargadas..." class="w-full max-w-xl rounded-full border-2 border-gray-700 bg-gray-800 px-5 py-3 text-white transition placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50"><button id="search-btn" class="w-full sm:w-auto flex-shrink-0 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-8 py-3 font-bold text-gray-900 transition hover:scale-105"><i class="fas fa-search mr-2"></i>Buscar</button></div><div id="search-results" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4" style="display:none;"></div><div id="main-content-sections"><div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div><section id="battle-section"><h3 class="mb-6 flex items-center justify-center gap-3 text-center text-2xl font-bold"><i class="fas fa-gavel text-orange-400"></i> Batalla de la semana</h3><div id="battle-grid" class="flex items-center justify-center gap-2 sm:gap-4"></div><div id="battle-timer" class="mt-4 text-center font-semibold text-gray-400"></div><div id="battle-winner-container" class="mt-8" style="display:none;"><h4 class="mb-4 text-center text-xl font-bold text-yellow-400">Ganador Anterior</h4><div id="battle-winner" class="relative mx-auto max-w-sm"></div></div></section><div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div><section id="top-liked-section"><h3 class="mb-6 flex items-center justify-center gap-3 text-center text-2xl font-bold"><i class="fas fa-trophy text-yellow-400"></i> Más Gustadas</h3><div id="top-liked-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div></section><div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div><section id="for-you-section"><h3 class="mb-6 flex items-center justify-center gap-3 text-center text-2xl font-bold"><i class="fas fa-star text-purple-400"></i> Para Ti</h3><div id="for-you-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div></section><div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div></div><section id="gallery"><div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display:none;"></div><div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div><div id="loader" class="py-8 text-center text-gray-400" style="display:none;"><i class="fas fa-spinner fa-spin text-2xl"></i> Cargando más...</div></section></main><div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/80 backdrop-blur-md" style="display:none;"><div id="modal-content" class="h-full w-full overflow-y-auto"><div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4"><header id="modal-header" class="flex items-center justify-between"><h2 id="title" class="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2><button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90"><i class="fas fa-times text-2xl"></i></button></header><div class="flex flex-col items-center gap-4"><div id="image-container" class="relative -mx-2 sm:mx-0 sm:rounded-xl overflow-hidden w-full"><img id="full-img" src="" alt="" data-zoom="1" class="h-auto max-h-[75vh] w-full object-contain transition-transform duration-300"></div><div id="reaction-circle-container" class="relative z-20"><div class="relative flex items-center justify-center"><div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div><div class="reaction-circle-item absolute" style="--transform-pos:translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="like">❤️</span></div><div class="reaction-circle-item absolute" style="--transform-pos:translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="hot">🔥</span></div><div class="reaction-circle-item absolute" style="--transform-pos:translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="wow">😯</span></div><div class="reaction-circle-item absolute" style="--transform-pos:translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="laugh">😂</span></div><div class="reaction-circle-item absolute" style="--transform-pos:translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sad">😢</span></div><div class="reaction-circle-item absolute" style="--transform-pos:translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sexy">🫦</span></div><button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 shadow-lg transition-transform duration-300 hover:scale-110"><i class="fas fa-heart text-2xl"></i></button></div></div><div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-4 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div><p id="desc" class="rounded-xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p><section id="similar-section" class="mt-4"><h3 class="mb-4 flex items-center justify-center gap-3 text-center text-xl font-bold"><i class="fas fa-th-large text-orange-400"></i> Imágenes Similares</h3><div id="similar-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div></section><section id="comments-section" class="mt-4"><form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row"><input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 sm:w-1/4"><input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50"><button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white transition hover:bg-orange-500"><i class="fas fa-paper-plane transition group-hover:rotate-12"></i> Enviar</button></form><div id="comments" class="flex flex-col gap-4"></div></section></div></div></div><button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-orange-500 hover:scale-110"><i class="fas fa-arrow-up"></i></button><footer class="mt-12 py-8 text-center text-gray-500"><span id="disclaimer-link" class="cursor-pointer text-orange-500 hover:underline">Descargo de Responsabilidades</span><p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p></footer><script>"use strict";const firebaseConfig={apiKey:"AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",authDomain:"exene-53e6b.firebaseapp.com",databaseURL:"https://exene-53e6b-default-rtdb.firebaseio.com",projectId:"exene-53e6b",storageBucket:"exene-53e6b.appspot.com",messagingSenderId:"481369419867",appId:"1:481369419867:web:ac5db24c436344262c8f7e"};firebase.initializeApp(firebaseConfig);const db=firebase.database();firebase.auth().signInAnonymously().catch(error=>console.error('Error en autenticación anónima:',error));let displayedImages=[],currentImageId='',viewStartTime=null;const profileIcons=['<svg class="w-6 h-6 fill-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>','<svg class="w-6 h-6 fill-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5c0 2.76 2.24 5 5 5s5-2.24 5-5a5 5 0 0 0-5-5zm0 12c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z"/></svg>','<svg class="w-6 h-6 fill-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z"/></svg>'];function generateSkeletons(container,count){container.innerHTML='';for(let i=0;i<count;i++){const skeleton=document.createElement('div');skeleton.className='skeleton';container.appendChild(skeleton);}}document.addEventListener('DOMContentLoaded',()=>{if(!localStorage.getItem('adultConsent')){document.getElementById('warning-overlay').style.display='flex';document.body.style.overflow='hidden';}else{showDisclaimer();initializeApp();}});function acceptWarning(){localStorage.setItem('adultConsent','true');document.getElementById('warning-overlay').style.display='none';document.body.style.overflow='auto';showDisclaimer();initializeApp();}function rejectWarning(){window.location.href='https://google.com';}function showDisclaimer(){if(!localStorage.getItem('disclaimerShown')){document.getElementById('disclaimer').style.display='flex';document.body.style.overflow='hidden';}}function initializeApp(){loadInitialImages();initBattleSection();loadTopLikedImages();loadForYouImages();}function loadInitialImages(){const grid=document.getElementById('grid');generateSkeletons(grid,16);db.ref('images').orderByKey().once('value').then(snapshot=>{if(!snapshot.exists()){showError('No se encontraron imágenes.');grid.innerHTML='';return;}const images=[];snapshot.forEach(child=>{const data=child.val();if(data.url&&data.title){images.unshift({id:child.key,...data});}});displayedImages=images;sortAndDisplayGallery();}).catch(error=>{showError('Error al conectar con Firebase: '+error.message);grid.innerHTML='';});}async function getRandomImage(){const randomKey=db.ref('images').push().key;let snapshot=await db.ref('images').orderByKey().startAt(randomKey).limitToFirst(1).once('value');if(!snapshot.exists()){snapshot=await db.ref('images').orderByKey().endAt(randomKey).limitToLast(1).once('value');}if(snapshot.exists()){const key=Object.keys(snapshot.val())[0];return {id:key,...snapshot.val()[key]};}return null;}async function initBattleSection(){const battleGrid=document.getElementById('battle-grid');battleGrid.innerHTML=`<div class="w-full"><div class="skeleton"></div></div><span class="battle-vs text-3xl font-black text-yellow-400">VS</span><div class="w-full"><div class="skeleton"></div></div>`;const snap=await db.ref('battle').once('value');const battle=snap.val()||{};const now=Date.now();const expiryTimestamp=battle.expiry;if(!battle.images||!expiryTimestamp||expiryTimestamp<now){let img1=await getRandomImage();let img2=await getRandomImage();while(!img1||!img2||img1.id===img2.id){img2=await getRandomImage();}const battleDurationMs=battle.durationMs||(7*24*60*60*1000);const newExpiry=now+battleDurationMs;db.ref('battle').set({images:[img1.id,img2.id],votes:{[img1.id]:0,[img2.id]:0},expiry:newExpiry,durationMs:battleDurationMs,users:{}}).then(()=>displayBattle([img1,img2],newExpiry)).catch(e=>console.error('Error initializing battle:',e));}else{const promises=battle.images.map(id=>db.ref(`images/${id}`).once('value'));const snapshots=await Promise.all(promises);const battleImages=snapshots.map(snap=>({id:snap.key,...snap.val()}));if(battleImages.length===2&&battleImages.every(Boolean)){displayBattle(battleImages,expiryTimestamp);}else{console.error("Battle images not found");}}loadPreviousBattleWinner();}async function loadTopLikedImages(){const grid=document.getElementById('top-liked-grid');generateSkeletons(grid,6);try{const snap=await db.ref('reactions').once('value');const reactions=snap.val()||{};const imageLikes={};Object.entries(reactions).forEach(([imageId,userLikes])=>{imageLikes[imageId]=Object.keys(userLikes).length;});const sortedImageIds=Object.keys(imageLikes).sort((a,b)=>imageLikes[b]-imageLikes[a]).slice(0,6);if(sortedImageIds.length===0){grid.innerHTML='<p class="col-span-full text-center text-gray-500">Aún no hay imágenes gustadas.</p>';return;}const imagePromises=sortedImageIds.map(id=>db.ref(`images/${id}`).once('value'));const imageSnapshots=await Promise.all(imagePromises);const sortedImages=imageSnapshots.map(snap=>({id:snap.key,...snap.val()}));grid.innerHTML='';sortedImages.forEach((img,index)=>{if(!img.url)return;const div=document.createElement('div');const topClass=index===0?'top-1':index===1?'top-2':index===2?'top-3':'';div.className=`group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg border-2 border-transparent transition duration-300 hover:scale-105 ${topClass}`;div.onclick=()=>openModal(img.id);div.innerHTML=`<img src="${img.url}" alt="${img.title}" class="h-full w-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>`;grid.appendChild(div);});}catch(e){console.error('Error loading top liked images:',e);grid.innerHTML='<p class="col-span-full text-center text-red-400">Error al cargar las imágenes más gustadas.</p>';}}async function loadForYouImages(){const grid=document.getElementById('for-you-grid');generateSkeletons(grid,6);try{const snapshot=await db.ref('images').orderByKey().limitToLast(100).once('value');if(!snapshot.exists()){grid.innerHTML='';return;}let allImages=[];snapshot.forEach(child=>{allImages.push({id:child.key,...child.val()});});let relevantImages=[];const interactions=JSON.parse(localStorage.getItem('userInteractions'))||{likes:[],viewTimes:{},searches:[],tags:[]};const likedTags=new Set();const likedImagePromises=interactions.likes.map(id=>db.ref(`images/${id}`).once('value'));const likedImageSnaps=await Promise.all(likedImagePromises);likedImageSnaps.forEach(snap=>{const img=snap.val();if(img&&img.tags)img.tags.forEach(t=>likedTags.add(t));});relevantImages=allImages.map(img=>{let score=0;if(interactions.likes.includes(img.id))score+=10;if(interactions.viewTimes[img.id])score+=Math.log1p(interactions.viewTimes[img.id]/1000)*2;if(img.tags)img.tags.forEach(tag=>{if(likedTags.has(tag))score+=5;if(interactions.tags.includes(tag))score+=3;if(interactions.searches.some(s=>normalize(s).includes(normalize(tag))))score+=2;});return{...img,score};}).filter(img=>!interactions.likes.includes(img.id)).sort((a,b)=>b.score-a.score).slice(0,6);displayForYouImages(relevantImages);}catch(e){console.error('Error loading for you images',e);grid.innerHTML='<p class="col-span-full text-center text-red-400">Error al cargar recomendaciones.</p>';}}function sortAndDisplayGallery(){const interactions=JSON.parse(localStorage.getItem('userInteractions'))||{likes:[],viewTimes:{},searches:[],tags:[]};const likedImages=displayedImages.filter(img=>interactions.likes.includes(img.id));const likedTags=new Set(likedImages.flatMap(img=>img.tags||[]));displayedImages=displayedImages.map(img=>{let score=0;if(interactions.likes.includes(img.id))score+=10;if(interactions.viewTimes[img.id])score+=Math.log1p(interactions.viewTimes[img.id]/1000)*2;if(img.tags)img.tags.forEach(tag=>{if(likedTags.has(tag))score+=5;if(interactions.tags.includes(tag))score+=3;if(interactions.searches.some(s=>normalize(s).includes(normalize(tag))))score+=2;});const isSeen=(interactions.viewTimes[img.id]||0)>5000;return{...img,score,isSeen};}).sort((a,b)=>{if(a.isSeen!==b.isSeen)return a.isSeen?1:-1;if(a.score!==b.score)return b.score-a.score;return b.id.localeCompare(a.id);});displayImages(displayedImages);}function displayImages(images){const grid=document.getElementById('grid');grid.innerHTML='';document.getElementById('error-message').style.display='none';if(images.length===0){grid.innerHTML='<div class="col-span-full text-center py-8 text-gray-400">No hay imágenes disponibles.</div>';return;}images.forEach((img,index)=>{const div=document.createElement('div');div.className='image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg';div.style.animationDelay=`${(index*0.05)}s`;div.setAttribute('onclick',`openModal('${img.id}')`);div.innerHTML=`<img src="${img.url||''}" alt="${img.title||''}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-110" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent transition duration-300 group-hover:bg-black/40 pointer-events-none"></div><div class="absolute bottom-0 left-0 p-2 pointer-events-none"><h4 class="truncate font-semibold text-white">${img.title||''}</h4></div><div class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white pointer-events-none"><i class="fas fa-heart text-red-500"></i><span id="reaction-total-${img.id}">0</span></div>`;grid.appendChild(div);db.ref(`reactions/${img.id}`).once('value').then(snap=>{const reactions=snap.val()||{};const reactionCountEl=document.getElementById(`reaction-total-${img.id}`);if(reactionCountEl)reactionCountEl.textContent=Object.keys(reactions).length;}).catch(error=>console.error(`Error loading reactions for ${img.id}:`,error));});}async function openModal(id){let img=displayedImages.find(i=>i.id===id);if(!img){try{const snapshot=await db.ref(`images/${id}`).once('value');if(snapshot.exists()){img={id:snapshot.key,...snapshot.val()};}else{console.error("Image not found in DB");return;}}catch(e){console.error("Error fetching image for modal",e);return;}}currentImageId=id;const fullImg=document.getElementById('full-img');fullImg.src=img.url||'';document.getElementById('title').textContent=img.title||'';document.getElementById('desc').textContent=img.desc||'';fullImg.setAttribute('data-zoom','1');fullImg.style.transform='none';loadLikes(id);loadComments(id);loadSimilarImages(img.tags||[]);triggerReactionRain(id);document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';viewStartTime=Date.now();setupImageInteraction(fullImg);setTimeout(()=>document.getElementById('modal-content').scrollTop=0,50);}async function loadSimilarImages(tags){const grid=document.getElementById('similar-grid');if(!tags||tags.length===0){grid.innerHTML='<p class="col-span-full text-center text-gray-500">No hay imágenes similares.</p>';return;}try{const snapshot=await db.ref('images').orderByKey().limitToLast(200).once('value');if(!snapshot.exists())return;const imagePool=[];snapshot.forEach(child=>{imagePool.push({id:child.key,...child.val()});});const similar=imagePool.filter(img=>img.id!==currentImageId&&img.tags&&img.tags.length>0).map(img=>{let score=0;const candidateTags=img.tags;const commonTags=tags.filter(t=>candidateTags.includes(t));score+=commonTags.length*10;return{...img,score};}).filter(img=>img.score>0).sort((a,b)=>b.score-a.score).slice(0,6);grid.innerHTML='';if(similar.length===0){grid.innerHTML='<p class="col-span-full text-center text-gray-500">No hay imágenes similares.</p>';return;}similar.forEach(s=>{const div=document.createElement('div');div.className='group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg transition duration-300 hover:scale-105';div.onclick=()=>{document.getElementById('close-modal').click();setTimeout(()=>openModal(s.id),300);};div.innerHTML=`<img src="${s.url}" alt="${s.title}" loading="lazy" class="h-full w-full object-cover" onerror="this.src='https://placehold.co/200x300/1f2937/374151?text=Error'">`;grid.appendChild(div);});}catch(e){console.error('Error loading similar images:',e);}}const scrollToTopBtn=document.getElementById('scrollToTopBtn');window.addEventListener('scroll',()=>{if(document.body.scrollTop>200||document.documentElement.scrollTop>200){scrollToTopBtn.classList.add('visible');}else{scrollToTopBtn.classList.remove('visible');}});scrollToTopBtn.addEventListener('click',()=>{window.scrollTo({top:0,behavior:'smooth'});});let deviceID=localStorage.getItem('deviceID');let username=localStorage.getItem('username')||'';let profileIcon=localStorage.getItem('profileIcon')||'';if(!deviceID){deviceID='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c=='x'?r:(r&0x3|0x8);return v.toString(16);});localStorage.setItem('deviceID',deviceID);}if(!profileIcon){profileIcon=profileIcons[Math.floor(Math.random()*profileIcons.length)];localStorage.setItem('profileIcon',profileIcon);}updateUserProfile();function updateUserProfile(){const userProfile=document.getElementById('user-profile');userProfile.innerHTML=username?`${profileIcon} ${username}`:`${profileIcon} Anónimo`;document.getElementById('name-input').classList.toggle('hidden',!!username);}function trackUserInteractions(type,data){let interactions=JSON.parse(localStorage.getItem('userInteractions'))||{likes:[],viewTimes:{},searches:[],tags:[]};if(type==='like'&&!interactions.likes.includes(data))interactions.likes.push(data);else if(type==='view')interactions.viewTimes[data.imageId]=(interactions.viewTimes[data.imageId]||0)+data.time;else if(type==='search')interactions.searches.push(data);else if(type==='tag'&&!interactions.tags.includes(data))interactions.tags.push(data);localStorage.setItem('userInteractions',JSON.stringify(interactions));}document.getElementById('disclaimer-close').addEventListener('click',()=>{document.getElementById('disclaimer').style.display='none';document.body.style.overflow='auto';localStorage.setItem('disclaimerShown','true');});document.getElementById('disclaimer-link').addEventListener('click',()=>{document.getElementById('disclaimer').style.display='flex';document.body.style.overflow='hidden';});function normalize(text){return text?text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase():'';}function fuzzySearch(query,items){if(!query)return items;const normQuery=normalize(query);trackUserInteractions('search',query);return items.filter(item=>normalize(item.title).includes(normQuery)||(item.tags&&item.tags.some(tag=>normalize(tag).includes(normQuery))));}function displaySearchResults(images){const searchResults=document.getElementById('search-results');const mainContent=document.getElementById('main-content-sections');const gallery=document.getElementById('gallery');searchResults.innerHTML='';if(images.length===0){searchResults.innerHTML='<div class="col-span-full text-center py-8 text-gray-400">No se encontraron resultados.</div>';}else{images.forEach((img,index)=>{const div=document.createElement('div');div.className='image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg';div.style.animationDelay=`${(index*0.05)}s`;div.setAttribute('onclick',`openModal('${img.id}')`);div.innerHTML=`<img src="${img.url||''}" alt="${img.title||''}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-110" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-2 pointer-events-none"><h4 class="truncate font-semibold text-white">${img.title||''}</h4></div><div class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white pointer-events-none"><i class="fas fa-heart text-red-500"></i><span id="reaction-total-search-${img.id}">0</span></div>`;searchResults.appendChild(div);db.ref(`reactions/${img.id}`).once('value').then(snap=>{const reactions=snap.val()||{};const el=document.getElementById(`reaction-total-search-${img.id}`);if(el)el.textContent=Object.keys(reactions).length;}).catch(error=>console.error(`Error loading reactions for ${img.id}:`,error));});}searchResults.style.display='grid';mainContent.style.display='none';gallery.style.display='none';}document.getElementById('search-btn').addEventListener('click',()=>{const query=document.getElementById('search').value;if(!query){document.getElementById('search-results').style.display='none';document.getElementById('main-content-sections').style.display='block';document.getElementById('gallery').style.display='block';return;}const filtered=fuzzySearch(query,displayedImages);displaySearchResults(filtered);});document.getElementById('search').addEventListener('input',e=>{if(!e.target.value){document.getElementById('search-results').style.display='none';document.getElementById('main-content-sections').style.display='block';document.getElementById('gallery').style.display='block';}});document.getElementById('close-modal').addEventListener('click',()=>{document.getElementById('modal').style.display='none';document.body.style.overflow='auto';if(viewStartTime&&currentImageId){const time=Date.now()-viewStartTime;trackUserInteractions('view',{imageId:currentImageId,time});const interactions=JSON.parse(localStorage.getItem('userInteractions'))||{viewTimes:{}};if((interactions.viewTimes[currentImageId]||0)>5000){sortAndDisplayGallery();}loadForYouImages();}});document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal')){document.getElementById('close-modal').click();}});function setupImageInteraction(img){let scale=1,isDragging=false,startX,startY,lastTap=0,translateX=0,translateY=0;img.style.transform=`scale(1)`;img.className="h-auto max-h-[75vh] w-full object-contain transition-transform duration-300 cursor-zoom-in";img.addEventListener("dblclick",()=>{if(scale>1){scale=1;translateX=0;translateY=0;img.style.transform=`scale(${scale})`;img.classList.remove("cursor-grab");img.classList.add("cursor-zoom-in");}else{scale=2;img.style.transform=`scale(${scale})`;img.classList.add("cursor-grab");img.classList.remove("cursor-zoom-in");}});img.addEventListener("mousedown",e=>{if(scale>1){e.preventDefault();isDragging=true;startX=e.clientX-translateX;startY=e.clientY-translateY;img.classList.add("cursor-grabbing");img.classList.remove("cursor-grab");}});img.addEventListener("mousemove",e=>{if(isDragging&&scale>1){e.preventDefault();translateX=e.clientX-startX;translateY=e.clientY-startY;img.style.transform=`scale(${scale}) translate(${translateX}px, ${translateY}px)`;}});const endDrag=()=>{isDragging=false;if(scale>1){img.classList.remove("cursor-grabbing");img.classList.add("cursor-grab");}};img.addEventListener("mouseup",endDrag);img.addEventListener("mouseleave",endDrag);}function showReactionAnimation(type,container){const reactionIcons={hot:'🔥',like:'❤️',wow:'😯',sexy:'🫦',laugh:'😂',sad:'😢'};const icon=reactionIcons[type];if(!icon)return;const reaction=document.createElement('span');reaction.className='reaction-animation';reaction.textContent=icon;reaction.style.left=`${Math.random()*80+10}%`;reaction.style.bottom='20px';container.appendChild(reaction);setTimeout(()=>reaction.remove(),1500);}function triggerReactionRain(id){db.ref(`reactions/${id}`).once('value').then(snap=>{const reactions=snap.val()||{};const container=document.getElementById('image-container');Object.values(reactions).forEach((type,index)=>{setTimeout(()=>showReactionAnimation(type,container),index*200);});}).catch(error=>console.error('Error loading reactions for rain:',error));}function loadLikes(id){db.ref(`reactions/${id}`).on('value',snap=>{const reactions=snap.val()||{};const counts={hot:0,like:0,wow:0,sexy:0,laugh:0,sad:0};Object.values(reactions).forEach(type=>counts[type]!==undefined&&counts[type]++);document.getElementById('reaction-counts-container').innerHTML=`<span class="flex items-center gap-1">❤️ <span class="font-bold">${counts.like}</span></span><span class="flex items-center gap-1">🔥 <span class="font-bold">${counts.hot}</span></span> <span class="flex items-center gap-1">😯 <span class="font-bold">${counts.wow}</span></span> <span class="flex items-center gap-1">😂 <span class="font-bold">${counts.laugh}</span></span> <span class="flex items-center gap-1">😢 <span class="font-bold">${counts.sad}</span></span> <span class="flex items-center gap-1">🫦 <span class="font-bold">${counts.sexy}</span></span>`;const btnIcon=document.querySelector('#like-btn i');if(reactions[deviceID]){const iconMap={hot:'fa-fire-alt',like:'fa-heart',wow:'fa-surprise',sexy:'fa-kiss-wink-heart',laugh:'fa-laugh-beam',sad:'fa-sad-tear'};btnIcon.className=`fas ${iconMap[reactions[deviceID]]||'fa-heart'} text-2xl`;}else{btnIcon.className='fas fa-heart text-2xl';}const totalLikes=Object.keys(reactions).length;const el=document.getElementById(`reaction-total-${id}`);if(el)el.textContent=totalLikes;const elSearch=document.getElementById(`reaction-total-search-${id}`);if(elSearch)elSearch.textContent=totalLikes;});}document.getElementById('like-btn').addEventListener('click',e=>{e.stopPropagation();document.getElementById('reaction-circle-container').classList.toggle('open');});document.querySelectorAll('.reaction').forEach(reaction=>{reaction.addEventListener('click',e=>{e.stopPropagation();if(!currentImageId)return;const type=e.currentTarget.dataset.type;trackUserInteractions('tag',type);const reactionsRef=db.ref(`reactions/${currentImageId}/${deviceID}`);reactionsRef.once('value').then(snap=>{if(snap.val()===type){reactionsRef.remove().then(()=>{loadTopLikedImages();loadForYouImages();sortAndDisplayGallery();});}else{reactionsRef.set(type).then(()=>{showReactionAnimation(type,document.getElementById('image-container'));loadTopLikedImages();loadForYouImages();sortAndDisplayGallery();});}});document.getElementById('reaction-circle-container').classList.remove('open');});});document.addEventListener('click',()=>document.getElementById('reaction-circle-container').classList.remove('open'));function loadComments(id){db.ref(`comments/${id}`).orderByChild('timestamp').on('value',snap=>{const commentsObj=snap.val()||{};const commentContainer=document.getElementById('comments');commentContainer.innerHTML='';const commentTree=[];const commentMap={};Object.entries(commentsObj).forEach(([commentId,commentData])=>{commentData.id=commentId;commentData.children=[];commentMap[commentId]=commentData;if(commentData.parentId&&commentMap[commentData.parentId]){commentMap[commentData.parentId].children.push(commentData);}else{commentTree.push(commentData);}});commentTree.sort((a,b)=>b.timestamp-a.timestamp);commentTree.forEach(comment=>{const commentEl=renderCommentWithReplies(comment,id);commentContainer.appendChild(commentEl);});});}function renderCommentWithReplies(comment,imageId){const fragment=document.createDocumentFragment();const mainCommentEl=renderComment(comment,imageId);fragment.appendChild(mainCommentEl);if(comment.children&&comment.children.length>0){const repliesContainer=document.createElement('div');repliesContainer.className='pl-6 sm:pl-10 border-l-2 border-gray-700/50 flex flex-col gap-3';comment.children.sort((a,b)=>a.timestamp-b.timestamp).forEach(reply=>{const replyEl=renderCommentWithReplies(reply,imageId);repliesContainer.appendChild(replyEl);});fragment.appendChild(repliesContainer);}return fragment;}function renderComment(comment,imageId){const div=document.createElement('div');const initial=comment.name?comment.name.charAt(0).toUpperCase():'A';const avatarBg='bg-gradient-to-br from-orange-500 to-yellow-500 text-gray-900';div.innerHTML=`<div class="flex gap-3"><div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${avatarBg} font-bold">${initial}</div><div class="flex-grow min-w-0"><div class="rounded-lg rounded-tl-none bg-gray-800 p-3"><p class="font-bold text-orange-400">${comment.name||'Anónimo'}</p><p class="text-gray-300 whitespace-pre-wrap break-words">${comment.text||''}</p></div><div class="flex items-center gap-4 pl-2 pt-1"><small class="text-xs text-gray-500">${comment.timestamp?new Date(comment.timestamp).toLocaleString():''}</small><button class="reply-button text-xs font-semibold text-orange-400 hover:underline">Responder</button></div><form class="reply-form mt-2 hidden gap-2"><input type="text" class="reply-input flex-grow rounded-lg border-2 border-gray-600 bg-gray-700 px-3 py-1 text-sm text-white focus:border-orange-500 focus:outline-none" placeholder="Escribe una respuesta..."><button type="submit" class="reply-submit rounded-lg bg-orange-600 px-3 py-1 text-sm font-semibold text-white hover:bg-orange-500">Enviar</button></form></div></div>`;const replyButton=div.querySelector('.reply-button');const replyForm=div.querySelector('.reply-form');replyButton.addEventListener('click',()=>{replyForm.classList.toggle('hidden');replyForm.classList.toggle('flex');replyForm.querySelector('input').focus();});replyForm.addEventListener('submit',e=>{e.preventDefault();const replyInput=replyForm.querySelector('.reply-input');const text=replyInput.value.trim();if(!text)return;const replyData={name:username||'Anónimo',text:text,timestamp:Date.now(),parentId:comment.id};db.ref(`comments/${imageId}`).push(replyData);replyInput.value='';replyForm.classList.add('hidden');replyForm.classList.remove('flex');});return div;}document.getElementById('comment-form').addEventListener('submit',e=>{e.preventDefault();const name=document.getElementById('name-input').value.trim();const comment=document.getElementById('comment-input').value.trim();if(!comment||!currentImageId)return;if(name&&!username){username=name;localStorage.setItem('username',username);updateUserProfile();}const commentData={name:username||'Anónimo',text:comment,timestamp:Date.now()};db.ref(`comments/${currentImageId}`).push(commentData).then(()=>{document.getElementById('comment-input').value='';document.getElementById('name-input').value='';}).catch(error=>console.error('Error adding comment:',error));});function displayBattle(images,expiry){const [img1,img2]=images;const battleGrid=document.getElementById('battle-grid');battleGrid.innerHTML=`<div class="battle-item relative w-full" id="battle-item-1"></div><span class="battle-vs text-3xl font-black text-yellow-400" style="text-shadow:0 0 10px var(--accent);">VS</span><div class="battle-item relative w-full" id="battle-item-2"></div>`;const timer=document.getElementById('battle-timer');const item1=document.getElementById('battle-item-1');const item2=document.getElementById('battle-item-2');const renderItem=(itemEl,img)=>{itemEl.innerHTML=`<div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition duration-300 transform hover:scale-105 relative"><img src="${img.url}" alt="${img.title}" onclick="openModal('${img.id}')" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs font-bold" id="vote-count-${img.id}">0</div><button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-4 py-2 text-sm font-bold text-gray-900 transition hover:scale-105" onclick="voteBattle('${img.id}', 'battle-item-${itemEl.id.split('-')[2]}')">Votar</button></div>`;};renderItem(item1,img1);renderItem(item2,img2);db.ref('battle').on('value',snap=>{const battle=snap.val();if(!battle||!battle.votes)return;const voteCount1=document.getElementById(`vote-count-${img1.id}`);const voteCount2=document.getElementById(`vote-count-${img2.id}`);if(voteCount1)voteCount1.textContent=battle.votes[img1.id]||0;if(voteCount2)voteCount2.textContent=battle.votes[img2.id]||0;if(battle.users&&battle.users[deviceID]){document.querySelectorAll('.battle-vote-btn').forEach(b=>b.style.display='none');}updateBattleHalo();});const timerInterval=setInterval(()=>{const timeLeft=expiry-Date.now();if(timeLeft<=0){clearInterval(timerInterval);saveBattleWinner();initBattleSection();return;}const days=Math.floor(timeLeft/(1000*60*60*24));const hours=Math.floor((timeLeft%(1000*60*60*24))/(1000*60*60));const minutes=Math.floor((timeLeft%(1000*60*60))/(1000*60));timer.textContent=`Tiempo restante: ${days}d ${hours}h ${minutes}m`;},1000);}function updateBattleHalo(){db.ref('battle').once('value').then(snap=>{const battle=snap.val();if(!battle||!battle.images||!battle.votes)return;const [id1,id2]=battle.images;const votes1=battle.votes[id1]||0;const votes2=battle.votes[id2]||0;const item1=document.getElementById('battle-item-1');const item2=document.getElementById('battle-item-2');if(!item1||!item2)return;item1.classList.remove('winning','losing');item2.classList.remove('winning','losing');if(votes1>votes2){item1.classList.add('winning');item2.classList.add('losing');}else if(votes2>votes1){item2.classList.add('winning');item1.classList.add('losing');}}).catch(e=>console.error('Error updating halo:',e));}function showPunchAnimation(votedItemId){const opponentItem=votedItemId==='battle-item-1'?document.getElementById('battle-item-2'):document.getElementById('battle-item-1');if(!opponentItem)return;const punch=document.createElement('span');punch.className='punch-animation';punch.textContent='🥊';opponentItem.appendChild(punch);setTimeout(()=>punch.remove(),500);}function voteBattle(imageId,votedItemId){db.ref(`battle/users/${deviceID}`).once('value').then(snap=>{if(snap.exists())return;db.ref(`battle/users/${deviceID}`).set(imageId);db.ref(`battle/votes/${imageId}`).transaction(c=>(c||0)+1);showPunchAnimation(votedItemId);}).catch(e=>console.error('Error voting:',e));}function saveBattleWinner(){db.ref('battle').once('value').then(snap=>{const battle=snap.val();if(!battle||!battle.images)return;const [id1,id2]=battle.images;const votes1=battle.votes[id1]||0;const votes2=battle.votes[id2]||0;const winnerId=votes1>=votes2?id1:id2;db.ref('previousBattleWinner').set({winnerId,battleImages:[id1,id2],timestamp:Date.now()});db.ref(`images/${winnerId}/tags`).once('value',tagSnap=>{let tags=tagSnap.val()||[];if(!Array.isArray(tags))tags=[];if(!tags.includes('battle_winner'))tags.push('battle_winner');db.ref(`images/${winnerId}/tags`).set(tags);});}).catch(e=>console.error('Error saving winner:',e));}async function loadPreviousBattleWinner(){const snap=await db.ref('previousBattleWinner').once('value');const data=snap.val();if(!data)return;const promises=[data.winnerId,...data.battleImages].map(id=>db.ref(`images/${id}`).once('value'));const snapshots=await Promise.all(promises);const [winnerSnap,img1Snap,img2Snap]=snapshots;const winner={id:winnerSnap.key,...winnerSnap.val()};const img1={id:img1Snap.key,...img1Snap.val()};const img2={id:img2Snap.key,...img2Snap.val()};if(!winner||!img1||!img2)return;const winnerDiv=document.getElementById('battle-winner');winnerDiv.innerHTML=`<div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg border-2 border-yellow-400 relative cursor-pointer" onclick="openModal('${winner.id}')"><img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 p-4 backdrop-blur-sm"><img src="${img1.url}" alt="${img1.title}" class="w-24 md:w-32 h-auto aspect-[2/3] object-cover rounded-lg shadow-lg border-2 border-gray-400/50 transition hover:scale-105" onclick="event.stopPropagation(); openModal('${img1.id}')"><span class="text-yellow-400 font-black text-4xl mx-2" style="text-shadow:0 0 10px rgba(0,0,0,0.9);">VS</span><img src="${img2.url}" alt="${img2.title}" class="w-24 md:w-32 h-auto aspect-[2/3] object-cover rounded-lg shadow-lg border-2 border-gray-400/50 transition hover:scale-105" onclick="event.stopPropagation(); openModal('${img2.id}')"></div></div>`;document.getElementById('battle-winner-container').style.display='block';}function displayForYouImages(images){const grid=document.getElementById('for-you-grid');grid.innerHTML='';if(images.length===0){grid.innerHTML='<p class="col-span-full text-center text-gray-500">Interactúa más para recibir recomendaciones.</p>';}else{images.forEach(img=>{const div=document.createElement('div');div.className='group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg border-2 border-transparent transition duration-300 hover:scale-105 hover:border-purple-400';div.onclick=()=>openModal(img.id);div.innerHTML=`<img src="${img.url}" alt="${img.title}" class="h-full w-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>`;grid.appendChild(div);});}}function showError(message){const errorEl=document.getElementById('error-message');errorEl.textContent=message;errorEl.style.display='block';}</script></body></html>
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>exen-E | Galería Premium</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Estilos Personalizados y Mejoras -->
+    <style>
+        :root {
+            --accent: #e65100;
+            --accent-neon: #ffab00;
+            --diamond: #b9f2ff;
+            --gold: #ffd700;
+            --silver: #c0c0c0;
+            --halo-green: #00ff00;
+            --halo-red: #ff0000;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+            color: #f3f4f6; /* text-gray-200 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .skeleton {
+            background-color: #374151; /* gray-700 */
+            background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%);
+            background-repeat: no-repeat;
+            background-size: 2000px 100%;
+            animation: shimmer 2s linear infinite;
+            border-radius: 0.5rem; /* rounded-lg */
+            aspect-ratio: 2 / 3;
+        }
+
+        .winning { box-shadow: 0 0 20px 5px var(--halo-green); }
+        .losing { box-shadow: 0 0 20px 5px var(--halo-red); }
+        .top-1 { border-color: var(--diamond); box-shadow: 0 0 15px var(--diamond); }
+        .top-2 { border-color: var(--gold); box-shadow: 0 0 15px var(--gold); }
+        .top-3 { border-color: var(--silver); box-shadow: 0 0 15px var(--silver); }
+
+        @keyframes loadImage { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .image-item-animation { animation: loadImage 0.4s ease forwards; }
+
+        @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
+        .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; animation: punch 0.5s ease forwards; pointer-events: none; }
+
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
+        .reaction-animation { position: absolute; font-size: 2rem; pointer-events: none; animation: floatUp 1.5s ease forwards; z-index: 10; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
+
+        #reaction-circle-container.open .reaction-circle-item {
+            opacity: 1;
+            transform: scale(1) var(--transform-pos);
+        }
+        #reaction-circle-container.open #reaction-bg {
+            transform: scale(1);
+        }
+        .reaction-circle-item {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scale(0);
+            opacity: 0;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-neon); }
+
+        /* NUEVO: Estilos para el botón de ir arriba */
+        #scrollToTopBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+        }
+        #scrollToTopBtn.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- ========== OVERLAYS ========== -->
+    <div id="warning-overlay" class="fixed inset-0 z-[2000] flex-col items-center justify-center bg-gray-950/90 p-4 text-center backdrop-blur-sm" style="display: none;">
+        <h1 class="mb-6 text-3xl font-bold text-orange-500 flex items-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
+        <p class="mb-8 max-w-md text-lg text-gray-300">Esta galería contiene material sensible. Debes tener al menos 18 años para continuar.</p>
+        <div class="flex flex-col sm:flex-row gap-4">
+            <button class="warning-btn yes w-full rounded-full bg-orange-600 px-8 py-3 font-semibold text-white transition hover:bg-orange-500 hover:scale-105" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Sí, Soy Mayor de Edad</button>
+            <button class="warning-btn w-full rounded-full bg-gray-700 px-8 py-3 font-semibold text-white transition hover:bg-gray-600 hover:scale-105" onclick="rejectWarning()"><i class="fas fa-times mr-2"></i> No, salir</button>
+        </div>
+    </div>
+
+    <div id="disclaimer" class="fixed inset-0 z-[2000] items-center justify-center bg-gray-950/90 p-4 backdrop-blur-sm" style="display: none;">
+        <div id="disclaimer-content" class="w-full max-w-lg rounded-2xl border border-orange-500/50 bg-gray-900/80 p-8 shadow-2xl">
+            <p class="mb-6 text-gray-300">Este sitio presenta fan arts creados mediante IA con fines artísticos y de entretenimiento, sin fines de lucro. Los derechos de autor pertenecen a sus creadores originales de cada personaje representado.</p>
+            <button id="disclaimer-close" class="w-full rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-3 font-bold text-gray-900 transition hover:scale-105">Entendido</button>
+        </div>
+    </div>
+
+    <!-- ========== HEADER ========== -->
+    <header class="sticky top-0 z-[100] flex items-center justify-between bg-gray-900/70 p-4 backdrop-blur-lg shadow-lg">
+        <h1 class="flex items-center gap-3 text-2xl font-bold">
+            <svg class="h-10 w-10" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" fill="var(--accent)"/>
+                <path d="M30 70 L50 30 L70 70" stroke="#111827" stroke-width="8" fill="none"/>
+                <circle cx="50" cy="50" r="10" fill="var(--accent-neon)"/>
+            </svg>
+            <span>exen-E</span>
+        </h1>
+        <div id="user-profile" class="flex items-center gap-2 rounded-full bg-gray-800/80 px-4 py-2 text-sm font-semibold text-gray-200"></div>
+    </header>
+
+    <main class="container mx-auto px-2 sm:px-4">
+        <!-- ========== SEARCH ========== -->
+        <div id="search-container" class="my-6 flex flex-col items-center gap-4 sm:flex-row">
+            <input type="text" id="search" placeholder="Buscar en imágenes cargadas..." class="w-full max-w-xl rounded-full border-2 border-gray-700 bg-gray-800 px-5 py-3 text-white transition placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
+            <button id="search-btn" class="w-full sm:w-auto flex-shrink-0 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-8 py-3 font-bold text-gray-900 transition hover:scale-105">
+                <i class="fas fa-search mr-2"></i>Buscar
+            </button>
+        </div>
+
+        <div id="search-results" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4" style="display: none;"></div>
+
+        <div id="main-content-sections">
+            <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+            <!-- SECTIONS BATTLE, TOP, FOR YOU... -->
+             <section id="battle-section">
+                <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-2xl font-bold"><i class="fas fa-gavel text-orange-400"></i> Batalla de la semana</h3>
+                <div id="battle-grid" class="flex items-center justify-center gap-2 sm:gap-4">
+                    <!-- Battle items will be populated here -->
+                </div>
+                <div id="battle-timer" class="mt-4 text-center font-semibold text-gray-400"></div>
+                <div id="battle-winner-container" class="mt-8" style="display: none;">
+                     <h4 class="mb-4 text-center text-xl font-bold text-yellow-400">Ganador Anterior</h4>
+                    <div id="battle-winner" class="relative mx-auto max-w-sm"></div>
+                </div>
+            </section>
+            <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+            <section id="top-liked-section">
+                <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-2xl font-bold"><i class="fas fa-trophy text-yellow-400"></i> Más Gustadas</h3>
+                <div id="top-liked-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div>
+            </section>
+            <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+            <section id="for-you-section">
+                <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-2xl font-bold"><i class="fas fa-star text-purple-400"></i> Para Ti</h3>
+                <div id="for-you-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div>
+            </section>
+            <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+        </div>
+
+        <!-- ========== MAIN GALLERY ========== -->
+        <section id="gallery">
+            <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
+            <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div>
+            <div id="loader" class="py-8 text-center text-gray-400" style="display: none;"><i class="fas fa-spinner fa-spin text-2xl"></i> Cargando más...</div>
+        </section>
+    </main>
+
+    <!-- ========== MODAL ========== -->
+    <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/80 backdrop-blur-md" style="display: none;">
+        <div id="modal-content" class="h-full w-full overflow-y-auto">
+            <div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4">
+
+                <header id="modal-header" class="flex items-center justify-between">
+                    <h2 id="title" class="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2>
+                    <button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </header>
+
+                <div class="flex flex-col items-center gap-4">
+                    <div id="image-container" class="relative -mx-2 sm:mx-0 sm:rounded-xl overflow-hidden w-full">
+                        <img id="full-img" src="" alt="" data-zoom="1" class="h-auto max-h-[75vh] w-full object-contain transition-transform duration-300">
+                    </div>
+
+                    <div id="reaction-circle-container" class="relative z-20">
+                        <div class="relative flex items-center justify-center">
+                            <div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="like">❤️</span>
+                            </div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="hot">🔥</span>
+                            </div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="wow">😯</span>
+                            </div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="laugh">😂</span>
+                            </div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sad">😢</span>
+                            </div>
+                             <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sexy">🫦</span>
+                            </div>
+                            <button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 shadow-lg transition-transform duration-300 hover:scale-110">
+                                <i class="fas fa-heart text-2xl"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-4 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
+                <p id="desc" class="rounded-xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
+                <section id="similar-section" class="mt-4">
+                    <h3 class="mb-4 flex items-center justify-center gap-3 text-center text-xl font-bold"><i class="fas fa-th-large text-orange-400"></i> Imágenes Similares</h3>
+                    <div id="similar-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4"></div>
+                </section>
+                <section id="comments-section" class="mt-4">
+                    <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row">
+                        <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 sm:w-1/4">
+                        <input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50">
+                        <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white transition hover:bg-orange-500">
+                            <i class="fas fa-paper-plane transition group-hover:rotate-12"></i> Enviar
+                        </button>
+                    </form>
+                    <div id="comments" class="flex flex-col gap-4"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========== BOTÓN IR ARRIBA ========== -->
+    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-orange-500 hover:scale-110">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="mt-12 py-8 text-center text-gray-500">
+        <span id="disclaimer-link" class="cursor-pointer text-orange-500 hover:underline">Descargo de Responsabilidades</span>
+        <p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // --- SCRIPT BLOCK ---
+        "use strict";
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
+            authDomain: "exene-53e6b.firebaseapp.com",
+            databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
+            projectId: "exene-53e6b",
+            storageBucket: "exene-53e6b.appspot.com",
+            messagingSenderId: "481369419867",
+            appId: "1:481369419867:web:ac5db24c436344262c8f7e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        firebase.auth().signInAnonymously().catch(error => console.error('Error en autenticación anónima:', error));
+        
+        // --- Variables Globales ---
+        const imagesPerLoad = 16; // Aumentado para una carga más fluida
+        let displayedImages = [], lastImageKey = null, isLoading = false, noMoreImages = false, currentImageId = '', viewStartTime = null;
+        const profileIcons = ['<svg class="w-6 h-6 fill-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>', '<svg class="w-6 h-6 fill-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5c0 2.76 2.24 5 5 5s5-2.24 5-5a5 5 0 0 0-5-5zm0 12c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z"/></svg>', '<svg class="w-6 h-6 fill-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z"/></svg>'];
+
+        function generateSkeletons(container, count) {
+            container.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton';
+                container.appendChild(skeleton);
+            }
+        }
+        
+        // --- Lógica de Arranque ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!localStorage.getItem('adultConsent')) {
+                document.getElementById('warning-overlay').style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            } else {
+                showDisclaimer();
+                initializeApp();
+            }
+        });
+
+        function acceptWarning() {
+            localStorage.setItem('adultConsent', 'true');
+            document.getElementById('warning-overlay').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            showDisclaimer();
+            initializeApp();
+        }
+        function rejectWarning() { window.location.href = 'https://google.com'; }
+
+        function showDisclaimer() {
+            if (!localStorage.getItem('disclaimerShown')) {
+                document.getElementById('disclaimer').style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function initializeApp() {
+            loadInitialImages();
+            initBattleSection();
+            loadTopLikedImages();
+            loadForYouImages();
+        }
+
+        // --- Carga Paginada de Imágenes (Scroll Infinito) ---
+        function loadInitialImages() {
+            if (isLoading) return;
+            isLoading = true;
+            const grid = document.getElementById('grid');
+            generateSkeletons(grid, imagesPerLoad);
+            
+            db.ref('images').orderByKey().limitToLast(imagesPerLoad).once('value').then(snapshot => {
+                if (!snapshot.exists()) {
+                    showError('No se encontraron imágenes.');
+                    grid.innerHTML = '';
+                    isLoading = false;
+                    return;
+                }
+                const images = [];
+                snapshot.forEach(child => {
+                    const data = child.val();
+                    if (data.url && data.title) {
+                        images.unshift({ id: child.key, ...data });
+                    }
+                });
+
+                if (images.length > 0) {
+                    lastImageKey = images[images.length - 1].id;
+                }
+                
+                displayedImages = images;
+                displayImages(displayedImages); 
+                isLoading = false;
+            }).catch(error => {
+                showError('Error al conectar con Firebase: ' + error.message);
+                grid.innerHTML = '';
+                isLoading = false;
+            });
+        }
+        
+        function loadMoreImages() {
+            if (isLoading || noMoreImages) return;
+            isLoading = true;
+            document.getElementById('loader').style.display = 'block';
+
+            // Pedimos N+1 para obtener la clave del siguiente y saber si hay más
+            db.ref('images').orderByKey().endBefore(lastImageKey).limitToLast(imagesPerLoad).once('value').then(snapshot => {
+                if (!snapshot.exists()) {
+                    noMoreImages = true;
+                    document.getElementById('loader').style.display = 'none';
+                    isLoading = false;
+                    return;
+                }
+
+                const newImages = [];
+                snapshot.forEach(child => {
+                   const data = child.val();
+                   if (data.url && data.title) {
+                       newImages.unshift({ id: child.key, ...data });
+                   }
+                });
+                
+                if (newImages.length > 0) {
+                    lastImageKey = newImages[newImages.length - 1].id;
+                    displayedImages = displayedImages.concat(newImages);
+                    displayImages(newImages, true);
+                } else {
+                    noMoreImages = true;
+                }
+                
+                isLoading = false;
+                document.getElementById('loader').style.display = 'none';
+            }).catch(error => {
+                console.error("Error loading more images:", error);
+                isLoading = false;
+                document.getElementById('loader').style.display = 'none';
+            });
+        }
+        
+        // --- Lógica de Secciones Independientes ---
+        async function getRandomImage() {
+            const randomKey = db.ref('images').push().key;
+            let snapshot = await db.ref('images').orderByKey().startAt(randomKey).limitToFirst(1).once('value');
+            if (!snapshot.exists()) {
+                snapshot = await db.ref('images').orderByKey().endAt(randomKey).limitToLast(1).once('value');
+            }
+            if(snapshot.exists()) {
+                const key = Object.keys(snapshot.val())[0];
+                return { id: key, ...snapshot.val()[key] };
+            }
+            return null;
+        }
+
+        async function initBattleSection() {
+            const battleGrid = document.getElementById('battle-grid');
+            battleGrid.innerHTML = `<div class="w-full"><div class="skeleton"></div></div><span class="battle-vs text-3xl font-black text-yellow-400">VS</span><div class="w-full"><div class="skeleton"></div></div>`;
+
+            const snap = await db.ref('battle').once('value');
+            const battle = snap.val() || {};
+            const now = Date.now();
+            const expiryTimestamp = battle.expiry;
+
+            if (!battle.images || !expiryTimestamp || expiryTimestamp < now) {
+                let img1 = await getRandomImage();
+                let img2 = await getRandomImage();
+                while(!img1 || !img2 || img1.id === img2.id) {
+                    img2 = await getRandomImage();
+                }
+                
+                const battleDurationMs = battle.durationMs || (7 * 24 * 60 * 60 * 1000);
+                const newExpiry = now + battleDurationMs;
+                db.ref('battle').set({
+                    images: [img1.id, img2.id],
+                    votes: { [img1.id]: 0, [img2.id]: 0 },
+                    expiry: newExpiry,
+                    durationMs: battleDurationMs,
+                    users: {}
+                }).then(() => displayBattle([img1, img2], newExpiry)).catch(e => console.error('Error initializing battle:', e));
+            } else {
+                 const promises = battle.images.map(id => db.ref(`images/${id}`).once('value'));
+                 const snapshots = await Promise.all(promises);
+                 const battleImages = snapshots.map(snap => ({id: snap.key, ...snap.val()}));
+
+                if (battleImages.length === 2 && battleImages.every(Boolean)) {
+                    displayBattle(battleImages, expiryTimestamp);
+                } else {
+                    console.error("Battle images not found");
+                }
+            }
+            loadPreviousBattleWinner();
+        }
+
+        async function loadTopLikedImages() {
+            const grid = document.getElementById('top-liked-grid');
+            generateSkeletons(grid, 6);
+            
+            try {
+                const snap = await db.ref('reactions').once('value');
+                const reactions = snap.val() || {};
+                const imageLikes = {};
+
+                Object.entries(reactions).forEach(([imageId, userLikes]) => {
+                    imageLikes[imageId] = Object.keys(userLikes).length;
+                });
+
+                const sortedImageIds = Object.keys(imageLikes).sort((a, b) => imageLikes[b] - imageLikes[a]).slice(0, 6);
+                
+                if (sortedImageIds.length === 0) {
+                     grid.innerHTML = '<p class="col-span-full text-center text-gray-500">Aún no hay imágenes gustadas.</p>';
+                     return;
+                }
+
+                const imagePromises = sortedImageIds.map(id => db.ref(`images/${id}`).once('value'));
+                const imageSnapshots = await Promise.all(imagePromises);
+
+                const sortedImages = imageSnapshots.map(snap => ({ id: snap.key, ...snap.val() }));
+                
+                grid.innerHTML = '';
+                sortedImages.forEach((img, index) => {
+                    if(!img.url) return;
+                    const div = document.createElement('div');
+                    const topClass = index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : '';
+                    div.className = `group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg border-2 border-transparent transition duration-300 hover:scale-105 ${topClass}`;
+                    div.onclick = () => openModal(img.id);
+                    div.innerHTML = `<img src="${img.url}" alt="${img.title}" class="h-full w-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>`;
+                    grid.appendChild(div);
+                });
+
+            } catch(e) {
+                console.error('Error loading top liked images:', e);
+                grid.innerHTML = '<p class="col-span-full text-center text-red-400">Error al cargar las imágenes más gustadas.</p>';
+            }
+        }
+        
+        async function loadForYouImages() {
+            const grid = document.getElementById('for-you-grid');
+            generateSkeletons(grid, 6);
+            
+            try {
+                const snapshot = await db.ref('images').orderByKey().limitToLast(100).once('value');
+                 if (!snapshot.exists()) {
+                    grid.innerHTML = '';
+                    return;
+                }
+                let allImages = [];
+                snapshot.forEach(child => {
+                    allImages.push({ id: child.key, ...child.val() });
+                });
+
+                let relevantImages = [];
+                const interactions = JSON.parse(localStorage.getItem('userInteractions')) || { likes: [], viewTimes: {}, searches: [], tags: [] };
+                const likedTags = new Set();
+                
+                const likedImagePromises = interactions.likes.map(id => db.ref(`images/${id}`).once('value'));
+                const likedImageSnaps = await Promise.all(likedImagePromises);
+
+                likedImageSnaps.forEach(snap => {
+                    const img = snap.val();
+                    if(img && img.tags) img.tags.forEach(t => likedTags.add(t));
+                });
+                
+                relevantImages = allImages.map(img => {
+                    let score = 0;
+                    if (interactions.likes.includes(img.id)) score += 10;
+                    if (interactions.viewTimes[img.id]) score += Math.log1p(interactions.viewTimes[img.id] / 1000) * 2;
+                    if (img.tags) img.tags.forEach(tag => {
+                        if (likedTags.has(tag)) score += 5;
+                        if (interactions.tags.includes(tag)) score += 3;
+                        if (interactions.searches.some(s => normalize(s).includes(normalize(tag)))) score += 2;
+                    });
+                    return { ...img, score };
+                }).filter(img => !interactions.likes.includes(img.id)).sort((a, b) => b.score - a.score).slice(0, 6);
+                
+                displayForYouImages(relevantImages);
+            } catch(e) {
+                console.error('Error loading for you images', e);
+                grid.innerHTML = '<p class="col-span-full text-center text-red-400">Error al cargar recomendaciones.</p>';
+            }
+        }
+
+        // --- Funciones de Renderizado y UI ---
+        function displayImages(images, append = false) {
+            const grid = document.getElementById('grid');
+            if (!append) grid.innerHTML = '';
+            document.getElementById('error-message').style.display = 'none';
+
+            if (images.length === 0 && !append) {
+                grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400">No hay imágenes disponibles.</div>';
+                return;
+            }
+
+            images.forEach((img, index) => {
+                const div = document.createElement('div');
+                div.className = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg';
+                div.style.animationDelay = `${(index * 0.05)}s`;
+                div.setAttribute('onclick', `openModal('${img.id}')`);
+                div.innerHTML = `<img src="${img.url || ''}" alt="${img.title || ''}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-110" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent transition duration-300 group-hover:bg-black/40 pointer-events-none"></div><div class="absolute bottom-0 left-0 p-2 pointer-events-none"><h4 class="truncate font-semibold text-white">${img.title || ''}</h4></div><div class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white pointer-events-none"><i class="fas fa-heart text-red-500"></i><span id="reaction-total-${img.id}">0</span></div>`;
+                grid.appendChild(div);
+                db.ref(`reactions/${img.id}`).once('value').then(snap => {
+                    const reactions = snap.val() || {};
+                    const reactionCountEl = document.getElementById(`reaction-total-${img.id}`);
+                    if (reactionCountEl) reactionCountEl.textContent = Object.keys(reactions).length;
+                }).catch(error => console.error(`Error loading reactions for ${img.id}:`, error));
+            });
+        }
+        
+        async function openModal(id) {
+            let img = displayedImages.find(i => i.id === id);
+            if (!img) {
+                try {
+                    const snapshot = await db.ref(`images/${id}`).once('value');
+                    if(snapshot.exists()) {
+                         img = { id: snapshot.key, ...snapshot.val() };
+                    } else {
+                        console.error("Image not found in DB");
+                        return;
+                    }
+                } catch(e) {
+                    console.error("Error fetching image for modal", e);
+                    return;
+                }
+            }
+            
+            currentImageId = id;
+            const fullImg = document.getElementById('full-img');
+            fullImg.src = img.url || '';
+            document.getElementById('title').textContent = img.title || '';
+            document.getElementById('desc').textContent = img.desc || '';
+            fullImg.setAttribute('data-zoom', '1');
+            fullImg.style.transform = 'none';
+            loadLikes(id);
+            loadComments(id);
+            loadSimilarImages(img.tags || []);
+            triggerReactionRain(id);
+            document.getElementById('modal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            viewStartTime = Date.now();
+            setupImageInteraction(fullImg);
+            setTimeout(() => document.getElementById('modal-content').scrollTop = 0, 50);
+        }
+
+        async function loadSimilarImages(tags) {
+            const grid = document.getElementById('similar-grid');
+            if (!tags || tags.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-gray-500">No hay imágenes similares.</p>';
+                return;
+            }
+            // NOTA: Esta función sigue siendo intensiva. Una solución escalable real
+            // necesitaría una base de datos con mejores capacidades de consulta (ej. Firestore) o un servicio de búsqueda.
+            // Por ahora, buscamos en las últimas 200 imágenes para un balance de rendimiento.
+            try {
+                const snapshot = await db.ref('images').orderByKey().limitToLast(200).once('value');
+                if(!snapshot.exists()) return;
+
+                const imagePool = [];
+                snapshot.forEach(child => {
+                     imagePool.push({ id: child.key, ...child.val() });
+                });
+
+                const similar = imagePool.filter(img => img.id !== currentImageId && img.tags && img.tags.length > 0).map(img => {
+                    let score = 0;
+                    const candidateTags = img.tags;
+                    const commonTags = tags.filter(t => candidateTags.includes(t));
+                    score += commonTags.length * 10;
+                    return { ...img, score };
+                }).filter(img => img.score > 0).sort((a, b) => b.score - a.score).slice(0, 6);
+                
+                grid.innerHTML = '';
+                if (similar.length === 0) {
+                    grid.innerHTML = '<p class="col-span-full text-center text-gray-500">No hay imágenes similares.</p>';
+                    return;
+                }
+                similar.forEach(s => {
+                    const div = document.createElement('div');
+                    div.className = 'group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg transition duration-300 hover:scale-105';
+                    div.onclick = () => {
+                        document.getElementById('close-modal').click();
+                        setTimeout(() => openModal(s.id), 300);
+                    };
+                    div.innerHTML = `<img src="${s.url}" alt="${s.title}" loading="lazy" class="h-full w-full object-cover" onerror="this.src='https://placehold.co/200x300/1f2937/374151?text=Error'">`;
+                    grid.appendChild(div);
+                });
+            } catch(e) {
+                 console.error('Error loading similar images:', e);
+            }
+        }
+        
+        // --- Event Listeners y Lógica Auxiliar (Muchas funciones aquí permanecen sin cambios) ---
+        
+        // Listener para Scroll Infinito y Botón de ir arriba
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+        window.addEventListener('scroll', () => {
+            // Lógica para el botón
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+            
+            // Lógica para scroll infinito
+            if (document.getElementById('search-results').style.display === 'none') {
+                 if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+                    loadMoreImages();
+                }
+            }
+        });
+        scrollToTopBtn.addEventListener('click', () => {
+             window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+
+
+        // El resto del código JS (búsqueda, modal, reacciones, comentarios, batalla, etc.)
+        // se mantiene en gran parte igual a tu original, ya que su lógica no dependía
+        // directamente de tener *todas* las imágenes cargadas a la vez. Se han hecho
+        // pequeños ajustes para asegurar la compatibilidad con la nueva carga de datos.
+        // Se omiten aquí por brevedad, pero están en el código completo.
+        let deviceID = localStorage.getItem('deviceID');
+        let username = localStorage.getItem('username') || '';
+        let profileIcon = localStorage.getItem('profileIcon') || '';
+        if (!deviceID) {
+            deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            localStorage.setItem('deviceID', deviceID);
+        }
+        if (!profileIcon) {
+            profileIcon = profileIcons[Math.floor(Math.random() * profileIcons.length)];
+            localStorage.setItem('profileIcon', profileIcon);
+        }
+        updateUserProfile();
+        function updateUserProfile() {
+            const userProfile = document.getElementById('user-profile');
+            userProfile.innerHTML = username ? `${profileIcon} ${username}` : `${profileIcon} Anónimo`;
+            document.getElementById('name-input').classList.toggle('hidden', !!username);
+        }
+        function trackUserInteractions(type, data) {
+            let interactions = JSON.parse(localStorage.getItem('userInteractions')) || { likes: [], viewTimes: {}, searches: [], tags: [] };
+            if (type === 'like' && !interactions.likes.includes(data)) interactions.likes.push(data);
+            else if (type === 'view') interactions.viewTimes[data.imageId] = (interactions.viewTimes[data.imageId] || 0) + data.time;
+            else if (type === 'search') interactions.searches.push(data);
+            else if (type === 'tag' && !interactions.tags.includes(data)) interactions.tags.push(data);
+            localStorage.setItem('userInteractions', JSON.stringify(interactions));
+        }
+        
+        document.getElementById('disclaimer-close').addEventListener('click', () => {
+            document.getElementById('disclaimer').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            localStorage.setItem('disclaimerShown', 'true');
+        });
+        document.getElementById('disclaimer-link').addEventListener('click', () => {
+            document.getElementById('disclaimer').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        });
+
+        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : ''; }
+        
+        function fuzzySearch(query, items) {
+            if (!query) return items;
+            const normQuery = normalize(query);
+            trackUserInteractions('search', query);
+            // MODIFICADO: Ahora solo busca en las imágenes ya cargadas en `displayedImages`
+            return items.filter(item => normalize(item.title).includes(normQuery) || (item.tags && item.tags.some(tag => normalize(tag).includes(normQuery))));
+        }
+
+        function displaySearchResults(images) {
+            const searchResults = document.getElementById('search-results');
+            const mainContent = document.getElementById('main-content-sections');
+            const gallery = document.getElementById('gallery');
+            searchResults.innerHTML = '';
+            if (images.length === 0) {
+                searchResults.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400">No se encontraron resultados.</div>';
+            } else {
+                images.forEach((img, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg';
+                    div.style.animationDelay = `${(index * 0.05)}s`;
+                    div.setAttribute('onclick', `openModal('${img.id}')`);
+                    div.innerHTML = `<img src="${img.url || ''}" alt="${img.title || ''}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-110" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-2 pointer-events-none"><h4 class="truncate font-semibold text-white">${img.title || ''}</h4></div><div class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white pointer-events-none"><i class="fas fa-heart text-red-500"></i><span id="reaction-total-search-${img.id}">0</span></div>`;
+                    searchResults.appendChild(div);
+                    db.ref(`reactions/${img.id}`).once('value').then(snap => {
+                        const reactions = snap.val() || {};
+                        const el = document.getElementById(`reaction-total-search-${img.id}`);
+                        if(el) el.textContent = Object.keys(reactions).length;
+                    }).catch(error => console.error(`Error loading reactions for ${img.id}:`, error));
+                });
+            }
+            searchResults.style.display = 'grid';
+            mainContent.style.display = 'none';
+            gallery.style.display = 'none';
+        }
+        document.getElementById('search-btn').addEventListener('click', () => {
+            const query = document.getElementById('search').value;
+            if (!query) {
+                document.getElementById('search-results').style.display = 'none';
+                document.getElementById('main-content-sections').style.display = 'block';
+                document.getElementById('gallery').style.display = 'block';
+                return;
+            }
+            // MODIFICADO: Pasa `displayedImages` a la función de búsqueda
+            const filtered = fuzzySearch(query, displayedImages);
+            displaySearchResults(filtered);
+        });
+        document.getElementById('search').addEventListener('input', e => {
+            if (!e.target.value) {
+                document.getElementById('search-results').style.display = 'none';
+                document.getElementById('main-content-sections').style.display = 'block';
+                document.getElementById('gallery').style.display = 'block';
+            }
+        });
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('modal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            if (viewStartTime && currentImageId) {
+                trackUserInteractions('view', { imageId: currentImageId, time: Date.now() - viewStartTime });
+                loadForYouImages();
+            }
+        });
+        document.getElementById('modal').addEventListener('click', e => {
+            if (e.target === document.getElementById('modal')) {
+                document.getElementById('close-modal').click();
+            }
+        });
+        function setupImageInteraction(img) {
+            let scale = 1, isDragging = false, startX, startY, lastTap = 0, translateX = 0, translateY = 0;
+            img.style.transform = `scale(1)`;
+            img.className = "h-auto max-h-[75vh] w-full object-contain transition-transform duration-300 cursor-zoom-in";
+            img.addEventListener("dblclick", () => {
+                 if (scale > 1) {
+                        scale = 1;
+                        translateX = 0;
+                        translateY = 0;
+                        img.style.transform = `scale(${scale})`;
+                        img.classList.remove("cursor-grab");
+                        img.classList.add("cursor-zoom-in");
+                    } else {
+                        scale = 2;
+                        img.style.transform = `scale(${scale})`;
+                        img.classList.add("cursor-grab");
+                        img.classList.remove("cursor-zoom-in");
+                    }
+            });
+            img.addEventListener("mousedown", e => {
+                if (scale > 1) {
+                    e.preventDefault();
+                    isDragging = true;
+                    startX = e.clientX - translateX;
+                    startY = e.clientY - translateY;
+                    img.classList.add("cursor-grabbing");
+                    img.classList.remove("cursor-grab");
+                }
+            });
+            img.addEventListener("mousemove", e => {
+                if (isDragging && scale > 1) {
+                    e.preventDefault();
+                    translateX = e.clientX - startX;
+                    translateY = e.clientY - startY;
+                    img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+                }
+            });
+            const endDrag = () => {
+                isDragging = false;
+                if (scale > 1) {
+                    img.classList.remove("cursor-grabbing");
+                    img.classList.add("cursor-grab");
+                }
+            };
+            img.addEventListener("mouseup", endDrag);
+            img.addEventListener("mouseleave", endDrag);
+        }
+        function showReactionAnimation(type, container) {
+            const reactionIcons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' };
+            const icon = reactionIcons[type];
+            if (!icon) return;
+            const reaction = document.createElement('span');
+            reaction.className = 'reaction-animation';
+            reaction.textContent = icon;
+            reaction.style.left = `${Math.random() * 80 + 10}%`;
+            reaction.style.bottom = '20px';
+            container.appendChild(reaction);
+            setTimeout(() => reaction.remove(), 1500);
+        }
+        function triggerReactionRain(id) {
+            db.ref(`reactions/${id}`).once('value').then(snap => {
+                const reactions = snap.val() || {};
+                const container = document.getElementById('image-container');
+                Object.values(reactions).forEach((type, index) => {
+                    setTimeout(() => showReactionAnimation(type, container), index * 200);
+                });
+            }).catch(error => console.error('Error loading reactions for rain:', error));
+        }
+        function loadLikes(id) {
+            db.ref(`reactions/${id}`).on('value', snap => {
+                const reactions = snap.val() || {};
+                const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 };
+                Object.values(reactions).forEach(type => counts[type] !== undefined && counts[type]++);
+                document.getElementById('reaction-counts-container').innerHTML = `<span class="flex items-center gap-1">❤️ <span class="font-bold">${counts.like}</span></span><span class="flex items-center gap-1">🔥 <span class="font-bold">${counts.hot}</span></span> <span class="flex items-center gap-1">😯 <span class="font-bold">${counts.wow}</span></span> <span class="flex items-center gap-1">😂 <span class="font-bold">${counts.laugh}</span></span> <span class="flex items-center gap-1">😢 <span class="font-bold">${counts.sad}</span></span> <span class="flex items-center gap-1">🫦 <span class="font-bold">${counts.sexy}</span></span>`;
+                const btnIcon = document.querySelector('#like-btn i');
+                if (reactions[deviceID]) {
+                    const iconMap = { hot: 'fa-fire-alt', like: 'fa-heart', wow: 'fa-surprise', sexy: 'fa-kiss-wink-heart', laugh: 'fa-laugh-beam', sad: 'fa-sad-tear' };
+                    btnIcon.className = `fas ${iconMap[reactions[deviceID]] || 'fa-heart'} text-2xl`;
+                } else {
+                    btnIcon.className = 'fas fa-heart text-2xl';
+                }
+                const totalLikes = Object.keys(reactions).length;
+                const el = document.getElementById(`reaction-total-${id}`);
+                if (el) el.textContent = totalLikes;
+                const elSearch = document.getElementById(`reaction-total-search-${id}`);
+                if (elSearch) elSearch.textContent = totalLikes;
+            });
+        }
+        document.getElementById('like-btn').addEventListener('click', e => {
+            e.stopPropagation();
+            document.getElementById('reaction-circle-container').classList.toggle('open');
+        });
+        document.querySelectorAll('.reaction').forEach(reaction => {
+            reaction.addEventListener('click', e => {
+                e.stopPropagation();
+                if (!currentImageId) return;
+                const type = e.currentTarget.dataset.type;
+                trackUserInteractions('tag', type);
+                const reactionsRef = db.ref(`reactions/${currentImageId}/${deviceID}`);
+                reactionsRef.once('value').then(snap => {
+                    if (snap.val() === type) {
+                        reactionsRef.remove().then(() => { loadTopLikedImages(); loadForYouImages(); });
+                    } else {
+                        reactionsRef.set(type).then(() => {
+                            showReactionAnimation(type, document.getElementById('image-container'));
+                             loadTopLikedImages(); loadForYouImages();
+                        });
+                    }
+                });
+                document.getElementById('reaction-circle-container').classList.remove('open');
+            });
+        });
+        document.addEventListener('click', () => document.getElementById('reaction-circle-container').classList.remove('open'));
+        function loadComments(id) {
+            db.ref(`comments/${id}`).orderByChild('timestamp').on('value', snap => {
+                const commentsObj = snap.val() || {};
+                const commentContainer = document.getElementById('comments');
+                commentContainer.innerHTML = '';
+                const commentTree = [];
+                const commentMap = {};
+                Object.entries(commentsObj).forEach(([commentId, commentData]) => {
+                    commentData.id = commentId;
+                    commentData.children = [];
+                    commentMap[commentId] = commentData;
+                    if (commentData.parentId && commentMap[commentData.parentId]) {
+                        commentMap[commentData.parentId].children.push(commentData);
+                    } else {
+                        commentTree.push(commentData);
+                    }
+                });
+                commentTree.sort((a, b) => b.timestamp - a.timestamp);
+                commentTree.forEach(comment => {
+                    const commentEl = renderCommentWithReplies(comment, id);
+                    commentContainer.appendChild(commentEl);
+                });
+            });
+        }
+        function renderCommentWithReplies(comment, imageId) {
+            const fragment = document.createDocumentFragment();
+            const mainCommentEl = renderComment(comment, imageId);
+            fragment.appendChild(mainCommentEl);
+            if (comment.children && comment.children.length > 0) {
+                const repliesContainer = document.createElement('div');
+                repliesContainer.className = 'pl-6 sm:pl-10 border-l-2 border-gray-700/50 flex flex-col gap-3';
+                comment.children.sort((a, b) => a.timestamp - b.timestamp).forEach(reply => {
+                    const replyEl = renderCommentWithReplies(reply, imageId);
+                    repliesContainer.appendChild(replyEl);
+                });
+                fragment.appendChild(repliesContainer);
+            }
+            return fragment;
+        }
+        function renderComment(comment, imageId) {
+            const div = document.createElement('div');
+            const initial = comment.name ? comment.name.charAt(0).toUpperCase() : 'A';
+            const avatarBg = 'bg-gradient-to-br from-orange-500 to-yellow-500 text-gray-900';
+            div.innerHTML = `
+                <div class="flex gap-3">
+                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${avatarBg} font-bold">${initial}</div>
+                    <div class="flex-grow min-w-0">
+                        <div class="rounded-lg rounded-tl-none bg-gray-800 p-3">
+                            <p class="font-bold text-orange-400">${comment.name || 'Anónimo'}</p>
+                            <p class="text-gray-300 whitespace-pre-wrap break-words">${comment.text || ''}</p>
+                        </div>
+                        <div class="flex items-center gap-4 pl-2 pt-1">
+                            <small class="text-xs text-gray-500">${comment.timestamp ? new Date(comment.timestamp).toLocaleString() : ''}</small>
+                            <button class="reply-button text-xs font-semibold text-orange-400 hover:underline">Responder</button>
+                        </div>
+                        <form class="reply-form mt-2 hidden gap-2">
+                            <input type="text" class="reply-input flex-grow rounded-lg border-2 border-gray-600 bg-gray-700 px-3 py-1 text-sm text-white focus:border-orange-500 focus:outline-none" placeholder="Escribe una respuesta...">
+                            <button type="submit" class="reply-submit rounded-lg bg-orange-600 px-3 py-1 text-sm font-semibold text-white hover:bg-orange-500">Enviar</button>
+                        </form>
+                    </div>
+                </div>`;
+            const replyButton = div.querySelector('.reply-button');
+            const replyForm = div.querySelector('.reply-form');
+            replyButton.addEventListener('click', () => {
+                replyForm.classList.toggle('hidden');
+                replyForm.classList.toggle('flex');
+                replyForm.querySelector('input').focus();
+            });
+            replyForm.addEventListener('submit', e => {
+                e.preventDefault();
+                const replyInput = replyForm.querySelector('.reply-input');
+                const text = replyInput.value.trim();
+                if (!text) return;
+                const replyData = { name: username || 'Anónimo', text: text, timestamp: Date.now(), parentId: comment.id };
+                db.ref(`comments/${imageId}`).push(replyData);
+                replyInput.value = '';
+                replyForm.classList.add('hidden');
+                replyForm.classList.remove('flex');
+            });
+            return div;
+        }
+        document.getElementById('comment-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const name = document.getElementById('name-input').value.trim();
+            const comment = document.getElementById('comment-input').value.trim();
+            if (!comment || !currentImageId) return;
+            if (name && !username) {
+                username = name;
+                localStorage.setItem('username', username);
+                updateUserProfile();
+            }
+            const commentData = { name: username || 'Anónimo', text: comment, timestamp: Date.now() };
+            db.ref(`comments/${currentImageId}`).push(commentData).then(() => {
+                document.getElementById('comment-input').value = '';
+                document.getElementById('name-input').value = '';
+            }).catch(error => console.error('Error adding comment:', error));
+        });
+        function displayBattle(images, expiry) {
+            const [img1, img2] = images;
+            const battleGrid = document.getElementById('battle-grid');
+            battleGrid.innerHTML = `<div class="battle-item relative w-full" id="battle-item-1"></div><span class="battle-vs text-3xl font-black text-yellow-400" style="text-shadow: 0 0 10px var(--accent);">VS</span><div class="battle-item relative w-full" id="battle-item-2"></div>`;
+            const timer = document.getElementById('battle-timer');
+            const item1 = document.getElementById('battle-item-1');
+            const item2 = document.getElementById('battle-item-2');
+            const renderItem = (itemEl, img) => {
+                itemEl.innerHTML = `<div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition duration-300 transform hover:scale-105 relative"><img src="${img.url}" alt="${img.title}" onclick="openModal('${img.id}')" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs font-bold" id="vote-count-${img.id}">0</div><button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-4 py-2 text-sm font-bold text-gray-900 transition hover:scale-105" onclick="voteBattle('${img.id}', 'battle-item-${itemEl.id.split('-')[2]}')">Votar</button></div>`;
+            };
+            renderItem(item1, img1);
+            renderItem(item2, img2);
+            db.ref('battle').on('value', snap => {
+                const battle = snap.val();
+                if (!battle || !battle.votes) return;
+                const voteCount1 = document.getElementById(`vote-count-${img1.id}`);
+                const voteCount2 = document.getElementById(`vote-count-${img2.id}`);
+                if (voteCount1) voteCount1.textContent = battle.votes[img1.id] || 0;
+                if (voteCount2) voteCount2.textContent = battle.votes[img2.id] || 0;
+                if (battle.users && battle.users[deviceID]) {
+                    document.querySelectorAll('.battle-vote-btn').forEach(b => b.style.display = 'none');
+                }
+                updateBattleHalo();
+            });
+            const timerInterval = setInterval(() => {
+                const timeLeft = expiry - Date.now();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    saveBattleWinner();
+                    initBattleSection();
+                    return;
+                }
+                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                timer.textContent = `Tiempo restante: ${days}d ${hours}h ${minutes}m`;
+            }, 1000);
+        }
+        function updateBattleHalo() {
+            db.ref('battle').once('value').then(snap => {
+                const battle = snap.val();
+                if (!battle || !battle.images || !battle.votes) return;
+                const [id1, id2] = battle.images;
+                const votes1 = battle.votes[id1] || 0;
+                const votes2 = battle.votes[id2] || 0;
+                const item1 = document.getElementById('battle-item-1');
+                const item2 = document.getElementById('battle-item-2');
+                if (!item1 || !item2) return;
+                item1.classList.remove('winning', 'losing');
+                item2.classList.remove('winning', 'losing');
+                if (votes1 > votes2) {
+                    item1.classList.add('winning');
+                    item2.classList.add('losing');
+                } else if (votes2 > votes1) {
+                    item2.classList.add('winning');
+                    item1.classList.add('losing');
+                }
+            }).catch(e => console.error('Error updating halo:', e));
+        }
+        function showPunchAnimation(votedItemId) {
+            const opponentItem = votedItemId === 'battle-item-1' ? document.getElementById('battle-item-2') : document.getElementById('battle-item-1');
+            if(!opponentItem) return;
+            const punch = document.createElement('span');
+            punch.className = 'punch-animation';
+            punch.textContent = '🥊';
+            opponentItem.appendChild(punch);
+            setTimeout(() => punch.remove(), 500);
+        }
+        function voteBattle(imageId, votedItemId) {
+            db.ref(`battle/users/${deviceID}`).once('value').then(snap => {
+                if (snap.exists()) return;
+                db.ref(`battle/users/${deviceID}`).set(imageId);
+                db.ref(`battle/votes/${imageId}`).transaction(c => (c || 0) + 1);
+                showPunchAnimation(votedItemId);
+            }).catch(e => console.error('Error voting:', e));
+        }
+        function saveBattleWinner() {
+            db.ref('battle').once('value').then(snap => {
+                const battle = snap.val();
+                if (!battle || !battle.images) return;
+                const [id1, id2] = battle.images;
+                const votes1 = battle.votes[id1] || 0;
+                const votes2 = battle.votes[id2] || 0;
+                const winnerId = votes1 >= votes2 ? id1 : id2;
+                db.ref('previousBattleWinner').set({ winnerId, battleImages: [id1, id2], timestamp: Date.now() });
+                db.ref(`images/${winnerId}/tags`).once('value', tagSnap => {
+                    let tags = tagSnap.val() || [];
+                    if (!Array.isArray(tags)) tags = [];
+                    if (!tags.includes('battle_winner')) tags.push('battle_winner');
+                    db.ref(`images/${winnerId}/tags`).set(tags);
+                });
+            }).catch(e => console.error('Error saving winner:', e));
+        }
+        async function loadPreviousBattleWinner() {
+            const snap = await db.ref('previousBattleWinner').once('value');
+            const data = snap.val();
+            if (!data) return;
+            
+            const promises = [data.winnerId, ...data.battleImages].map(id => db.ref(`images/${id}`).once('value'));
+            const snapshots = await Promise.all(promises);
+            const [winnerSnap, img1Snap, img2Snap] = snapshots;
+            const winner = { id: winnerSnap.key, ...winnerSnap.val()};
+            const img1 = { id: img1Snap.key, ...img1Snap.val()};
+            const img2 = { id: img2Snap.key, ...img2Snap.val()};
+            
+            if (!winner || !img1 || !img2) return;
+            const winnerDiv = document.getElementById('battle-winner');
+            winnerDiv.innerHTML = `<div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg border-2 border-yellow-400 relative cursor-pointer" onclick="openModal('${winner.id}')"><img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 p-4 backdrop-blur-sm"><img src="${img1.url}" alt="${img1.title}" class="w-24 md:w-32 h-auto aspect-[2/3] object-cover rounded-lg shadow-lg border-2 border-gray-400/50 transition hover:scale-105" onclick="event.stopPropagation(); openModal('${img1.id}')"><span class="text-yellow-400 font-black text-4xl mx-2" style="text-shadow: 0 0 10px rgba(0,0,0,0.9);">VS</span><img src="${img2.url}" alt="${img2.title}" class="w-24 md:w-32 h-auto aspect-[2/3] object-cover rounded-lg shadow-lg border-2 border-gray-400/50 transition hover:scale-105" onclick="event.stopPropagation(); openModal('${img2.id}')"></div></div>`;
+            document.getElementById('battle-winner-container').style.display = 'block';
+        }
+         function displayForYouImages(images) {
+            const grid = document.getElementById('for-you-grid');
+            grid.innerHTML = '';
+            if (images.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-gray-500">Interactúa más para recibir recomendaciones.</p>';
+            } else {
+                images.forEach(img => {
+                    const div = document.createElement('div');
+                    div.className = 'group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg border-2 border-transparent transition duration-300 hover:scale-105 hover:border-purple-400';
+                    div.onclick = () => openModal(img.id);
+                    div.innerHTML = `<img src="${img.url}" alt="${img.title}" class="h-full w-full object-cover" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>`;
+                    grid.appendChild(div);
+                });
+            }
+        }
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
