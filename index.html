@@ -170,7 +170,7 @@
             
             <section id="top-liked-section" class="mb-12">
                 <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-trophy text-yellow-400"></i> Más Gustadas</h3>
-                <div id="top-liked-grid" class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
+                <div id="top-liked-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
                     <!-- Slider images will be populated here -->
                 </div>
             </section>
@@ -179,7 +179,7 @@
             
             <section id="for-you-section" class="mb-12">
                 <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-star text-purple-400"></i> Para Ti</h3>
-                <div id="for-you-grid" class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
+                <div id="for-you-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
                     <!-- Slider images will be populated here -->
                 </div>
             </section>
@@ -245,22 +245,12 @@
                 <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
                 <p id="desc" class="rounded-xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
                 
-                <!-- START: Similar Images Section Update -->
                 <section id="similar-section" class="mt-4 w-full">
                     <h3 class="mb-4 flex items-center justify-center gap-3 text-center text-xl font-bold"><i class="fas fa-th-large text-orange-400"></i> Imágenes Similares</h3>
-                    <div class="relative group">
-                        <div id="similar-grid" class="flex overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 scrollbar-hide gap-4">
-                            <!-- Similar images will be populated here -->
-                        </div>
-                        <button id="similar-prev" class="absolute top-1/2 left-2 -translate-y-1/2 z-10 hidden sm:flex items-center justify-center w-12 h-12 bg-slate-800/50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-slate-700">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <button id="similar-next" class="absolute top-1/2 right-2 -translate-y-1/2 z-10 hidden sm:flex items-center justify-center w-12 h-12 bg-slate-800/50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-slate-700">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
+                    <div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
+                        <!-- Similar images will be populated here -->
                     </div>
                 </section>
-                <!-- END: Similar Images Section Update -->
                 
                 <section id="comments-section" class="mt-4 w-full">
                     <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row">
@@ -310,7 +300,7 @@
         let isLoading = false;
         let noMoreImages = false;
         let currentImageId = '';
-        let similarSliderInterval = null; // Variable para el intervalo del carrusel
+        const sliderAnimationState = {}; // Almacena el estado de las animaciones de los sliders
         let deviceID = localStorage.getItem('deviceID');
         if (!deviceID) {
             deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -486,7 +476,7 @@
                 likesCount[imgId] = Object.keys(users).length;
             });
 
-            const sortedIds = Object.keys(likesCount).sort((a,b) => likesCount[b] - likesCount[a]).slice(0, 6);
+            const sortedIds = Object.keys(likesCount).sort((a,b) => likesCount[b] - likesCount[a]).slice(0, 10);
             if (sortedIds.length === 0) {
                  grid.innerHTML = '<p class="w-full text-center text-gray-500">Aún no hay imágenes gustadas.</p>';
                  return;
@@ -496,19 +486,104 @@
             const images = imageSnaps.map(s => ({id: s.key, ...s.val()}));
             
             displayImages(images, 'top-liked-grid');
+            initAutoSlider('top-liked-grid');
         }
         
         async function loadForYouImages() {
             const grid = document.getElementById('for-you-grid');
-            generateSkeletons(grid, 6, true);
-            const imageSnap = await db.ref('images').limitToLast(6).once('value');
-            if (!imageSnap.exists()) {
-                grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay imágenes para mostrar.</p>';
+            generateSkeletons(grid, 10, true);
+
+            let viewedImageIds = [];
+            try {
+                viewedImageIds = JSON.parse(localStorage.getItem('viewedImages')) || [];
+            } catch (e) {
+                viewedImageIds = [];
+            }
+
+            // Fallback para usuarios nuevos: mostrar las más recientes.
+            if (viewedImageIds.length === 0) {
+                const imageSnap = await db.ref('images').limitToLast(10).once('value');
+                if (!imageSnap.exists()) {
+                    grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay imágenes para mostrar.</p>';
+                    return;
+                }
+                const images = [];
+                imageSnap.forEach(child => { images.push({id: child.key, ...child.val()}); });
+                displayImages(images.reverse(), 'for-you-grid');
+                initAutoSlider('for-you-grid');
                 return;
             }
-            const images = [];
-            imageSnap.forEach(child => { images.push({id: child.key, ...child.val()}); });
-            displayImages(images.reverse(), 'for-you-grid');
+
+            // 1. Obtener las etiquetas de las imágenes vistas por el usuario para crear un perfil de gustos.
+            const viewedImageSnaps = await Promise.all(viewedImageIds.map(id => db.ref(`images/${id}`).once('value')));
+            const userTagProfile = {};
+            viewedImageSnaps.forEach(snap => {
+                if (snap.exists() && Array.isArray(snap.val().tags)) {
+                    snap.val().tags.forEach(tag => {
+                        userTagProfile[tag] = (userTagProfile[tag] || 0) + 1;
+                    });
+                }
+            });
+            
+            // Si el historial no tiene etiquetas, usar el fallback.
+            if (Object.keys(userTagProfile).length === 0) {
+                localStorage.removeItem('viewedImages'); // Limpiar historial inválido
+                loadForYouImages(); 
+                return;
+            }
+
+            // 2. Obtener imágenes candidatas para recomendar.
+            const candidateSnap = await db.ref('images').limitToLast(200).once('value');
+            if (!candidateSnap.exists()) {
+                grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay imágenes para recomendar.</p>';
+                return;
+            }
+            
+            const candidates = [];
+            candidateSnap.forEach(child => {
+                const img = { id: child.key, ...child.val() };
+                // Recomendar solo imágenes que no han sido vistas.
+                if (img.tags && !viewedImageIds.includes(img.id)) {
+                    candidates.push(img);
+                }
+            });
+
+            // 3. Calificar y ordenar las candidatas según el perfil del usuario.
+            const scoredCandidates = candidates.map(img => {
+                let score = 0;
+                if (Array.isArray(img.tags)) {
+                    img.tags.forEach(tag => {
+                        if (userTagProfile[tag]) {
+                            score += userTagProfile[tag]; // La puntuación aumenta con la frecuencia de la etiqueta en el historial.
+                        }
+                    });
+                }
+                return { image: img, score };
+            }).filter(item => item.score > 0);
+
+            scoredCandidates.sort((a, b) => b.score - a.score);
+
+            const recommendedImages = scoredCandidates.slice(0, 10).map(item => item.image);
+
+            // 4. Mostrar las imágenes recomendadas o un fallback si no hay.
+            if (recommendedImages.length > 0) {
+                displayImages(recommendedImages, 'for-you-grid');
+                initAutoSlider('for-you-grid');
+            } else {
+                const imageSnap = await db.ref('images').limitToLast(10).once('value');
+                 if (!imageSnap.exists()) {
+                    grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay imágenes nuevas para mostrar.</p>';
+                    return;
+                }
+                const images = [];
+                imageSnap.forEach(child => {
+                    if (!viewedImageIds.includes(child.key)) {
+                        images.push({id: child.key, ...child.val()});
+                    }
+                });
+                displayImages(images.reverse(), 'for-you-grid');
+                initAutoSlider('for-you-grid');
+            }
         }
 
         // --- Funciones de Renderizado y UI ---
@@ -521,21 +596,21 @@
                 return;
             }
             
-            const isSlider = containerId === 'top-liked-grid' || containerId === 'for-you-grid';
-            const isSimilarSlider = containerId === 'similar-grid';
+            const isSlider = containerId === 'top-liked-grid' || containerId === 'for-you-grid' || containerId === 'similar-grid';
 
             images.forEach((img, index) => {
                 if (!img.url || !img.title) return; // Skip incomplete data
                 const div = document.createElement('div');
                 
-                let classList = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-xl image-card-hover';
-                if (isSlider) {
-                    classList += ' flex-shrink-0 w-2/5 sm:w-1/4 md:w-1/5';
-                }
-                if (isSimilarSlider) {
-                    classList += ' snap-center flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%]';
-                }
+                let classList = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-xl image-card-hover flex-shrink-0';
                 
+                if (isSlider) {
+                    classList += ' w-2/5 sm:w-1/4 md:w-1/5';
+                }
+                if (containerId === 'similar-grid') {
+                    classList = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-xl image-card-hover flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%]';
+                }
+
                 if (containerId === 'top-liked-grid') {
                     const topClass = index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : '';
                     if (topClass) classList += ` border-2 border-transparent ${topClass}`;
@@ -577,83 +652,116 @@
             loadComments(id);
             loadSimilarImages(img.tags || []);
             triggerReactionRain(id);
+            trackImageView(id); // Registrar la vista de la imagen
 
             document.getElementById('modal').style.display = 'block';
             document.body.style.overflow = 'hidden';
             setTimeout(() => document.getElementById('modal-content').scrollTop = 0, 50);
         }
 
-        function initSimilarImagesSlider() {
-            const container = document.getElementById('similar-grid');
-            const prevBtn = document.getElementById('similar-prev');
-            const nextBtn = document.getElementById('similar-next');
+        function trackImageView(imageId) {
+            if (!imageId) return;
+            let viewedImages = [];
+            try {
+                viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || [];
+            } catch (e) {
+                console.error("Error parsing viewedImages from localStorage", e);
+                viewedImages = [];
+            }
+            const existingIndex = viewedImages.indexOf(imageId);
+            if (existingIndex > -1) {
+                viewedImages.splice(existingIndex, 1);
+            }
+            viewedImages.unshift(imageId);
+            const historyLimit = 50;
+            if (viewedImages.length > historyLimit) {
+                viewedImages = viewedImages.slice(0, historyLimit);
+            }
+            localStorage.setItem('viewedImages', JSON.stringify(viewedImages));
+        }
 
-            if (!container || !prevBtn || !nextBtn || container.children.length === 0) return;
+        function initAutoSlider(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container || container.children.length < 2) return;
 
-            const stopAutoScroll = () => {
-                if (similarSliderInterval) clearInterval(similarSliderInterval);
-                similarSliderInterval = null;
-            };
+            if (sliderAnimationState[containerId]?.animationFrameId) {
+                cancelAnimationFrame(sliderAnimationState[containerId].animationFrameId);
+            }
 
-            const startAutoScroll = () => {
-                stopAutoScroll(); 
-                similarSliderInterval = setInterval(() => {
-                    if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 20) {
-                        container.scrollTo({ left: 0, behavior: 'smooth' });
-                    } else {
-                        container.scrollBy({ left: container.clientWidth, behavior: 'smooth' });
-                    }
-                }, 3000);
-            };
-
-            const setupButton = (btn, direction) => {
-                btn.addEventListener('click', () => {
-                    stopAutoScroll();
-                    container.scrollBy({ left: container.clientWidth * direction, behavior: 'smooth' });
-                    setTimeout(startAutoScroll, 5000);
+            if (!container.dataset.cloned) {
+                const originalChildren = Array.from(container.children);
+                originalChildren.forEach(child => {
+                    const clone = child.cloneNode(true);
+                    clone.setAttribute('aria-hidden', 'true');
+                    container.appendChild(clone);
                 });
+                container.dataset.cloned = 'true';
+            }
+
+            const scrollWidth = container.scrollWidth / 2;
+            let isPaused = false;
+
+            const scroll = () => {
+                if (!isPaused) {
+                    container.scrollLeft += 0.5;
+                    if (container.scrollLeft >= scrollWidth) {
+                        container.scrollLeft = 0;
+                    }
+                }
+                sliderAnimationState[containerId].animationFrameId = requestAnimationFrame(scroll);
             };
-            
-            setupButton(nextBtn, 1);
-            setupButton(prevBtn, -1);
-            
-            const elementsToHover = [container, prevBtn, nextBtn];
-            elementsToHover.forEach(el => el.addEventListener('mouseenter', stopAutoScroll));
-            elementsToHover.forEach(el => el.addEventListener('mouseleave', startAutoScroll));
-            
-            let userScrollTimeout;
-            const handleUserScroll = () => {
-                stopAutoScroll();
-                clearTimeout(userScrollTimeout);
-                userScrollTimeout = setTimeout(startAutoScroll, 5000);
-            };
-            container.addEventListener('wheel', handleUserScroll, { passive: true });
-            container.addEventListener('touchstart', handleUserScroll, { passive: true });
-            
-            startAutoScroll();
+
+            const start = () => { isPaused = false; };
+            const stop = () => { isPaused = true; };
+
+            container.addEventListener('mouseenter', stop);
+            container.addEventListener('mouseleave', start);
+            container.addEventListener('touchstart', stop, { passive: true });
+            container.addEventListener('touchend', start, { passive: true });
+
+            sliderAnimationState[containerId] = {};
+            scroll();
         }
 
         async function loadSimilarImages(tags) {
             const grid = document.getElementById('similar-grid');
+            
+            if (sliderAnimationState['similar-grid']?.animationFrameId) {
+                cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId);
+            }
             grid.innerHTML = '';
+            delete grid.dataset.cloned;
+
             if (!tags || tags.length === 0) {
-                 grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No hay imágenes similares.</p>';
+                 grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No hay etiquetas para encontrar similares.</p>';
                 return;
             }
-            const snap = await db.ref('images').orderByChild('timestamp').limitToLast(100).once('value');
+
+            const snap = await db.ref('images').orderByChild('timestamp').limitToLast(200).once('value');
             if(!snap.exists()) return;
 
             const candidates = [];
-            snap.forEach(child => { candidates.push({ id: child.key, ...child.val() }); });
+            snap.forEach(child => {
+                const img = { id: child.key, ...child.val() };
+                if (img.id !== currentImageId && Array.isArray(img.tags)) {
+                    candidates.push(img);
+                }
+            });
             
-            const similar = candidates.filter(img => img.id !== currentImageId && img.tags && tags.some(t => img.tags.includes(t)))
-                                      .slice(0, 6); // Changed to 6
+            const scoredImages = candidates.map(img => {
+                const commonTags = img.tags.filter(tag => tags.includes(tag));
+                return { image: img, score: commonTags.length };
+            }).filter(item => item.score > 0);
 
-            if(similar.length > 0) {
-                displayImages(similar, 'similar-grid');
-                initSimilarImagesSlider();
+            scoredImages.sort((a, b) => b.score - a.score);
+
+            const similarImages = scoredImages.slice(0, 10).map(item => item.image);
+
+            if(similarImages.length > 0) {
+                displayImages(similarImages, 'similar-grid');
+                initAutoSlider('similar-grid');
             } else {
-                grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No hay imágenes similares.</p>';
+                grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No se encontraron imágenes con etiquetas similares.</p>';
             }
         }
         
@@ -705,9 +813,9 @@
         document.getElementById('close-modal').addEventListener('click', () => {
             document.getElementById('modal').style.display = 'none';
             document.body.style.overflow = 'auto';
-            if (similarSliderInterval) {
-                clearInterval(similarSliderInterval);
-                similarSliderInterval = null;
+            if (sliderAnimationState['similar-grid']?.animationFrameId) {
+                cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId);
+                delete sliderAnimationState['similar-grid'];
             }
         });
         
