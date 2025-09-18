@@ -58,14 +58,6 @@
             aspect-ratio: 2 / 3;
         }
 
-        /* Custom Loader for pagination */
-        .custom-loader {
-            width: 50px; height: 50px; border-radius: 50%;
-            border: 3px solid #4b5563; border-top-color: var(--accent);
-            animation: spin 1s ease-in-out infinite; margin: 0 auto;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
         /* Estilos de Batalla y Top */
         .winning { box-shadow: 0 0 20px 5px var(--halo-green); }
         .losing { box-shadow: 0 0 20px 5px var(--halo-red); }
@@ -76,11 +68,11 @@
         @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
 
-        /* Animación de reacción sobre la imagen */
+        /* Animación de reacción sobre la imagen (Restaurada) */
         @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
         .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
 
-        /* Animación para el "rain effect" (no se usa al clickear) */
+        /* Animación para el "rain effect" (Restaurada) */
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
         .reaction-animation { position: absolute; font-size: 2rem; pointer-events: none; animation: floatUp 1.5s ease forwards; z-index: 10; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
 
@@ -193,7 +185,7 @@
         <section id="gallery">
             <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
             <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"></div>
-            <div id="loader" class="py-12" style="display: none;"><div class="custom-loader"></div></div>
+            <div id="loader" class="py-12" style="display: none;"><div class="skeleton"></div></div>
             <div id="load-more-trigger" class="h-10"></div> <!-- Invisible trigger for IntersectionObserver -->
         </section>
     </main>
@@ -295,8 +287,9 @@
         
         // --- Variables Globales ---
         const imagesPerLoad = 20;
-        let allImages = []; // Cache para búsqueda y secciones
+        let allImages = []; // Cache para búsqueda y datos del modal
         let lastImageTimestamp = null;
+        let lastImageKey = null; // Clave para una paginación precisa
         let isLoading = false;
         let noMoreImages = false;
         let currentImageId = '';
@@ -370,6 +363,7 @@
 
                 if (images.length > 0) {
                     lastImageTimestamp = images[0].timestamp;
+                    lastImageKey = images[0].id;
                 }
                 
                 images.reverse();
@@ -386,12 +380,14 @@
         function loadMoreImages() {
             if (isLoading || noMoreImages) return;
             isLoading = true;
-            document.getElementById('loader').style.display = 'block';
+            const loaderContainer = document.getElementById('loader');
+            loaderContainer.style.display = 'block';
+            generateSkeletons(loaderContainer, 1);
 
-            db.ref('images').orderByChild('timestamp').endAt(lastImageTimestamp).limitToLast(imagesPerLoad + 1).once('value').then(snapshot => {
-                if (!snapshot.exists()) {
+            db.ref('images').orderByChild('timestamp').endBefore(lastImageTimestamp, lastImageKey).limitToLast(imagesPerLoad).once('value').then(snapshot => {
+                loaderContainer.style.display = 'none';
+                if (!snapshot.exists() || snapshot.numChildren() === 0) {
                     noMoreImages = true;
-                    document.getElementById('loader').style.display = 'none';
                     isLoading = false;
                     return;
                 }
@@ -401,22 +397,21 @@
                    newImages.push({ id: child.key, ...child.val() });
                 });
                 
-                newImages.pop();
+                if (newImages.length < imagesPerLoad) { noMoreImages = true; }
 
-                if (newImages.length === 0) {
-                    noMoreImages = true;
-                } else {
+                if (newImages.length > 0) {
                     lastImageTimestamp = newImages[0].timestamp;
+                    lastImageKey = newImages[0].id;
                     newImages.reverse();
                     allImages = allImages.concat(newImages);
                     displayImages(newImages, 'grid', true);
                 }
                 
                 isLoading = false;
-                document.getElementById('loader').style.display = 'none';
             }).catch(error => {
                 console.error("Error loading more images:", error);
                 isLoading = false;
+                loaderContainer.style.display = 'none';
             });
         }
         
@@ -467,7 +462,7 @@
 
         async function loadTopLikedImages() {
             const grid = document.getElementById('top-liked-grid');
-            generateSkeletons(grid, 6, true);
+            generateSkeletons(grid, 10, true);
             
             const reactionsSnap = await db.ref('reactions').once('value');
             const reactions = reactionsSnap.val() || {};
@@ -494,14 +489,9 @@
             generateSkeletons(grid, 10, true);
 
             let viewedImageIds = [];
-            try {
-                viewedImageIds = JSON.parse(localStorage.getItem('viewedImages')) || [];
-            } catch (e) {
-                viewedImageIds = [];
-            }
+            try { viewedImageIds = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImageIds = []; }
 
-            // Fallback para usuarios nuevos: mostrar las más recientes.
-            if (viewedImageIds.length === 0) {
+            const fallbackToRecents = async () => {
                 const imageSnap = await db.ref('images').limitToLast(10).once('value');
                 if (!imageSnap.exists()) {
                     grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay imágenes para mostrar.</p>';
@@ -511,80 +501,54 @@
                 imageSnap.forEach(child => { images.push({id: child.key, ...child.val()}); });
                 displayImages(images.reverse(), 'for-you-grid');
                 initAutoSlider('for-you-grid');
+            };
+
+            if (viewedImageIds.length === 0) {
+                await fallbackToRecents();
                 return;
             }
 
-            // 1. Obtener las etiquetas de las imágenes vistas por el usuario para crear un perfil de gustos.
-            const viewedImageSnaps = await Promise.all(viewedImageIds.map(id => db.ref(`images/${id}`).once('value')));
+            const viewedImageSnaps = await Promise.all(viewedImageIds.slice(0, 20).map(id => db.ref(`images/${id}`).once('value')));
             const userTagProfile = {};
             viewedImageSnaps.forEach(snap => {
                 if (snap.exists() && Array.isArray(snap.val().tags)) {
-                    snap.val().tags.forEach(tag => {
-                        userTagProfile[tag] = (userTagProfile[tag] || 0) + 1;
-                    });
+                    snap.val().tags.forEach(tag => { userTagProfile[tag] = (userTagProfile[tag] || 0) + 1; });
                 }
             });
             
-            // Si el historial no tiene etiquetas, usar el fallback.
             if (Object.keys(userTagProfile).length === 0) {
-                localStorage.removeItem('viewedImages'); // Limpiar historial inválido
-                loadForYouImages(); 
+                await fallbackToRecents();
                 return;
             }
 
-            // 2. Obtener imágenes candidatas para recomendar.
             const candidateSnap = await db.ref('images').limitToLast(200).once('value');
-            if (!candidateSnap.exists()) {
-                grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay imágenes para recomendar.</p>';
-                return;
-            }
+            if (!candidateSnap.exists()) { await fallbackToRecents(); return; }
             
             const candidates = [];
             candidateSnap.forEach(child => {
                 const img = { id: child.key, ...child.val() };
-                // Recomendar solo imágenes que no han sido vistas.
-                if (img.tags && !viewedImageIds.includes(img.id)) {
-                    candidates.push(img);
-                }
+                if (img.tags && !viewedImageIds.includes(img.id)) { candidates.push(img); }
             });
 
-            // 3. Calificar y ordenar las candidatas según el perfil del usuario.
             const scoredCandidates = candidates.map(img => {
                 let score = 0;
                 if (Array.isArray(img.tags)) {
-                    img.tags.forEach(tag => {
-                        if (userTagProfile[tag]) {
-                            score += userTagProfile[tag]; // La puntuación aumenta con la frecuencia de la etiqueta en el historial.
-                        }
-                    });
+                    img.tags.forEach(tag => { if (userTagProfile[tag]) score += userTagProfile[tag]; });
                 }
                 return { image: img, score };
             }).filter(item => item.score > 0);
 
             scoredCandidates.sort((a, b) => b.score - a.score);
-
             const recommendedImages = scoredCandidates.slice(0, 10).map(item => item.image);
 
-            // 4. Mostrar las imágenes recomendadas o un fallback si no hay.
             if (recommendedImages.length > 0) {
                 displayImages(recommendedImages, 'for-you-grid');
                 initAutoSlider('for-you-grid');
             } else {
-                const imageSnap = await db.ref('images').limitToLast(10).once('value');
-                 if (!imageSnap.exists()) {
-                    grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay imágenes nuevas para mostrar.</p>';
-                    return;
-                }
-                const images = [];
-                imageSnap.forEach(child => {
-                    if (!viewedImageIds.includes(child.key)) {
-                        images.push({id: child.key, ...child.val()});
-                    }
-                });
-                displayImages(images.reverse(), 'for-you-grid');
-                initAutoSlider('for-you-grid');
+                await fallbackToRecents();
             }
         }
+
 
         // --- Funciones de Renderizado y UI ---
         function displayImages(images, containerId, append = false) {
@@ -652,7 +616,7 @@
             loadComments(id);
             loadSimilarImages(img.tags || []);
             triggerReactionRain(id);
-            trackImageView(id); // Registrar la vista de la imagen
+            trackImageView(id);
 
             document.getElementById('modal').style.display = 'block';
             document.body.style.overflow = 'hidden';
@@ -662,21 +626,15 @@
         function trackImageView(imageId) {
             if (!imageId) return;
             let viewedImages = [];
-            try {
-                viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || [];
-            } catch (e) {
-                console.error("Error parsing viewedImages from localStorage", e);
-                viewedImages = [];
-            }
+            try { viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImages = []; }
+            
             const existingIndex = viewedImages.indexOf(imageId);
-            if (existingIndex > -1) {
-                viewedImages.splice(existingIndex, 1);
-            }
+            if (existingIndex > -1) { viewedImages.splice(existingIndex, 1); }
+            
             viewedImages.unshift(imageId);
-            const historyLimit = 50;
-            if (viewedImages.length > historyLimit) {
-                viewedImages = viewedImages.slice(0, historyLimit);
-            }
+            const historyLimit = 50; 
+            if (viewedImages.length > historyLimit) { viewedImages = viewedImages.slice(0, historyLimit); }
+            
             localStorage.setItem('viewedImages', JSON.stringify(viewedImages));
         }
 
@@ -708,7 +666,7 @@
                         container.scrollLeft = 0;
                     }
                 }
-                sliderAnimationState[containerId].animationFrameId = requestAnimationFrame(scroll);
+                sliderAnimationState[containerId] = { animationFrameId: requestAnimationFrame(scroll) };
             };
 
             const start = () => { isPaused = false; };
@@ -719,7 +677,6 @@
             container.addEventListener('touchstart', stop, { passive: true });
             container.addEventListener('touchend', start, { passive: true });
 
-            sliderAnimationState[containerId] = {};
             scroll();
         }
 
@@ -859,7 +816,7 @@
                 let delay = 0;
                 snap.forEach(childSnap => {
                     setTimeout(() => showReactionAnimation(childSnap.val(), container), delay);
-                    delay += 200;
+                    delay += Math.random() * 200 + 50; // Randomize delay for a more natural feel
                 });
             });
         }
@@ -1037,3 +994,4 @@
     </script>
 </body>
 </html>
+
