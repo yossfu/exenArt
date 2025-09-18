@@ -618,6 +618,7 @@
             triggerReactionRain(id);
             trackImageView(id);
 
+            document.getElementById('scrollToTopBtn').classList.remove('visible'); // CORRECCIÓN: Ocultar botón
             document.getElementById('modal').style.display = 'block';
             document.body.style.overflow = 'hidden';
             setTimeout(() => document.getElementById('modal-content').scrollTop = 0, 50);
@@ -773,6 +774,10 @@
             if (sliderAnimationState['similar-grid']?.animationFrameId) {
                 cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId);
                 delete sliderAnimationState['similar-grid'];
+            }
+            // CORRECCIÓN: Re-evaluar la visibilidad del botón al cerrar el modal
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                scrollToTopBtn.classList.add('visible');
             }
         });
         
