@@ -48,7 +48,7 @@
             margin-bottom: 15px;
             font-family: 'Inter', sans-serif;
         }
-        #admin-form, #login-form, #edit-form {
+        #admin-form, #login-form, #edit-form, #create-battle-form {
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -81,9 +81,15 @@
             justify-content: center;
             gap: 8px;
         }
-        button:hover {
+        button:hover:not(:disabled) {
             background: linear-gradient(135deg, #444, #555);
             transform: scale(1.02);
+        }
+        button:disabled {
+            background: #2a2a2a;
+            color: #777;
+            cursor: not-allowed;
+            transform: none;
         }
         .action-btn {
             padding: 8px;
@@ -102,23 +108,22 @@
         .edit-btn:hover, .approve-btn:hover {
             background: linear-gradient(135deg, #66bb6a, #4caf50);
         }
-        #error-message, #success-message {
+        .message-box {
             text-align: center;
             padding: 10px;
             font-size: 14px;
-            display: none;
-            font-family: 'Inter', sans-serif;
+            border-radius: 6px;
+            margin-top: 10px;
         }
-        #error-message {
+        .error {
             color: #ff6b6b;
             background: rgba(255, 75, 75, 0.1);
-            border-radius: 6px;
         }
-        #success-message {
+        .success {
             color: #4caf50;
             background: rgba(76, 175, 80, 0.1);
-            border-radius: 6px;
         }
+
         header {
             background: linear-gradient(135deg, #1e1e1e, #0a0a0a);
             padding: 15px 20px;
@@ -158,14 +163,12 @@
         }
         #image-list, #comment-list {
             margin-top: 20px;
-            display: none;
         }
-        #image-list.show, #comment-list.show {
-            display: block;
-        }
-        #image-list h2, #comment-list h2 {
+        h2 {
             font-size: 1.5em;
             margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
         }
         #image-table, #comment-table {
             width: 100%;
@@ -221,57 +224,48 @@
             background: linear-gradient(135deg, #444, #555);
         }
         @media (max-width: 768px) {
-            body {
-                padding: 5px;
-            }
-            #admin-container {
-                padding: 15px;
-                width: 100%;
-            }
-            header h1 {
-                font-size: 1.5em;
-            }
-            #image-table, #comment-table {
-                font-size: 14px;
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-            #image-table th, #image-table td, #comment-table th, #comment-table td {
-                padding: 8px;
-            }
-            #image-table td img {
-                width: 40px;
-                height: 40px;
-            }
-            #search-container, #comment-search-container {
-                flex-direction: column;
-            }
-            #search-btn, #comment-search-btn {
-                width: 100%;
-            }
-            .action-btn {
-                padding: 6px 8px;
-                font-size: 12px;
-                margin: 2px;
-            }
+            body { padding: 5px; }
+            #admin-container { padding: 15px; width: 100%; }
+            header h1 { font-size: 1.5em; }
+            #image-table, #comment-table { font-size: 14px; display: block; overflow-x: auto; white-space: nowrap; }
+            #image-table th, #image-table td, #comment-table th, #comment-table td { padding: 8px; }
+            #image-table td img { width: 40px; height: 40px; }
+            #search-container, #comment-search-container { flex-direction: column; }
+            #search-btn, #comment-search-btn { width: 100%; }
+            .action-btn { padding: 6px 8px; font-size: 12px; margin: 2px; }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header>
         <h1><i class="fas fa-images"></i> exen-E - Administración</h1>
     </header>
 
-    <!-- Contenedor de Administración -->
     <div id="admin-container">
         <div id="login-form">
             <input type="password" id="admin-pass" placeholder="Contraseña de Administrador">
             <button onclick="checkAdmin()"><i class="fas fa-sign-in-alt"></i> Entrar</button>
-            <div id="error-message">Contraseña incorrecta</div>
+            <div id="login-error" class="message-box error" style="display: none;"></div>
         </div>
         <div id="admin-content" style="display: none;">
+            <div id="global-message" class="message-box" style="display: none;"></div>
+
+            <!-- SECCIÓN DE BATALLAS -->
+            <div id="battle-management" class="mb-8">
+                <h2><i class="fas fa-gavel"></i> Gestionar Batalla</h2>
+                <div id="current-battle-status" class="mb-4 p-4 bg-[#2a2a2a] rounded-lg"></div>
+                <div id="create-battle-form">
+                    <p>Selecciona dos imágenes de la lista de abajo para iniciar una batalla.</p>
+                    <div>
+                        <label for="battle-duration" class="block mb-1 font-semibold">Duración de la batalla (días):</label>
+                        <input type="number" id="battle-duration" value="7" style="width: 100%; padding: 10px; background: #333; border-radius: 6px; border: 1px solid #555; color: #fff;">
+                    </div>
+                    <button id="start-battle-btn" disabled><i class="fas fa-play"></i> Iniciar Batalla</button>
+                    <button id="end-battle-btn" class="delete-btn" style="display: none;"><i class="fas fa-stop"></i> Terminar Batalla y Declarar Ganador</button>
+                </div>
+            </div>
+
+            <!-- FORMULARIO PARA AÑADIR IMAGEN -->
             <form id="admin-form">
                 <h2><i class="fas fa-upload"></i> Agregar Nueva Imagen</h2>
                 <input type="url" id="img-url" placeholder="URL de la Imagen (https://...)" required>
@@ -279,9 +273,9 @@
                 <textarea id="img-desc" placeholder="Descripción" required></textarea>
                 <input type="text" id="img-tags" placeholder="Tags (separados por comas, ej. arte, fanart)" required>
                 <button type="submit"><i class="fas fa-plus"></i> Añadir Imagen</button>
-                <div id="success-message">Imagen añadida con éxito</div>
-                <div id="error-message">Error al añadir la imagen</div>
             </form>
+
+            <!-- LISTA DE IMÁGENES -->
             <div id="image-list">
                 <h2><i class="fas fa-list"></i> Lista de Imágenes</h2>
                 <div id="search-container">
@@ -291,6 +285,7 @@
                 <table id="image-table">
                     <thead>
                         <tr>
+                            <th>Batalla</th>
                             <th>Imagen</th>
                             <th>Título</th>
                             <th>Tags</th>
@@ -300,6 +295,8 @@
                     <tbody id="image-table-body"></tbody>
                 </table>
             </div>
+
+            <!-- LISTA DE COMENTARIOS -->
             <div id="comment-list">
                 <h2><i class="fas fa-comments"></i> Lista de Comentarios</h2>
                 <div id="comment-search-container">
@@ -319,6 +316,8 @@
                     <tbody id="comment-table-body"></tbody>
                 </table>
             </div>
+
+            <!-- FORMULARIO DE EDICIÓN (OCULTO) -->
             <form id="edit-form">
                 <h2><i class="fas fa-edit"></i> Editar Imagen</h2>
                 <input type="hidden" id="edit-img-id">
@@ -333,17 +332,15 @@
         </div>
     </div>
 
-    <!-- Footer con Disclaimer -->
     <footer>
         <div id="disclaimer">
             <i class="fas fa-info-circle"></i>
-            <strong>Descargo de Responsabilidades:</strong> Este sitio contiene fanarts y contenido creativo compartido sin fines de lucro. Todos los derechos de autor pertenecen a sus respectivos creadores originales. No se promueve ni distribuye material con intención comercial. Si ves algo que te pertenece, contáctanos para removerlo.
+            <strong>Descargo de Responsabilidades:</strong> Este sitio contiene fanarts y contenido creativo compartido sin fines de lucro.
         </div>
         <p>&copy; 2025 exen-E. Diseñado en la oscuridad.</p>
     </footer>
 
     <script>
-        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
             authDomain: "exene-53e6b.firebaseapp.com",
@@ -356,232 +353,136 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
+        
+        let selectedForBattle = [];
 
-        // Generar ID único
-        function generateUniqueId() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let id = '';
-            for (let i = 0; i < 10; i++) {
-                id += chars.charAt(Math.floor(Math.random() * chars.length));
+        function showMessage(text, isSuccess = false) {
+            const el = document.getElementById('global-message');
+            el.textContent = text;
+            el.className = `message-box ${isSuccess ? 'success' : 'error'}`;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 4000);
+        }
+
+        function showLoginError(text) {
+            const el = document.getElementById('login-error');
+            el.textContent = text;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 4000);
+        }
+
+        auth.onAuthStateChanged(user => {
+            const loginForm = document.getElementById('login-form');
+            const adminContent = document.getElementById('admin-content');
+            if (user && user.email === 'admin123@exene.com') {
+                loginForm.style.display = 'none';
+                adminContent.style.display = 'block';
+                loadImages();
+                loadComments();
+                loadCurrentBattleStatus();
+            } else {
+                loginForm.style.display = 'block';
+                adminContent.style.display = 'none';
+                if (user) { auth.signOut(); } // Sign out non-admin users
             }
-            return `img_${id}`;
+        });
+
+        function checkAdmin() {
+            const password = document.getElementById('admin-pass').value;
+            const email = "admin123@exene.com"; // Hardcoded admin email
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    console.error('Login error:', error);
+                    showLoginError('Error de autenticación: ' + error.message);
+                });
         }
 
-        // Mostrar mensajes
-        function showMessage(elementId, message, isSuccess = false) {
-            const element = document.querySelector(`#${elementId}`);
-            element.textContent = message;
-            element.style.display = 'block';
-            element.style.color = isSuccess ? '#4caf50' : '#ff6b6b';
-            element.style.background = isSuccess ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 75, 75, 0.1)';
-            setTimeout(() => {
-                element.style.display = 'none';
-            }, 3000);
-        }
-
-        // Validar URL
         function isValidUrl(string) {
-            try {
-                new URL(string);
-                return true;
-            } catch (_) {
-                return false;
-            }
+            try { new URL(string); return true; } catch (_) { return false; }
         }
 
-        // Normalizar texto para búsqueda
         function normalize(text) {
             return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
         }
 
-        // Verificar estado de autenticación
-        auth.onAuthStateChanged(user => {
-            if (user && user.isAnonymous) {
-                // Usuarios anónimos no ven el panel de admin
-                document.getElementById('login-form').style.display = 'block';
-                document.getElementById('admin-content').style.display = 'none';
-            } else if (user) {
-                // Verificar si es el usuario admin (admin123@exene.com)
-                if (user.email === 'admin123@exene.com') {
-                    console.log('Email autenticado: ' + user.email); // Log para depurar
-                    document.getElementById('login-form').style.display = 'none';
-                    document.getElementById('admin-content').style.display = 'block';
-                    document.getElementById('image-list').classList.add('show');
-                    document.getElementById('comment-list').classList.add('show');
-                    loadImages();
-                    loadComments();
-                } else {
-                    showMessage('error-message', 'No tienes permisos de administrador');
-                    auth.signOut();
-                }
-            } else {
-                // No hay usuario, iniciar sesión anónima
-                auth.signInAnonymously().catch(error => {
-                    showMessage('error-message', 'Error al iniciar sesión anónima: ' + error.message);
-                });
-            }
-        });
-
-        // Login de administrador
-        function checkAdmin() {
-            const email = document.getElementById('admin-pass').value + '@exene.com';
-            const password = document.getElementById('admin-pass').value;
-            auth.signInWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    // Refrescar el token para asegurar que las reglas reconozcan el email
-                    userCredential.user.reload().then(() => {
-                        // Verificar si es el usuario admin
-                        if (userCredential.user.email === 'admin123@exene.com') {
-                            console.log('Login exitoso - Email: ' + userCredential.user.email); // Log para depurar
-                            document.getElementById('login-form').style.display = 'none';
-                            document.getElementById('admin-content').style.display = 'block';
-                            document.getElementById('image-list').classList.add('show');
-                            document.getElementById('comment-list').classList.add('show');
-                            loadImages();
-                            loadComments();
-                        } else {
-                            showMessage('error-message', 'No tienes permisos de administrador');
-                            auth.signOut();
-                        }
-                    });
-                })
-                .catch(error => {
-                    showMessage('error-message', 'Error al iniciar sesión: ' + error.message);
-                    console.error('Error de autenticación:', error);
-                });
-        }
-
-        // Cargar lista de imágenes
-        function loadImages(query = '') {
-            db.ref('images').orderByChild('timestamp').once('value', snapshot => {
-                const images = [];
-                snapshot.forEach(child => {
-                    const data = child.val();
-                    images.push({ id: child.key, ...data });
-                });
-                images.reverse(); // Mostrar las más nuevas primero
-                const filteredImages = query ? images.filter(img =>
-                    normalize(img.title).includes(normalize(query)) ||
-                    (img.tags && img.tags.some(tag => normalize(tag).includes(normalize(query))))
-                ) : images;
-                displayImages(filteredImages);
-            }).catch(error => {
-                showMessage('error-message', 'Error al cargar imágenes: ' + error.message);
-            });
-        }
-
-        // Mostrar imágenes en la tabla
-        function displayImages(images) {
-            const tableBody = document.getElementById('image-table-body');
-            tableBody.innerHTML = '';
-            if (images.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No se encontraron imágenes.</td></tr>';
-                return;
-            }
-            images.forEach(img => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><img src="${img.url}" alt="${img.title}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlPC90ZXh0Pjwvc3ZnPg=='"></td>
-                    <td>${img.title}</td>
-                    <td>${img.tags ? img.tags.join(', ') : ''}</td>
-                    <td>
-                        <button class="action-btn edit-btn" onclick="editImage('${img.id}')"><i class="fas fa-edit"></i> Editar</button>
-                        <button class="action-btn delete-btn" onclick="deleteImage('${img.id}')"><i class="fas fa-trash"></i> Eliminar</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Cargar lista de comentarios
-        function loadComments(query = '') {
-            db.ref('comments').once('value', snapshot => {
-                const comments = [];
-                snapshot.forEach(imageSnapshot => {
-                    const imageId = imageSnapshot.key;
-                    imageSnapshot.forEach(commentSnapshot => {
-                        const data = commentSnapshot.val();
-                        comments.push({ imageId, commentId: commentSnapshot.key, ...data });
-                    });
-                });
-                const filteredComments = query ? comments.filter(comment =>
-                    normalize(comment.text).includes(normalize(query)) ||
-                    (comment.name && normalize(comment.name).includes(normalize(query)))
-                ) : comments;
-                displayComments(filteredComments);
-            }).catch(error => {
-                showMessage('error-message', 'Error al cargar comentarios: ' + error.message);
-            });
-        }
-
-        // Mostrar comentarios en la tabla
-        function displayComments(comments) {
-            const tableBody = document.getElementById('comment-table-body');
-            tableBody.innerHTML = '';
-            if (comments.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No se encontraron comentarios.</td></tr>';
-                return;
-            }
-            comments.forEach(comment => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${comment.imageId}</td>
-                    <td>${comment.text}</td>
-                    <td>${comment.name || 'Anónimo'}</td>
-                    <td>${comment.approved === false ? 'No aprobado' : 'Aprobado'}</td>
-                    <td>
-                        <button class="action-btn ${comment.approved === false ? 'approve-btn' : 'delete-btn'}" onclick="toggleCommentApproval('${comment.imageId}', '${comment.commentId}', ${comment.approved === false})">
-                            <i class="fas fa-${comment.approved === false ? 'check' : 'ban'}"></i>
-                            ${comment.approved === false ? 'Aprobar' : 'Desaprobar'}
-                        </button>
-                        <button class="action-btn delete-btn" onclick="deleteComment('${comment.imageId}', '${comment.commentId}')"><i class="fas fa-trash"></i> Eliminar</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Manejar envío del formulario para añadir imagen
         document.getElementById('admin-form').addEventListener('submit', e => {
             e.preventDefault();
             const url = document.getElementById('img-url').value.trim();
             const title = document.getElementById('img-title').value.trim();
             const desc = document.getElementById('img-desc').value.trim();
             const tags = document.getElementById('img-tags').value.split(',').map(t => t.trim()).filter(t => t);
-            const id = generateUniqueId();
-
-            // Validaciones
-            if (!isValidUrl(url)) {
-                showMessage('error-message', 'URL de imagen inválida');
-                return;
-            }
-            if (!title) {
-                showMessage('error-message', 'El título es obligatorio');
-                return;
-            }
-            if (!desc) {
-                showMessage('error-message', 'La descripción es obligatoria');
-                return;
-            }
-            if (tags.length === 0) {
-                showMessage('error-message', 'Debe incluir al menos un tag');
+            
+            if (!isValidUrl(url) || !title || !desc || tags.length === 0) {
+                showMessage('Todos los campos son obligatorios y la URL debe ser válida.');
                 return;
             }
 
-            // Guardar en Firebase
-            const data = { url, title, desc, tags, timestamp: Date.now() }; // <-- CORRECCIÓN: Añadir timestamp
-            db.ref('images/' + id).set(data)
+            const data = { url, title, desc, tags, timestamp: Date.now() };
+            const newImageRef = db.ref('images').push(); // Use push to generate a unique key
+            newImageRef.set(data)
                 .then(() => {
-                    showMessage('success-message', 'Imagen añadida con éxito', true);
+                    showMessage('Imagen añadida con éxito', true);
                     e.target.reset();
                     loadImages();
                 })
-                .catch(error => {
-                    showMessage('error-message', 'Error al añadir la imagen: ' + error.message);
-                });
+                .catch(error => showMessage('Error al añadir imagen: ' + error.message));
         });
 
-        // Editar imagen
+        function loadImages(query = '') {
+            db.ref('images').orderByChild('timestamp').once('value', snapshot => {
+                const images = [];
+                snapshot.forEach(child => {
+                    images.push({ id: child.key, ...child.val() });
+                });
+                images.reverse();
+                const normalizedQuery = normalize(query);
+                const filteredImages = query ? images.filter(img =>
+                    normalize(img.title).includes(normalizedQuery) ||
+                    (img.tags && img.tags.some(tag => normalize(tag).includes(normalizedQuery)))
+                ) : images;
+                displayImages(filteredImages);
+            }).catch(error => showMessage('Error al cargar imágenes: ' + error.message));
+        }
+
+        function displayImages(images) {
+            const tableBody = document.getElementById('image-table-body');
+            tableBody.innerHTML = '';
+            if (images.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No se encontraron imágenes.</td></tr>';
+                return;
+            }
+            images.forEach(img => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="text-align: center;"><input type="checkbox" class="battle-selection" value="${img.id}" onchange="handleBattleSelection(this)"></td>
+                    <td><img src="${img.url}" alt="${img.title}" onerror="this.src='data:image/svg+xml;base64,...'"></td>
+                    <td>${img.title}</td>
+                    <td>${img.tags ? img.tags.join(', ') : ''}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editImage('${img.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn delete-btn" onclick="deleteImage('${img.id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        function deleteImage(id) {
+            if (confirm('¿Seguro que quieres eliminar esta imagen? También se eliminarán sus comentarios y reacciones.')) {
+                const updates = {};
+                updates[`/images/${id}`] = null;
+                updates[`/comments/${id}`] = null;
+                updates[`/reactions/${id}`] = null;
+                
+                db.ref().update(updates)
+                    .then(() => {
+                        showMessage('Imagen eliminada correctamente.', true);
+                        loadImages();
+                    })
+                    .catch(error => showMessage('Error al eliminar: ' + error.message));
+            }
+        }
+
         function editImage(id) {
             db.ref(`images/${id}`).once('value', snapshot => {
                 const img = snapshot.val();
@@ -591,18 +492,16 @@
                     document.getElementById('edit-img-title').value = img.title;
                     document.getElementById('edit-img-desc').value = img.desc;
                     document.getElementById('edit-img-tags').value = img.tags ? img.tags.join(', ') : '';
-                    document.getElementById('edit-img-timestamp').value = img.timestamp || ''; // <-- CORRECCIÓN: Guardar timestamp
+                    document.getElementById('edit-img-timestamp').value = img.timestamp;
+                    
                     document.getElementById('edit-form').classList.add('show');
                     document.getElementById('admin-form').style.display = 'none';
                     document.getElementById('image-list').style.display = 'none';
                     document.getElementById('comment-list').style.display = 'none';
                 }
-            }).catch(error => {
-                showMessage('error-message', 'Error al cargar la imagen: ' + error.message);
             });
         }
 
-        // Guardar cambios de edición
         document.getElementById('edit-form').addEventListener('submit', e => {
             e.preventDefault();
             const id = document.getElementById('edit-img-id').value;
@@ -610,43 +509,23 @@
             const title = document.getElementById('edit-img-title').value.trim();
             const desc = document.getElementById('edit-img-desc').value.trim();
             const tags = document.getElementById('edit-img-tags').value.split(',').map(t => t.trim()).filter(t => t);
-            const timestamp = document.getElementById('edit-img-timestamp').value;
+            const timestamp = parseInt(document.getElementById('edit-img-timestamp').value, 10);
 
-            // Validaciones
-            if (!isValidUrl(url)) {
-                showMessage('error-message', 'URL de imagen inválida');
-                return;
-            }
-            if (!title) {
-                showMessage('error-message', 'El título es obligatorio');
-                return;
-            }
-            if (!desc) {
-                showMessage('error-message', 'La descripción es obligatoria');
-                return;
-            }
-            if (tags.length === 0) {
-                showMessage('error-message', 'Debe incluir al menos un tag');
+            if (!isValidUrl(url) || !title || !desc || tags.length === 0) {
+                showMessage('Todos los campos son obligatorios y la URL debe ser válida.');
                 return;
             }
 
-            // Actualizar en Firebase
-            const data = { url, title, desc, tags, timestamp: parseInt(timestamp) || Date.now() }; // <-- CORRECCIÓN: Incluir timestamp
-            db.ref('images/' + id).set(data)
+            const data = { url, title, desc, tags, timestamp };
+            db.ref(`images/${id}`).set(data)
                 .then(() => {
-                    showMessage('success-message', 'Imagen actualizada con éxito', true);
-                    document.getElementById('edit-form').classList.remove('show');
-                    document.getElementById('admin-form').style.display = 'flex';
-                    document.getElementById('image-list').style.display = 'block';
-                    document.getElementById('comment-list').style.display = 'block';
+                    showMessage('Imagen actualizada con éxito.', true);
+                    cancelEdit();
                     loadImages();
                 })
-                .catch(error => {
-                    showMessage('error-message', 'Error al actualizar la imagen: ' + error.message);
-                });
+                .catch(error => showMessage('Error al actualizar: ' + error.message));
         });
 
-        // Cancelar edición
         function cancelEdit() {
             document.getElementById('edit-form').classList.remove('show');
             document.getElementById('admin-form').style.display = 'flex';
@@ -654,71 +533,193 @@
             document.getElementById('comment-list').style.display = 'block';
         }
 
-        // Eliminar imagen
-        function deleteImage(id) {
-            if (confirm('¿Estás seguro de que deseas eliminar esta imagen?')) {
-                db.ref(`images/${id}`).remove()
-                    .then(() => {
-                        showMessage('success-message', 'Imagen eliminada con éxito', true);
-                        loadImages();
-                    })
-                    .catch(error => {
-                        showMessage('error-message', 'Error al eliminar la imagen: ' + error.message);
-                    });
+        // BATTLE LOGIC
+        function handleBattleSelection(checkbox) {
+            if (checkbox.checked) {
+                if (selectedForBattle.length < 2) {
+                    selectedForBattle.push(checkbox.value);
+                } else {
+                    checkbox.checked = false;
+                    showMessage('Solo puedes seleccionar dos imágenes para la batalla.');
+                }
+            } else {
+                selectedForBattle = selectedForBattle.filter(id => id !== checkbox.value);
             }
+            document.getElementById('start-battle-btn').disabled = selectedForBattle.length !== 2;
         }
 
-        // Aprobar/Desaprobar comentario
+        document.getElementById('start-battle-btn').addEventListener('click', () => {
+            if (selectedForBattle.length !== 2) return;
+            const durationDays = parseInt(document.getElementById('battle-duration').value, 10);
+            if (isNaN(durationDays) || durationDays <= 0) {
+                showMessage('La duración debe ser un número positivo.');
+                return;
+            }
+            const expiry = Date.now() + durationDays * 24 * 60 * 60 * 1000;
+            const [id1, id2] = selectedForBattle;
+            const battleData = {
+                images: [id1, id2],
+                expiry: expiry,
+                votes: { [id1]: 0, [id2]: 0 }
+            };
+            db.ref('battle').set(battleData)
+                .then(() => {
+                    showMessage('¡Batalla iniciada con éxito!', true);
+                    selectedForBattle = [];
+                    document.querySelectorAll('.battle-selection').forEach(cb => cb.checked = false);
+                    document.getElementById('start-battle-btn').disabled = true;
+                    loadCurrentBattleStatus();
+                })
+                .catch(error => showMessage('Error al iniciar batalla: ' + error.message));
+        });
+
+        document.getElementById('end-battle-btn').addEventListener('click', async () => {
+            if (!confirm('¿Seguro que quieres terminar la batalla actual y declarar un ganador?')) return;
+            try {
+                const battleSnap = await db.ref('battle').once('value');
+                if (!battleSnap.exists()) {
+                    showMessage('No hay una batalla activa para terminar.');
+                    return;
+                }
+                const battle = battleSnap.val();
+                const [id1, id2] = battle.images;
+                const votes1 = battle.votes[id1] || 0;
+                const votes2 = battle.votes[id2] || 0;
+
+                const winnerData = (votes1 >= votes2) ? 
+                    { winnerId: id1, loserId: id2, winnerVotes: votes1, loserVotes: votes2, timestamp: Date.now() } : 
+                    { winnerId: id2, loserId: id1, winnerVotes: votes2, loserVotes: votes1, timestamp: Date.now() };
+                
+                await db.ref('previousBattleWinner').set(winnerData);
+                await db.ref('battle').remove();
+                
+                showMessage('Batalla terminada. Ganador guardado.', true);
+                loadCurrentBattleStatus();
+            } catch (error) {
+                showMessage('Error al terminar la batalla: ' + error.message);
+            }
+        });
+
+        async function loadCurrentBattleStatus() {
+            const statusContainer = document.getElementById('current-battle-status');
+            const endBattleBtn = document.getElementById('end-battle-btn');
+            try {
+                const battleSnap = await db.ref('battle').once('value');
+                if (!battleSnap.exists()) {
+                    statusContainer.innerHTML = '<p>No hay ninguna batalla activa en este momento.</p>';
+                    endBattleBtn.style.display = 'none';
+                    return;
+                }
+
+                const battle = battleSnap.val();
+                const [id1, id2] = battle.images;
+                const [img1Snap, img2Snap] = await Promise.all([
+                    db.ref(`images/${id1}`).once('value'),
+                    db.ref(`images/${id2}`).once('value')
+                ]);
+                
+                if (!img1Snap.exists() || !img2Snap.exists()) {
+                    statusContainer.innerHTML = '<p class="error">Error: Una de las imágenes de la batalla ya no existe.</p>';
+                    return;
+                }
+
+                const img1 = img1Snap.val();
+                const img2 = img2Snap.val();
+                const timeLeft = battle.expiry - Date.now();
+                const days = Math.floor(timeLeft / 864e5);
+                const hours = Math.floor(timeLeft / 36e5 % 24);
+                const timeString = timeLeft > 0 ? `<b>${days}d ${hours}h</b> restantes` : '<b style="color:#ff6b6b;">Terminada</b>';
+
+                statusContainer.innerHTML = `
+                    <p class="font-bold mb-2"><b>Batalla activa:</b></p>
+                    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <img src="${img1.url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                        <div><p>${img1.title}</p><p>Votos: <b>${battle.votes[id1] || 0}</b></p></div>
+                        <span style="font-weight: bold; font-size: 1.2rem;">VS</span>
+                        <img src="${img2.url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                        <div><p>${img2.title}</p><p>Votos: <b>${battle.votes[id2] || 0}</b></p></div>
+                    </div>
+                    <p class="mt-2">Expira el ${new Date(battle.expiry).toLocaleDateString()} (${timeString})</p>
+                `;
+                endBattleBtn.style.display = 'block';
+            } catch (error) {
+                statusContainer.innerHTML = `<p class="error">Error al cargar estado de la batalla: ${error.message}</p>`;
+            }
+        }
+        
+        // COMMENTS LOGIC
+        function loadComments(query = '') {
+            db.ref('comments').once('value', snapshot => {
+                const comments = [];
+                snapshot.forEach(imageSnapshot => {
+                    const imageId = imageSnapshot.key;
+                    imageSnapshot.forEach(commentSnapshot => {
+                        comments.push({ imageId, commentId: commentSnapshot.key, ...commentSnapshot.val() });
+                    });
+                });
+                comments.reverse(); // Newest first
+                const normalizedQuery = normalize(query);
+                const filteredComments = query ? comments.filter(comment =>
+                    normalize(comment.text).includes(normalizedQuery) ||
+                    (comment.name && normalize(comment.name).includes(normalizedQuery))
+                ) : comments;
+                displayComments(filteredComments);
+            }).catch(error => showMessage('Error al cargar comentarios: ' + error.message));
+        }
+
+        function displayComments(comments) {
+            const tableBody = document.getElementById('comment-table-body');
+            tableBody.innerHTML = '';
+            if (comments.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No se encontraron comentarios.</td></tr>';
+                return;
+            }
+            comments.forEach(comment => {
+                const row = document.createElement('tr');
+                const isApproved = comment.approved !== false; // Default to approved if undefined
+                row.innerHTML = `
+                    <td>${comment.imageId}</td>
+                    <td>${comment.text}</td>
+                    <td>${comment.name || 'Anónimo'}</td>
+                    <td>${isApproved ? 'Aprobado' : 'No aprobado'}</td>
+                    <td>
+                        <button class="action-btn ${!isApproved ? 'approve-btn' : 'delete-btn'}" onclick="toggleCommentApproval('${comment.imageId}', '${comment.commentId}', ${!isApproved})">
+                            <i class="fas fa-${!isApproved ? 'check' : 'ban'}"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteComment('${comment.imageId}', '${comment.commentId}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
         function toggleCommentApproval(imageId, commentId, approve) {
             db.ref(`comments/${imageId}/${commentId}`).update({ approved: approve })
                 .then(() => {
-                    showMessage('success-message', `Comentario ${approve ? 'aprobado' : 'desaprobado'} con éxito`, true);
+                    showMessage(`Comentario ${approve ? 'aprobado' : 'desaprobado'}.`, true);
                     loadComments();
                 })
-                .catch(error => {
-                    showMessage('error-message', `Error al ${approve ? 'aprobar' : 'desaprobar'} el comentario: ${error.message}`);
-                });
+                .catch(error => showMessage(`Error: ${error.message}`));
         }
 
-        // Eliminar comentario
         function deleteComment(imageId, commentId) {
-            if (confirm('¿Estás seguro de que deseas eliminar este comentario?')) {
+            if (confirm('¿Seguro que quieres eliminar este comentario?')) {
                 db.ref(`comments/${imageId}/${commentId}`).remove()
                     .then(() => {
-                        showMessage('success-message', 'Comentario eliminado con éxito', true);
+                        showMessage('Comentario eliminado.', true);
                         loadComments();
                     })
-                    .catch(error => {
-                        showMessage('error-message', 'Error al eliminar el comentario: ' + error.message);
-                    });
+                    .catch(error => showMessage('Error al eliminar: ' + error.message));
             }
         }
+        
+        // SEARCH LISTENERS
+        document.getElementById('search-btn').addEventListener('click', () => loadImages(document.getElementById('search-images').value));
+        document.getElementById('search-images').addEventListener('input', e => { if (!e.target.value) loadImages(); });
+        document.getElementById('comment-search-btn').addEventListener('click', () => loadComments(document.getElementById('search-comments').value));
+        document.getElementById('search-comments').addEventListener('input', e => { if (!e.target.value) loadComments(); });
 
-        // Búsqueda de imágenes
-        document.getElementById('search-btn').addEventListener('click', () => {
-            const query = document.getElementById('search-images').value;
-            loadImages(query);
-        });
-
-        // Restaurar lista de imágenes al limpiar búsqueda
-        document.getElementById('search-images').addEventListener('input', e => {
-            if (!e.target.value) {
-                loadImages();
-            }
-        });
-
-        // Búsqueda de comentarios
-        document.getElementById('comment-search-btn').addEventListener('click', () => {
-            const query = document.getElementById('search-comments').value;
-            loadComments(query);
-        });
-
-        // Restaurar lista de comentarios al limpiar búsqueda
-        document.getElementById('search-comments').addEventListener('input', e => {
-            if (!e.target.value) {
-                loadComments();
-            }
-        });
     </script>
 </body>
 </html>
+
