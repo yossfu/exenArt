@@ -30,9 +30,6 @@
     <meta property="og:image:alt" content="Logo de exen-E Galería Premium" />
 
 
-    <!-- Una breve descripción que aparecerá debajo del título en la vista previa -->
-    <meta property="og:description" content="Descubre una colección premium de imágenes en la galería de exen-E." />
-
     <!-- 
     ======================================================================
     === FIN DE LAS ETIQUETAS OPEN GRAPH ===================================
@@ -187,9 +184,12 @@
                     <!-- Battle items will be populated here -->
                 </div>
                 <div id="battle-timer" class="mt-4 text-center font-semibold text-gray-400"></div>
+                <!-- Contenedor del Ganador Mejorado -->
                 <div id="battle-winner-container" class="mt-8" style="display: none;">
-                     <h4 class="mb-4 text-center text-xl font-bold text-yellow-400">Ganador Anterior</h4>
-                    <div id="battle-winner" class="relative mx-auto max-w-sm"></div>
+                     <h4 class="mb-4 text-center text-xl font-bold text-yellow-400">Ganador de la Batalla Anterior</h4>
+                    <div id="battle-winner" class="relative mx-auto max-w-lg">
+                        <!-- El contenido del ganador se generará aquí -->
+                    </div>
                 </div>
             </section>
             
@@ -359,6 +359,7 @@
         function initializeApp() {
             loadInitialImages();
             initBattleSection();
+            loadPreviousBattleWinner(); // Cargar ganador al inicio
             loadTopLikedImages();
             loadForYouImages();
             setupIntersectionObserver();
@@ -451,50 +452,6 @@
         }
         
         // --- Lógica de Secciones ---
-        async function getRandomImage() {
-            const randomKey = db.ref('images').push().key;
-            let snapshot = await db.ref('images').orderByKey().startAt(randomKey).limitToFirst(1).once('value');
-            if (!snapshot.exists()) {
-                snapshot = await db.ref('images').orderByKey().endAt(randomKey).limitToLast(1).once('value');
-            }
-            if(snapshot.exists()) {
-                const key = Object.keys(snapshot.val())[0];
-                return { id: key, ...snapshot.val()[key] };
-            }
-            return null;
-        }
-
-        async function initBattleSection() {
-            const battleGrid = document.getElementById('battle-grid');
-            battleGrid.innerHTML = `<div class="w-full"><div class="skeleton"></div></div><span class="text-3xl font-black text-yellow-400">VS</span><div class="w-full"><div class="skeleton"></div></div>`;
-
-            const snap = await db.ref('battle').once('value');
-            const battle = snap.val() || {};
-            const now = Date.now();
-            
-            if (!battle.images || !battle.expiry || battle.expiry < now) {
-                let [img1, img2] = await Promise.all([getRandomImage(), getRandomImage()]);
-                while(!img1 || !img2 || img1.id === img2.id) { img2 = await getRandomImage(); }
-                
-                const newExpiry = now + (7 * 24 * 60 * 60 * 1000); // 7 days
-                const newBattle = {
-                    images: [img1.id, img2.id],
-                    votes: { [img1.id]: 0, [img2.id]: 0 },
-                    expiry: newExpiry,
-                    users: {}
-                };
-                if(battle.images) { saveBattleWinner(battle); }
-                db.ref('battle').set(newBattle)
-                    .then(() => displayBattle([img1, img2], newExpiry))
-                    .catch(e => console.error('Error initializing battle:', e));
-            } else {
-                 const snapshots = await Promise.all(battle.images.map(id => db.ref(`images/${id}`).once('value')));
-                 const battleImages = snapshots.map(snap => ({id: snap.key, ...snap.val()}));
-                 displayBattle(battleImages, battle.expiry);
-            }
-            loadPreviousBattleWinner();
-        }
-
         async function loadTopLikedImages() {
             const grid = document.getElementById('top-liked-grid');
             generateSkeletons(grid, 10, true);
@@ -653,7 +610,7 @@
             triggerReactionRain(id);
             trackImageView(id);
 
-            document.getElementById('scrollToTopBtn').classList.remove('visible'); // CORRECCIÓN: Ocultar botón
+            document.getElementById('scrollToTopBtn').classList.remove('visible');
             document.getElementById('modal').style.display = 'block';
             document.body.style.overflow = 'hidden';
             setTimeout(() => document.getElementById('modal-content').scrollTop = 0, 50);
@@ -810,7 +767,6 @@
                 cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId);
                 delete sliderAnimationState['similar-grid'];
             }
-            // CORRECCIÓN: Re-evaluar la visibilidad del botón al cerrar el modal
             if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
                 scrollToTopBtn.classList.add('visible');
             }
@@ -835,7 +791,7 @@
 
             setTimeout(() => {
                 if (animationEl) animationEl.remove();
-            }, 500); // Duración de la animación es 0.5s
+            }, 500);
         }
 
         function showReactionAnimation(type, container) {
@@ -856,7 +812,7 @@
                 let delay = 0;
                 snap.forEach(childSnap => {
                     setTimeout(() => showReactionAnimation(childSnap.val(), container), delay);
-                    delay += Math.random() * 200 + 50; // Randomize delay for a more natural feel
+                    delay += Math.random() * 200 + 50;
                 });
             });
         }
@@ -934,7 +890,115 @@
               .then(() => document.getElementById('comment-input').value = '');
         });
 
-        // --- Batalla ---
+        // --- Batalla (Lógica Definitiva con Bloqueo Atómico) ---
+
+        // Función para intentar adquirir un bloqueo para crear una nueva batalla.
+        function tryAcquireBattleLock(oldBattleData) {
+            const lockRef = db.ref('battleLock');
+            
+            lockRef.transaction(currentLock => {
+                // El bloqueo puede ser adquirido si no existe O si es muy antiguo (más de 30 seg),
+                // lo que indica que un cliente anterior pudo haber fallado.
+                if (currentLock === null || (Date.now() - currentLock.timestamp > 30000)) {
+                    return { owner: deviceID, timestamp: Date.now() };
+                }
+                // Si el bloqueo ya está tomado por otro, abortamos la transacción devolviendo undefined.
+                return; 
+            }).then(result => {
+                // `result.committed` es true si nuestra escritura fue exitosa.
+                if (result.committed) {
+                    const finalLock = result.snapshot.val();
+                    // Verificamos que nosotros seamos realmente los dueños del bloqueo.
+                    if (finalLock && finalLock.owner === deviceID) {
+                        console.log('Bloqueo adquirido. Creando nueva batalla...');
+                        createNewBattle(oldBattleData);
+                    }
+                } else {
+                    console.log('Otro cliente está creando la batalla. Esperando...');
+                }
+            }).catch(error => {
+                console.error("Error en la transacción de bloqueo de batalla:", error);
+            });
+        }
+
+
+        function initBattleSection() {
+            const battleRef = db.ref('battle');
+            const battleGrid = document.getElementById('battle-grid');
+
+            battleRef.on('value', async (snap) => {
+                if (window.battleTimerInterval) clearInterval(window.battleTimerInterval);
+                const battleData = snap.val();
+
+                // Si la batalla no existe o ha expirado...
+                if (!battleData || battleData.expiry < Date.now()) {
+                    battleGrid.innerHTML = `<p class="text-center text-gray-500 col-span-full animate-pulse">Buscando nueva batalla...</p>`;
+                    // ...intentamos adquirir el bloqueo para crear una.
+                    tryAcquireBattleLock(battleData);
+                } else {
+                    // Si hay una batalla activa, la mostramos.
+                    const snapshots = await Promise.all(battleData.images.map(id => db.ref(`images/${id}`).once('value')));
+                    const battleImages = snapshots
+                        .filter(s => s.exists())
+                        .map(s => ({id: s.key, ...s.val()}));
+
+                    if (battleImages.length < 2) {
+                        console.error("Datos de batalla inválidos. Intentando reiniciar...");
+                        battleGrid.innerHTML = `<p class="text-center text-red-500 col-span-full">Error al cargar la batalla. Reiniciando...</p>`;
+                        tryAcquireBattleLock(null);
+                        return;
+                    }
+                    displayBattle(battleImages, battleData.expiry);
+                }
+            });
+        }
+
+        async function createNewBattle(oldBattle) {
+            // Procesar al ganador de la batalla anterior si existe.
+            if (oldBattle && oldBattle.votes) {
+                const imageIds = Object.keys(oldBattle.votes);
+                if (imageIds.length >= 2) {
+                    const [id1, id2] = imageIds;
+                    const winnerData = (oldBattle.votes[id1] > oldBattle.votes[id2])
+                        ? { winnerId: id1, loserId: id2, winnerVotes: oldBattle.votes[id1], loserVotes: oldBattle.votes[id2], timestamp: Date.now() }
+                        : { winnerId: id2, loserId: id1, winnerVotes: oldBattle.votes[id2], loserVotes: oldBattle.votes[id1], timestamp: Date.now() };
+                    await db.ref('previousBattleWinner').set(winnerData);
+                    loadPreviousBattleWinner();
+                }
+            }
+
+            // Seleccionar nuevas imágenes para la batalla.
+            const imagesSnap = await db.ref('images').once('value');
+            if (!imagesSnap.exists() || imagesSnap.numChildren() < 2) {
+                console.error("No hay suficientes imágenes para crear una batalla.");
+                document.getElementById('battle-grid').innerHTML = `<p class="text-center text-red-500 col-span-full">No hay suficientes imágenes para una batalla.</p>`;
+                await db.ref('battleLock').set(null); // Liberar el bloqueo si fallamos.
+                return;
+            }
+            const allImageIds = Object.keys(imagesSnap.val());
+            let index1 = Math.floor(Math.random() * allImageIds.length);
+            let index2;
+            do {
+                index2 = Math.floor(Math.random() * allImageIds.length);
+            } while (index1 === index2);
+            
+            const selectedIds = [allImageIds[index1], allImageIds[index2]];
+            const battleDuration = 7 * 24 * 60 * 60 * 1000; // 7 días
+            
+            const newBattle = {
+                images: selectedIds,
+                votes: { [selectedIds[0]]: 0, [selectedIds[1]]: 0 },
+                expiry: Date.now() + battleDuration,
+                users: {}
+            };
+
+            // Escribir la nueva batalla y luego liberar el bloqueo.
+            await db.ref('battle').set(newBattle);
+            await db.ref('battleLock').set(null);
+            console.log('Nueva batalla creada y bloqueo liberado.');
+        }
+
+
         function displayBattle(images, expiry) {
             const [img1, img2] = images;
             const battleGrid = document.getElementById('battle-grid');
@@ -954,37 +1018,51 @@
             renderItem(document.getElementById('battle-item-1'), img1);
             renderItem(document.getElementById('battle-item-2'), img2);
             
-            db.ref('battle').on('value', snap => {
-                const battle = snap.val();
-                if (!battle || !battle.votes) return;
-                document.getElementById(`vote-count-${img1.id}`).textContent = battle.votes[img1.id] || 0;
-                document.getElementById(`vote-count-${img2.id}`).textContent = battle.votes[img2.id] || 0;
-                if (battle.users && battle.users[deviceID]) {
-                    document.querySelectorAll('.battle-vote-btn').forEach(b => b.style.display = 'none');
-                }
-                updateBattleHalo();
+            db.ref('battle/votes').on('value', snap => {
+                 if(!snap.exists()) return;
+                 const votes = snap.val();
+                 const voteCount1 = document.getElementById(`vote-count-${img1.id}`);
+                 const voteCount2 = document.getElementById(`vote-count-${img2.id}`);
+                 if(voteCount1) voteCount1.textContent = votes[img1.id] || 0;
+                 if(voteCount2) voteCount2.textContent = votes[img2.id] || 0;
+                 updateBattleHalo();
+            });
+
+            db.ref(`battle/users/${deviceID}`).on('value', snap => {
+                const hasVoted = snap.exists();
+                document.querySelectorAll('.battle-vote-btn').forEach(b => {
+                    b.disabled = hasVoted;
+                    if (hasVoted) {
+                        b.textContent = "Votado";
+                        b.classList.remove('bg-gradient-to-r', 'from-orange-500', 'to-yellow-500');
+                        b.classList.add('bg-gray-600', 'cursor-not-allowed');
+                    }
+                });
             });
 
             const timerEl = document.getElementById('battle-timer');
-            const timerInterval = setInterval(() => {
+            const updateTimer = () => {
                 const timeLeft = expiry - Date.now();
                 if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    timerEl.textContent = "La batalla ha terminado. Calculando ganador...";
-                    setTimeout(initBattleSection, 5000); // Restart after 5s
+                    clearInterval(window.battleTimerInterval);
+                    timerEl.textContent = "La batalla ha terminado. Esperando la siguiente...";
                     return;
                 }
                 const d = Math.floor(timeLeft / 864e5), h = Math.floor(timeLeft / 36e5 % 24), m = Math.floor(timeLeft / 6e4 % 60);
                 timerEl.textContent = `Tiempo restante: ${d}d ${h}h ${m}m`;
-            }, 1000);
+            };
+            updateTimer();
+            window.battleTimerInterval = setInterval(updateTimer, 60000); // Actualiza cada minuto
         }
 
         function voteBattle(imageId, event) {
             event.stopPropagation();
-            db.ref(`battle/users/${deviceID}`).once('value', snap => {
-                if (snap.exists()) return;
-                db.ref(`battle/users/${deviceID}`).set(imageId);
-                db.ref(`battle/votes/${imageId}`).transaction(c => (c || 0) + 1);
+            const userVoteRef = db.ref(`battle/users/${deviceID}`);
+            userVoteRef.once('value', snap => {
+                if (!snap.exists()) {
+                    userVoteRef.set(imageId);
+                    db.ref(`battle/votes/${imageId}`).transaction(currentVotes => (currentVotes || 0) + 1);
+                }
             });
         }
         
@@ -998,33 +1076,67 @@
                 if(!item1 || !item2) return;
                 item1.classList.remove('winning', 'losing');
                 item2.classList.remove('winning', 'losing');
-                if (votes[id1] > votes[id2]) {
+
+                const votes1 = votes[id1] || 0;
+                const votes2 = votes[id2] || 0;
+
+                if (votes1 > votes2) {
                     item1.classList.add('winning'); item2.classList.add('losing');
-                } else if (votes[id2] > votes[id1]) {
+                } else if (votes2 > votes1) {
                     item2.classList.add('winning'); item1.classList.add('losing');
                 }
             });
         }
         
-        function saveBattleWinner(battle) {
-            const votes = battle.votes;
-            const [id1, id2] = battle.images;
-            const winnerId = (votes[id1] || 0) >= (votes[id2] || 0) ? id1 : id2;
-            db.ref('previousBattleWinner').set({ winnerId, timestamp: Date.now() });
-        }
-        
         async function loadPreviousBattleWinner() {
-            const snap = await db.ref('previousBattleWinner').once('value');
-            if (!snap.exists()) return;
-            const winnerId = snap.val().winnerId;
-            const winnerSnap = await db.ref(`images/${winnerId}`).once('value');
-            if (!winnerSnap.exists()) return;
+            const winnerDataSnap = await db.ref('previousBattleWinner').once('value');
+            if (!winnerDataSnap.exists()) {
+                document.getElementById('battle-winner-container').style.display = 'none';
+                return;
+            }
 
-            const winner = {id: winnerSnap.key, ...winnerSnap.val()};
+            const { winnerId, loserId, winnerVotes, loserVotes } = winnerDataSnap.val();
+
+            const [winnerSnap, loserSnap] = await Promise.all([
+                db.ref(`images/${winnerId}`).once('value'),
+                db.ref(`images/${loserId}`).once('value')
+            ]);
+
+            if (!winnerSnap.exists() || !loserSnap.exists()) return;
+
+            const winner = { id: winnerSnap.key, ...winnerSnap.val() };
+            const loser = { id: loserSnap.key, ...loserSnap.val() };
+            
             const container = document.getElementById('battle-winner');
-            container.innerHTML = `<div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg border-2 border-yellow-400 relative cursor-pointer" onclick="openModal('${winner.id}')"><img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4"><h5 class="text-white font-bold">${winner.title}</h5></div></div>`;
+            
+            container.innerHTML = `
+                <div class="relative aspect-[2/3] rounded-lg overflow-hidden shadow-lg border-4 border-yellow-400 cursor-pointer" onclick="openModal('${winner.id}')">
+                    <img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
+                    
+                    <div class="absolute top-4 left-0 right-0 text-center">
+                         <h5 class="text-2xl text-white font-black" style="text-shadow: 0 2px 4px black;">${winner.title}</h5>
+                         <p class="text-lg font-bold text-yellow-300">${winnerVotes} votos 👑</p>
+                    </div>
+
+                    <!-- Superimposed battle recap at the bottom -->
+                    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-xs p-2 bg-black/50 rounded-xl backdrop-blur-sm">
+                        <div class="flex justify-center items-center gap-2">
+                             <!-- Winner Image (small) -->
+                            <img src="${winner.url}" alt="${winner.title}" class="w-16 h-20 object-cover rounded-md border-2 border-green-400">
+                            
+                            <span class="text-xl font-bold text-gray-200">VS</span>
+
+                            <!-- Loser Image (small) -->
+                            <img src="${loser.url}" alt="${loser.title}" class="w-16 h-20 object-cover rounded-md border-2 border-red-500 opacity-80">
+                        </div>
+                         <p class="text-center text-xs text-gray-400 mt-1">${winnerVotes} vs ${loserVotes} votos</p>
+                    </div>
+                </div>
+            `;
             document.getElementById('battle-winner-container').style.display = 'block';
         }
+
 
         function showError(message) {
             const errorEl = document.getElementById('error-message');
@@ -1034,3 +1146,4 @@
     </script>
 </body>
 </html>
+
