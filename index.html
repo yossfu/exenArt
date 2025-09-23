@@ -1027,24 +1027,34 @@
             const container = document.getElementById('battle-winner');
             
             container.innerHTML = `
-                <div class="relative aspect-[2/3] rounded-lg overflow-hidden shadow-lg border-4 border-yellow-400 cursor-pointer" onclick="openModal('${winner.id}')">
-                    <img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                    
-                    <div class="absolute top-2 left-2 right-2 flex justify-center items-center gap-2">
-                        <div class="relative w-16 h-16 rounded-full border-2 border-green-400 p-1">
-                            <img src="${winner.url}" class="w-full h-full object-cover rounded-full">
-                            <span class="absolute -bottom-2 -right-2 text-lg">👑</span>
-                        </div>
-                        <span class="text-2xl font-bold text-gray-300" style="text-shadow: 0 0 5px black;">VS</span>
-                        <div class="relative w-14 h-14 rounded-full border-2 border-red-500 p-1 opacity-75">
-                            <img src="${loser.url}" class="w-full h-full object-cover rounded-full">
-                        </div>
-                    </div>
+                <div class="relative group aspect-[2/3] rounded-2xl overflow-hidden shadow-lg cursor-pointer" onclick="openModal('${winner.id}')">
+                    <img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
 
+                    <!-- Contenedor inferior con toda la información -->
                     <div class="absolute bottom-0 left-0 right-0 p-4 text-center">
-                        <h5 class="text-2xl text-white font-black" style="text-shadow: 0 2px 4px black;">${winner.title}</h5>
-                        <p class="text-lg font-bold text-yellow-300">${winnerVotes} <span class="font-normal text-gray-200">vs</span> ${loserVotes} votos</p>
+                        <h5 class="text-2xl text-white font-black drop-shadow-lg mb-3">${winner.title}</h5>
+
+                        <!-- Contenedor de avatares y votos -->
+                        <div class="flex items-center justify-center gap-4">
+                            <!-- Avatar del Ganador -->
+                            <div class="flex-shrink-0 relative">
+                                <img src="${winner.url}" class="w-16 h-16 object-cover rounded-full border-4 border-green-400 shadow-md">
+                                <span class="absolute -bottom-2 -right-2 text-2xl drop-shadow-lg">👑</span>
+                            </div>
+
+                            <!-- Puntuación -->
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-yellow-300 drop-shadow-md">${winnerVotes}</p>
+                                <p class="text-sm font-semibold text-gray-200">VS</p>
+                                <p class="text-xl font-bold text-gray-400 drop-shadow-md">${loserVotes}</p>
+                            </div>
+                            
+                            <!-- Avatar del Perdedor -->
+                            <div class="flex-shrink-0">
+                                 <img src="${loser.url}" class="w-14 h-14 object-cover rounded-full border-2 border-red-500 opacity-70 shadow-sm">
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1059,4 +1069,3 @@
     </script>
 </body>
 </html>
-
