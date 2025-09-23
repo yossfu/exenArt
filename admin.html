@@ -37,7 +37,7 @@
             animation: animate__fadeIn 0.5s ease;
             overflow-x: auto;
         }
-        #admin-pass, #search-images, #search-comments {
+        #admin-pass, #search-images, #search-comments, #poll-question {
             width: 100%;
             padding: 12px;
             background: #333;
@@ -48,7 +48,7 @@
             margin-bottom: 15px;
             font-family: 'Inter', sans-serif;
         }
-        #admin-form, #login-form, #edit-form, #create-battle-form {
+        #admin-form, #login-form, #edit-form, #create-battle-form, #create-poll-form {
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -170,6 +170,7 @@
             border-bottom: 1px solid #444;
             padding-bottom: 10px;
         }
+        .mb-8 { margin-bottom: 2rem; }
         #image-table, #comment-table {
             width: 100%;
             border-collapse: collapse;
@@ -238,7 +239,7 @@
 </head>
 <body>
     <header>
-        <h1><i class="fas fa-images"></i> exen-E - Administración</h1>
+        <h1><i class="fas fa-user-shield"></i> exen-E - Administración</h1>
     </header>
 
     <div id="admin-container">
@@ -249,6 +250,17 @@
         </div>
         <div id="admin-content" style="display: none;">
             <div id="global-message" class="message-box" style="display: none;"></div>
+
+            <!-- SECCIÓN DE ENCUESTA -->
+            <div id="poll-management" class="mb-8">
+                <h2><i class="fas fa-poll"></i> Gestionar Encuesta</h2>
+                <div id="current-poll-status" class="mb-4 p-4 bg-[#2a2a2a] rounded-lg"></div>
+                <div id="create-poll-form">
+                    <input type="text" id="poll-question" placeholder="Escribe la pregunta de la encuesta...">
+                    <button id="set-poll-btn"><i class="fas fa-check"></i> Asignar Encuesta de la Semana</button>
+                    <button id="end-poll-btn" class="delete-btn" style="display: none;"><i class="fas fa-stop"></i> Terminar Encuesta Actual</button>
+                </div>
+            </div>
 
             <!-- SECCIÓN DE BATALLAS -->
             <div id="battle-management" class="mb-8">
@@ -380,6 +392,7 @@
                 loadImages();
                 loadComments();
                 loadCurrentBattleStatus();
+                loadCurrentPollStatus(); // Cargar estado de la encuesta
             } else {
                 loginForm.style.display = 'block';
                 adminContent.style.display = 'none';
@@ -418,7 +431,7 @@
             }
 
             const data = { url, title, desc, tags, timestamp: Date.now() };
-            const newImageRef = db.ref('images').push(); // Use push to generate a unique key
+            const newImageRef = db.ref('images').push();
             newImageRef.set(data)
                 .then(() => {
                     showMessage('Imagen añadida con éxito', true);
@@ -533,7 +546,85 @@
             document.getElementById('comment-list').style.display = 'block';
         }
 
-        // BATTLE LOGIC
+        // --- LÓGICA DE ENCUESTA ---
+        async function loadCurrentPollStatus() {
+            const statusContainer = document.getElementById('current-poll-status');
+            const endPollBtn = document.getElementById('end-poll-btn');
+
+            try {
+                const pollSnap = await db.ref('polls/activePoll').once('value');
+                if (!pollSnap.exists()) {
+                    statusContainer.innerHTML = '<p>No hay ninguna encuesta activa en este momento.</p>';
+                    endPollBtn.style.display = 'none';
+                    return;
+                }
+
+                const poll = pollSnap.val();
+                statusContainer.innerHTML = `
+                    <p class="font-bold mb-2"><b>Encuesta activa:</b></p>
+                    <p>${poll.question}</p>
+                `;
+                endPollBtn.style.display = 'block';
+            } catch (error) {
+                statusContainer.innerHTML = `<p class="error">Error al cargar estado de la encuesta: ${error.message}</p>`;
+            }
+        }
+
+        document.getElementById('set-poll-btn').addEventListener('click', async () => {
+            const question = document.getElementById('poll-question').value.trim();
+            if (!question) {
+                showMessage('La pregunta de la encuesta no puede estar vacía.');
+                return;
+            }
+
+            const pollSnap = await db.ref('polls/activePoll').once('value');
+            if (pollSnap.exists()) {
+                if (!confirm('Ya hay una encuesta activa. ¿Deseas reemplazarla? Esto eliminará las respuestas anteriores.')) {
+                    return;
+                }
+            }
+
+            const questionId = 'poll_' + Date.now();
+            const pollData = {
+                question: question,
+                questionId: questionId,
+            };
+
+            if (pollSnap.exists()) {
+                const oldQuestionId = pollSnap.val().questionId;
+                await db.ref(`poll_answers/${oldQuestionId}`).remove();
+            }
+            
+            db.ref('polls/activePoll').set(pollData)
+                .then(() => {
+                    showMessage('¡Encuesta asignada con éxito!', true);
+                    document.getElementById('poll-question').value = '';
+                    loadCurrentPollStatus();
+                })
+                .catch(error => showMessage('Error al asignar encuesta: ' + error.message));
+        });
+
+        document.getElementById('end-poll-btn').addEventListener('click', async () => {
+            if (!confirm('¿Seguro que quieres terminar la encuesta actual? Las respuestas serán eliminadas.')) return;
+            
+            try {
+                const pollSnap = await db.ref('polls/activePoll').once('value');
+                if (pollSnap.exists()) {
+                    const oldQuestionId = pollSnap.val().questionId;
+                    await db.ref(`poll_answers/${oldQuestionId}`).remove();
+                    await db.ref('polls/activePoll').remove();
+                    showMessage('Encuesta terminada.', true);
+                    loadCurrentPollStatus();
+                } else {
+                    showMessage('No hay encuesta activa para terminar.');
+                }
+            } catch(error) {
+                showMessage('Error al terminar la encuesta: ' + error.message);
+            }
+        });
+
+
+        // --- LÓGICA DE BATALLA ---
         function handleBattleSelection(checkbox) {
             if (checkbox.checked) {
                 if (selectedForBattle.length < 2) {
@@ -639,7 +730,7 @@
                         <img src="${img2.url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
                         <div><p>${img2.title}</p><p>Votos: <b>${battle.votes[id2] || 0}</b></p></div>
                     </div>
-                    <p class="mt-2">Expira el ${new Date(battle.expiry).toLocaleDateString()} (${timeString})</p>
+                    <p style="margin-top: 0.5rem;">Expira el ${new Date(battle.expiry).toLocaleDateString()} (${timeString})</p>
                 `;
                 endBattleBtn.style.display = 'block';
             } catch (error) {
@@ -647,7 +738,7 @@
             }
         }
         
-        // COMMENTS LOGIC
+        // --- LÓGICA DE COMENTARIOS ---
         function loadComments(query = '') {
             db.ref('comments').once('value', snapshot => {
                 const comments = [];
@@ -676,7 +767,7 @@
             }
             comments.forEach(comment => {
                 const row = document.createElement('tr');
-                const isApproved = comment.approved !== false; // Default to approved if undefined
+                const isApproved = comment.approved !== false;
                 row.innerHTML = `
                     <td>${comment.imageId}</td>
                     <td>${comment.text}</td>
@@ -722,4 +813,3 @@
     </script>
 </body>
 </html>
-

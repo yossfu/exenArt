@@ -45,6 +45,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+    <!-- ========= LIBRERÍA AÑADIDA: Alpine.js ========= -->
+    <!-- Se añade para manejar la interactividad de forma moderna y robusta -->
+    <script src="https://unpkg.com/alpinejs@3.13.10/dist/cdn.min.js" defer></script>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -100,11 +105,11 @@
         @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
 
-        /* Animación de reacción sobre la imagen (Restaurada) */
+        /* Animación de reacción sobre la imagen */
         @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
         .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
 
-        /* Animación para el "rain effect" (Restaurada) */
+        /* Animación para el "rain effect" */
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
         .reaction-animation { position: absolute; font-size: 2rem; pointer-events: none; animation: floatUp 1.5s ease forwards; z-index: 10; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
 
@@ -141,6 +146,64 @@
         /* Helper para ocultar scrollbar en sliders */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* ===== NUEVOS ESTILOS PARA LA ENCUESTA UNIFICADA ===== */
+        .poll-answer-card {
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        /* Animación de aparición para grid estático */
+        .poll-grid-animation {
+             animation: pollAnswerAppear 0.5s ease-out forwards;
+        }
+        @keyframes pollAnswerAppear {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Barra de votos */
+        .poll-vote-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0));
+            width: 0%; /* Se actualiza con JS */
+            transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: -1;
+        }
+
+        /* Contenedor scroller si hay más de 3 respuestas */
+        .poll-scroller {
+            height: 288px; /* h-72 */
+            position: relative;
+            overflow: hidden;
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+            mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+        }
+        .scroller-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            animation: scroll-up 40s linear infinite;
+        }
+        .poll-scroller:hover .scroller-inner {
+            animation-play-state: paused;
+        }
+        @keyframes scroll-up {
+            from { transform: translateY(0); }
+            to { transform: translateY(-50%); }
+        }
+        
+        /* Ventana flotante */
+        #poll-widget {
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s;
+        }
+        #poll-widget.open {
+            transform: translateY(0);
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -213,6 +276,44 @@
             
             <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
             
+            <!-- ========= CONTENEDOR DE ENCUESTA CON ALPINE.JS ========= -->
+            <div x-data="{ isPollOpen: false }">
+                <section id="poll-section" class="mb-12">
+                    <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-poll text-green-400"></i> Encuesta de la Semana</h3>
+                    <div id="poll-container" class="max-w-4xl mx-auto text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
+                        <!-- El contenido de la encuesta se carga aquí desde Firebase -->
+                    </div>
+                    <!-- Contenedor principal para todas las respuestas -->
+                    <div id="poll-answers-main-container" class="mt-8">
+                         <!-- El contenido (grid estático o scroller animado) se inyectará aquí -->
+                    </div>
+                </section>
+
+                <!-- VENTANA FLOTANTE DE ENCUESTA CONTROLADA POR ALPINE.JS -->
+                <div id="poll-widget" 
+                     class="fixed bottom-5 right-5 z-[900] w-full max-w-sm bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 transform translate-y-[calc(100%+20px)] opacity-0"
+                     :class="{ 'open': isPollOpen }">
+                    
+                    <button @click="isPollOpen = false" class="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700/80 text-gray-400 transition hover:bg-slate-600 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    
+                    <h3 id="poll-widget-question" class="text-xl font-bold mb-4 text-center text-gray-100"></h3>
+                    
+                    <form id="poll-answer-form" @submit.prevent="handlePollSubmit($event); isPollOpen = false">
+                        <textarea id="poll-answer-input" rows="3" placeholder="Tu respuesta (máx 30 caracteres)..." maxlength="30" class="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-2 text-white transition focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500/50 mb-3"></textarea>
+                        <input type="text" id="poll-name-input" placeholder="Nombre (máx 10 caracteres)" maxlength="10" class="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-2 text-white transition focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500/50 mb-4">
+                        <button type="submit" id="poll-submit-btn" class="w-full group rounded-lg bg-green-600 px-5 py-2.5 font-semibold text-white transition hover:bg-green-500">
+                            <i class="fas fa-paper-plane mr-2"></i> Enviar Respuesta
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <!-- ========= FIN DEL CONTENEDOR DE ENCUESTA ========= -->
+
+
+            <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+
             <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-images text-blue-400"></i> Galería Completa</h3>
         </div>
 
@@ -225,7 +326,7 @@
         </section>
     </main>
 
-    <!-- ========== MODAL ========== -->
+    <!-- ========== MODAL IMAGEN ========== -->
     <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90 backdrop-blur-md" style="display: none;">
         <div id="modal-content" class="h-full w-full overflow-y-auto">
             <div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4">
@@ -292,6 +393,7 @@
             </div>
         </div>
     </div>
+
     
     <!-- ========== BOTÓN IR ARRIBA ========== -->
     <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-orange-500 hover:scale-110">
@@ -329,6 +431,8 @@
         let noMoreImages = false;
         let currentImageId = '';
         const sliderAnimationState = {}; // Almacena el estado de las animaciones de los sliders
+        let modalOpenTime = null; // Para rastrear tiempo en el modal
+        let activePoll = null; // Para almacenar la encuesta activa
         let deviceID = localStorage.getItem('deviceID');
         if (!deviceID) {
             deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -342,7 +446,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             const warningOverlay = document.getElementById('warning-overlay');
             if (!localStorage.getItem('adultConsent')) {
-                // FIX: Check if warningOverlay exists before accessing its style
                 if (warningOverlay) {
                     warningOverlay.style.display = 'flex';
                     document.body.style.overflow = 'hidden';
@@ -355,7 +458,6 @@
         function acceptWarning() {
             localStorage.setItem('adultConsent', 'true');
             const warningOverlay = document.getElementById('warning-overlay');
-            // FIX: Check if warningOverlay exists before accessing its style
             if (warningOverlay) {
                 warningOverlay.style.display = 'none';
             }
@@ -369,7 +471,9 @@
             initBattleSection();
             loadTopLikedImages();
             loadForYouImages();
+            loadPollSection(); 
             setupIntersectionObserver();
+            setupEventListeners(); 
         }
 
         function generateSkeletons(container, count, isSlider = false) {
@@ -487,11 +591,8 @@
             const grid = document.getElementById('for-you-grid');
             generateSkeletons(grid, 10, true);
 
-            let viewedImageIds = [];
-            try { viewedImageIds = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImageIds = []; }
-
             const fallbackToRecents = async () => {
-                const imageSnap = await db.ref('images').limitToLast(10).once('value');
+                const imageSnap = await db.ref('images').orderByChild('timestamp').limitToLast(10).once('value');
                 if (!imageSnap.exists()) {
                     grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay imágenes para mostrar.</p>';
                     return;
@@ -502,19 +603,39 @@
                 initAutoSlider('for-you-grid');
             };
 
-            if (viewedImageIds.length === 0) {
+            let viewedImageIds = [];
+            try { viewedImageIds = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) {}
+            
+            let imageInteractions = {};
+            try { imageInteractions = JSON.parse(localStorage.getItem('imageInteractions')) || {}; } catch (e) {}
+            
+            const userLikesSnap = await db.ref('reactions').once('value');
+            const allReactions = userLikesSnap.val() || {};
+            const userLikes = {};
+            Object.keys(allReactions).forEach(imgId => {
+                if (allReactions[imgId][deviceID]) {
+                    userLikes[imgId] = allReactions[imgId][deviceID];
+                }
+            });
+
+            if (viewedImageIds.length === 0 && Object.keys(userLikes).length === 0) {
                 await fallbackToRecents();
                 return;
             }
 
-            const viewedImageSnaps = await Promise.all(viewedImageIds.slice(0, 20).map(id => db.ref(`images/${id}`).once('value')));
+            const profileImageIds = [...new Set([...viewedImageIds, ...Object.keys(userLikes)])].slice(0, 50);
+            const profileImageSnaps = await Promise.all(profileImageIds.map(id => db.ref(`images/${id}`).once('value')));
             const userTagProfile = {};
-            viewedImageSnaps.forEach(snap => {
+            profileImageSnaps.forEach(snap => {
                 if (snap.exists() && Array.isArray(snap.val().tags)) {
-                    snap.val().tags.forEach(tag => { userTagProfile[tag] = (userTagProfile[tag] || 0) + 1; });
+                    const isLiked = userLikes[snap.key];
+                    const weight = isLiked ? 3 : 1; 
+                    snap.val().tags.forEach(tag => { 
+                        userTagProfile[tag] = (userTagProfile[tag] || 0) + weight; 
+                    });
                 }
             });
-            
+
             if (Object.keys(userTagProfile).length === 0) {
                 await fallbackToRecents();
                 return;
@@ -524,21 +645,27 @@
             if (!candidateSnap.exists()) { await fallbackToRecents(); return; }
             
             const candidates = [];
+            const allConsideredIds = new Set(profileImageIds);
             candidateSnap.forEach(child => {
                 const img = { id: child.key, ...child.val() };
-                if (img.tags && !viewedImageIds.includes(img.id)) { candidates.push(img); }
+                if (img.tags && !allConsideredIds.has(img.id)) { candidates.push(img); }
             });
 
             const scoredCandidates = candidates.map(img => {
-                let score = 0;
+                let tagScore = 0;
                 if (Array.isArray(img.tags)) {
-                    img.tags.forEach(tag => { if (userTagProfile[tag]) score += userTagProfile[tag]; });
+                    img.tags.forEach(tag => { if (userTagProfile[tag]) tagScore += userTagProfile[tag]; });
                 }
-                return { image: img, score };
+                
+                const interactionData = imageInteractions[img.id];
+                const timeScore = interactionData ? Math.log10(interactionData.timeSpent / 1000 + 1) * 2 : 0;
+                
+                let totalScore = tagScore + timeScore;
+                return { image: img, score: totalScore };
             }).filter(item => item.score > 0);
 
             scoredCandidates.sort((a, b) => b.score - a.score);
-            const recommendedImages = scoredCandidates.slice(0, 10).map(item => item.image);
+            const recommendedImages = scoredCandidates.slice(0, 15).map(item => item.image);
 
             if (recommendedImages.length > 0) {
                 displayImages(recommendedImages, 'for-you-grid');
@@ -599,6 +726,11 @@
         }
         
         async function openModal(id) {
+            const pollWrapper = document.querySelector('[x-data]');
+            if (pollWrapper && pollWrapper.__x) {
+                pollWrapper.__x.data.isPollOpen = false;
+            }
+            
             let img = allImages.find(i => i.id === id);
             if (!img) {
                 const snapshot = await db.ref(`images/${id}`).once('value');
@@ -607,6 +739,7 @@
             }
             
             currentImageId = id;
+            modalOpenTime = Date.now(); 
             document.getElementById('full-img').src = img.url;
             document.getElementById('title').textContent = img.title;
             document.getElementById('desc').textContent = img.desc;
@@ -615,16 +748,17 @@
             loadComments(id);
             loadSimilarImages(img.tags || []);
             triggerReactionRain(id);
-            trackImageView(id);
+            trackImageView(id, 'view');
 
-            document.getElementById('scrollToTopBtn').classList.remove('visible'); // CORRECCIÓN: Ocultar botón
+            document.getElementById('scrollToTopBtn').classList.remove('visible');
             document.getElementById('modal').style.display = 'block';
             document.body.style.overflow = 'hidden';
             setTimeout(() => document.getElementById('modal-content').scrollTop = 0, 50);
         }
 
-        function trackImageView(imageId) {
+        function trackImageView(imageId, eventType, timeSpent = 0) {
             if (!imageId) return;
+
             let viewedImages = [];
             try { viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImages = []; }
             
@@ -636,6 +770,29 @@
             if (viewedImages.length > historyLimit) { viewedImages = viewedImages.slice(0, historyLimit); }
             
             localStorage.setItem('viewedImages', JSON.stringify(viewedImages));
+
+            if (eventType === 'close' && timeSpent > 1000) { 
+                let imageInteractions = {};
+                try { imageInteractions = JSON.parse(localStorage.getItem('imageInteractions')) || {}; } catch(e) { imageInteractions = {}; }
+                
+                if (!imageInteractions[imageId]) {
+                    imageInteractions[imageId] = { timeSpent: 0 };
+                }
+                imageInteractions[imageId].timeSpent += timeSpent;
+                imageInteractions[imageId].lastViewed = Date.now();
+
+                const interactionKeys = Object.keys(imageInteractions);
+                if (interactionKeys.length > 100) {
+                    interactionKeys.sort((a, b) => imageInteractions[b].lastViewed - imageInteractions[a].lastViewed);
+                    const prunedInteractions = {};
+                    interactionKeys.slice(0, 100).forEach(key => {
+                        prunedInteractions[key] = imageInteractions[key];
+                    });
+                    imageInteractions = prunedInteractions;
+                }
+                
+                localStorage.setItem('imageInteractions', JSON.stringify(imageInteractions));
+            }
         }
 
         function initAutoSlider(containerId) {
@@ -723,6 +880,56 @@
         }
         
         // --- Event Listeners y Lógica Auxiliar ---
+        function setupEventListeners() {
+            const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+            window.addEventListener('scroll', () => {
+                (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ?
+                    scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible');
+            });
+            scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+            
+            document.getElementById('search').addEventListener('input', e => {
+                const query = normalize(e.target.value);
+                const searchResults = document.getElementById('search-results');
+                const mainContent = document.getElementById('main-content-sections');
+                const gallery = document.getElementById('gallery');
+
+                if (!query) {
+                    searchResults.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    gallery.style.display = 'block';
+                    return;
+                }
+                
+                const filtered = allImages.filter(item => 
+                    normalize(item.title).includes(query) || 
+                    (item.tags && item.tags.some(tag => normalize(tag).includes(query)))
+                );
+                
+                displayImages(filtered, 'search-results');
+                searchResults.style.display = 'grid';
+                mainContent.style.display = 'none';
+                gallery.style.display = 'none';
+            });
+
+            document.getElementById('close-modal').addEventListener('click', () => {
+                if (currentImageId && modalOpenTime) {
+                    const timeSpent = Date.now() - modalOpenTime;
+                    trackImageView(currentImageId, 'close', timeSpent);
+                    modalOpenTime = null;
+                }
+                document.getElementById('modal').style.display = 'none';
+                document.body.style.overflow = 'auto';
+                if (sliderAnimationState['similar-grid']?.animationFrameId) {
+                    cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId);
+                    delete sliderAnimationState['similar-grid'];
+                }
+                if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                    scrollToTopBtn.classList.add('visible');
+                }
+            });
+        }
+
         function setupIntersectionObserver() {
             const trigger = document.getElementById('load-more-trigger');
             const options = { rootMargin: '0px 0px 500px 0px' };
@@ -733,52 +940,8 @@
             }, options);
             observer.observe(trigger);
         }
-
-        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-        window.addEventListener('scroll', () => {
-            (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ?
-                scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible');
-        });
-        scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
         
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : ''; }
-        
-        document.getElementById('search').addEventListener('input', e => {
-            const query = normalize(e.target.value);
-            const searchResults = document.getElementById('search-results');
-            const mainContent = document.getElementById('main-content-sections');
-            const gallery = document.getElementById('gallery');
-
-            if (!query) {
-                searchResults.style.display = 'none';
-                mainContent.style.display = 'block';
-                gallery.style.display = 'block';
-                return;
-            }
-            
-            const filtered = allImages.filter(item => 
-                normalize(item.title).includes(query) || 
-                (item.tags && item.tags.some(tag => normalize(tag).includes(query)))
-            );
-            
-            displayImages(filtered, 'search-results');
-            searchResults.style.display = 'grid';
-            mainContent.style.display = 'none';
-            gallery.style.display = 'none';
-        });
-
-        document.getElementById('close-modal').addEventListener('click', () => {
-            document.getElementById('modal').style.display = 'none';
-            document.body.style.overflow = 'auto';
-            if (sliderAnimationState['similar-grid']?.animationFrameId) {
-                cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId);
-                delete sliderAnimationState['similar-grid'];
-            }
-            // CORRECCIÓN: Re-evaluar la visibilidad del botón al cerrar el modal
-            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-                scrollToTopBtn.classList.add('visible');
-            }
-        });
         
         // --- Reacciones ---
         function animateReactionOnImage(type) {
@@ -799,7 +962,7 @@
 
             setTimeout(() => {
                 if (animationEl) animationEl.remove();
-            }, 500); // Duración de la animación es 0.5s
+            }, 500);
         }
 
         function showReactionAnimation(type, container) {
@@ -820,7 +983,7 @@
                 let delay = 0;
                 snap.forEach(childSnap => {
                     setTimeout(() => showReactionAnimation(childSnap.val(), container), delay);
-                    delay += Math.random() * 200 + 50; // Randomize delay for a more natural feel
+                    delay += Math.random() * 200 + 50;
                 });
             });
         }
@@ -1030,27 +1193,18 @@
                 <div class="relative group aspect-[2/3] rounded-2xl overflow-hidden shadow-lg cursor-pointer" onclick="openModal('${winner.id}')">
                     <img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-
-                    <!-- Contenedor inferior con toda la información -->
                     <div class="absolute bottom-0 left-0 right-0 p-4 text-center">
                         <h5 class="text-2xl text-white font-black drop-shadow-lg mb-3">${winner.title}</h5>
-
-                        <!-- Contenedor de avatares y votos -->
                         <div class="flex items-center justify-center gap-4">
-                            <!-- Avatar del Ganador -->
                             <div class="flex-shrink-0 relative">
                                 <img src="${winner.url}" class="w-16 h-16 object-cover rounded-full border-4 border-green-400 shadow-md">
                                 <span class="absolute -bottom-2 -right-2 text-2xl drop-shadow-lg">👑</span>
                             </div>
-
-                            <!-- Puntuación -->
                             <div class="text-center">
                                 <p class="text-2xl font-bold text-yellow-300 drop-shadow-md">${winnerVotes}</p>
                                 <p class="text-sm font-semibold text-gray-200">VS</p>
                                 <p class="text-xl font-bold text-gray-400 drop-shadow-md">${loserVotes}</p>
                             </div>
-                            
-                            <!-- Avatar del Perdedor -->
                             <div class="flex-shrink-0">
                                  <img src="${loser.url}" class="w-14 h-14 object-cover rounded-full border-2 border-red-500 opacity-70 shadow-sm">
                             </div>
@@ -1061,6 +1215,133 @@
             winnerContainer.style.display = 'block';
         }
 
+        // --- SECCIÓN DE ENCUESTA UNIFICADA ---
+        async function loadPollSection() {
+            const pollContainer = document.getElementById('poll-container');
+            
+            db.ref('polls/activePoll').on('value', async snap => {
+                if (snap.exists()) {
+                    activePoll = snap.val();
+                    const hasAnsweredSnap = await db.ref(`poll_votes/${deviceID}/${activePoll.questionId}`).once('value');
+                    const hasAnswered = hasAnsweredSnap.exists();
+                    
+                    pollContainer.innerHTML = `
+                        <p class="text-xl sm:text-2xl font-semibold text-gray-200 mb-4">${activePoll.question}</p>
+                        <button 
+                                @click.prevent="isPollOpen = true"
+                                class="rounded-full bg-green-600 px-8 py-3 font-semibold text-white transition hover:bg-green-500 hover:scale-105 disabled:bg-gray-500 disabled:cursor-not-allowed" 
+                                ${hasAnswered ? 'disabled' : ''}>
+                            <i class="fas fa-edit mr-2"></i> ${hasAnswered ? 'Ya Respondiste' : 'Responder'}
+                        </button>
+                    `;
+                    document.getElementById('poll-widget-question').textContent = activePoll.question;
+
+                    loadPollAnswers(activePoll.questionId);
+                } else {
+                    activePoll = null;
+                    pollContainer.innerHTML = `<p class="text-lg text-gray-500">No hay ninguna encuesta activa esta semana. ¡Vuelve pronto!</p>`;
+                    document.getElementById('poll-answers-main-container').innerHTML = '';
+                }
+            });
+        }
+
+        function loadPollAnswers(questionId) {
+            db.ref(`poll_answers/${questionId}`).on('value', snap => {
+                const mainContainer = document.getElementById('poll-answers-main-container');
+                mainContainer.innerHTML = '';
+                if (!snap.exists()) return;
+
+                const answers = [];
+                snap.forEach(child => { answers.push({ id: child.key, ...child.val() }); });
+
+                const totalLikes = answers.reduce((sum, ans) => sum + Object.keys(ans.likes || {}).length, 0);
+                answers.sort((a, b) => (Object.keys(b.likes || {}).length) - (Object.keys(a.likes || {}).length));
+
+                const renderCardHTML = (answer) => {
+                    const likes = answer.likes || {};
+                    const likeCount = Object.keys(likes).length;
+                    const userHasLiked = likes[deviceID];
+                    const percentage = totalLikes > 0 ? Math.min(100, (likeCount / totalLikes) * 100) : 0;
+                    
+                    return `
+                        <div class="poll-answer-card bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700 flex-shrink-0">
+                            <div class="poll-vote-bar" style="width: ${percentage}%;"></div>
+                            <div class="relative">
+                                <p class="text-gray-300 mb-3 text-lg break-words">“${answer.text}”</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-bold text-green-400">${answer.name || 'Anónimo'}</span>
+                                    <button class="poll-like-btn flex items-center gap-2 rounded-full px-3 py-1 text-sm transition ${userHasLiked ? 'bg-green-500 text-white' : 'bg-slate-700 hover:bg-slate-600 text-gray-300'}" data-answer-id="${answer.id}">
+                                        <i class="fas fa-thumbs-up"></i>
+                                        <span>${likeCount}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                };
+
+                if (answers.length <= 3) {
+                    const grid = document.createElement('div');
+                    grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+                    answers.forEach((answer, index) => {
+                        const cardWrapper = document.createElement('div');
+                        cardWrapper.className = 'poll-grid-animation';
+                        cardWrapper.style.animationDelay = `${index * 0.07}s`;
+                        cardWrapper.innerHTML = renderCardHTML(answer);
+                        grid.appendChild(cardWrapper);
+                    });
+                    mainContainer.appendChild(grid);
+                } else {
+                    const scroller = document.createElement('div');
+                    scroller.className = 'poll-scroller';
+                    const scrollerInner = document.createElement('div');
+                    scrollerInner.className = 'scroller-inner';
+
+                    const allCardsHTML = answers.map(renderCardHTML).join('');
+                    scrollerInner.innerHTML = allCardsHTML + allCardsHTML; // Duplicar para el bucle
+                    
+                    scroller.appendChild(scrollerInner);
+                    mainContainer.appendChild(scroller);
+                }
+                
+                document.querySelectorAll('.poll-like-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (!activePoll) return;
+                        likePollAnswer(activePoll.questionId, btn.dataset.answerId);
+                    });
+                });
+            });
+        }
+
+        function likePollAnswer(questionId, answerId) {
+            if (!deviceID) return;
+            const likeRef = db.ref(`poll_answers/${questionId}/${answerId}/likes/${deviceID}`);
+            likeRef.once('value', snap => {
+                snap.exists() ? likeRef.remove() : likeRef.set(true);
+            });
+        }
+        
+        function handlePollSubmit(e) {
+            e.preventDefault();
+            if (!activePoll) return;
+            
+            const text = document.getElementById('poll-answer-input').value.trim();
+            const name = document.getElementById('poll-name-input').value.trim();
+
+            if (!text) return;
+
+            const answerData = {
+                text: text,
+                name: name || 'Anónimo',
+                deviceID: deviceID,
+                timestamp: Date.now()
+            };
+            
+            db.ref(`poll_answers/${activePoll.questionId}`).push(answerData);
+            db.ref(`poll_votes/${deviceID}/${activePoll.questionId}`).set(true);
+            
+            e.target.reset();
+        }
+
         function showError(message) {
             const errorEl = document.getElementById('error-message');
             errorEl.textContent = message;
@@ -1069,3 +1350,4 @@
     </script>
 </body>
 </html>
+
