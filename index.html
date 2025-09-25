@@ -95,12 +95,45 @@
             aspect-ratio: 2 / 3;
         }
 
-        /* Estilos de Batalla y Top */
+        /* Estilos de Batalla y Top - COLORES CORREGIDOS */
         .winning { box-shadow: 0 0 20px 5px var(--halo-green); }
         .losing { box-shadow: 0 0 20px 5px var(--halo-red); }
         .top-1 { border-color: var(--diamond); box-shadow: 0 0 15px var(--diamond); }
         .top-2 { border-color: var(--gold); box-shadow: 0 0 15px var(--gold); }
         .top-3 { border-color: var(--silver); box-shadow: 0 0 15px var(--silver); }
+
+        /* Animación al votar */
+        @keyframes vote-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px 10px var(--accent-neon); }
+            100% { transform: scale(1); }
+        }
+        .vote-animation {
+            animation: vote-pulse 0.6s ease-out;
+        }
+        
+        /* ===== NUEVOS ESTILOS PARA LA CORONA ===== */
+        @keyframes crown-appear {
+            0% { transform: translateX(-50%) translateY(10px) scale(0.5); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+        }
+        .crown-icon {
+            position: absolute;
+            top: -15px; /* Ajusta para que quede sobre el marco */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem; /* Tamaño del ícono */
+            color: var(--gold);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            display: none; /* Oculto por defecto */
+            z-index: 10;
+            pointer-events: none; /* Para que no interfiera con los clics */
+        }
+        .battle-item.has-crown .crown-icon {
+            display: block;
+            animation: crown-appear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
 
         @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
@@ -934,10 +967,12 @@
                     return;
                 }
                 
-                const filtered = allImages.filter(item => 
-                    normalize(item.title).includes(query) || 
-                    (item.tags && item.tags.some(tag => normalize(tag).includes(query)))
-                );
+                // LÓGICA DE BÚSQUEDA MEJORADA
+                const filtered = allImages.filter(item => {
+                    const titleMatch = item.title && normalize(item.title).includes(query);
+                    const tagMatch = item.tags && Array.isArray(item.tags) && item.tags.some(tag => normalize(tag).includes(query));
+                    return titleMatch || tagMatch;
+                });
                 
                 displayImages(filtered, 'search-results');
                 searchResults.style.display = 'grid';
@@ -1169,12 +1204,13 @@
             const [img1, img2] = images;
             const battleGrid = document.getElementById('battle-grid');
             battleGrid.innerHTML = `
-                <div class="battle-item relative w-full" id="battle-item-1"></div>
+                <div class="battle-item relative w-full" id="battle-item-1" data-image-id="${img1.id}"></div>
                 <span class="text-3xl font-black text-yellow-400" style="text-shadow: 0 0 10px var(--accent);">VS</span>
-                <div class="battle-item relative w-full" id="battle-item-2"></div>`;
+                <div class="battle-item relative w-full" id="battle-item-2" data-image-id="${img2.id}"></div>`;
 
             const renderItem = (container, img) => {
                 container.innerHTML = `
+                    <i class="fas fa-crown crown-icon"></i>
                     <div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition duration-300 transform hover:scale-105 relative">
                         <img src="${img.url}" alt="${img.title}" onclick="openModal('${img.id}')" class="w-full h-full object-cover cursor-pointer">
                         <div class="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs font-bold" id="vote-count-${img.id}">0</div>
@@ -1218,6 +1254,14 @@
 
         function voteBattle(imageId, event) {
             event.stopPropagation();
+
+            const imageCard = event.target.closest('.aspect-\\[2\\/3\\]');
+            if (imageCard) {
+                imageCard.classList.add('vote-animation');
+                setTimeout(() => {
+                    imageCard.classList.remove('vote-animation');
+                }, 600);
+            }
             
             document.querySelectorAll('.battle-vote-btn').forEach(b => b.style.display = 'none');
 
@@ -1228,21 +1272,47 @@
             });
         }
         
+        // --- FUNCIÓN DE BATALLA CORREGIDA ---
         function updateBattleHalo() {
             db.ref('battle/votes').once('value').then(snap => {
                 const votes = snap.val();
-                if(!votes) return;
-                const [id1, id2] = Object.keys(votes);
+                if (!votes) return;
+
                 const item1 = document.getElementById('battle-item-1');
                 const item2 = document.getElementById('battle-item-2');
-                if(!item1 || !item2) return;
-                item1.classList.remove('winning', 'losing');
-                item2.classList.remove('winning', 'losing');
-                if ((votes[id1] || 0) > (votes[id2] || 0)) {
-                    item1.classList.add('winning'); item2.classList.add('losing');
-                } else if ((votes[id2] || 0) > (votes[id1] || 0)) {
-                    item2.classList.add('winning'); item1.classList.add('losing');
+                if (!item1 || !item2) return;
+
+                // Obtener IDs directamente de los atributos de datos para asegurar el mapeo correcto
+                const id1 = item1.dataset.imageId;
+                const id2 = item2.dataset.imageId;
+
+                // Asegurarse de que los IDs existan antes de proceder
+                if (!id1 || !id2) return;
+
+                const img1Container = item1.querySelector('.aspect-\\[2\\/3\\]');
+                const img2Container = item2.querySelector('.aspect-\\[2\\/3\\]');
+                if (!img1Container || !img2Container) return;
+                
+                // Resetear clases
+                img1Container.classList.remove('winning', 'losing');
+                img2Container.classList.remove('winning', 'losing');
+                item1.classList.remove('has-crown');
+                item2.classList.remove('has-crown');
+
+                const votes1 = votes[id1] || 0;
+                const votes2 = votes[id2] || 0;
+
+                // Aplicar clases basadas en la comparación correcta de votos
+                if (votes1 > votes2) {
+                    img1Container.classList.add('winning');
+                    img2Container.classList.add('losing');
+                    item1.classList.add('has-crown');
+                } else if (votes2 > votes1) {
+                    img2Container.classList.add('winning');
+                    img1Container.classList.add('losing');
+                    item2.classList.add('has-crown');
                 }
+                // Si los votos son iguales, no se aplica ninguna clase de ganador/perdedor
             });
         }
         
