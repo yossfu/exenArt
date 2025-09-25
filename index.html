@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>exen-E | Galería Premium</title>
+    <title>exen-E | Galería</title>
 
     <!-- 
     ======================================================================
@@ -220,13 +220,8 @@
 
     <!-- ========== HEADER ========== -->
     <header class="sticky top-0 z-[100] flex items-center justify-between bg-slate-900/80 p-4 backdrop-blur-lg shadow-lg">
-        <h1 class="flex items-center gap-3 text-2xl font-bold">
-            <svg class="h-10 w-10" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="45" fill="var(--accent)"/>
-                <path d="M30 70 L50 30 L70 70" stroke="#111827" stroke-width="8" fill="none"/>
-                <circle cx="50" cy="50" r="10" fill="var(--accent-neon)"/>
-            </svg>
-            <span>exen-E</span>
+        <h1 class="flex items-center text-2xl font-bold">
+            <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-12 w-auto">
         </h1>
         <div id="user-profile" class="flex items-center gap-2 rounded-full bg-gray-800/80 px-4 py-2 text-sm font-semibold text-gray-200"></div>
     </header>
@@ -328,6 +323,15 @@
 
     <!-- ========== MODAL IMAGEN ========== -->
     <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90 backdrop-blur-md" style="display: none;">
+        <!-- Botón Anterior -->
+        <button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:scale-110">
+            <i class="fas fa-chevron-left text-2xl"></i>
+        </button>
+        <!-- Botón Siguiente -->
+        <button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:scale-110">
+            <i class="fas fa-chevron-right text-2xl"></i>
+        </button>
+
         <div id="modal-content" class="h-full w-full overflow-y-auto">
             <div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4">
 
@@ -430,6 +434,10 @@
         let isLoading = false;
         let noMoreImages = false;
         let currentImageId = '';
+        let currentImageIndex = -1; // Índice de la imagen actual en `allImages` para navegación
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const swipeThreshold = 50; // Distancia mínima en píxeles para considerar un swipe
         const sliderAnimationState = {}; // Almacena el estado de las animaciones de los sliders
         let modalOpenTime = null; // Para rastrear tiempo en el modal
         let activePoll = null; // Para almacenar la encuesta activa
@@ -587,10 +595,13 @@
             initAutoSlider('top-liked-grid');
         }
         
+        // --- Lógica de la sección "Para Ti" ---
+        // Esta función genera recomendaciones personalizadas basadas en los metadatos de interacción del usuario.
         async function loadForYouImages() {
             const grid = document.getElementById('for-you-grid');
             generateSkeletons(grid, 10, true);
 
+            // Fallback: si no hay datos del usuario, muestra las imágenes más recientes.
             const fallbackToRecents = async () => {
                 const imageSnap = await db.ref('images').orderByChild('timestamp').limitToLast(10).once('value');
                 if (!imageSnap.exists()) {
@@ -603,12 +614,15 @@
                 initAutoSlider('for-you-grid');
             };
 
+            // 1. Recopilar metadatos del usuario desde el almacenamiento local.
+            // Se obtiene el historial de imágenes vistas y el tiempo de interacción con cada una.
             let viewedImageIds = [];
             try { viewedImageIds = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) {}
             
             let imageInteractions = {};
             try { imageInteractions = JSON.parse(localStorage.getItem('imageInteractions')) || {}; } catch (e) {}
             
+            // 2. Obtener las reacciones (likes) del usuario desde Firebase.
             const userLikesSnap = await db.ref('reactions').once('value');
             const allReactions = userLikesSnap.val() || {};
             const userLikes = {};
@@ -618,16 +632,20 @@
                 }
             });
 
+            // Si no hay interacciones, usar el fallback.
             if (viewedImageIds.length === 0 && Object.keys(userLikes).length === 0) {
                 await fallbackToRecents();
                 return;
             }
 
+            // 3. Construir un perfil de gustos del usuario basado en etiquetas (tags).
+            // Se analizan las etiquetas de las imágenes con las que el usuario ha interactuado.
             const profileImageIds = [...new Set([...viewedImageIds, ...Object.keys(userLikes)])].slice(0, 50);
             const profileImageSnaps = await Promise.all(profileImageIds.map(id => db.ref(`images/${id}`).once('value')));
             const userTagProfile = {};
             profileImageSnaps.forEach(snap => {
                 if (snap.exists() && Array.isArray(snap.val().tags)) {
+                    // Se da más peso a las imágenes que le gustaron al usuario.
                     const isLiked = userLikes[snap.key];
                     const weight = isLiked ? 3 : 1; 
                     snap.val().tags.forEach(tag => { 
@@ -641,6 +659,7 @@
                 return;
             }
 
+            // 4. Buscar imágenes candidatas y puntuarlas según el perfil del usuario.
             const candidateSnap = await db.ref('images').limitToLast(200).once('value');
             if (!candidateSnap.exists()) { await fallbackToRecents(); return; }
             
@@ -648,15 +667,18 @@
             const allConsideredIds = new Set(profileImageIds);
             candidateSnap.forEach(child => {
                 const img = { id: child.key, ...child.val() };
+                // Se consideran solo imágenes nuevas que tengan etiquetas.
                 if (img.tags && !allConsideredIds.has(img.id)) { candidates.push(img); }
             });
 
+            // 5. Calcular una puntuación para cada imagen candidata.
             const scoredCandidates = candidates.map(img => {
-                let tagScore = 0;
+                let tagScore = 0; // Puntuación por coincidencia de etiquetas.
                 if (Array.isArray(img.tags)) {
                     img.tags.forEach(tag => { if (userTagProfile[tag]) tagScore += userTagProfile[tag]; });
                 }
                 
+                // Puntuación adicional por tiempo de visualización (si aplica).
                 const interactionData = imageInteractions[img.id];
                 const timeScore = interactionData ? Math.log10(interactionData.timeSpent / 1000 + 1) * 2 : 0;
                 
@@ -664,6 +686,7 @@
                 return { image: img, score: totalScore };
             }).filter(item => item.score > 0);
 
+            // 6. Ordenar y mostrar las mejores recomendaciones.
             scoredCandidates.sort((a, b) => b.score - a.score);
             const recommendedImages = scoredCandidates.slice(0, 15).map(item => item.image);
 
@@ -671,6 +694,7 @@
                 displayImages(recommendedImages, 'for-you-grid');
                 initAutoSlider('for-you-grid');
             } else {
+                // Si no hay recomendaciones, usar el fallback.
                 await fallbackToRecents();
             }
         }
@@ -739,6 +763,8 @@
             }
             
             currentImageId = id;
+            currentImageIndex = allImages.findIndex(i => i.id === id);
+            
             modalOpenTime = Date.now(); 
             document.getElementById('full-img').src = img.url;
             document.getElementById('title').textContent = img.title;
@@ -749,6 +775,13 @@
             loadSimilarImages(img.tags || []);
             triggerReactionRain(id);
             trackImageView(id, 'view');
+
+            const prevBtn = document.getElementById('prev-image');
+            const nextBtn = document.getElementById('next-image');
+            if (prevBtn && nextBtn && currentImageIndex !== -1) {
+                prevBtn.style.display = currentImageIndex > 0 ? 'flex' : 'none';
+                nextBtn.style.display = currentImageIndex < allImages.length - 1 ? 'flex' : 'none';
+            }
 
             document.getElementById('scrollToTopBtn').classList.remove('visible');
             document.getElementById('modal').style.display = 'block';
@@ -928,6 +961,30 @@
                     scrollToTopBtn.classList.add('visible');
                 }
             });
+
+            // Listeners para navegación en el modal (botones, swipe, teclado)
+            document.getElementById('prev-image').addEventListener('click', navigateToPrevious);
+            document.getElementById('next-image').addEventListener('click', navigateToNext);
+
+            const modal = document.getElementById('modal');
+            modal.addEventListener('touchstart', e => {
+                if (e.target.closest('button, input, textarea, .reaction, a')) return;
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            modal.addEventListener('touchend', e => {
+                if (touchStartX === 0) return;
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+                touchStartX = 0; // Reset
+            });
+            
+            document.addEventListener('keydown', e => {
+                if (document.getElementById('modal').style.display !== 'block') return;
+                if (e.key === 'ArrowRight') navigateToNext();
+                else if (e.key === 'ArrowLeft') navigateToPrevious();
+                else if (e.key === 'Escape') document.getElementById('close-modal').click();
+            });
         }
 
         function setupIntersectionObserver() {
@@ -943,6 +1000,32 @@
         
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : ''; }
         
+        // --- Navegación del Modal ---
+        function navigateToNext() {
+            if (currentImageIndex > -1 && currentImageIndex < allImages.length - 1) {
+                const nextImage = allImages[currentImageIndex + 1];
+                if (nextImage) openModal(nextImage.id);
+            }
+        }
+
+        function navigateToPrevious() {
+            if (currentImageIndex > 0) {
+                const prevImage = allImages[currentImageIndex - 1];
+                if (prevImage) openModal(prevImage.id);
+            }
+        }
+
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            if (Math.abs(deltaX) > swipeThreshold) {
+                if (deltaX < 0) { // Swipe a la izquierda
+                    navigateToNext();
+                } else { // Swipe a la derecha
+                    navigateToPrevious();
+                }
+            }
+        }
+
         // --- Reacciones ---
         function animateReactionOnImage(type) {
             const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' };
@@ -1197,7 +1280,7 @@
                         <h5 class="text-2xl text-white font-black drop-shadow-lg mb-3">${winner.title}</h5>
                         <div class="flex items-center justify-center gap-4">
                             <div class="flex-shrink-0 relative">
-                                <img src="${winner.url}" class="w-16 h-16 object-cover rounded-full border-4 border-green-400 shadow-md">
+                                <img src="${winner.url}" class="w-12 aspect-[2/3] object-cover rounded-md border-4 border-green-400 shadow-md">
                                 <span class="absolute -bottom-2 -right-2 text-2xl drop-shadow-lg">👑</span>
                             </div>
                             <div class="text-center">
@@ -1206,7 +1289,7 @@
                                 <p class="text-xl font-bold text-gray-400 drop-shadow-md">${loserVotes}</p>
                             </div>
                             <div class="flex-shrink-0">
-                                 <img src="${loser.url}" class="w-14 h-14 object-cover rounded-full border-2 border-red-500 opacity-70 shadow-sm">
+                                 <img src="${loser.url}" class="w-10 aspect-[2/3] object-cover rounded-md border-2 border-red-500 opacity-70 shadow-sm">
                             </div>
                         </div>
                     </div>
