@@ -12,236 +12,47 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Inter', sans-serif;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            padding: 10px;
-        }
-        #admin-container {
-            width: 100%;
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-            background: #1e1e1e;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            animation: animate__fadeIn 0.5s ease;
-            overflow-x: auto;
-        }
-        #admin-pass, #search-images, #search-comments, #poll-question {
-            width: 100%;
-            padding: 12px;
-            background: #333;
-            border: 1px solid #555;
-            color: #fff;
-            font-size: 16px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-family: 'Inter', sans-serif;
-        }
-        #admin-form, #login-form, #edit-form, #create-battle-form, #create-poll-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        #admin-form input, #admin-form textarea, #edit-form input, #edit-form textarea {
-            padding: 12px;
-            background: #333;
-            border: 1px solid #555;
-            color: #fff;
-            font-size: 16px;
-            border-radius: 6px;
-            font-family: 'Inter', sans-serif;
-        }
-        #admin-form textarea, #edit-form textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-        button {
-            padding: 12px;
-            background: linear-gradient(135deg, #333, #444);
-            border: none;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        button:hover:not(:disabled) {
-            background: linear-gradient(135deg, #444, #555);
-            transform: scale(1.02);
-        }
-        button:disabled {
-            background: #2a2a2a;
-            color: #777;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .action-btn {
-            padding: 8px;
-            font-size: 14px;
-            margin: 0 5px;
-        }
-        .delete-btn {
-            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
-        }
-        .delete-btn:hover {
-            background: linear-gradient(135deg, #ff8e8e, #ff6b6b);
-        }
-        .edit-btn, .approve-btn {
-            background: linear-gradient(135deg, #4caf50, #66bb6a);
-        }
-        .edit-btn:hover, .approve-btn:hover {
-            background: linear-gradient(135deg, #66bb6a, #4caf50);
-        }
-        .message-box {
-            text-align: center;
-            padding: 10px;
-            font-size: 14px;
-            border-radius: 6px;
-            margin-top: 10px;
-        }
-        .error {
-            color: #ff6b6b;
-            background: rgba(255, 75, 75, 0.1);
-        }
-        .success {
-            color: #4caf50;
-            background: rgba(76, 175, 80, 0.1);
-        }
-
-        header {
-            background: linear-gradient(135deg, #1e1e1e, #0a0a0a);
-            padding: 15px 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            margin-bottom: 20px;
-            border-radius: 8px;
-        }
-        header h1 {
-            font-size: 1.8em;
-            color: #fff;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-            font-weight: 600;
-        }
-        footer {
-            background: linear-gradient(135deg, #1e1e1e, #0a0a0a);
-            padding: 20px;
-            text-align: center;
-            color: #aaa;
-            font-size: 0.9em;
-            margin-top: auto;
-            font-family: 'Inter', sans-serif;
-        }
-        #disclaimer {
-            background: #1e1e1e;
-            padding: 15px;
-            margin: 10px 20px;
-            border-radius: 8px;
-            border-left: 4px solid #ff6b6b;
-            font-size: 0.8em;
-            line-height: 1.4;
-            color: #ccc;
-        }
-        #disclaimer i {
-            color: #ff6b6b;
-            margin-right: 5px;
-        }
-        #image-list, #comment-list {
-            margin-top: 20px;
-        }
-        h2 {
-            font-size: 1.5em;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #444;
-            padding-bottom: 10px;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: #121212; color: #ffffff; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh; padding: 10px; }
+        #admin-container { width: 100%; max-width: 1200px; margin: auto; padding: 20px; background: #1e1e1e; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: animate__fadeIn 0.5s ease; overflow-x: auto; }
+        #admin-pass, #search-images, #search-comments, #poll-question { width: 100%; padding: 12px; background: #333; border: 1px solid #555; color: #fff; font-size: 16px; border-radius: 6px; margin-bottom: 15px; font-family: 'Inter', sans-serif; }
+        #admin-form, #login-form, #edit-form, #create-battle-form, #create-poll-form { display: flex; flex-direction: column; gap: 15px; }
+        #admin-form input, #admin-form textarea, #edit-form input, #edit-form textarea { padding: 12px; background: #333; border: 1px solid #555; color: #fff; font-size: 16px; border-radius: 6px; font-family: 'Inter', sans-serif; }
+        #admin-form textarea, #edit-form textarea { resize: vertical; min-height: 100px; }
+        button { padding: 12px; background: linear-gradient(135deg, #333, #444); border: none; color: #fff; font-size: 16px; cursor: pointer; border-radius: 6px; transition: all 0.3s ease; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        button:hover:not(:disabled) { background: linear-gradient(135deg, #444, #555); transform: scale(1.02); }
+        button:disabled { background: #2a2a2a; color: #777; cursor: not-allowed; transform: none; }
+        .action-btn { padding: 8px; font-size: 14px; margin: 0 5px; }
+        .delete-btn { background: linear-gradient(135deg, #ff6b6b, #ff8e8e); }
+        .delete-btn:hover { background: linear-gradient(135deg, #ff8e8e, #ff6b6b); }
+        .edit-btn, .approve-btn { background: linear-gradient(135deg, #4caf50, #66bb6a); }
+        .edit-btn:hover, .approve-btn:hover { background: linear-gradient(135deg, #66bb6a, #4caf50); }
+        .message-box { text-align: center; padding: 10px; font-size: 14px; border-radius: 6px; margin-top: 10px; }
+        .error { color: #ff6b6b; background: rgba(255, 75, 75, 0.1); }
+        .success { color: #4caf50; background: rgba(76, 175, 80, 0.1); }
+        header { background: linear-gradient(135deg, #1e1e1e, #0a0a0a); padding: 15px 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); margin-bottom: 20px; border-radius: 8px; }
+        header h1 { font-size: 1.8em; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5); font-weight: 600; }
+        footer { background: linear-gradient(135deg, #1e1e1e, #0a0a0a); padding: 20px; text-align: center; color: #aaa; font-size: 0.9em; margin-top: auto; font-family: 'Inter', sans-serif; }
+        #image-list, #comment-list { margin-top: 20px; }
+        h2 { font-size: 1.5em; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .mb-8 { margin-bottom: 2rem; }
-        #image-table, #comment-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #2a2a2a;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        #image-table th, #image-table td, #comment-table th, #comment-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #555;
-            white-space: nowrap;
-        }
-        #image-table th, #comment-table th {
-            background: #333;
-            font-weight: 600;
-        }
-        #image-table td img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        #image-table td button, #comment-table td button {
-            margin: 0 5px;
-            padding: 6px 10px;
-            font-size: 12px;
-        }
-        #edit-form {
-            display: none;
-            margin-top: 20px;
-        }
-        #edit-form.show {
-            display: flex;
-        }
-        #search-container, #comment-search-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        #search-images, #search-comments {
-            flex: 1;
-            min-width: 200px;
-        }
-        #search-btn, #comment-search-btn {
-            background: linear-gradient(135deg, #333, #444);
-            flex-shrink: 0;
-        }
-        #search-btn:hover, #comment-search-btn:hover {
-            background: linear-gradient(135deg, #444, #555);
-        }
+        #image-table, #comment-table { width: 100%; border-collapse: collapse; background: #2a2a2a; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+        #image-table th, #image-table td, #comment-table th, #comment-table td { padding: 12px; text-align: left; border-bottom: 1px solid #555; white-space: nowrap; }
+        #image-table th, #comment-table th { background: #333; font-weight: 600; }
+        #image-table td img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        #edit-form { display: none; margin-top: 20px; }
+        #edit-form.show { display: flex; }
+        #search-container, #comment-search-container { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
         @media (max-width: 768px) {
             body { padding: 5px; }
             #admin-container { padding: 15px; width: 100%; }
             header h1 { font-size: 1.5em; }
-            #image-table, #comment-table { font-size: 14px; display: block; overflow-x: auto; white-space: nowrap; }
-            #image-table th, #image-table td, #comment-table th, #comment-table td { padding: 8px; }
-            #image-table td img { width: 40px; height: 40px; }
-            #search-container, #comment-search-container { flex-direction: column; }
-            #search-btn, #comment-search-btn { width: 100%; }
-            .action-btn { padding: 6px 8px; font-size: 12px; margin: 2px; }
+            #image-table, #comment-table { display: block; overflow-x: auto; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1><i class="fas fa-user-shield"></i> exen-E - Administración</h1>
-    </header>
-
+    <header><h1><i class="fas fa-user-shield"></i> exen-E - Administración</h1></header>
     <div id="admin-container">
         <div id="login-form">
             <input type="password" id="admin-pass" placeholder="Contraseña de Administrador">
@@ -250,44 +61,37 @@
         </div>
         <div id="admin-content" style="display: none;">
             <div id="global-message" class="message-box" style="display: none;"></div>
-
-            <!-- SECCIÓN DE ENCUESTA -->
             <div id="poll-management" class="mb-8">
                 <h2><i class="fas fa-poll"></i> Gestionar Encuesta</h2>
-                <div id="current-poll-status" class="mb-4 p-4 bg-[#2a2a2a] rounded-lg"></div>
+                <div id="current-poll-status" class="mb-4 p-4 rounded-lg" style="background-color: #2a2a2a;"></div>
                 <div id="create-poll-form">
                     <input type="text" id="poll-question" placeholder="Escribe la pregunta de la encuesta...">
                     <button id="set-poll-btn"><i class="fas fa-check"></i> Asignar Encuesta de la Semana</button>
                     <button id="end-poll-btn" class="delete-btn" style="display: none;"><i class="fas fa-stop"></i> Terminar Encuesta Actual</button>
                 </div>
             </div>
-
-            <!-- SECCIÓN DE BATALLAS -->
             <div id="battle-management" class="mb-8">
                 <h2><i class="fas fa-gavel"></i> Gestionar Batalla</h2>
-                <div id="current-battle-status" class="mb-4 p-4 bg-[#2a2a2a] rounded-lg"></div>
+                <div id="current-battle-status" class="mb-4 p-4 rounded-lg" style="background-color: #2a2a2a;"></div>
                 <div id="create-battle-form">
                     <p>Selecciona dos imágenes de la lista de abajo para iniciar una batalla.</p>
                     <div>
-                        <label for="battle-duration" class="block mb-1 font-semibold">Duración de la batalla (días):</label>
+                        <label for="battle-duration" style="display: block; margin-bottom: 4px; font-weight: 600;">Duración de la batalla (días):</label>
                         <input type="number" id="battle-duration" value="7" style="width: 100%; padding: 10px; background: #333; border-radius: 6px; border: 1px solid #555; color: #fff;">
                     </div>
                     <button id="start-battle-btn" disabled><i class="fas fa-play"></i> Iniciar Batalla</button>
                     <button id="end-battle-btn" class="delete-btn" style="display: none;"><i class="fas fa-stop"></i> Terminar Batalla y Declarar Ganador</button>
                 </div>
             </div>
-
-            <!-- FORMULARIO PARA AÑADIR IMAGEN -->
             <form id="admin-form">
                 <h2><i class="fas fa-upload"></i> Agregar Nueva Imagen</h2>
                 <input type="url" id="img-url" placeholder="URL de la Imagen (https://...)" required>
+                <img id="image-preview" src="" alt="Vista previa" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
                 <input type="text" id="img-title" placeholder="Título" required>
                 <textarea id="img-desc" placeholder="Descripción" required></textarea>
                 <input type="text" id="img-tags" placeholder="Tags (separados por comas, ej. arte, fanart)" required>
                 <button type="submit"><i class="fas fa-plus"></i> Añadir Imagen</button>
             </form>
-
-            <!-- LISTA DE IMÁGENES -->
             <div id="image-list">
                 <h2><i class="fas fa-list"></i> Lista de Imágenes</h2>
                 <div id="search-container">
@@ -295,20 +99,10 @@
                     <button id="search-btn"><i class="fas fa-search"></i> Buscar</button>
                 </div>
                 <table id="image-table">
-                    <thead>
-                        <tr>
-                            <th>Batalla</th>
-                            <th>Imagen</th>
-                            <th>Título</th>
-                            <th>Tags</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Batalla</th><th>Imagen</th><th>Título</th><th>Tags</th><th>Acciones</th></tr></thead>
                     <tbody id="image-table-body"></tbody>
                 </table>
             </div>
-
-            <!-- LISTA DE COMENTARIOS -->
             <div id="comment-list">
                 <h2><i class="fas fa-comments"></i> Lista de Comentarios</h2>
                 <div id="comment-search-container">
@@ -316,25 +110,16 @@
                     <button id="comment-search-btn"><i class="fas fa-search"></i> Buscar</button>
                 </div>
                 <table id="comment-table">
-                    <thead>
-                        <tr>
-                            <th>Imagen</th>
-                            <th>Texto</th>
-                            <th>Nombre</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Imagen</th><th>Texto</th><th>Nombre</th><th>Estado</th><th>Acciones</th></tr></thead>
                     <tbody id="comment-table-body"></tbody>
                 </table>
             </div>
-
-            <!-- FORMULARIO DE EDICIÓN (OCULTO) -->
             <form id="edit-form">
                 <h2><i class="fas fa-edit"></i> Editar Imagen</h2>
                 <input type="hidden" id="edit-img-id">
                 <input type="hidden" id="edit-img-timestamp">
                 <input type="url" id="edit-img-url" placeholder="URL de la Imagen (https://...)" required>
+                <img id="edit-image-preview" src="" alt="Vista previa" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
                 <input type="text" id="edit-img-title" placeholder="Título" required>
                 <textarea id="edit-img-desc" placeholder="Descripción" required></textarea>
                 <input type="text" id="edit-img-tags" placeholder="Tags (separados por comas, ej. arte, fanart)" required>
@@ -343,14 +128,7 @@
             </form>
         </div>
     </div>
-
-    <footer>
-        <div id="disclaimer">
-            <i class="fas fa-info-circle"></i>
-            <strong>Descargo de Responsabilidades:</strong> Este sitio contiene fanarts y contenido creativo compartido sin fines de lucro.
-        </div>
-        <p>&copy; 2025 exen-E. Diseñado en la oscuridad.</p>
-    </footer>
+    <footer><p>&copy; 2025 exen-E. Diseñado en la oscuridad.</p></footer>
 
     <script>
         const firebaseConfig = {
@@ -365,8 +143,23 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
-        
         let selectedForBattle = [];
+
+        function setupImagePreview(inputId, previewId) {
+            const urlInput = document.getElementById(inputId);
+            const previewImage = document.getElementById(previewId);
+            urlInput.addEventListener('input', () => {
+                const url = urlInput.value.trim();
+                if (isValidUrl(url)) {
+                    previewImage.src = url;
+                    previewImage.style.display = 'block';
+                } else {
+                    previewImage.style.display = 'none';
+                }
+            });
+        }
+        setupImagePreview('img-url', 'image-preview');
+        setupImagePreview('edit-img-url', 'edit-image-preview');
 
         function showMessage(text, isSuccess = false) {
             const el = document.getElementById('global-message');
@@ -392,17 +185,17 @@
                 loadImages();
                 loadComments();
                 loadCurrentBattleStatus();
-                loadCurrentPollStatus(); // Cargar estado de la encuesta
+                loadCurrentPollStatus();
             } else {
                 loginForm.style.display = 'block';
                 adminContent.style.display = 'none';
-                if (user) { auth.signOut(); } // Sign out non-admin users
+                if (user) { auth.signOut(); }
             }
         });
 
         function checkAdmin() {
             const password = document.getElementById('admin-pass').value;
-            const email = "admin123@exene.com"; // Hardcoded admin email
+            const email = "admin123@exene.com";
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
                     console.error('Login error:', error);
@@ -424,18 +217,16 @@
             const title = document.getElementById('img-title').value.trim();
             const desc = document.getElementById('img-desc').value.trim();
             const tags = document.getElementById('img-tags').value.split(',').map(t => t.trim()).filter(t => t);
-            
             if (!isValidUrl(url) || !title || !desc || tags.length === 0) {
                 showMessage('Todos los campos son obligatorios y la URL debe ser válida.');
                 return;
             }
-
             const data = { url, title, desc, tags, timestamp: Date.now() };
-            const newImageRef = db.ref('images').push();
-            newImageRef.set(data)
+            db.ref('images').push().set(data)
                 .then(() => {
                     showMessage('Imagen añadida con éxito', true);
                     e.target.reset();
+                    document.getElementById('image-preview').style.display = 'none';
                     loadImages();
                 })
                 .catch(error => showMessage('Error al añadir imagen: ' + error.message));
@@ -444,9 +235,7 @@
         function loadImages(query = '') {
             db.ref('images').orderByChild('timestamp').once('value', snapshot => {
                 const images = [];
-                snapshot.forEach(child => {
-                    images.push({ id: child.key, ...child.val() });
-                });
+                snapshot.forEach(child => { images.push({ id: child.key, ...child.val() }); });
                 images.reverse();
                 const normalizedQuery = normalize(query);
                 const filteredImages = query ? images.filter(img =>
@@ -468,7 +257,7 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td style="text-align: center;"><input type="checkbox" class="battle-selection" value="${img.id}" onchange="handleBattleSelection(this)"></td>
-                    <td><img src="${img.url}" alt="${img.title}" onerror="this.src='data:image/svg+xml;base64,...'"></td>
+                    <td><img src="${img.url}" alt="${img.title}"></td>
                     <td>${img.title}</td>
                     <td>${img.tags ? img.tags.join(', ') : ''}</td>
                     <td>
@@ -486,7 +275,6 @@
                 updates[`/images/${id}`] = null;
                 updates[`/comments/${id}`] = null;
                 updates[`/reactions/${id}`] = null;
-                
                 db.ref().update(updates)
                     .then(() => {
                         showMessage('Imagen eliminada correctamente.', true);
@@ -507,6 +295,10 @@
                     document.getElementById('edit-img-tags').value = img.tags ? img.tags.join(', ') : '';
                     document.getElementById('edit-img-timestamp').value = img.timestamp;
                     
+                    const preview = document.getElementById('edit-image-preview');
+                    preview.src = img.url;
+                    preview.style.display = 'block';
+
                     document.getElementById('edit-form').classList.add('show');
                     document.getElementById('admin-form').style.display = 'none';
                     document.getElementById('image-list').style.display = 'none';
@@ -523,12 +315,10 @@
             const desc = document.getElementById('edit-img-desc').value.trim();
             const tags = document.getElementById('edit-img-tags').value.split(',').map(t => t.trim()).filter(t => t);
             const timestamp = parseInt(document.getElementById('edit-img-timestamp').value, 10);
-
             if (!isValidUrl(url) || !title || !desc || tags.length === 0) {
                 showMessage('Todos los campos son obligatorios y la URL debe ser válida.');
                 return;
             }
-
             const data = { url, title, desc, tags, timestamp };
             db.ref(`images/${id}`).set(data)
                 .then(() => {
@@ -544,13 +334,14 @@
             document.getElementById('admin-form').style.display = 'flex';
             document.getElementById('image-list').style.display = 'block';
             document.getElementById('comment-list').style.display = 'block';
+            document.getElementById('edit-form').reset();
+            document.getElementById('edit-image-preview').style.display = 'none';
         }
 
         // --- LÓGICA DE ENCUESTA ---
         async function loadCurrentPollStatus() {
             const statusContainer = document.getElementById('current-poll-status');
             const endPollBtn = document.getElementById('end-poll-btn');
-
             try {
                 const pollSnap = await db.ref('polls/activePoll').once('value');
                 if (!pollSnap.exists()) {
@@ -558,46 +349,25 @@
                     endPollBtn.style.display = 'none';
                     return;
                 }
-
                 const poll = pollSnap.val();
-                statusContainer.innerHTML = `
-                    <p class="font-bold mb-2"><b>Encuesta activa:</b></p>
-                    <p>${poll.question}</p>
-                `;
+                statusContainer.innerHTML = `<p class="font-bold mb-2"><b>Encuesta activa:</b> ${poll.question}</p>`;
                 endPollBtn.style.display = 'block';
             } catch (error) {
-                statusContainer.innerHTML = `<p class="error">Error al cargar estado de la encuesta: ${error.message}</p>`;
+                statusContainer.innerHTML = `<p class="error">Error al cargar estado: ${error.message}</p>`;
             }
         }
 
         document.getElementById('set-poll-btn').addEventListener('click', async () => {
             const question = document.getElementById('poll-question').value.trim();
-            if (!question) {
-                showMessage('La pregunta de la encuesta no puede estar vacía.');
-                return;
-            }
-
+            if (!question) { showMessage('La pregunta no puede estar vacía.'); return; }
             const pollSnap = await db.ref('polls/activePoll').once('value');
-            if (pollSnap.exists()) {
-                if (!confirm('Ya hay una encuesta activa. ¿Deseas reemplazarla? Esto eliminará las respuestas anteriores.')) {
-                    return;
-                }
-            }
-
+            if (pollSnap.exists() && !confirm('Ya hay una encuesta activa. ¿Deseas reemplazarla?')) return;
             const questionId = 'poll_' + Date.now();
-            const pollData = {
-                question: question,
-                questionId: questionId,
-            };
-
-            if (pollSnap.exists()) {
-                const oldQuestionId = pollSnap.val().questionId;
-                await db.ref(`poll_answers/${oldQuestionId}`).remove();
-            }
-            
+            const pollData = { question, questionId };
+            if (pollSnap.exists()) { await db.ref(`poll_answers/${pollSnap.val().questionId}`).remove(); }
             db.ref('polls/activePoll').set(pollData)
                 .then(() => {
-                    showMessage('¡Encuesta asignada con éxito!', true);
+                    showMessage('¡Encuesta asignada!', true);
                     document.getElementById('poll-question').value = '';
                     loadCurrentPollStatus();
                 })
@@ -605,34 +375,23 @@
         });
 
         document.getElementById('end-poll-btn').addEventListener('click', async () => {
-            if (!confirm('¿Seguro que quieres terminar la encuesta actual? Las respuestas serán eliminadas.')) return;
-            
+            if (!confirm('¿Seguro que quieres terminar la encuesta actual?')) return;
             try {
                 const pollSnap = await db.ref('polls/activePoll').once('value');
                 if (pollSnap.exists()) {
-                    const oldQuestionId = pollSnap.val().questionId;
-                    await db.ref(`poll_answers/${oldQuestionId}`).remove();
+                    await db.ref(`poll_answers/${pollSnap.val().questionId}`).remove();
                     await db.ref('polls/activePoll').remove();
                     showMessage('Encuesta terminada.', true);
                     loadCurrentPollStatus();
-                } else {
-                    showMessage('No hay encuesta activa para terminar.');
                 }
-            } catch(error) {
-                showMessage('Error al terminar la encuesta: ' + error.message);
-            }
+            } catch(error) { showMessage('Error al terminar encuesta: ' + error.message); }
         });
-
 
         // --- LÓGICA DE BATALLA ---
         function handleBattleSelection(checkbox) {
             if (checkbox.checked) {
-                if (selectedForBattle.length < 2) {
-                    selectedForBattle.push(checkbox.value);
-                } else {
-                    checkbox.checked = false;
-                    showMessage('Solo puedes seleccionar dos imágenes para la batalla.');
-                }
+                if (selectedForBattle.length < 2) selectedForBattle.push(checkbox.value);
+                else { checkbox.checked = false; showMessage('Solo puedes seleccionar dos imágenes.'); }
             } else {
                 selectedForBattle = selectedForBattle.filter(id => id !== checkbox.value);
             }
@@ -642,20 +401,13 @@
         document.getElementById('start-battle-btn').addEventListener('click', () => {
             if (selectedForBattle.length !== 2) return;
             const durationDays = parseInt(document.getElementById('battle-duration').value, 10);
-            if (isNaN(durationDays) || durationDays <= 0) {
-                showMessage('La duración debe ser un número positivo.');
-                return;
-            }
+            if (isNaN(durationDays) || durationDays <= 0) { showMessage('La duración debe ser un número positivo.'); return; }
             const expiry = Date.now() + durationDays * 24 * 60 * 60 * 1000;
             const [id1, id2] = selectedForBattle;
-            const battleData = {
-                images: [id1, id2],
-                expiry: expiry,
-                votes: { [id1]: 0, [id2]: 0 }
-            };
+            const battleData = { images: [id1, id2], expiry, votes: { [id1]: 0, [id2]: 0 } };
             db.ref('battle').set(battleData)
                 .then(() => {
-                    showMessage('¡Batalla iniciada con éxito!', true);
+                    showMessage('¡Batalla iniciada!', true);
                     selectedForBattle = [];
                     document.querySelectorAll('.battle-selection').forEach(cb => cb.checked = false);
                     document.getElementById('start-battle-btn').disabled = true;
@@ -665,30 +417,20 @@
         });
 
         document.getElementById('end-battle-btn').addEventListener('click', async () => {
-            if (!confirm('¿Seguro que quieres terminar la batalla actual y declarar un ganador?')) return;
+            if (!confirm('¿Seguro que quieres terminar la batalla actual?')) return;
             try {
                 const battleSnap = await db.ref('battle').once('value');
-                if (!battleSnap.exists()) {
-                    showMessage('No hay una batalla activa para terminar.');
-                    return;
-                }
+                if (!battleSnap.exists()) { showMessage('No hay batalla activa.'); return; }
                 const battle = battleSnap.val();
                 const [id1, id2] = battle.images;
                 const votes1 = battle.votes[id1] || 0;
                 const votes2 = battle.votes[id2] || 0;
-
-                const winnerData = (votes1 >= votes2) ? 
-                    { winnerId: id1, loserId: id2, winnerVotes: votes1, loserVotes: votes2, timestamp: Date.now() } : 
-                    { winnerId: id2, loserId: id1, winnerVotes: votes2, loserVotes: votes1, timestamp: Date.now() };
-                
+                const winnerData = (votes1 >= votes2) ? { winnerId: id1, loserId: id2, winnerVotes: votes1, loserVotes: votes2, timestamp: Date.now() } : { winnerId: id2, loserId: id1, winnerVotes: votes2, loserVotes: votes1, timestamp: Date.now() };
                 await db.ref('previousBattleWinner').set(winnerData);
                 await db.ref('battle').remove();
-                
                 showMessage('Batalla terminada. Ganador guardado.', true);
                 loadCurrentBattleStatus();
-            } catch (error) {
-                showMessage('Error al terminar la batalla: ' + error.message);
-            }
+            } catch (error) { showMessage('Error al terminar batalla: ' + error.message); }
         });
 
         async function loadCurrentBattleStatus() {
@@ -697,32 +439,25 @@
             try {
                 const battleSnap = await db.ref('battle').once('value');
                 if (!battleSnap.exists()) {
-                    statusContainer.innerHTML = '<p>No hay ninguna batalla activa en este momento.</p>';
+                    statusContainer.innerHTML = '<p>No hay ninguna batalla activa.</p>';
                     endBattleBtn.style.display = 'none';
                     return;
                 }
-
                 const battle = battleSnap.val();
                 const [id1, id2] = battle.images;
-                const [img1Snap, img2Snap] = await Promise.all([
-                    db.ref(`images/${id1}`).once('value'),
-                    db.ref(`images/${id2}`).once('value')
-                ]);
-                
+                const [img1Snap, img2Snap] = await Promise.all([ db.ref(`images/${id1}`).once('value'), db.ref(`images/${id2}`).once('value') ]);
                 if (!img1Snap.exists() || !img2Snap.exists()) {
-                    statusContainer.innerHTML = '<p class="error">Error: Una de las imágenes de la batalla ya no existe.</p>';
+                    statusContainer.innerHTML = '<p class="error">Error: Una de las imágenes de la batalla no existe.</p>';
                     return;
                 }
-
                 const img1 = img1Snap.val();
                 const img2 = img2Snap.val();
                 const timeLeft = battle.expiry - Date.now();
                 const days = Math.floor(timeLeft / 864e5);
                 const hours = Math.floor(timeLeft / 36e5 % 24);
                 const timeString = timeLeft > 0 ? `<b>${days}d ${hours}h</b> restantes` : '<b style="color:#ff6b6b;">Terminada</b>';
-
                 statusContainer.innerHTML = `
-                    <p class="font-bold mb-2"><b>Batalla activa:</b></p>
+                    <p style="font-weight: bold; margin-bottom: 8px;"><b>Batalla activa:</b></p>
                     <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
                         <img src="${img1.url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
                         <div><p>${img1.title}</p><p>Votos: <b>${battle.votes[id1] || 0}</b></p></div>
@@ -733,9 +468,7 @@
                     <p style="margin-top: 0.5rem;">Expira el ${new Date(battle.expiry).toLocaleDateString()} (${timeString})</p>
                 `;
                 endBattleBtn.style.display = 'block';
-            } catch (error) {
-                statusContainer.innerHTML = `<p class="error">Error al cargar estado de la batalla: ${error.message}</p>`;
-            }
+            } catch (error) { statusContainer.innerHTML = `<p class="error">Error al cargar batalla: ${error.message}</p>`; }
         }
         
         // --- LÓGICA DE COMENTARIOS ---
@@ -743,17 +476,13 @@
             db.ref('comments').once('value', snapshot => {
                 const comments = [];
                 snapshot.forEach(imageSnapshot => {
-                    const imageId = imageSnapshot.key;
                     imageSnapshot.forEach(commentSnapshot => {
-                        comments.push({ imageId, commentId: commentSnapshot.key, ...commentSnapshot.val() });
+                        comments.push({ imageId: imageSnapshot.key, commentId: commentSnapshot.key, ...commentSnapshot.val() });
                     });
                 });
-                comments.reverse(); // Newest first
+                comments.reverse();
                 const normalizedQuery = normalize(query);
-                const filteredComments = query ? comments.filter(comment =>
-                    normalize(comment.text).includes(normalizedQuery) ||
-                    (comment.name && normalize(comment.name).includes(normalizedQuery))
-                ) : comments;
+                const filteredComments = query ? comments.filter(c => normalize(c.text).includes(normalizedQuery) || (c.name && normalize(c.name).includes(normalizedQuery))) : comments;
                 displayComments(filteredComments);
             }).catch(error => showMessage('Error al cargar comentarios: ' + error.message));
         }
@@ -769,14 +498,12 @@
                 const row = document.createElement('tr');
                 const isApproved = comment.approved !== false;
                 row.innerHTML = `
-                    <td>${comment.imageId}</td>
+                    <td>${comment.imageId.substring(0, 6)}...</td>
                     <td>${comment.text}</td>
                     <td>${comment.name || 'Anónimo'}</td>
                     <td>${isApproved ? 'Aprobado' : 'No aprobado'}</td>
                     <td>
-                        <button class="action-btn ${!isApproved ? 'approve-btn' : 'delete-btn'}" onclick="toggleCommentApproval('${comment.imageId}', '${comment.commentId}', ${!isApproved})">
-                            <i class="fas fa-${!isApproved ? 'check' : 'ban'}"></i>
-                        </button>
+                        <button class="action-btn ${!isApproved ? 'approve-btn' : 'delete-btn'}" onclick="toggleCommentApproval('${comment.imageId}', '${comment.commentId}', ${!isApproved})"><i class="fas fa-${!isApproved ? 'check' : 'ban'}"></i></button>
                         <button class="action-btn delete-btn" onclick="deleteComment('${comment.imageId}', '${comment.commentId}')"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
@@ -809,7 +536,7 @@
         document.getElementById('search-images').addEventListener('input', e => { if (!e.target.value) loadImages(); });
         document.getElementById('comment-search-btn').addEventListener('click', () => loadComments(document.getElementById('search-comments').value));
         document.getElementById('search-comments').addEventListener('input', e => { if (!e.target.value) loadComments(); });
-
     </script>
 </body>
 </html>
+
