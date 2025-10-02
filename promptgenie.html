@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Prompts para Forge (Stable Diffusion)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        #promptOutput {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-radius: 5px;
+            word-wrap: break-word;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .config-panel {
+            display: none; /* Oculto por defecto */
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .config-panel h2, .config-panel h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .config-field {
+            margin-bottom: 15px;
+        }
+        .config-field label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .config-field input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .config-field button {
+            margin-top: 5px;
+            background-color: #28a745;
+        }
+        .config-field button:hover {
+            background-color: #218838;
+        }
+        .file-upload {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .file-upload select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .file-upload input[type="file"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .file-upload button {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .file-upload button:hover {
+            background-color: #e0a800;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Generador de Prompts para Forge (Stable Diffusion)</h1>
+        <div id="promptOutput">Haz clic en el botón para generar un prompt.</div>
+        <button onclick="generatePrompt()">Generar Prompt</button>
+        <button onclick="toggleConfigPanel()">Mostrar/Ocultar Configuración</button>
+
+        <div class="config-panel" id="configPanel">
+            <h2>Panel de Configuración</h2>
+            <div class="config-field">
+                <label for="subjectInput">Sujeto:</label>
+                <input type="text" id="subjectInput" placeholder="Ej: un astronauta">
+                <button onclick="addToCategory('subjects', 'subjectInput')">Añadir</button>
+            </div>
+            <div class="config-field">
+                <label for="styleInput">Estilo:</label>
+                <input type="text" id="styleInput" placeholder="Ej: estilo gótico">
+                <button onclick="addToCategory('styles', 'styleInput')">Añadir</button>
+            </div>
+            <div class="config-field">
+                <label for="detailInput">Detalles:</label>
+                <input type="text" id="detailInput" placeholder="Ej: ultra detallado">
+                <button onclick="addToCategory('details', 'detailInput')">Añadir</button>
+            </div>
+            <div class="config-field">
+                <label for="lightingInput">Iluminación:</label>
+                <input type="text" id="lightingInput" placeholder="Ej: luz dorada">
+                <button onclick="addToCategory('lighting', 'lightingInput')">Añadir</button>
+            </div>
+            <div class="config-field">
+                <label for="environmentInput">Entorno:</label>
+                <input type="text" id="environmentInput" placeholder="Ej: en una cueva oscura">
+                <button onclick="addToCategory('environments', 'environmentInput')">Añadir</button>
+            </div>
+            <div class="config-field">
+                <label for="moodInput">Estado de ánimo:</label>
+                <input type="text" id="moodInput" placeholder="Ej: nostálgico">
+                <button onclick="addToCategory('moods', 'moodInput')">Añadir</button>
+            </div>
+            <div class="config-field">
+                <label for="extraInput">Extras:</label>
+                <input type="text" id="extraInput" placeholder="Ej: , lente gran angular">
+                <button onclick="addToCategory('extras', 'extraInput')">Añadir</button>
+            </div>
+
+            <div class="file-upload">
+                <h3>Cargar desde Archivo (.txt o .json)</h3>
+                <select id="categorySelect">
+                    <option value="">Todas las categorías (solo para JSON)</option>
+                    <option value="subjects">Sujetos</option>
+                    <option value="styles">Estilos</option>
+                    <option value="details">Detalles</option>
+                    <option value="lighting">Iluminación</option>
+                    <option value="environments">Entornos</option>
+                    <option value="moods">Estados de ánimo</option>
+                    <option value="extras">Extras</option>
+                </select>
+                <input type="file" id="fileInput" accept=".txt,.json">
+                <button onclick="loadFile()">Cargar Archivo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Listas de palabras clave para diferentes categorías
+        let subjects = [
+            "un caballero medieval", "una nave espacial futurista", "un dragón místico", "una ciudad cyberpunk",
+            "un bosque encantado", "una sirena en el océano", "un samurai en la montaña", "un castillo flotante",
+            "un robot steampunk", "una bruja en un pantano"
+        ];
+
+        let styles = [
+            "realista", "pintura al óleo", "estilo anime", "cyberpunk", "surrealista", "arte digital",
+            "acuarela", "estilo cómic", "fotografía", "pixel art"
+        ];
+
+        let details = [
+            "detallado", "hiperrealista", "textura rica", "colores vibrantes", "detalles intrincados",
+            "estilo minimalista", "alta resolución", "baja poli", "renderizado 3D", "boceto"
+        ];
+
+        let lighting = [
+            "luz suave", "iluminación dramática", "luz de neón", "atardecer cálido", "luz de luna",
+            "iluminación cinematográfica", "luz difusa", "sombras duras", "luz natural", "resplandor etéreo"
+        ];
+
+        let environments = [
+            "en una montaña nevada", "en un desierto ardiente", "bajo el agua", "en el espacio exterior",
+            "en un bosque brumoso", "en una ciudad en ruinas", "en un templo antiguo", "en un mercado bullicioso",
+            "en un paisaje alienígena", "en un campo de flores"
+        ];
+
+        let moods = [
+            "misterioso", "épico", "sereno", "caótico", "melancólico", "futurista", "sombrío",
+            "alegre", "mágico", "intenso"
+        ];
+
+        let extras = [
+            ", fondo detallado", ", enfoque nítido", ", colores saturados", ", composición dinámica",
+            ", perspectiva aérea", ", reflejos realistas", ", partículas flotantes", ", niebla ambiental",
+            ", texturas orgánicas", ""
+        ];
+
+        // Prefijo fijo para todos los prompts
+        const prefix = "masterpiece, best quality, ultra-detailed, 8k resolution, high dynamic range, absurdres, stunningly beautiful, intricate details, sharp focus, detailed eyes, cinematic color grading, high-resolution texture, ";
+
+        // Función para seleccionar un elemento aleatorio de un array
+        function getRandomElement(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        // Función para generar el prompt con el prefijo
+        function generatePrompt() {
+            const randomPart = `${getRandomElement(subjects)}, ${getRandomElement(styles)}, ${getRandomElement(details)}, ${getRandomElement(lighting)}, ${getRandomElement(environments)}, ${getRandomElement(moods)}${getRandomElement(extras)}`;
+            const prompt = prefix + randomPart;
+            document.getElementById("promptOutput").innerText = prompt;
+        }
+
+        // Función para añadir una nueva opción a una categoría
+        function addToCategory(category, inputId) {
+            const input = document.getElementById(inputId);
+            const value = input.value.trim();
+            if (value) {
+                window[category].push(value);
+                input.value = ''; // Limpiar el campo
+                alert(`"${value}" añadido a ${category}.`);
+            } else {
+                alert('Por favor, introduce un valor válido.');
+            }
+        }
+
+        // Función para cargar archivo .txt o .json
+        function loadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const categorySelect = document.getElementById('categorySelect').value;
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Por favor, selecciona un archivo.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                let addedCount = 0;
+
+                if (file.name.endsWith('.json')) {
+                    try {
+                        const data = JSON.parse(content);
+
+                        if (categorySelect === '') {
+                            // Añadir a todas las categorías si es un objeto con múltiples keys
+                            for (const key in data) {
+                                if (Array.isArray(data[key]) && window[key]) {
+                                    window[key].push(...data[key].filter(item => item.trim()));
+                                    addedCount += data[key].length;
+                                }
+                            }
+                        } else {
+                            // Añadir a categoría específica (asumiendo data es array o {category: array})
+                            let items = Array.isArray(data) ? data : data[categorySelect];
+                            if (Array.isArray(items)) {
+                                window[categorySelect].push(...items.filter(item => item.trim()));
+                                addedCount = items.length;
+                            } else {
+                                alert('El JSON debe ser un array o un objeto con la clave de la categoría para la categoría seleccionada.');
+                                return;
+                            }
+                        }
+                    } catch (err) {
+                        alert('Error al parsear el JSON: ' + err.message);
+                        return;
+                    }
+                } else if (file.name.endsWith('.txt')) {
+                    if (categorySelect === '') {
+                        alert('Para archivos .txt, selecciona una categoría específica.');
+                        return;
+                    }
+                    const lines = content.split(/\r?\n/).filter(line => line.trim());
+                    window[categorySelect].push(...lines);
+                    addedCount = lines.length;
+                } else {
+                    alert('Archivo no soportado. Usa .txt o .json.');
+                    return;
+                }
+
+                fileInput.value = ''; // Limpiar el input de archivo
+                if (addedCount > 0) {
+                    alert(`${addedCount} elementos añadidos exitosamente.`);
+                } else {
+                    alert('No se añadieron elementos. Verifica el formato del archivo.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Función para alternar la visibilidad del panel de configuración
+        function toggleConfigPanel() {
+            const panel = document.getElementById('configPanel');
+            if (panel.style.display === 'none' || panel.style.display === '') {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

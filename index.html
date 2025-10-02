@@ -26,7 +26,7 @@
       - La imagen debe estar en un servidor público para que Facebook pueda acceder a ella.
       - Se recomienda un tamaño de 1200x630 píxeles.
     -->
-    <meta property="og:image" content="https://files.catbox.moe/fklbm8.jpg" />
+    <meta property="og:image" content="https://files.catbox.moe/4ubhtv.jpg" />
     <meta property="og:image:alt" content="Logo de exen-E Galería Premium" />
 
 
@@ -1003,12 +1003,16 @@
 
             const modal = document.getElementById('modal');
             modal.addEventListener('touchstart', e => {
-                if (e.target.closest('button, input, textarea, .reaction, a')) return;
+                // SOLUCIÓN: Previene el swipe de la imagen principal si el gesto comienza en la sección de similares o en otros elementos interactivos.
+                if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) {
+                    touchStartX = 0; // Invalida el inicio del swipe para que 'touchend' no haga nada.
+                    return;
+                }
                 touchStartX = e.changedTouches[0].screenX;
             }, { passive: true });
 
             modal.addEventListener('touchend', e => {
-                if (touchStartX === 0) return;
+                if (touchStartX === 0) return; // Si el swipe fue invalidado, no continúa.
                 touchEndX = e.changedTouches[0].screenX;
                 handleSwipe();
                 touchStartX = 0; // Reset
@@ -1503,4 +1507,3 @@
     </script>
 </body>
 </html>
-
