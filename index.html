@@ -58,6 +58,9 @@
 
     <!-- Estilos Personalizados y Mejoras -->
     <style>
+        /* =================================================================
+           == NUEVO TEMA DE COLOR: AZUL FORMAL ==
+           ================================================================= */
         :root {
             --accent: #2563eb; /* Azul Principal (blue-600) */
             --accent-neon: #3b82f6; /* Azul de Acento (blue-500) */
@@ -73,6 +76,7 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0f172a; /* bg-slate-900 */
+            /* MEJORA: Fondo con más profundidad y estilo */
             background-image: 
                 radial-gradient(circle at 1% 1%, rgba(59, 130, 246, 0.1) 0%, transparent 30%),
                 radial-gradient(circle at 99% 99%, rgba(20, 83, 163, 0.15) 0%, transparent 40%),
@@ -81,47 +85,16 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        
-        /* CORRECCIÓN: Se elimina el borde lateral de las secciones */
-        .section-container {
-            padding: 2rem 0;
-            border-radius: 1.5rem; /* rounded-3xl */
-            background-position: center center;
-            background-size: cover;
-            position: relative;
-            overflow: hidden;
-        }
-        .section-container::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-color: rgba(15, 23, 42, 0.85); /* bg-slate-900 with opacity */
-            backdrop-filter: blur(2px);
-        }
-        .section-content {
-            position: relative;
-            z-index: 1;
-            padding: 0 1.5rem; /* Se mantiene el padding horizontal en el contenido interno */
-        }
-        .section-bg-1 {
-            background-image: url('https://www.transparenttextures.com/patterns/az-subtle.png');
-        }
-        .section-bg-2 {
-            background-image: url('https://www.transparenttextures.com/patterns/clean-textile.png');
-        }
-        .section-bg-3 {
-             background-image: url('https://www.transparenttextures.com/patterns/concrete-wall.png');
-        }
-        .section-bg-4 {
-             background-image: url('https://www.transparenttextures.com/patterns/dark-denim-3.png');
-        }
 
+        /* ===== INICIO: MEJORAS VISUALES DE TÍTULOS Y SEPARADORES ===== */
 
+        /* Header mejorado con borde y sombra sutil */
         header {
             border-bottom: 1px solid rgba(59, 130, 246, 0.2);
             box-shadow: 0 5px 20px rgba(59, 130, 246, 0.05);
         }
 
+        /* Estilo base para los títulos de sección (h3) */
         main h3 {
             font-weight: 900;
             letter-spacing: 0.025em;
@@ -134,11 +107,13 @@
             padding-bottom: 0.75rem;
         }
 
+        /* Colorea los iconos dentro de los títulos con el color de acento neón */
         main h3 i {
             -webkit-text-fill-color: var(--accent-neon);
             text-shadow: 0 0 8px var(--accent-neon);
         }
 
+        /* Línea decorativa debajo de cada título */
         main h3::after {
             content: '';
             position: absolute;
@@ -151,11 +126,13 @@
             box-shadow: 0 0 10px var(--accent-neon);
         }
 
+        /* Ajuste para que la línea decorativa se centre en títulos centrados */
         main h3.text-center::after {
             left: 50%;
             transform: translateX(-50%);
         }
 
+        /* Divisor decorativo estilo Art Deco para separar secciones */
         .decorative-divider {
             display: flex;
             align-items: center;
@@ -176,6 +153,9 @@
             padding: 0 1em;
         }
         
+        /* ===== FIN: MEJORAS VISUALES ===== */
+        
+        /* Skeleton Loader Animation */
         @keyframes shimmer {
             0% { background-position: -1000px 0; }
             100% { background-position: 1000px 0; }
@@ -190,12 +170,14 @@
             aspect-ratio: 2 / 3;
         }
 
+        /* Estilos de Batalla y Top - COLORES CORREGIDOS */
         .winning { box-shadow: 0 0 20px 5px var(--halo-green); }
         .losing { box-shadow: 0 0 20px 5px var(--halo-red); }
         .top-1 { border-color: var(--diamond); box-shadow: 0 0 15px var(--diamond); }
         .top-2 { border-color: var(--gold); box-shadow: 0 0 15px var(--gold); }
         .top-3 { border-color: var(--silver); box-shadow: 0 0 15px var(--silver); }
 
+        /* Animación al votar */
         @keyframes vote-pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); box-shadow: 0 0 30px 10px var(--accent-neon); }
@@ -205,21 +187,22 @@
             animation: vote-pulse 0.6s ease-out;
         }
         
+        /* ===== NUEVOS ESTILOS PARA LA CORONA ===== */
         @keyframes crown-appear {
             0% { transform: translateX(-50%) translateY(10px) scale(0.5); opacity: 0; }
             100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
         }
         .crown-icon {
             position: absolute;
-            top: -15px; 
+            top: -15px; /* Ajusta para que quede sobre el marco */
             left: 50%;
             transform: translateX(-50%);
-            font-size: 2rem; 
+            font-size: 2rem; /* Tamaño del ícono */
             color: var(--gold);
             text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            display: none; 
+            display: none; /* Oculto por defecto */
             z-index: 10;
-            pointer-events: none;
+            pointer-events: none; /* Para que no interfiera con los clics */
         }
         .battle-item.has-crown .crown-icon {
             display: block;
@@ -230,12 +213,15 @@
         @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
 
+        /* Animación de reacción sobre la imagen */
         @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
         .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
 
+        /* Animación para el "rain effect" */
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
         .reaction-animation { position: absolute; font-size: 2rem; pointer-events: none; animation: floatUp 1.5s ease forwards; z-index: 10; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
 
+        /* Círculo de reacciones */
         #reaction-circle-container.open .reaction-circle-item {
             opacity: 1;
             transform: scale(1) var(--transform-pos);
@@ -259,19 +245,23 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
 
+        /* Estilos de Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-neon); }
         
+        /* Helper para ocultar scrollbar en sliders */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* ===== NUEVOS ESTILOS PARA LA ENCUESTA UNIFICADA ===== */
         .poll-answer-card {
             position: relative;
             overflow: hidden;
             z-index: 1;
         }
+        /* Animación de aparición para grid estático */
         .poll-grid-animation {
              animation: pollAnswerAppear 0.5s ease-out forwards;
         }
@@ -280,22 +270,23 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
+        /* Barra de votos */
         .poll-vote-bar {
             position: absolute;
             left: 0;
             top: 0;
             bottom: 0;
             background: linear-gradient(90deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0));
-            width: 0%; 
+            width: 0%; /* Se actualiza con JS */
             transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
             z-index: -1;
         }
 
-        /* CORRECCIÓN: Se añade overflow-y-auto para permitir scroll manual */
+        /* Contenedor scroller si hay más de 3 respuestas */
         .poll-scroller {
-            height: 288px; 
+            height: 288px; /* h-72 */
             position: relative;
-            overflow-y: auto;
+            overflow: hidden;
             -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
             mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
         }
@@ -304,33 +295,16 @@
             flex-direction: column;
             gap: 1rem;
             animation: scroll-up 40s linear infinite;
-            will-change: transform;
         }
-        /* Pausa la animación al pasar el ratón O al hacer scroll manual */
-        .poll-scroller:hover .scroller-inner,
-        .poll-scroller.is-scrolling .scroller-inner {
+        .poll-scroller:hover .scroller-inner {
             animation-play-state: paused;
         }
         @keyframes scroll-up {
             from { transform: translateY(0); }
-            to { transform: translateY(-50%); } 
-        }
-
-        /* NUEVO: Animación para sliders horizontales */
-        .horizontal-scroller-inner {
-            display: flex;
-            gap: 1rem;
-            animation: scroll-horizontal 60s linear infinite;
-            will-change: transform;
-        }
-        .horizontal-scroller:hover .horizontal-scroller-inner {
-            animation-play-state: paused;
-        }
-        @keyframes scroll-horizontal {
-             from { transform: translateX(0); }
-             to { transform: translateX(-50%); }
+            to { transform: translateY(-50%); }
         }
         
+        /* Ventana flotante */
         #poll-widget {
             transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s;
         }
@@ -353,6 +327,7 @@
     </div>
 
     <!-- ========== HEADER ========== -->
+    <!-- CAMBIO: Se centra el logo y se posiciona el perfil de forma absoluta -->
     <header class="sticky top-0 z-[100] flex items-center justify-center relative bg-slate-900/80 p-4 backdrop-blur-lg">
         <h1 class="flex items-center text-2xl font-bold">
             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-12 w-auto">
@@ -364,7 +339,9 @@
         <!-- ========== SEARCH ========== -->
         <form id="search-form" class="my-6 flex justify-center">
             <div class="relative w-full max-w-xl">
+                <!-- CAMBIO: Se aumenta el padding derecho para los botones -->
                 <input type="text" id="search-input" placeholder="Buscar en toda la galería..." class="w-full rounded-full border-2 border-gray-700 bg-gray-800 py-3 pl-5 pr-24 text-white transition placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+                <!-- NUEVO: Botón para limpiar/cerrar la búsqueda -->
                 <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-12 hidden items-center justify-center w-12 text-gray-400 hover:text-blue-500 transition-colors" aria-label="Limpiar búsqueda">
                     <i class="fas fa-times text-xl"></i>
                 </button>
@@ -382,55 +359,66 @@
 
         
         <div id="main-content-sections">
-             <section id="battle-section" class="section-container section-bg-1 my-12">
-                <div class="section-content">
-                    <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-gavel"></i> Batalla de la Semana</h3>
-                    <div id="battle-grid" class="flex items-center justify-center gap-2 sm:gap-4"></div>
-                    <div id="battle-timer" class="mt-4 text-center font-semibold text-gray-400"></div>
-                    <div id="battle-winner-container" class="mt-8" style="display: none;">
-                         <h4 class="mb-4 text-center text-xl font-bold text-sky-400">Ganador de la Batalla Anterior</h4>
-                        <div id="battle-winner" class="relative mx-auto max-w-lg"></div>
+            <!-- SECTIONS BATTLE, TOP, FOR YOU... -->
+             <section id="battle-section" class="mb-12">
+                <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-gavel"></i> Batalla de la Semana</h3>
+                <div id="battle-grid" class="flex items-center justify-center gap-2 sm:gap-4">
+                    <!-- Battle items will be populated here -->
+                </div>
+                <div id="battle-timer" class="mt-4 text-center font-semibold text-gray-400"></div>
+                <!-- Contenedor del Ganador Mejorado -->
+                <div id="battle-winner-container" class="mt-8" style="display: none;">
+                     <h4 class="mb-4 text-center text-xl font-bold text-sky-400">Ganador de la Batalla Anterior</h4>
+                    <div id="battle-winner" class="relative mx-auto max-w-lg">
+                        <!-- El contenido del ganador se generará aquí -->
                     </div>
                 </div>
             </section>
             
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             
-            <section id="top-liked-section" class="section-container section-bg-2 my-12">
-                <div class="section-content">
-                    <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-trophy"></i> Más Gustadas</h3>
+            <section id="top-liked-section" class="mb-12">
+                <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-trophy"></i> Más Gustadas</h3>
+                <div id="top-liked-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
+                    <!-- Slider images will be populated here -->
                 </div>
-                <!-- Se saca el grid del padding para que ocupe todo el ancho -->
-                <div id="top-liked-grid" class="horizontal-scroller flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
             </section>
             
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             
-            <section id="for-you-section" class="section-container section-bg-3 my-12">
-                 <div class="section-content">
-                    <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-star"></i> Para Ti</h3>
+            <section id="for-you-section" class="mb-12">
+                <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-star"></i> Para Ti</h3>
+                <div id="for-you-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
+                    <!-- Slider images will be populated here -->
                 </div>
-                 <div id="for-you-grid" class="horizontal-scroller flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
             </section>
             
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             
+            <!-- ========= CONTENEDOR DE ENCUESTA CON ALPINE.JS ========= -->
             <div x-data="{ isPollOpen: false }">
-                <section id="poll-section" class="section-container section-bg-4 my-12">
-                    <div class="section-content">
-                        <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-poll"></i> Encuesta de la Semana</h3>
-                        <div id="poll-container" class="max-w-4xl mx-auto text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700"></div>
-                        <div id="poll-answers-main-container" class="mt-8"></div>
+                <section id="poll-section" class="mb-12">
+                    <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-poll"></i> Encuesta de la Semana</h3>
+                    <div id="poll-container" class="max-w-4xl mx-auto text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
+                        <!-- El contenido de la encuesta se carga aquí desde Firebase -->
+                    </div>
+                    <!-- Contenedor principal para todas las respuestas -->
+                    <div id="poll-answers-main-container" class="mt-8">
+                         <!-- El contenido (grid estático o scroller animado) se inyectará aquí -->
                     </div>
                 </section>
 
+                <!-- VENTANA FLOTANTE DE ENCUESTA CONTROLADA POR ALPINE.JS -->
                 <div id="poll-widget" 
                      class="fixed bottom-5 right-5 z-[900] w-full max-w-sm bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 transform translate-y-[calc(100%+20px)] opacity-0"
                      :class="{ 'open': isPollOpen }">
+                    
                     <button @click="isPollOpen = false" class="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700/80 text-gray-400 transition hover:bg-slate-600 hover:text-white">
                         <i class="fas fa-times"></i>
                     </button>
+                    
                     <h3 id="poll-widget-question" class="text-xl font-bold mb-4 text-center text-gray-100"></h3>
+                    
                     <form id="poll-answer-form" @submit.prevent="handlePollSubmit($event); isPollOpen = false">
                         <textarea id="poll-answer-input" rows="3" placeholder="Tu respuesta (máx 30 caracteres)..." maxlength="30" class="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-2 text-white transition focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500/50 mb-3"></textarea>
                         <input type="text" id="poll-name-input" placeholder="Nombre (máx 10 caracteres)" maxlength="10" class="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-2 text-white transition focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500/50 mb-4">
@@ -440,6 +428,8 @@
                     </form>
                 </div>
             </div>
+            <!-- ========= FIN DEL CONTENEDOR DE ENCUESTA ========= -->
+
 
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
 
@@ -451,15 +441,17 @@
             <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
             <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"></div>
             <div id="loader" class="py-12" style="display: none;"><div class="skeleton"></div></div>
-            <div id="load-more-trigger" class="h-10"></div>
+            <div id="load-more-trigger" class="h-10"></div> <!-- Invisible trigger for IntersectionObserver -->
         </section>
     </main>
 
     <!-- ========== MODAL IMAGEN ========== -->
     <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90 backdrop-blur-md" style="display: none;">
+        <!-- Botón Anterior -->
         <button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:scale-110">
             <i class="fas fa-chevron-left text-2xl"></i>
         </button>
+        <!-- Botón Siguiente -->
         <button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:scale-110">
             <i class="fas fa-chevron-right text-2xl"></i>
         </button>
@@ -510,8 +502,10 @@
                 <p id="desc" class="rounded-xl border-2 border-blue-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
                 
                 <section id="similar-section" class="mt-4 w-full">
-                    <h3 class="mb-4 flex items-center justify-center gap-3 text-center text-xl font-bold px-6"><i class="fas fa-th-large text-blue-400"></i> Imágenes Similares</h3>
-                    <div id="similar-grid" class="horizontal-scroller flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
+                    <h3 class="mb-4 flex items-center justify-center gap-3 text-center text-xl font-bold"><i class="fas fa-th-large text-blue-400"></i> Imágenes Similares</h3>
+                    <div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
+                        <!-- Similar images will be populated here -->
+                    </div>
                 </section>
                 
                 <section id="comments-section" class="mt-4 w-full">
@@ -558,8 +552,8 @@
         
         // --- Variables Globales ---
         const imagesPerLoad = 20;
-        let allImages = [];
-        let fullGalleryCache = [];
+        let allImages = []; // Cache para la galería principal
+        let fullGalleryCache = []; // Caché para la búsqueda de toda la galería
         let lastImageTimestamp = null;
         let lastImageKey = null;
         let isLoading = false;
@@ -581,6 +575,7 @@
             localStorage.setItem('deviceID', deviceID);
         }
 
+        // Variables de estado para la paginación de búsqueda
         let currentSearchResults = [];
         let searchCurrentPage = 1;
         const searchResultsPerPage = 20;
@@ -617,7 +612,7 @@
             loadPollSection(); 
             setupIntersectionObserver();
             setupEventListeners(); 
-            cacheFullGalleryForSearch();
+            cacheFullGalleryForSearch(); // Cargar caché de búsqueda
         }
 
         function cacheFullGalleryForSearch() {
@@ -655,6 +650,7 @@
             }
         }
 
+        // --- Carga Paginada de Imágenes ---
         function loadInitialImages() {
             if (isLoading) return;
             isLoading = true;
@@ -727,6 +723,7 @@
             });
         }
         
+        // --- Lógica de Secciones ---
         async function loadTopLikedImages() {
             const grid = document.getElementById('top-liked-grid');
             generateSkeletons(grid, 10, true);
@@ -740,15 +737,15 @@
 
             const sortedIds = Object.keys(likesCount).sort((a,b) => likesCount[b] - likesCount[a]).slice(0, 10);
             if (sortedIds.length === 0) {
-                 grid.innerHTML = '<p class="w-full text-center text-gray-500 px-6">Aún no hay imágenes gustadas.</p>';
+                 grid.innerHTML = '<p class="w-full text-center text-gray-500">Aún no hay imágenes gustadas.</p>';
                  return;
             }
 
             const imageSnaps = await Promise.all(sortedIds.map(id => db.ref(`images/${id}`).once('value')));
             const images = imageSnaps.map(s => ({id: s.key, ...s.val()}));
             
-            displayImages(images, 'top-liked-grid', false, true);
-            initHorizontalAutoSlider('top-liked-grid');
+            displayImages(images, 'top-liked-grid');
+            initAutoSlider('top-liked-grid');
         }
         
         async function loadForYouImages() {
@@ -758,13 +755,13 @@
             const fallbackToRecents = async () => {
                 const imageSnap = await db.ref('images').orderByChild('timestamp').limitToLast(10).once('value');
                 if (!imageSnap.exists()) {
-                    grid.innerHTML = '<p class="w-full text-center text-gray-500 px-6">No hay imágenes para mostrar.</p>';
+                    grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay imágenes para mostrar.</p>';
                     return;
                 }
                 const images = [];
                 imageSnap.forEach(child => { images.push({id: child.key, ...child.val()}); });
-                displayImages(images.reverse(), 'for-you-grid', false, true);
-                initHorizontalAutoSlider('for-you-grid');
+                displayImages(images.reverse(), 'for-you-grid');
+                initAutoSlider('for-you-grid');
             };
 
             let viewedImageIds = [];
@@ -832,29 +829,33 @@
             const recommendedImages = scoredCandidates.slice(0, 15).map(item => item.image);
 
             if (recommendedImages.length > 0) {
-                displayImages(recommendedImages, 'for-you-grid', false, true);
-                initHorizontalAutoSlider('for-you-grid');
+                displayImages(recommendedImages, 'for-you-grid');
+                initAutoSlider('for-you-grid');
             } else {
                 await fallbackToRecents();
             }
         }
 
 
-        function displayImages(images, containerId, append = false, isHorizontalSlider = false) {
+        // --- Funciones de Renderizado y UI ---
+        function displayImages(images, containerId, append = false) {
             const grid = document.getElementById(containerId);
+            if (!append) grid.innerHTML = '';
             
-            let content = '';
-
             if (images.length === 0 && !append) {
-                grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400 px-6">No se encontraron imágenes.</div>`;
+                grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes.</div>`;
                 return;
             }
+            
+            const isSlider = containerId === 'top-liked-grid' || containerId === 'for-you-grid' || containerId === 'similar-grid';
 
             images.forEach((img, index) => {
-                if (!img || !img.url || !img.title) return;
+                if (!img || !img.url || !img.title) return; // Skip incomplete data
+                const div = document.createElement('div');
+                
                 let classList = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-xl image-card-hover flex-shrink-0';
                 
-                if (isHorizontalSlider) {
+                if (isSlider) {
                     classList += ' w-2/5 sm:w-1/4 md:w-1/5';
                 }
                 if (containerId === 'similar-grid') {
@@ -866,37 +867,19 @@
                     if (topClass) classList += ` border-2 border-transparent ${topClass}`;
                 }
 
-                content += `
-                    <div class="${classList}" style="animation-delay: ${append ? 0 : (index * 0.05)}s" onclick="openModal('${img.id}')">
-                        <img src="${img.url}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent transition duration-300 group-hover:bg-black/50 pointer-events-none"></div>
-                        <div class="absolute bottom-0 left-0 p-3 pointer-events-none">
-                            <h4 class="truncate font-bold text-white text-shadow-lg">${img.title}</h4>
-                        </div>
-                        <div class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white pointer-events-none"><i class="fas fa-heart text-red-500"></i><span id="reaction-total-${img.id}">0</span></div>
+                div.className = classList;
+                div.style.animationDelay = `${(index * 0.05)}s`;
+                div.setAttribute('onclick', `openModal('${img.id}')`);
+                div.innerHTML = `
+                    <img src="${img.url}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent transition duration-300 group-hover:bg-black/50 pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-0 p-3 pointer-events-none">
+                        <h4 class="truncate font-bold text-white text-shadow-lg">${img.title}</h4>
                     </div>
+                     <div class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white pointer-events-none"><i class="fas fa-heart text-red-500"></i><span id="reaction-total-${img.id}">0</span></div>
                 `;
-            });
-            
-            if (isHorizontalSlider) {
-                // Para sliders horizontales, creamos un inner div para la animación
-                if (!append) {
-                    grid.innerHTML = `<div class="horizontal-scroller-inner">${content}</div>`;
-                } else {
-                    grid.querySelector('.horizontal-scroller-inner').innerHTML += content;
-                }
-            } else {
-                 if (append) {
-                    grid.innerHTML += content;
-                 } else {
-                    grid.innerHTML = content;
-                 }
-            }
-            
-            // Cargar contadores de reacciones después de renderizar
-            images.forEach(img => {
-                 if (!img || !img.id) return;
-                 db.ref(`reactions/${img.id}`).once('value').then(snap => {
+                grid.appendChild(div);
+                db.ref(`reactions/${img.id}`).once('value').then(snap => {
                     const reactionCountEl = document.getElementById(`reaction-total-${img.id}`);
                     if (reactionCountEl) reactionCountEl.textContent = snap.numChildren();
                 });
@@ -985,54 +968,59 @@
             }
         }
 
-        function initHorizontalAutoSlider(containerId) {
+        function initAutoSlider(containerId) {
             const container = document.getElementById(containerId);
-            const inner = container.querySelector('.horizontal-scroller-inner');
-            if (!container || !inner || inner.children.length < 2) return;
+            if (!container || container.children.length < 2) return;
 
-            // Limpiar animación anterior si existe
-            if (sliderAnimationState[containerId]) {
-                cancelAnimationFrame(sliderAnimationState[containerId]);
+            if (sliderAnimationState[containerId]?.animationFrameId) {
+                cancelAnimationFrame(sliderAnimationState[containerId].animationFrameId);
             }
 
-            // Duplicar contenido para bucle infinito
             if (!container.dataset.cloned) {
-                inner.innerHTML += inner.innerHTML;
+                const originalChildren = Array.from(container.children);
+                originalChildren.forEach(child => {
+                    const clone = child.cloneNode(true);
+                    clone.setAttribute('aria-hidden', 'true');
+                    container.appendChild(clone);
+                });
                 container.dataset.cloned = 'true';
             }
 
-            let scrollTimeout;
+            const scrollWidth = container.scrollWidth / 2;
+            let isPaused = false;
 
-            // Pausar con interacción del ratón
-            container.addEventListener('mouseenter', () => inner.style.animationPlayState = 'paused');
-            container.addEventListener('mouseleave', () => inner.style.animationPlayState = 'running');
-
-            // Pausar con interacción táctil/scroll
-            const handleManualScroll = () => {
-                inner.style.animationPlayState = 'paused';
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(() => {
-                    inner.style.animationPlayState = 'running';
-                }, 2000); // Reanudar después de 2 segundos de inactividad
+            const scroll = () => {
+                if (!isPaused) {
+                    container.scrollLeft += 0.5;
+                    if (container.scrollLeft >= scrollWidth) {
+                        container.scrollLeft = 0;
+                    }
+                }
+                sliderAnimationState[containerId] = { animationFrameId: requestAnimationFrame(scroll) };
             };
-            
-            container.addEventListener('scroll', handleManualScroll, { passive: true });
-            container.addEventListener('touchstart', handleManualScroll, { passive: true });
-        }
 
+            const start = () => { isPaused = false; };
+            const stop = () => { isPaused = true; };
+
+            container.addEventListener('mouseenter', stop);
+            container.addEventListener('mouseleave', start);
+            container.addEventListener('touchstart', stop, { passive: true });
+            container.addEventListener('touchend', start, { passive: true });
+
+            scroll();
+        }
 
         async function loadSimilarImages(tags) {
             const grid = document.getElementById('similar-grid');
             
-             // Limpiar estado de animación anterior
-            if (sliderAnimationState['similar-grid']) {
-                cancelAnimationFrame(sliderAnimationState['similar-grid']);
+            if (sliderAnimationState['similar-grid']?.animationFrameId) {
+                cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId);
             }
             grid.innerHTML = '';
             delete grid.dataset.cloned;
 
             if (!tags || tags.length === 0) {
-                 grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500 px-6">No hay etiquetas para encontrar similares.</p>';
+                 grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No hay etiquetas para encontrar similares.</p>';
                 return;
             }
 
@@ -1048,13 +1036,14 @@
             const similarImages = scoredImages.slice(0, 10).map(item => item.image);
 
             if(similarImages.length > 0) {
-                displayImages(similarImages, 'similar-grid', false, true);
-                initHorizontalAutoSlider('similar-grid'); 
+                displayImages(similarImages, 'similar-grid');
+                // CORRECCIÓN: Se elimina la llamada a initAutoSlider para este slider en específico
             } else {
-                grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500 px-6">No se encontraron imágenes con etiquetas similares.</p>';
+                grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No se encontraron imágenes con etiquetas similares.</p>';
             }
         }
         
+        // --- Event Listeners y Lógica Auxiliar ---
         function setupEventListeners() {
             const scrollToTopBtn = document.getElementById('scrollToTopBtn');
             window.addEventListener('scroll', () => {
@@ -1069,11 +1058,13 @@
                 executeSearch(query);
             });
 
+            // NUEVO: Listener para el botón de limpiar búsqueda
             document.getElementById('clear-search-btn').addEventListener('click', resetSearchView);
 
 
             document.getElementById('search-input').addEventListener('input', e => {
                 if (e.target.value.trim() === '') {
+                    // Solo resetea la vista si no hay resultados activos, para no interferir con una búsqueda ya hecha
                     if(document.getElementById('search-results-container').classList.contains('hidden')) {
                         resetSearchView();
                     }
@@ -1088,6 +1079,10 @@
                 }
                 document.getElementById('modal').style.display = 'none';
                 document.body.style.overflow = 'auto';
+                if (sliderAnimationState['similar-grid']?.animationFrameId) {
+                    cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId);
+                    delete sliderAnimationState['similar-grid'];
+                }
                 if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
                     scrollToTopBtn.classList.add('visible');
                 }
@@ -1120,6 +1115,7 @@
             });
         }
         
+        // --- NUEVAS FUNCIONES DE BÚSQUEDA Y PAGINACIÓN ---
         function executeSearch(query) {
             const clearBtn = document.getElementById('clear-search-btn');
             if (!query) {
@@ -1199,6 +1195,8 @@
             currentSearchResults = [];
             searchCurrentPage = 1;
         }
+        // --- FIN DE NUEVAS FUNCIONES ---
+
 
         function setupIntersectionObserver() {
             const trigger = document.getElementById('load-more-trigger');
@@ -1240,6 +1238,7 @@
             }
         }
 
+        // --- Reacciones ---
         function animateReactionOnImage(type) {
             const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' };
             const icon = icons[type];
@@ -1319,6 +1318,7 @@
         });
         document.addEventListener('click', () => document.getElementById('reaction-circle-container').classList.remove('open'));
         
+        // --- Comentarios ---
         function loadComments(id) {
              db.ref(`comments/${id}`).orderByChild('timestamp').on('value', snap => {
                 const commentsContainer = document.getElementById('comments');
@@ -1356,6 +1356,7 @@
               .then(() => document.getElementById('comment-input').value = '');
         });
 
+        // --- Batalla ---
         async function initBattleSection() {
             const battleGrid = document.getElementById('battle-grid');
             battleGrid.innerHTML = `<div class="w-full"><div class="skeleton"></div></div><span class="text-3xl font-black text-sky-400">VS</span><div class="w-full"><div class="skeleton"></div></div>`;
@@ -1538,6 +1539,7 @@
             winnerContainer.style.display = 'block';
         }
 
+        // --- SECCIÓN DE ENCUESTA UNIFICADA ---
         async function loadPollSection() {
             const pollContainer = document.getElementById('poll-container');
             
@@ -1623,16 +1625,6 @@
                     
                     scroller.appendChild(scrollerInner);
                     mainContainer.appendChild(scroller);
-
-                    // CORRECCIÓN: Lógica para pausar animación en scroll manual
-                    let scrollTimeout;
-                    scroller.addEventListener('scroll', () => {
-                        scroller.classList.add('is-scrolling');
-                        clearTimeout(scrollTimeout);
-                        scrollTimeout = setTimeout(() => {
-                            scroller.classList.remove('is-scrolling');
-                        }, 1500);
-                    });
                 }
                 
                 document.querySelectorAll('.poll-like-btn').forEach(btn => {
@@ -1682,4 +1674,3 @@
     </script>
 </body>
 </html>
-
