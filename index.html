@@ -59,8 +59,8 @@
     <!-- Estilos Personalizados y Mejoras -->
     <style>
         :root {
-            --accent: #e65100;
-            --accent-neon: #ffab00;
+            --accent: #2563eb; /* Azul Principal (blue-600) */
+            --accent-neon: #3b82f6; /* Azul de Acento (blue-500) */
             --diamond: #b9f2ff;
             --gold: #ffd700;
             --silver: #c0c0c0;
@@ -73,25 +73,54 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0f172a; /* bg-slate-900 */
-            /* MEJORA: Fondo con más profundidad y estilo */
             background-image: 
-                radial-gradient(circle at 1% 1%, rgba(234, 88, 12, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 1% 1%, rgba(59, 130, 246, 0.1) 0%, transparent 30%),
                 radial-gradient(circle at 99% 99%, rgba(20, 83, 163, 0.15) 0%, transparent 40%),
                 linear-gradient(180deg, #0f172a 0%, #0c1322 100%);
             color: #f3f4f6; /* text-gray-200 */
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-
-        /* ===== INICIO: MEJORAS VISUALES DE TÍTULOS Y SEPARADORES ===== */
-
-        /* Header mejorado con borde y sombra sutil */
-        header {
-            border-bottom: 1px solid rgba(230, 81, 0, 0.2);
-            box-shadow: 0 5px 20px rgba(230, 81, 0, 0.05);
+        
+        .section-container {
+            padding: 2rem 1.5rem;
+            border-radius: 1.5rem; /* rounded-3xl */
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            background-position: center center;
+            background-size: cover;
+            position: relative;
+            overflow: hidden;
+        }
+        .section-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-color: rgba(15, 23, 42, 0.85); /* bg-slate-900 with opacity */
+            backdrop-filter: blur(2px);
+        }
+        .section-content {
+            position: relative;
+            z-index: 1;
+        }
+        .section-bg-1 {
+            background-image: url('https://www.transparenttextures.com/patterns/az-subtle.png');
+        }
+        .section-bg-2 {
+            background-image: url('https://www.transparenttextures.com/patterns/clean-textile.png');
+        }
+        .section-bg-3 {
+             background-image: url('https://www.transparenttextures.com/patterns/concrete-wall.png');
+        }
+        .section-bg-4 {
+             background-image: url('https://www.transparenttextures.com/patterns/dark-denim-3.png');
         }
 
-        /* Estilo base para los títulos de sección (h3) */
+
+        header {
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.05);
+        }
+
         main h3 {
             font-weight: 900;
             letter-spacing: 0.025em;
@@ -104,13 +133,11 @@
             padding-bottom: 0.75rem;
         }
 
-        /* Colorea los iconos dentro de los títulos con el color de acento neón */
         main h3 i {
             -webkit-text-fill-color: var(--accent-neon);
             text-shadow: 0 0 8px var(--accent-neon);
         }
 
-        /* Línea decorativa debajo de cada título */
         main h3::after {
             content: '';
             position: absolute;
@@ -123,13 +150,11 @@
             box-shadow: 0 0 10px var(--accent-neon);
         }
 
-        /* Ajuste para que la línea decorativa se centre en títulos centrados */
         main h3.text-center::after {
             left: 50%;
             transform: translateX(-50%);
         }
 
-        /* Divisor decorativo estilo Art Deco para separar secciones */
         .decorative-divider {
             display: flex;
             align-items: center;
@@ -150,9 +175,6 @@
             padding: 0 1em;
         }
         
-        /* ===== FIN: MEJORAS VISUALES ===== */
-        
-        /* Skeleton Loader Animation */
         @keyframes shimmer {
             0% { background-position: -1000px 0; }
             100% { background-position: 1000px 0; }
@@ -167,14 +189,12 @@
             aspect-ratio: 2 / 3;
         }
 
-        /* Estilos de Batalla y Top - COLORES CORREGIDOS */
         .winning { box-shadow: 0 0 20px 5px var(--halo-green); }
         .losing { box-shadow: 0 0 20px 5px var(--halo-red); }
         .top-1 { border-color: var(--diamond); box-shadow: 0 0 15px var(--diamond); }
         .top-2 { border-color: var(--gold); box-shadow: 0 0 15px var(--gold); }
         .top-3 { border-color: var(--silver); box-shadow: 0 0 15px var(--silver); }
 
-        /* Animación al votar */
         @keyframes vote-pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); box-shadow: 0 0 30px 10px var(--accent-neon); }
@@ -184,22 +204,21 @@
             animation: vote-pulse 0.6s ease-out;
         }
         
-        /* ===== NUEVOS ESTILOS PARA LA CORONA ===== */
         @keyframes crown-appear {
             0% { transform: translateX(-50%) translateY(10px) scale(0.5); opacity: 0; }
             100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
         }
         .crown-icon {
             position: absolute;
-            top: -15px; /* Ajusta para que quede sobre el marco */
+            top: -15px; 
             left: 50%;
             transform: translateX(-50%);
-            font-size: 2rem; /* Tamaño del ícono */
+            font-size: 2rem; 
             color: var(--gold);
             text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            display: none; /* Oculto por defecto */
+            display: none; 
             z-index: 10;
-            pointer-events: none; /* Para que no interfiera con los clics */
+            pointer-events: none;
         }
         .battle-item.has-crown .crown-icon {
             display: block;
@@ -210,15 +229,12 @@
         @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
 
-        /* Animación de reacción sobre la imagen */
         @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
         .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
 
-        /* Animación para el "rain effect" */
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
         .reaction-animation { position: absolute; font-size: 2rem; pointer-events: none; animation: floatUp 1.5s ease forwards; z-index: 10; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
 
-        /* Círculo de reacciones */
         #reaction-circle-container.open .reaction-circle-item {
             opacity: 1;
             transform: scale(1) var(--transform-pos);
@@ -242,23 +258,19 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
 
-        /* Estilos de Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-neon); }
         
-        /* Helper para ocultar scrollbar en sliders */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* ===== NUEVOS ESTILOS PARA LA ENCUESTA UNIFICADA ===== */
         .poll-answer-card {
             position: relative;
             overflow: hidden;
             z-index: 1;
         }
-        /* Animación de aparición para grid estático */
         .poll-grid-animation {
              animation: pollAnswerAppear 0.5s ease-out forwards;
         }
@@ -267,21 +279,19 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* Barra de votos */
         .poll-vote-bar {
             position: absolute;
             left: 0;
             top: 0;
             bottom: 0;
             background: linear-gradient(90deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0));
-            width: 0%; /* Se actualiza con JS */
+            width: 0%; 
             transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
             z-index: -1;
         }
 
-        /* Contenedor scroller si hay más de 3 respuestas */
         .poll-scroller {
-            height: 288px; /* h-72 */
+            height: 288px; 
             position: relative;
             overflow: hidden;
             -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
@@ -292,16 +302,16 @@
             flex-direction: column;
             gap: 1rem;
             animation: scroll-up 40s linear infinite;
+            will-change: transform; /* CORRECCIÓN: Mejora el rendimiento de la animación */
         }
         .poll-scroller:hover .scroller-inner {
             animation-play-state: paused;
         }
         @keyframes scroll-up {
             from { transform: translateY(0); }
-            to { transform: translateY(-50%); }
+            to { transform: translateY(-50%); } 
         }
         
-        /* Ventana flotante */
         #poll-widget {
             transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s;
         }
@@ -315,91 +325,93 @@
 
     <!-- ========== OVERLAYS ========== -->
     <div id="warning-overlay" class="fixed inset-0 z-[2000] flex-col items-center justify-center bg-gray-950/90 p-4 text-center backdrop-blur-sm" style="display: none;">
-        <h1 class="mb-6 text-3xl font-bold text-orange-500 flex items-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
+        <h1 class="mb-6 text-3xl font-bold text-blue-500 flex items-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
         <p class="mb-8 max-w-md text-lg text-gray-300">Esta galería contiene material sensible. Debes tener al menos 18 años para continuar.</p>
         <div class="flex flex-col sm:flex-row gap-4">
-            <button class="w-full rounded-full bg-orange-600 px-8 py-3 font-semibold text-white transition hover:bg-orange-500 hover:scale-105" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Sí, Soy Mayor de Edad</button>
+            <button class="w-full rounded-full bg-blue-600 px-8 py-3 font-semibold text-white transition hover:bg-blue-500 hover:scale-105" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Sí, Soy Mayor de Edad</button>
             <button class="w-full rounded-full bg-gray-700 px-8 py-3 font-semibold text-white transition hover:bg-gray-600 hover:scale-105" onclick="rejectWarning()"><i class="fas fa-times mr-2"></i> No, salir</button>
         </div>
     </div>
 
     <!-- ========== HEADER ========== -->
-    <header class="sticky top-0 z-[100] flex items-center justify-between bg-slate-900/80 p-4 backdrop-blur-lg">
+    <header class="sticky top-0 z-[100] flex items-center justify-center relative bg-slate-900/80 p-4 backdrop-blur-lg">
         <h1 class="flex items-center text-2xl font-bold">
             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-12 w-auto">
         </h1>
-        <div id="user-profile" class="flex items-center gap-2 rounded-full bg-gray-800/80 px-4 py-2 text-sm font-semibold text-gray-200"></div>
+        <div id="user-profile" class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 rounded-full bg-gray-800/80 px-4 py-2 text-sm font-semibold text-gray-200"></div>
     </header>
 
     <main class="container mx-auto px-2 sm:px-4">
         <!-- ========== SEARCH ========== -->
-        <div id="search-container" class="my-6 flex flex-col items-center gap-4 sm:flex-row">
-            <input type="text" id="search" placeholder="Buscar en toda la galería..." class="w-full max-w-xl rounded-full border-2 border-gray-700 bg-gray-800 px-5 py-3 text-white transition placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
+        <form id="search-form" class="my-6 flex justify-center">
+            <div class="relative w-full max-w-xl">
+                <input type="text" id="search-input" placeholder="Buscar en toda la galería..." class="w-full rounded-full border-2 border-gray-700 bg-gray-800 py-3 pl-5 pr-24 text-white transition placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+                <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-12 hidden items-center justify-center w-12 text-gray-400 hover:text-blue-500 transition-colors" aria-label="Limpiar búsqueda">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+                <button type="submit" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-400 hover:text-blue-500 transition-colors" aria-label="Buscar">
+                    <i class="fas fa-search text-xl"></i>
+                </button>
+            </div>
+        </form>
+
+        <!-- Contenedor para los resultados de búsqueda y paginación -->
+        <div id="search-results-container" class="hidden">
+            <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"></div>
+            <div id="search-pagination" class="mt-8 flex items-center justify-center gap-4"></div>
         </div>
 
-        <div id="search-results" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4" style="display: none;"></div>
         
         <div id="main-content-sections">
             <!-- SECTIONS BATTLE, TOP, FOR YOU... -->
-             <section id="battle-section" class="mb-12">
-                <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-gavel"></i> Batalla de la Semana</h3>
-                <div id="battle-grid" class="flex items-center justify-center gap-2 sm:gap-4">
-                    <!-- Battle items will be populated here -->
-                </div>
-                <div id="battle-timer" class="mt-4 text-center font-semibold text-gray-400"></div>
-                <!-- Contenedor del Ganador Mejorado -->
-                <div id="battle-winner-container" class="mt-8" style="display: none;">
-                     <h4 class="mb-4 text-center text-xl font-bold text-yellow-400">Ganador de la Batalla Anterior</h4>
-                    <div id="battle-winner" class="relative mx-auto max-w-lg">
-                        <!-- El contenido del ganador se generará aquí -->
+             <section id="battle-section" class="section-container section-bg-1 my-12">
+                <div class="section-content">
+                    <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-gavel"></i> Batalla de la Semana</h3>
+                    <div id="battle-grid" class="flex items-center justify-center gap-2 sm:gap-4"></div>
+                    <div id="battle-timer" class="mt-4 text-center font-semibold text-gray-400"></div>
+                    <div id="battle-winner-container" class="mt-8" style="display: none;">
+                         <h4 class="mb-4 text-center text-xl font-bold text-sky-400">Ganador de la Batalla Anterior</h4>
+                        <div id="battle-winner" class="relative mx-auto max-w-lg"></div>
                     </div>
                 </div>
             </section>
             
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             
-            <section id="top-liked-section" class="mb-12">
-                <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-trophy"></i> Más Gustadas</h3>
-                <div id="top-liked-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
-                    <!-- Slider images will be populated here -->
+            <section id="top-liked-section" class="section-container section-bg-2 my-12">
+                <div class="section-content">
+                    <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-trophy"></i> Más Gustadas</h3>
+                    <div id="top-liked-grid" class="flex gap-4 pb-4 -mx-6 px-6 overflow-x-auto scrollbar-hide"></div>
                 </div>
             </section>
             
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             
-            <section id="for-you-section" class="mb-12">
-                <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-star"></i> Para Ti</h3>
-                <div id="for-you-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
-                    <!-- Slider images will be populated here -->
+            <section id="for-you-section" class="section-container section-bg-3 my-12">
+                 <div class="section-content">
+                    <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-star"></i> Para Ti</h3>
+                    <div id="for-you-grid" class="flex gap-4 pb-4 -mx-6 px-6 overflow-x-auto scrollbar-hide"></div>
                 </div>
             </section>
             
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             
-            <!-- ========= CONTENEDOR DE ENCUESTA CON ALPINE.JS ========= -->
             <div x-data="{ isPollOpen: false }">
-                <section id="poll-section" class="mb-12">
-                    <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-poll"></i> Encuesta de la Semana</h3>
-                    <div id="poll-container" class="max-w-4xl mx-auto text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-                        <!-- El contenido de la encuesta se carga aquí desde Firebase -->
-                    </div>
-                    <!-- Contenedor principal para todas las respuestas -->
-                    <div id="poll-answers-main-container" class="mt-8">
-                         <!-- El contenido (grid estático o scroller animado) se inyectará aquí -->
+                <section id="poll-section" class="section-container section-bg-4 my-12">
+                    <div class="section-content">
+                        <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-poll"></i> Encuesta de la Semana</h3>
+                        <div id="poll-container" class="max-w-4xl mx-auto text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700"></div>
+                        <div id="poll-answers-main-container" class="mt-8"></div>
                     </div>
                 </section>
 
-                <!-- VENTANA FLOTANTE DE ENCUESTA CONTROLADA POR ALPINE.JS -->
                 <div id="poll-widget" 
                      class="fixed bottom-5 right-5 z-[900] w-full max-w-sm bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 transform translate-y-[calc(100%+20px)] opacity-0"
                      :class="{ 'open': isPollOpen }">
-                    
                     <button @click="isPollOpen = false" class="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700/80 text-gray-400 transition hover:bg-slate-600 hover:text-white">
                         <i class="fas fa-times"></i>
                     </button>
-                    
                     <h3 id="poll-widget-question" class="text-xl font-bold mb-4 text-center text-gray-100"></h3>
-                    
                     <form id="poll-answer-form" @submit.prevent="handlePollSubmit($event); isPollOpen = false">
                         <textarea id="poll-answer-input" rows="3" placeholder="Tu respuesta (máx 30 caracteres)..." maxlength="30" class="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-2 text-white transition focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500/50 mb-3"></textarea>
                         <input type="text" id="poll-name-input" placeholder="Nombre (máx 10 caracteres)" maxlength="10" class="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-2 text-white transition focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500/50 mb-4">
@@ -409,8 +421,6 @@
                     </form>
                 </div>
             </div>
-            <!-- ========= FIN DEL CONTENEDOR DE ENCUESTA ========= -->
-
 
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
 
@@ -422,17 +432,15 @@
             <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
             <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"></div>
             <div id="loader" class="py-12" style="display: none;"><div class="skeleton"></div></div>
-            <div id="load-more-trigger" class="h-10"></div> <!-- Invisible trigger for IntersectionObserver -->
+            <div id="load-more-trigger" class="h-10"></div>
         </section>
     </main>
 
     <!-- ========== MODAL IMAGEN ========== -->
     <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90 backdrop-blur-md" style="display: none;">
-        <!-- Botón Anterior -->
         <button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:scale-110">
             <i class="fas fa-chevron-left text-2xl"></i>
         </button>
-        <!-- Botón Siguiente -->
         <button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:scale-110">
             <i class="fas fa-chevron-right text-2xl"></i>
         </button>
@@ -441,7 +449,7 @@
             <div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4">
 
                 <header id="modal-header" class="flex items-center justify-between">
-                    <h2 id="title" class="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2>
+                    <h2 id="title" class="bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2>
                     <button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90">
                         <i class="fas fa-times text-2xl"></i>
                     </button>
@@ -473,27 +481,25 @@
                              <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);">
                                 <span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sexy">🫦</span>
                             </div>
-                            <button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 shadow-lg transition-transform duration-300 hover:scale-110">
+                            <button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-sky-500 text-white shadow-lg transition-transform duration-300 hover:scale-110">
                                 <i class="fas fa-heart text-2xl"></i>
                             </button>
                         </div>
                     </div>
 
                 <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
-                <p id="desc" class="rounded-xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
+                <p id="desc" class="rounded-xl border-2 border-blue-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
                 
                 <section id="similar-section" class="mt-4 w-full">
-                    <h3 class="mb-4 flex items-center justify-center gap-3 text-center text-xl font-bold"><i class="fas fa-th-large text-orange-400"></i> Imágenes Similares</h3>
-                    <div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
-                        <!-- Similar images will be populated here -->
-                    </div>
+                    <h3 class="mb-4 flex items-center justify-center gap-3 text-center text-xl font-bold"><i class="fas fa-th-large text-blue-400"></i> Imágenes Similares</h3>
+                    <div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
                 </section>
                 
                 <section id="comments-section" class="mt-4 w-full">
                     <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row">
-                        <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 sm:w-1/4">
-                        <input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50">
-                        <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white transition hover:bg-orange-500">
+                        <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 sm:w-1/4">
+                        <input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50">
+                        <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white transition hover:bg-blue-500">
                             <i class="fas fa-paper-plane transition group-hover:rotate-12"></i> Enviar
                         </button>
                     </form>
@@ -505,7 +511,7 @@
 
     
     <!-- ========== BOTÓN IR ARRIBA ========== -->
-    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-orange-500 hover:scale-110">
+    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-blue-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-blue-500 hover:scale-110">
         <i class="fas fa-arrow-up"></i>
     </button>
 
@@ -533,19 +539,20 @@
         
         // --- Variables Globales ---
         const imagesPerLoad = 20;
-        let allImages = []; // Cache para búsqueda y datos del modal
+        let allImages = [];
+        let fullGalleryCache = [];
         let lastImageTimestamp = null;
-        let lastImageKey = null; // Clave para una paginación precisa
+        let lastImageKey = null;
         let isLoading = false;
         let noMoreImages = false;
         let currentImageId = '';
-        let currentImageIndex = -1; // Índice de la imagen actual en `allImages` para navegación
+        let currentImageIndex = -1;
         let touchStartX = 0;
         let touchEndX = 0;
-        const swipeThreshold = 50; // Distancia mínima en píxeles para considerar un swipe
-        const sliderAnimationState = {}; // Almacena el estado de las animaciones de los sliders
-        let modalOpenTime = null; // Para rastrear tiempo en el modal
-        let activePoll = null; // Para almacenar la encuesta activa
+        const swipeThreshold = 50;
+        const sliderAnimationState = {};
+        let modalOpenTime = null;
+        let activePoll = null;
         let deviceID = localStorage.getItem('deviceID');
         if (!deviceID) {
             deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -554,6 +561,10 @@
             });
             localStorage.setItem('deviceID', deviceID);
         }
+
+        let currentSearchResults = [];
+        let searchCurrentPage = 1;
+        const searchResultsPerPage = 20;
 
         // --- Lógica de Arranque ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -587,7 +598,30 @@
             loadPollSection(); 
             setupIntersectionObserver();
             setupEventListeners(); 
+            cacheFullGalleryForSearch();
         }
+
+        function cacheFullGalleryForSearch() {
+            const searchInput = document.getElementById('search-input');
+            searchInput.disabled = true;
+            searchInput.placeholder = "Cargando base de datos para búsqueda...";
+
+            db.ref('images').once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const allData = [];
+                    snapshot.forEach(child => {
+                        allData.push({ id: child.key, ...child.val() });
+                    });
+                    fullGalleryCache = allData;
+                    searchInput.disabled = false;
+                    searchInput.placeholder = "Buscar en toda la galería...";
+                }
+            }).catch(error => {
+                console.error("Error al cachear la galería:", error);
+                searchInput.placeholder = "Error al cargar la búsqueda.";
+            });
+        }
+
 
         function generateSkeletons(container, count, isSlider = false) {
             container.innerHTML = '';
@@ -700,13 +734,10 @@
             initAutoSlider('top-liked-grid');
         }
         
-        // --- Lógica de la sección "Para Ti" ---
-        // Esta función genera recomendaciones personalizadas basadas en los metadatos de interacción del usuario.
         async function loadForYouImages() {
             const grid = document.getElementById('for-you-grid');
             generateSkeletons(grid, 10, true);
 
-            // Fallback: si no hay datos del usuario, muestra las imágenes más recientes.
             const fallbackToRecents = async () => {
                 const imageSnap = await db.ref('images').orderByChild('timestamp').limitToLast(10).once('value');
                 if (!imageSnap.exists()) {
@@ -719,15 +750,12 @@
                 initAutoSlider('for-you-grid');
             };
 
-            // 1. Recopilar metadatos del usuario desde el almacenamiento local.
-            // Se obtiene el historial de imágenes vistas y el tiempo de interacción con cada una.
             let viewedImageIds = [];
             try { viewedImageIds = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) {}
             
             let imageInteractions = {};
             try { imageInteractions = JSON.parse(localStorage.getItem('imageInteractions')) || {}; } catch (e) {}
             
-            // 2. Obtener las reacciones (likes) del usuario desde Firebase.
             const userLikesSnap = await db.ref('reactions').once('value');
             const allReactions = userLikesSnap.val() || {};
             const userLikes = {};
@@ -737,20 +765,16 @@
                 }
             });
 
-            // Si no hay interacciones, usar el fallback.
             if (viewedImageIds.length === 0 && Object.keys(userLikes).length === 0) {
                 await fallbackToRecents();
                 return;
             }
 
-            // 3. Construir un perfil de gustos del usuario basado en etiquetas (tags).
-            // Se analizan las etiquetas de las imágenes con las que el usuario ha interactuado.
             const profileImageIds = [...new Set([...viewedImageIds, ...Object.keys(userLikes)])].slice(0, 50);
             const profileImageSnaps = await Promise.all(profileImageIds.map(id => db.ref(`images/${id}`).once('value')));
             const userTagProfile = {};
             profileImageSnaps.forEach(snap => {
                 if (snap.exists() && Array.isArray(snap.val().tags)) {
-                    // Se da más peso a las imágenes que le gustaron al usuario.
                     const isLiked = userLikes[snap.key];
                     const weight = isLiked ? 3 : 1; 
                     snap.val().tags.forEach(tag => { 
@@ -764,7 +788,6 @@
                 return;
             }
 
-            // 4. Buscar imágenes candidatas y puntuarlas según el perfil del usuario.
             const candidateSnap = await db.ref('images').limitToLast(200).once('value');
             if (!candidateSnap.exists()) { await fallbackToRecents(); return; }
             
@@ -772,18 +795,15 @@
             const allConsideredIds = new Set(profileImageIds);
             candidateSnap.forEach(child => {
                 const img = { id: child.key, ...child.val() };
-                // Se consideran solo imágenes nuevas que tengan etiquetas.
                 if (img.tags && !allConsideredIds.has(img.id)) { candidates.push(img); }
             });
 
-            // 5. Calcular una puntuación para cada imagen candidata.
             const scoredCandidates = candidates.map(img => {
-                let tagScore = 0; // Puntuación por coincidencia de etiquetas.
+                let tagScore = 0;
                 if (Array.isArray(img.tags)) {
                     img.tags.forEach(tag => { if (userTagProfile[tag]) tagScore += userTagProfile[tag]; });
                 }
                 
-                // Puntuación adicional por tiempo de visualización (si aplica).
                 const interactionData = imageInteractions[img.id];
                 const timeScore = interactionData ? Math.log10(interactionData.timeSpent / 1000 + 1) * 2 : 0;
                 
@@ -791,7 +811,6 @@
                 return { image: img, score: totalScore };
             }).filter(item => item.score > 0);
 
-            // 6. Ordenar y mostrar las mejores recomendaciones.
             scoredCandidates.sort((a, b) => b.score - a.score);
             const recommendedImages = scoredCandidates.slice(0, 15).map(item => item.image);
 
@@ -799,7 +818,6 @@
                 displayImages(recommendedImages, 'for-you-grid');
                 initAutoSlider('for-you-grid');
             } else {
-                // Si no hay recomendaciones, usar el fallback.
                 await fallbackToRecents();
             }
         }
@@ -811,14 +829,14 @@
             if (!append) grid.innerHTML = '';
             
             if (images.length === 0 && !append) {
-                grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No hay imágenes para mostrar.</div>`;
+                grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes.</div>`;
                 return;
             }
             
             const isSlider = containerId === 'top-liked-grid' || containerId === 'for-you-grid' || containerId === 'similar-grid';
 
             images.forEach((img, index) => {
-                if (!img.url || !img.title) return; // Skip incomplete data
+                if (!img || !img.url || !img.title) return;
                 const div = document.createElement('div');
                 
                 let classList = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-xl image-card-hover flex-shrink-0';
@@ -860,7 +878,8 @@
                 pollWrapper.__x.data.isPollOpen = false;
             }
             
-            let img = allImages.find(i => i.id === id);
+            let img = allImages.find(i => i && i.id === id) || fullGalleryCache.find(i => i && i.id === id);
+            
             if (!img) {
                 const snapshot = await db.ref(`images/${id}`).once('value');
                 if(snapshot.exists()) img = { id: snapshot.key, ...snapshot.val() };
@@ -868,7 +887,9 @@
             }
             
             currentImageId = id;
-            currentImageIndex = allImages.findIndex(i => i.id === id);
+            
+            const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults;
+            currentImageIndex = currentView.findIndex(i => i && i.id === id);
             
             modalOpenTime = Date.now(); 
             document.getElementById('full-img').src = img.url;
@@ -885,7 +906,7 @@
             const nextBtn = document.getElementById('next-image');
             if (prevBtn && nextBtn && currentImageIndex !== -1) {
                 prevBtn.style.display = currentImageIndex > 0 ? 'flex' : 'none';
-                nextBtn.style.display = currentImageIndex < allImages.length - 1 ? 'flex' : 'none';
+                nextBtn.style.display = currentImageIndex < currentView.length - 1 ? 'flex' : 'none';
             }
 
             document.getElementById('scrollToTopBtn').classList.remove('visible');
@@ -933,6 +954,7 @@
             }
         }
 
+        // CORRECCIÓN: Slider ahora se pausa con interacción y se reanuda automáticamente
         function initAutoSlider(containerId) {
             const container = document.getElementById(containerId);
             if (!container || container.children.length < 2) return;
@@ -952,10 +974,12 @@
             }
 
             const scrollWidth = container.scrollWidth / 2;
-            let isPaused = false;
+            let isPausedByHover = false;
+            let isPausedByUserScroll = false;
+            let scrollTimeout;
 
             const scroll = () => {
-                if (!isPaused) {
+                if (!isPausedByHover && !isPausedByUserScroll && document.body.contains(container)) { 
                     container.scrollLeft += 0.5;
                     if (container.scrollLeft >= scrollWidth) {
                         container.scrollLeft = 0;
@@ -964,13 +988,22 @@
                 sliderAnimationState[containerId] = { animationFrameId: requestAnimationFrame(scroll) };
             };
 
-            const start = () => { isPaused = false; };
-            const stop = () => { isPaused = true; };
-
-            container.addEventListener('mouseenter', stop);
-            container.addEventListener('mouseleave', start);
-            container.addEventListener('touchstart', stop, { passive: true });
-            container.addEventListener('touchend', start, { passive: true });
+            const handleManualScroll = () => {
+                isPausedByUserScroll = true;
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    isPausedByUserScroll = false;
+                }, 2000); // Wait 2 seconds after last scroll event to resume
+            };
+            
+            const pause = () => { isPausedByHover = true; };
+            const resume = () => { isPausedByHover = false; };
+            
+            container.addEventListener('scroll', handleManualScroll, { passive: true });
+            container.addEventListener('mouseenter', pause);
+            container.addEventListener('touchstart', pause, { passive: true });
+            container.addEventListener('mouseleave', resume);
+            container.addEventListener('touchend', resume, { passive: true });
 
             scroll();
         }
@@ -989,16 +1022,7 @@
                 return;
             }
 
-            const snap = await db.ref('images').orderByChild('timestamp').limitToLast(200).once('value');
-            if(!snap.exists()) return;
-
-            const candidates = [];
-            snap.forEach(child => {
-                const img = { id: child.key, ...child.val() };
-                if (img.id !== currentImageId && Array.isArray(img.tags)) {
-                    candidates.push(img);
-                }
-            });
+            const candidates = fullGalleryCache.filter(img => img.id !== currentImageId && Array.isArray(img.tags));
             
             const scoredImages = candidates.map(img => {
                 const commonTags = img.tags.filter(tag => tags.includes(tag));
@@ -1011,13 +1035,12 @@
 
             if(similarImages.length > 0) {
                 displayImages(similarImages, 'similar-grid');
-                initAutoSlider('similar-grid');
+                initAutoSlider('similar-grid'); 
             } else {
                 grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No se encontraron imágenes con etiquetas similares.</p>';
             }
         }
         
-        // --- Event Listeners y Lógica Auxiliar ---
         function setupEventListeners() {
             const scrollToTopBtn = document.getElementById('scrollToTopBtn');
             window.addEventListener('scroll', () => {
@@ -1026,30 +1049,21 @@
             });
             scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
             
-            document.getElementById('search').addEventListener('input', e => {
-                const query = normalize(e.target.value);
-                const searchResults = document.getElementById('search-results');
-                const mainContent = document.getElementById('main-content-sections');
-                const gallery = document.getElementById('gallery');
+            document.getElementById('search-form').addEventListener('submit', e => {
+                e.preventDefault();
+                const query = normalize(document.getElementById('search-input').value);
+                executeSearch(query);
+            });
 
-                if (!query) {
-                    searchResults.style.display = 'none';
-                    mainContent.style.display = 'block';
-                    gallery.style.display = 'block';
-                    return;
+            document.getElementById('clear-search-btn').addEventListener('click', resetSearchView);
+
+
+            document.getElementById('search-input').addEventListener('input', e => {
+                if (e.target.value.trim() === '') {
+                    if(document.getElementById('search-results-container').classList.contains('hidden')) {
+                        resetSearchView();
+                    }
                 }
-                
-                // LÓGICA DE BÚSQUEDA MEJORADA
-                const filtered = allImages.filter(item => {
-                    const titleMatch = item.title && normalize(item.title).includes(query);
-                    const tagMatch = item.tags && Array.isArray(item.tags) && item.tags.some(tag => normalize(tag).includes(query));
-                    return titleMatch || tagMatch;
-                });
-                
-                displayImages(filtered, 'search-results');
-                searchResults.style.display = 'grid';
-                mainContent.style.display = 'none';
-                gallery.style.display = 'none';
             });
 
             document.getElementById('close-modal').addEventListener('click', () => {
@@ -1069,25 +1083,23 @@
                 }
             });
 
-            // Listeners para navegación en el modal (botones, swipe, teclado)
             document.getElementById('prev-image').addEventListener('click', navigateToPrevious);
             document.getElementById('next-image').addEventListener('click', navigateToNext);
 
             const modal = document.getElementById('modal');
             modal.addEventListener('touchstart', e => {
-                // SOLUCIÓN: Previene el swipe de la imagen principal si el gesto comienza en la sección de similares o en otros elementos interactivos.
                 if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) {
-                    touchStartX = 0; // Invalida el inicio del swipe para que 'touchend' no haga nada.
+                    touchStartX = 0;
                     return;
                 }
                 touchStartX = e.changedTouches[0].screenX;
             }, { passive: true });
 
             modal.addEventListener('touchend', e => {
-                if (touchStartX === 0) return; // Si el swipe fue invalidado, no continúa.
+                if (touchStartX === 0) return;
                 touchEndX = e.changedTouches[0].screenX;
                 handleSwipe();
-                touchStartX = 0; // Reset
+                touchStartX = 0;
             });
             
             document.addEventListener('keydown', e => {
@@ -1097,31 +1109,112 @@
                 else if (e.key === 'Escape') document.getElementById('close-modal').click();
             });
         }
+        
+        function executeSearch(query) {
+            const clearBtn = document.getElementById('clear-search-btn');
+            if (!query) {
+                resetSearchView();
+                return;
+            }
+
+            document.getElementById('main-content-sections').classList.add('hidden');
+            document.getElementById('gallery').classList.add('hidden');
+            document.getElementById('search-results-container').classList.remove('hidden');
+            clearBtn.classList.remove('hidden');
+            clearBtn.classList.add('flex');
+
+
+            currentSearchResults = fullGalleryCache.filter(item => {
+                const titleMatch = item.title && normalize(item.title).includes(query);
+                const tagMatch = item.tags && Array.isArray(item.tags) && item.tags.some(tag => normalize(tag).includes(query));
+                return titleMatch || tagMatch;
+            });
+            
+            searchCurrentPage = 1;
+            displaySearchResultsPage(searchCurrentPage);
+        }
+
+        function displaySearchResultsPage(page) {
+            searchCurrentPage = page;
+            const grid = document.getElementById('search-results-grid');
+            const startIndex = (page - 1) * searchResultsPerPage;
+            const endIndex = startIndex + searchResultsPerPage;
+            const pageItems = currentSearchResults.slice(startIndex, endIndex);
+
+            displayImages(pageItems, 'search-results-grid');
+            renderPaginationControls();
+            window.scrollTo(0,0);
+        }
+
+        function renderPaginationControls() {
+            const paginationContainer = document.getElementById('search-pagination');
+            const totalPages = Math.ceil(currentSearchResults.length / searchResultsPerPage);
+            paginationContainer.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            let paginationHTML = '';
+
+            paginationHTML += `
+                <button 
+                    onclick="displaySearchResultsPage(${searchCurrentPage - 1})" 
+                    class="px-4 py-2 bg-gray-700 rounded-md transition hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    ${searchCurrentPage === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-left mr-2"></i> Anterior
+                </button>`;
+
+            paginationHTML += `<span class="font-semibold text-gray-300">Página ${searchCurrentPage} de ${totalPages}</span>`;
+
+            paginationHTML += `
+                <button 
+                    onclick="displaySearchResultsPage(${searchCurrentPage + 1})" 
+                    class="px-4 py-2 bg-gray-700 rounded-md transition hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    ${searchCurrentPage === totalPages ? 'disabled' : ''}>
+                    Siguiente <i class="fas fa-chevron-right ml-2"></i>
+                </button>`;
+
+            paginationContainer.innerHTML = paginationHTML;
+        }
+
+        function resetSearchView() {
+            const clearBtn = document.getElementById('clear-search-btn');
+            document.getElementById('search-input').value = '';
+            document.getElementById('search-results-container').classList.add('hidden');
+            document.getElementById('search-results-grid').innerHTML = '';
+            document.getElementById('search-pagination').innerHTML = '';
+            document.getElementById('main-content-sections').classList.remove('hidden');
+            document.getElementById('gallery').classList.remove('hidden');
+            clearBtn.classList.add('hidden');
+            clearBtn.classList.remove('flex');
+            currentSearchResults = [];
+            searchCurrentPage = 1;
+        }
 
         function setupIntersectionObserver() {
             const trigger = document.getElementById('load-more-trigger');
             const options = { rootMargin: '0px 0px 500px 0px' };
             const observer = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting && document.getElementById('search-results').style.display === 'none') {
+                if (entries[0].isIntersecting && document.getElementById('search-results-container').classList.contains('hidden')) {
                     loadMoreImages();
                 }
             }, options);
             observer.observe(trigger);
         }
         
-        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : ''; }
+        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
         
-        // --- Navegación del Modal ---
         function navigateToNext() {
-            if (currentImageIndex > -1 && currentImageIndex < allImages.length - 1) {
-                const nextImage = allImages[currentImageIndex + 1];
+            const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults;
+            if (currentImageIndex > -1 && currentImageIndex < currentView.length - 1) {
+                const nextImage = currentView[currentImageIndex + 1];
                 if (nextImage) openModal(nextImage.id);
             }
         }
 
         function navigateToPrevious() {
+            const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults;
             if (currentImageIndex > 0) {
-                const prevImage = allImages[currentImageIndex - 1];
+                const prevImage = currentView[currentImageIndex - 1];
                 if (prevImage) openModal(prevImage.id);
             }
         }
@@ -1129,15 +1222,14 @@
         function handleSwipe() {
             const deltaX = touchEndX - touchStartX;
             if (Math.abs(deltaX) > swipeThreshold) {
-                if (deltaX < 0) { // Swipe a la izquierda
+                if (deltaX < 0) {
                     navigateToNext();
-                } else { // Swipe a la derecha
+                } else {
                     navigateToPrevious();
                 }
             }
         }
 
-        // --- Reacciones ---
         function animateReactionOnImage(type) {
             const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' };
             const icon = icons[type];
@@ -1217,7 +1309,6 @@
         });
         document.addEventListener('click', () => document.getElementById('reaction-circle-container').classList.remove('open'));
         
-        // --- Comentarios ---
         function loadComments(id) {
              db.ref(`comments/${id}`).orderByChild('timestamp').on('value', snap => {
                 const commentsContainer = document.getElementById('comments');
@@ -1229,13 +1320,13 @@
                 comments.reverse().forEach(comment => {
                     const div = document.createElement('div');
                     const initial = comment.name ? comment.name.charAt(0).toUpperCase() : 'A';
-                    const avatarBg = 'bg-gradient-to-br from-orange-500 to-yellow-500 text-gray-900';
+                    const avatarBg = 'bg-gradient-to-br from-blue-500 to-sky-500 text-white';
                     div.innerHTML = `
                         <div class="flex gap-3">
                             <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${avatarBg} font-bold">${initial}</div>
                             <div class="flex-grow min-w-0">
                                 <div class="rounded-lg rounded-tl-none bg-gray-800 p-3">
-                                    <p class="font-bold text-orange-400">${comment.name || 'Anónimo'}</p>
+                                    <p class="font-bold text-blue-400">${comment.name || 'Anónimo'}</p>
                                     <p class="text-gray-300 whitespace-pre-wrap break-words">${comment.text || ''}</p>
                                 </div>
                                 <small class="pl-2 pt-1 text-xs text-gray-500">${new Date(comment.timestamp).toLocaleString()}</small>
@@ -1255,10 +1346,9 @@
               .then(() => document.getElementById('comment-input').value = '');
         });
 
-        // --- Batalla ---
         async function initBattleSection() {
             const battleGrid = document.getElementById('battle-grid');
-            battleGrid.innerHTML = `<div class="w-full"><div class="skeleton"></div></div><span class="text-3xl font-black text-yellow-400">VS</span><div class="w-full"><div class="skeleton"></div></div>`;
+            battleGrid.innerHTML = `<div class="w-full"><div class="skeleton"></div></div><span class="text-3xl font-black text-sky-400">VS</span><div class="w-full"><div class="skeleton"></div></div>`;
 
             const snap = await db.ref('battle').once('value');
             if (!snap.exists()) {
@@ -1281,7 +1371,7 @@
             const battleGrid = document.getElementById('battle-grid');
             battleGrid.innerHTML = `
                 <div class="battle-item relative w-full" id="battle-item-1" data-image-id="${img1.id}"></div>
-                <span class="text-3xl font-black text-yellow-400" style="text-shadow: 0 0 10px var(--accent);">VS</span>
+                <span class="text-3xl font-black text-sky-400" style="text-shadow: 0 0 10px var(--accent);">VS</span>
                 <div class="battle-item relative w-full" id="battle-item-2" data-image-id="${img2.id}"></div>`;
 
             const renderItem = (container, img) => {
@@ -1290,7 +1380,7 @@
                     <div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition duration-300 transform hover:scale-105 relative">
                         <img src="${img.url}" alt="${img.title}" onclick="openModal('${img.id}')" class="w-full h-full object-cover cursor-pointer">
                         <div class="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs font-bold" id="vote-count-${img.id}">0</div>
-                        <button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-4 py-2 text-sm font-bold text-gray-900 transition hover:scale-105" onclick="voteBattle('${img.id}', event)">Votar</button>
+                        <button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-blue-500 to-sky-500 px-4 py-2 text-sm font-bold text-white transition hover:scale-105" onclick="voteBattle('${img.id}', event)">Votar</button>
                     </div>`;
             };
             renderItem(document.getElementById('battle-item-1'), img1);
@@ -1348,7 +1438,6 @@
             });
         }
         
-        // --- FUNCIÓN DE BATALLA CORREGIDA ---
         function updateBattleHalo() {
             db.ref('battle/votes').once('value').then(snap => {
                 const votes = snap.val();
@@ -1358,18 +1447,15 @@
                 const item2 = document.getElementById('battle-item-2');
                 if (!item1 || !item2) return;
 
-                // Obtener IDs directamente de los atributos de datos para asegurar el mapeo correcto
                 const id1 = item1.dataset.imageId;
                 const id2 = item2.dataset.imageId;
 
-                // Asegurarse de que los IDs existan antes de proceder
                 if (!id1 || !id2) return;
 
                 const img1Container = item1.querySelector('.aspect-\\[2\\/3\\]');
                 const img2Container = item2.querySelector('.aspect-\\[2\\/3\\]');
                 if (!img1Container || !img2Container) return;
                 
-                // Resetear clases
                 img1Container.classList.remove('winning', 'losing');
                 img2Container.classList.remove('winning', 'losing');
                 item1.classList.remove('has-crown');
@@ -1378,7 +1464,6 @@
                 const votes1 = votes[id1] || 0;
                 const votes2 = votes[id2] || 0;
 
-                // Aplicar clases basadas en la comparación correcta de votos
                 if (votes1 > votes2) {
                     img1Container.classList.add('winning');
                     img2Container.classList.add('losing');
@@ -1388,7 +1473,6 @@
                     img1Container.classList.add('losing');
                     item2.classList.add('has-crown');
                 }
-                // Si los votos son iguales, no se aplica ninguna clase de ganador/perdedor
             });
         }
         
@@ -1430,7 +1514,7 @@
                                 <span class="absolute -bottom-2 -right-2 text-2xl drop-shadow-lg">👑</span>
                             </div>
                             <div class="text-center">
-                                <p class="text-2xl font-bold text-yellow-300 drop-shadow-md">${winnerVotes}</p>
+                                <p class="text-2xl font-bold text-sky-300 drop-shadow-md">${winnerVotes}</p>
                                 <p class="text-sm font-semibold text-gray-200">VS</p>
                                 <p class="text-xl font-bold text-gray-400 drop-shadow-md">${loserVotes}</p>
                             </div>
@@ -1526,7 +1610,7 @@
                     scrollerInner.className = 'scroller-inner';
 
                     const allCardsHTML = answers.map(renderCardHTML).join('');
-                    scrollerInner.innerHTML = allCardsHTML + allCardsHTML; // Duplicar para el bucle
+                    scrollerInner.innerHTML = allCardsHTML + allCardsHTML;
                     
                     scroller.appendChild(scrollerInner);
                     mainContainer.appendChild(scroller);
@@ -1579,3 +1663,4 @@
     </script>
 </body>
 </html>
+
