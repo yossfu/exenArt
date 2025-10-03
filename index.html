@@ -73,12 +73,84 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0f172a; /* bg-slate-900 */
-            background-image: radial-gradient(circle at top right, rgba(234, 88, 12, 0.1), transparent 40%),
-                              radial-gradient(circle at bottom left, rgba(20, 83, 163, 0.1), transparent 50%);
+            /* MEJORA: Fondo con más profundidad y estilo */
+            background-image: 
+                radial-gradient(circle at 1% 1%, rgba(234, 88, 12, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 99% 99%, rgba(20, 83, 163, 0.15) 0%, transparent 40%),
+                linear-gradient(180deg, #0f172a 0%, #0c1322 100%);
             color: #f3f4f6; /* text-gray-200 */
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+
+        /* ===== INICIO: MEJORAS VISUALES DE TÍTULOS Y SEPARADORES ===== */
+
+        /* Header mejorado con borde y sombra sutil */
+        header {
+            border-bottom: 1px solid rgba(230, 81, 0, 0.2);
+            box-shadow: 0 5px 20px rgba(230, 81, 0, 0.05);
+        }
+
+        /* Estilo base para los títulos de sección (h3) */
+        main h3 {
+            font-weight: 900;
+            letter-spacing: 0.025em;
+            background: linear-gradient(90deg, var(--accent-neon), var(--accent) 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+
+        /* Colorea los iconos dentro de los títulos con el color de acento neón */
+        main h3 i {
+            -webkit-text-fill-color: var(--accent-neon);
+            text-shadow: 0 0 8px var(--accent-neon);
+        }
+
+        /* Línea decorativa debajo de cada título */
+        main h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--accent-neon);
+        }
+
+        /* Ajuste para que la línea decorativa se centre en títulos centrados */
+        main h3.text-center::after {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Divisor decorativo estilo Art Deco para separar secciones */
+        .decorative-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 3rem 0;
+        }
+        .decorative-divider::before, .decorative-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid;
+            border-image-source: linear-gradient(to right, transparent, var(--accent), transparent);
+            border-image-slice: 1;
+        }
+        .decorative-divider-icon {
+            font-size: 1.5rem;
+            color: var(--accent-neon);
+            text-shadow: 0 0 15px var(--accent-neon);
+            padding: 0 1em;
+        }
+        
+        /* ===== FIN: MEJORAS VISUALES ===== */
         
         /* Skeleton Loader Animation */
         @keyframes shimmer {
@@ -252,7 +324,7 @@
     </div>
 
     <!-- ========== HEADER ========== -->
-    <header class="sticky top-0 z-[100] flex items-center justify-between bg-slate-900/80 p-4 backdrop-blur-lg shadow-lg">
+    <header class="sticky top-0 z-[100] flex items-center justify-between bg-slate-900/80 p-4 backdrop-blur-lg">
         <h1 class="flex items-center text-2xl font-bold">
             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-12 w-auto">
         </h1>
@@ -270,7 +342,7 @@
         <div id="main-content-sections">
             <!-- SECTIONS BATTLE, TOP, FOR YOU... -->
              <section id="battle-section" class="mb-12">
-                <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-gavel text-orange-400"></i> Batalla de la Semana</h3>
+                <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-gavel"></i> Batalla de la Semana</h3>
                 <div id="battle-grid" class="flex items-center justify-center gap-2 sm:gap-4">
                     <!-- Battle items will be populated here -->
                 </div>
@@ -284,30 +356,30 @@
                 </div>
             </section>
             
-            <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+            <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             
             <section id="top-liked-section" class="mb-12">
-                <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-trophy text-yellow-400"></i> Más Gustadas</h3>
+                <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-trophy"></i> Más Gustadas</h3>
                 <div id="top-liked-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
                     <!-- Slider images will be populated here -->
                 </div>
             </section>
             
-            <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+            <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             
             <section id="for-you-section" class="mb-12">
-                <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-star text-purple-400"></i> Para Ti</h3>
+                <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-star"></i> Para Ti</h3>
                 <div id="for-you-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
                     <!-- Slider images will be populated here -->
                 </div>
             </section>
             
-            <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+            <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             
             <!-- ========= CONTENEDOR DE ENCUESTA CON ALPINE.JS ========= -->
             <div x-data="{ isPollOpen: false }">
                 <section id="poll-section" class="mb-12">
-                    <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-poll text-green-400"></i> Encuesta de la Semana</h3>
+                    <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-poll"></i> Encuesta de la Semana</h3>
                     <div id="poll-container" class="max-w-4xl mx-auto text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
                         <!-- El contenido de la encuesta se carga aquí desde Firebase -->
                     </div>
@@ -340,9 +412,9 @@
             <!-- ========= FIN DEL CONTENEDOR DE ENCUESTA ========= -->
 
 
-            <div class="my-8 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+            <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
 
-            <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-images text-blue-400"></i> Galería Completa</h3>
+            <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-images"></i> Galería Completa</h3>
         </div>
 
         <!-- ========== MAIN GALLERY ========== -->
