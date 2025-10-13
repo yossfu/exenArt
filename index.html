@@ -5,37 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>exen-E | Galería</title>
 
-    <!-- 
-    ======================================================================
-    === ETIQUETAS OPEN GRAPH PARA VISTA PREVIA EN REDES SOCIALES (COMO FACEBOOK) ===
-    ======================================================================
-    -->
-
-    <!-- Título que aparecerá en la vista previa -->
+    <!-- Metatags -->
     <meta property="og:title" content="exen-E | Galería " />
-
-    <!-- Tipo de contenido, para una página web estándar se usa "website" -->
     <meta property="og:type" content="website" />
-
-    <!-- La URL completa de tu página web (cámbiala cuando subas tu página a un servidor) -->
     <meta property="og:url" content="https://yossfu.github.io/exenArt/index.html" />
-
-    <!-- 
-      AQUÍ VA LA IMAGEN QUE QUIERES MOSTRAR
-      - Reemplaza la URL de abajo con el enlace directo a la imagen que deseas mostrar.
-      - La imagen debe estar en un servidor público para que Facebook pueda acceder a ella.
-      - Se recomienda un tamaño de 1200x630 píxeles.
-    -->
     <meta property="og:image" content="https://files.catbox.moe/4ubhtv.jpg" />
     <meta property="og:image:alt" content="Logo de exen-E Galería Premium" />
-
-
-    <!-- 
-    ======================================================================
-    === FIN DE LAS ETIQUETAS OPEN GRAPH ===================================
-    ======================================================================
-    -->
-
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -47,8 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
-    <!-- ========= LIBRERÍA AÑADIDA: Alpine.js ========= -->
-    <!-- Se añade para manejar la interactividad de forma moderna y robusta -->
+    <!-- Alpine.js -->
     <script src="https://unpkg.com/alpinejs@3.13.10/dist/cdn.min.js" defer></script>
 
     <!-- Firebase -->
@@ -59,11 +33,11 @@
     <!-- Estilos Personalizados y Mejoras -->
     <style>
         /* =================================================================
-           == NUEVO TEMA DE COLOR: AZUL FORMAL ==
+           == NUEVO TEMA DE COLOR: NARANJA INTENSO ==
            ================================================================= */
         :root {
-            --accent: #2563eb; /* Azul Principal (blue-600) */
-            --accent-neon: #3b82f6; /* Azul de Acento (blue-500) */
+            --accent: #f97316; /* orange-500 */
+            --accent-neon: #fb923c; /* orange-400 */
             --diamond: #b9f2ff;
             --gold: #ffd700;
             --silver: #c0c0c0;
@@ -75,23 +49,34 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a; /* bg-slate-900 */
-            /* MEJORA: Fondo con más profundidad y estilo */
-            background-image: 
-                radial-gradient(circle at 1% 1%, rgba(59, 130, 246, 0.1) 0%, transparent 30%),
-                radial-gradient(circle at 99% 99%, rgba(20, 83, 163, 0.15) 0%, transparent 40%),
-                linear-gradient(180deg, #0f172a 0%, #0c1322 100%);
+            background-color: #121212; /* Negro más oscuro */
+            /* Fondo sutil difuminado con el nuevo color */
+            background-image: radial-gradient(circle at 15% 50%, rgba(251, 146, 60, 0.1), transparent 40%),
+                              radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.1), transparent 40%);
             color: #f3f4f6; /* text-gray-200 */
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* ===== INICIO: MEJORAS VISUALES DE TÍTULOS Y SEPARADORES ===== */
-
         /* Header mejorado con borde y sombra sutil */
         header {
-            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.05);
+            border-bottom: 1px solid rgba(251, 146, 60, 0.2);
+            box-shadow: 0 5px 20px rgba(249, 115, 22, 0.05);
+        }
+        
+        /* Estilos para menú de navegación */
+        .nav-link {
+            background-color: transparent;
+            border: 2px solid transparent;
+        }
+        .nav-link:hover {
+            background-color: rgba(251, 146, 60, 0.1);
+            color: #fff;
+        }
+        .nav-link-active {
+            background-color: var(--accent);
+            color: #fff !important;
+            box-shadow: 0 0 15px rgba(251, 146, 60, 0.4);
         }
 
         /* Estilo base para los títulos de sección (h3) */
@@ -107,13 +92,11 @@
             padding-bottom: 0.75rem;
         }
 
-        /* Colorea los iconos dentro de los títulos con el color de acento neón */
         main h3 i {
             -webkit-text-fill-color: var(--accent-neon);
             text-shadow: 0 0 8px var(--accent-neon);
         }
 
-        /* Línea decorativa debajo de cada título */
         main h3::after {
             content: '';
             position: absolute;
@@ -126,13 +109,11 @@
             box-shadow: 0 0 10px var(--accent-neon);
         }
 
-        /* Ajuste para que la línea decorativa se centre en títulos centrados */
         main h3.text-center::after {
             left: 50%;
             transform: translateX(-50%);
         }
 
-        /* Divisor decorativo estilo Art Deco para separar secciones */
         .decorative-divider {
             display: flex;
             align-items: center;
@@ -153,9 +134,6 @@
             padding: 0 1em;
         }
         
-        /* ===== FIN: MEJORAS VISUALES ===== */
-        
-        /* Skeleton Loader Animation */
         @keyframes shimmer {
             0% { background-position: -1000px 0; }
             100% { background-position: 1000px 0; }
@@ -169,15 +147,14 @@
             border-radius: 0.75rem;
             aspect-ratio: 2 / 3;
         }
+        .skeleton-video { aspect-ratio: 16 / 9; }
 
-        /* Estilos de Batalla y Top - COLORES CORREGIDOS */
         .winning { box-shadow: 0 0 20px 5px var(--halo-green); }
         .losing { box-shadow: 0 0 20px 5px var(--halo-red); }
         .top-1 { border-color: var(--diamond); box-shadow: 0 0 15px var(--diamond); }
         .top-2 { border-color: var(--gold); box-shadow: 0 0 15px var(--gold); }
         .top-3 { border-color: var(--silver); box-shadow: 0 0 15px var(--silver); }
 
-        /* Animación al votar */
         @keyframes vote-pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); box-shadow: 0 0 30px 10px var(--accent-neon); }
@@ -186,42 +163,34 @@
         .vote-animation {
             animation: vote-pulse 0.6s ease-out;
         }
-        
-        /* ===== NUEVOS ESTILOS PARA LA CORONA ===== */
+
         @keyframes crown-appear {
             0% { transform: translateX(-50%) translateY(10px) scale(0.5); opacity: 0; }
             100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
         }
         .crown-icon {
             position: absolute;
-            top: -15px; /* Ajusta para que quede sobre el marco */
-            left: 50%;
+            top: -15px; left: 50%;
             transform: translateX(-50%);
-            font-size: 2rem; /* Tamaño del ícono */
-            color: var(--gold);
+            font-size: 2rem; color: var(--gold);
             text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            display: none; /* Oculto por defecto */
-            z-index: 10;
-            pointer-events: none; /* Para que no interfiera con los clics */
+            display: none; z-index: 10;
+            pointer-events: none;
         }
         .battle-item.has-crown .crown-icon {
             display: block;
             animation: crown-appear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-
         @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
 
-        /* Animación de reacción sobre la imagen */
         @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
         .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
 
-        /* Animación para el "rain effect" */
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
         .reaction-animation { position: absolute; font-size: 2rem; pointer-events: none; animation: floatUp 1.5s ease forwards; z-index: 10; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
 
-        /* Círculo de reacciones */
         #reaction-circle-container.open .reaction-circle-item {
             opacity: 1;
             transform: scale(1) var(--transform-pos);
@@ -238,187 +207,158 @@
             transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
         }
         #scrollToTopBtn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
-        
+
         .image-card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .image-card-hover:hover {
             transform: scale(1.03);
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
 
-        /* Estilos de Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-neon); }
-        
-        /* Helper para ocultar scrollbar en sliders */
+
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* ===== NUEVOS ESTILOS PARA LA ENCUESTA UNIFICADA ===== */
-        .poll-answer-card {
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-        }
-        /* Animación de aparición para grid estático */
-        .poll-grid-animation {
-             animation: pollAnswerAppear 0.5s ease-out forwards;
-        }
+        .poll-answer-card { position: relative; overflow: hidden; z-index: 1; }
+        .poll-grid-animation { animation: pollAnswerAppear 0.5s ease-out forwards; }
         @keyframes pollAnswerAppear {
             from { opacity: 0; transform: translateY(20px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* Barra de votos */
         .poll-vote-bar {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
+            position: absolute; left: 0; top: 0; bottom: 0;
             background: linear-gradient(90deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0));
-            width: 0%; /* Se actualiza con JS */
-            transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-            z-index: -1;
+            width: 0%; transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1); z-index: -1;
         }
-
-        /* Contenedor scroller si hay más de 3 respuestas */
+        
         .poll-scroller {
-            height: 288px; /* h-72 */
-            position: relative;
-            overflow: hidden;
+            height: 288px; position: relative; overflow: hidden;
             -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
             mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
         }
         .scroller-inner {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            display: flex; flex-direction: column; gap: 1rem;
             animation: scroll-up 40s linear infinite;
         }
-        .poll-scroller:hover .scroller-inner {
-            animation-play-state: paused;
-        }
-        @keyframes scroll-up {
-            from { transform: translateY(0); }
-            to { transform: translateY(-50%); }
-        }
+        .poll-scroller:hover .scroller-inner { animation-play-state: paused; }
+        @keyframes scroll-up { from { transform: translateY(0); } to { transform: translateY(-50%); } }
         
-        /* Ventana flotante */
-        #poll-widget {
-            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s;
-        }
-        #poll-widget.open {
-            transform: translateY(0);
-            opacity: 1;
-        }
+        #poll-widget { transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s; }
+        #poll-widget.open { transform: translateY(0); opacity: 1; }
     </style>
 </head>
 <body class="antialiased">
 
     <!-- ========== OVERLAYS ========== -->
     <div id="warning-overlay" class="fixed inset-0 z-[2000] flex-col items-center justify-center bg-gray-950/90 p-4 text-center backdrop-blur-sm" style="display: none;">
-        <h1 class="mb-6 text-3xl font-bold text-blue-500 flex items-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
+        <h1 class="mb-6 text-3xl font-bold text-orange-500 flex items-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
         <p class="mb-8 max-w-md text-lg text-gray-300">Esta galería contiene material sensible. Debes tener al menos 18 años para continuar.</p>
         <div class="flex flex-col sm:flex-row gap-4">
-            <button class="w-full rounded-full bg-blue-600 px-8 py-3 font-semibold text-white transition hover:bg-blue-500 hover:scale-105" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Sí, Soy Mayor de Edad</button>
+            <button class="w-full rounded-full bg-orange-600 px-8 py-3 font-semibold text-white transition hover:bg-orange-500 hover:scale-105" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Sí, Soy Mayor de Edad</button>
             <button class="w-full rounded-full bg-gray-700 px-8 py-3 font-semibold text-white transition hover:bg-gray-600 hover:scale-105" onclick="rejectWarning()"><i class="fas fa-times mr-2"></i> No, salir</button>
         </div>
     </div>
 
     <!-- ========== HEADER ========== -->
-    <!-- CAMBIO: Se centra el logo y se posiciona el perfil de forma absoluta -->
-    <header class="sticky top-0 z-[100] flex items-center justify-center relative bg-slate-900/80 p-4 backdrop-blur-lg">
-        <h1 class="flex items-center text-2xl font-bold">
-            <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-12 w-auto">
-        </h1>
-        <div id="user-profile" class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 rounded-full bg-gray-800/80 px-4 py-2 text-sm font-semibold text-gray-200"></div>
+    <header class="sticky top-0 z-[100] bg-gray-900/80 p-4 backdrop-blur-lg">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="w-1/3">
+                 <div id="user-profile" class="hidden sm:flex items-center gap-2 rounded-full bg-gray-800/80 px-4 py-2 text-sm font-semibold text-gray-200"></div>
+            </div>
+            <nav class="w-1/3 flex justify-center">
+                <ul class="flex items-center gap-2 sm:gap-4 text-sm sm:text-base">
+                    <li>
+                        <a href="index.html" id="nav-index" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-4 py-2 rounded-lg">
+                           Galería
+                        </a>
+                    </li>
+                    <li>
+                        <a href="videos.html" id="nav-videos" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-4 py-2 rounded-lg">
+                           Videos
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="w-1/3 flex justify-end">
+                <a href="index.html">
+                    <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-12 w-auto transition-transform duration-300 hover:scale-105">
+                </a>
+            </div>
+        </div>
     </header>
 
     <main class="container mx-auto px-2 sm:px-4">
         <!-- ========== SEARCH ========== -->
         <form id="search-form" class="my-6 flex justify-center">
             <div class="relative w-full max-w-xl">
-                <!-- CAMBIO: Se aumenta el padding derecho para los botones -->
-                <input type="text" id="search-input" placeholder="Buscar en toda la galería..." class="w-full rounded-full border-2 border-gray-700 bg-gray-800 py-3 pl-5 pr-24 text-white transition placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
-                <!-- NUEVO: Botón para limpiar/cerrar la búsqueda -->
-                <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-12 hidden items-center justify-center w-12 text-gray-400 hover:text-blue-500 transition-colors" aria-label="Limpiar búsqueda">
+                <input type="text" id="search-input" placeholder="Buscar en toda la galería..." class="w-full rounded-full border-2 border-gray-700 bg-gray-800 py-3 pl-5 pr-24 text-white transition placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
+                <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-12 hidden items-center justify-center w-12 text-gray-400 hover:text-orange-500 transition-colors" aria-label="Limpiar búsqueda">
                     <i class="fas fa-times text-xl"></i>
                 </button>
-                <button type="submit" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-400 hover:text-blue-500 transition-colors" aria-label="Buscar">
+                <button type="submit" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-400 hover:text-orange-500 transition-colors" aria-label="Buscar">
                     <i class="fas fa-search text-xl"></i>
                 </button>
             </div>
         </form>
 
-        <!-- Contenedor para los resultados de búsqueda y paginación -->
         <div id="search-results-container" class="hidden">
             <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"></div>
             <div id="search-pagination" class="mt-8 flex items-center justify-center gap-4"></div>
         </div>
 
-        
         <div id="main-content-sections">
-            <!-- SECTIONS BATTLE, TOP, FOR YOU... -->
              <section id="battle-section" class="mb-12">
                 <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-gavel"></i> Batalla de la Semana</h3>
-                <div id="battle-grid" class="flex items-center justify-center gap-2 sm:gap-4">
-                    <!-- Battle items will be populated here -->
-                </div>
+                <div id="battle-grid" class="flex items-center justify-center gap-2 sm:gap-4"></div>
                 <div id="battle-timer" class="mt-4 text-center font-semibold text-gray-400"></div>
-                <!-- Contenedor del Ganador Mejorado -->
                 <div id="battle-winner-container" class="mt-8" style="display: none;">
-                     <h4 class="mb-4 text-center text-xl font-bold text-sky-400">Ganador de la Batalla Anterior</h4>
-                    <div id="battle-winner" class="relative mx-auto max-w-lg">
-                        <!-- El contenido del ganador se generará aquí -->
-                    </div>
+                     <h4 class="mb-4 text-center text-xl font-bold text-orange-400">Ganador de la Batalla Anterior</h4>
+                    <div id="battle-winner" class="relative mx-auto max-w-lg"></div>
                 </div>
             </section>
-            
+
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
-            
+
+            <section id="featured-videos-section" class="mb-12">
+                <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-music"></i> Musica</h3>
+                <div id="featured-videos-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
+            </section>
+
+            <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
+
             <section id="top-liked-section" class="mb-12">
                 <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-trophy"></i> Más Gustadas</h3>
-                <div id="top-liked-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
-                    <!-- Slider images will be populated here -->
-                </div>
+                <div id="top-liked-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
             </section>
-            
+
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
-            
+
             <section id="for-you-section" class="mb-12">
                 <h3 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-200"><i class="fas fa-star"></i> Para Ti</h3>
-                <div id="for-you-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
-                    <!-- Slider images will be populated here -->
-                </div>
+                <div id="for-you-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
             </section>
-            
+
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
-            
-            <!-- ========= CONTENEDOR DE ENCUESTA CON ALPINE.JS ========= -->
+
             <div x-data="{ isPollOpen: false }">
                 <section id="poll-section" class="mb-12">
                     <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-poll"></i> Encuesta de la Semana</h3>
-                    <div id="poll-container" class="max-w-4xl mx-auto text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-                        <!-- El contenido de la encuesta se carga aquí desde Firebase -->
-                    </div>
-                    <!-- Contenedor principal para todas las respuestas -->
-                    <div id="poll-answers-main-container" class="mt-8">
-                         <!-- El contenido (grid estático o scroller animado) se inyectará aquí -->
-                    </div>
+                    <div id="poll-container" class="max-w-4xl mx-auto text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700"></div>
+                    <div id="poll-answers-main-container" class="mt-8"></div>
                 </section>
 
-                <!-- VENTANA FLOTANTE DE ENCUESTA CONTROLADA POR ALPINE.JS -->
-                <div id="poll-widget" 
+                <div id="poll-widget"
                      class="fixed bottom-5 right-5 z-[900] w-full max-w-sm bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 transform translate-y-[calc(100%+20px)] opacity-0"
                      :class="{ 'open': isPollOpen }">
-                    
+
                     <button @click="isPollOpen = false" class="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700/80 text-gray-400 transition hover:bg-slate-600 hover:text-white">
                         <i class="fas fa-times"></i>
                     </button>
-                    
                     <h3 id="poll-widget-question" class="text-xl font-bold mb-4 text-center text-gray-100"></h3>
-                    
                     <form id="poll-answer-form" @submit.prevent="handlePollSubmit($event); isPollOpen = false">
                         <textarea id="poll-answer-input" rows="3" placeholder="Tu respuesta (máx 30 caracteres)..." maxlength="30" class="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-2 text-white transition focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500/50 mb-3"></textarea>
                         <input type="text" id="poll-name-input" placeholder="Nombre (máx 10 caracteres)" maxlength="10" class="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-2 text-white transition focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500/50 mb-4">
@@ -428,39 +368,32 @@
                     </form>
                 </div>
             </div>
-            <!-- ========= FIN DEL CONTENEDOR DE ENCUESTA ========= -->
-
 
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
 
             <h3 class="mb-6 flex items-center justify-center gap-3 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-images"></i> Galería Completa</h3>
         </div>
 
-        <!-- ========== MAIN GALLERY ========== -->
         <section id="gallery">
             <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
             <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"></div>
             <div id="loader" class="py-12" style="display: none;"><div class="skeleton"></div></div>
-            <div id="load-more-trigger" class="h-10"></div> <!-- Invisible trigger for IntersectionObserver -->
+            <div id="load-more-trigger" class="h-10"></div>
         </section>
     </main>
 
-    <!-- ========== MODAL IMAGEN ========== -->
     <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90 backdrop-blur-md" style="display: none;">
-        <!-- Botón Anterior -->
         <button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:scale-110">
             <i class="fas fa-chevron-left text-2xl"></i>
         </button>
-        <!-- Botón Siguiente -->
         <button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:scale-110">
             <i class="fas fa-chevron-right text-2xl"></i>
         </button>
 
         <div id="modal-content" class="h-full w-full overflow-y-auto">
             <div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4">
-
                 <header id="modal-header" class="flex items-center justify-between">
-                    <h2 id="title" class="bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2>
+                    <h2 id="title" class="bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2>
                     <button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90">
                         <i class="fas fa-times text-2xl"></i>
                     </button>
@@ -492,50 +425,45 @@
                              <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);">
                                 <span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sexy">🫦</span>
                             </div>
-                            <button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-sky-500 text-white shadow-lg transition-transform duration-300 hover:scale-110">
+                            <button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-lg transition-transform duration-300 hover:scale-110">
                                 <i class="fas fa-heart text-2xl"></i>
                             </button>
                         </div>
                     </div>
 
-                <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
-                <p id="desc" class="rounded-xl border-2 border-blue-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
-                
-                <section id="similar-section" class="mt-4 w-full">
-                    <h3 class="mb-4 flex items-center justify-center gap-3 text-center text-xl font-bold"><i class="fas fa-th-large text-blue-400"></i> Imágenes Similares</h3>
-                    <div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
-                        <!-- Similar images will be populated here -->
-                    </div>
-                </section>
-                
-                <section id="comments-section" class="mt-4 w-full">
-                    <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row">
-                        <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 sm:w-1/4">
-                        <input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50">
-                        <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white transition hover:bg-blue-500">
-                            <i class="fas fa-paper-plane transition group-hover:rotate-12"></i> Enviar
-                        </button>
-                    </form>
-                    <div id="comments" class="flex flex-col gap-4"></div>
-                </section>
+                    <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
+                    <p id="desc" class="rounded-xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
+
+                    <section id="similar-section" class="mt-4 w-full">
+                        <h3 class="mb-4 flex items-center justify-center gap-3 text-center text-xl font-bold"><i class="fas fa-th-large text-orange-400"></i> Imágenes Similares</h3>
+                        <div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
+                    </section>
+
+                    <section id="comments-section" class="mt-4 w-full">
+                        <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row">
+                            <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 sm:w-1/4">
+                            <input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50">
+                            <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white transition hover:bg-orange-500">
+                                <i class="fas fa-paper-plane transition group-hover:rotate-12"></i> Enviar
+                            </button>
+                        </form>
+                        <div id="comments" class="flex flex-col gap-4"></div>
+                    </section>
+                </div>
             </div>
         </div>
     </div>
 
-    
-    <!-- ========== BOTÓN IR ARRIBA ========== -->
-    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-blue-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-blue-500 hover:scale-110">
+    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-orange-500 hover:scale-110">
         <i class="fas fa-arrow-up"></i>
     </button>
 
-    <!-- ========== FOOTER ========== -->
     <footer class="mt-12 py-8 text-center text-gray-500">
         <p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p>
     </footer>
 
     <script>
         "use strict";
-        // --- Configuración de Firebase ---
         const firebaseConfig = {
             apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
             authDomain: "exene-53e6b.firebaseapp.com",
@@ -547,13 +475,12 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        
+
         firebase.auth().signInAnonymously().catch(error => console.error('Error en autenticación anónima:', error));
-        
-        // --- Variables Globales ---
+
         const imagesPerLoad = 20;
-        let allImages = []; // Cache para la galería principal
-        let fullGalleryCache = []; // Caché para la búsqueda de toda la galería
+        let allImages = [];
+        let fullGalleryCache = [];
         let lastImageTimestamp = null;
         let lastImageKey = null;
         let isLoading = false;
@@ -574,13 +501,10 @@
             });
             localStorage.setItem('deviceID', deviceID);
         }
-
-        // Variables de estado para la paginación de búsqueda
         let currentSearchResults = [];
         let searchCurrentPage = 1;
         const searchResultsPerPage = 20;
 
-        // --- Lógica de Arranque ---
         document.addEventListener('DOMContentLoaded', () => {
             const warningOverlay = document.getElementById('warning-overlay');
             if (!localStorage.getItem('adultConsent')) {
@@ -609,17 +533,32 @@
             initBattleSection();
             loadTopLikedImages();
             loadForYouImages();
-            loadPollSection(); 
+            loadFeaturedVideos();
+            loadPollSection();
             setupIntersectionObserver();
-            setupEventListeners(); 
-            cacheFullGalleryForSearch(); // Cargar caché de búsqueda
+            setupEventListeners();
+            cacheFullGalleryForSearch();
+            setActiveNavLink();
+        }
+        
+        function setActiveNavLink() {
+            const path = window.location.pathname.split("/").pop();
+            const galleryLink = document.getElementById('nav-index');
+            const videosLink = document.getElementById('nav-videos');
+            if (!galleryLink || !videosLink) return;
+            galleryLink.classList.remove('nav-link-active');
+            videosLink.classList.remove('nav-link-active');
+            if (path === 'index.html' || path === '' || path.startsWith('index.html')) {
+                galleryLink.classList.add('nav-link-active');
+            } else if (path === 'videos.html' || path.startsWith('videos.html')) {
+                videosLink.classList.add('nav-link-active');
+            }
         }
 
         function cacheFullGalleryForSearch() {
             const searchInput = document.getElementById('search-input');
             searchInput.disabled = true;
             searchInput.placeholder = "Cargando base de datos para búsqueda...";
-
             db.ref('images').once('value').then(snapshot => {
                 if (snapshot.exists()) {
                     const allData = [];
@@ -636,77 +575,62 @@
             });
         }
 
-
-        function generateSkeletons(container, count, isSlider = false) {
+        function generateSkeletons(container, count, isSlider = false, isVideo = false) {
             container.innerHTML = '';
             for (let i = 0; i < count; i++) {
                 const skeleton = document.createElement('div');
                 let classList = 'skeleton';
-                if(isSlider) {
-                    classList += ' flex-shrink-0 w-2/5 sm:w-1/4 md:w-1/5'
+                if (isSlider) {
+                    classList += isVideo ? ' flex-shrink-0 w-3/4 sm:w-1/2 md:w-2/5 lg:w-1/3' : ' flex-shrink-0 w-2/5 sm:w-1/4 md:w-1/5';
+                }
+                if (isVideo) {
+                    classList += ' skeleton-video';
                 }
                 skeleton.className = classList;
                 container.appendChild(skeleton);
             }
         }
-
-        // --- Carga Paginada de Imágenes ---
+        
         function loadInitialImages() {
             if (isLoading) return;
             isLoading = true;
             const grid = document.getElementById('grid');
             generateSkeletons(grid, imagesPerLoad);
-            
             db.ref('images').orderByChild('timestamp').limitToLast(imagesPerLoad).once('value').then(snapshot => {
                 if (!snapshot.exists()) {
                     showError('No se encontraron imágenes.');
-                    grid.innerHTML = '';
-                    isLoading = false;
-                    return;
+                    grid.innerHTML = ''; isLoading = false; return;
                 }
                 const images = [];
-                snapshot.forEach(child => {
-                    images.push({ id: child.key, ...child.val() });
-                });
-
+                snapshot.forEach(child => { images.push({ id: child.key, ...child.val() }); });
                 if (images.length > 0) {
                     lastImageTimestamp = images[0].timestamp;
                     lastImageKey = images[0].id;
                 }
-                
                 images.reverse();
                 allImages = images;
-                displayImages(allImages, 'grid'); 
+                displayImages(allImages, 'grid');
                 isLoading = false;
             }).catch(error => {
                 showError('Error al conectar con Firebase: ' + error.message);
-                grid.innerHTML = '';
-                isLoading = false;
+                grid.innerHTML = ''; isLoading = false;
             });
         }
-        
+
         function loadMoreImages() {
             if (isLoading || noMoreImages) return;
             isLoading = true;
             const loaderContainer = document.getElementById('loader');
             loaderContainer.style.display = 'block';
             generateSkeletons(loaderContainer, 1);
-
             db.ref('images').orderByChild('timestamp').endBefore(lastImageTimestamp, lastImageKey).limitToLast(imagesPerLoad).once('value').then(snapshot => {
                 loaderContainer.style.display = 'none';
                 if (!snapshot.exists() || snapshot.numChildren() === 0) {
-                    noMoreImages = true;
-                    isLoading = false;
-                    return;
+                    noMoreImages = true; isLoading = false; return;
                 }
-
                 const newImages = [];
-                snapshot.forEach(child => {
-                   newImages.push({ id: child.key, ...child.val() });
-                });
-                
+                snapshot.forEach(child => { newImages.push({ id: child.key, ...child.val() }); });
                 if (newImages.length < imagesPerLoad) { noMoreImages = true; }
-
                 if (newImages.length > 0) {
                     lastImageTimestamp = newImages[0].timestamp;
                     lastImageKey = newImages[0].id;
@@ -714,44 +638,34 @@
                     allImages = allImages.concat(newImages);
                     displayImages(newImages, 'grid', true);
                 }
-                
                 isLoading = false;
             }).catch(error => {
                 console.error("Error loading more images:", error);
-                isLoading = false;
-                loaderContainer.style.display = 'none';
+                isLoading = false; loaderContainer.style.display = 'none';
             });
         }
-        
-        // --- Lógica de Secciones ---
+
         async function loadTopLikedImages() {
             const grid = document.getElementById('top-liked-grid');
             generateSkeletons(grid, 10, true);
-            
             const reactionsSnap = await db.ref('reactions').once('value');
             const reactions = reactionsSnap.val() || {};
             const likesCount = {};
-            Object.entries(reactions).forEach(([imgId, users]) => {
-                likesCount[imgId] = Object.keys(users).length;
-            });
-
+            Object.entries(reactions).forEach(([imgId, users]) => { likesCount[imgId] = Object.keys(users).length; });
             const sortedIds = Object.keys(likesCount).sort((a,b) => likesCount[b] - likesCount[a]).slice(0, 10);
             if (sortedIds.length === 0) {
                  grid.innerHTML = '<p class="w-full text-center text-gray-500">Aún no hay imágenes gustadas.</p>';
                  return;
             }
-
             const imageSnaps = await Promise.all(sortedIds.map(id => db.ref(`images/${id}`).once('value')));
             const images = imageSnaps.map(s => ({id: s.key, ...s.val()}));
-            
             displayImages(images, 'top-liked-grid');
             initAutoSlider('top-liked-grid');
         }
-        
+
         async function loadForYouImages() {
             const grid = document.getElementById('for-you-grid');
             generateSkeletons(grid, 10, true);
-
             const fallbackToRecents = async () => {
                 const imageSnap = await db.ref('images').orderByChild('timestamp').limitToLast(10).once('value');
                 if (!imageSnap.exists()) {
@@ -763,110 +677,73 @@
                 displayImages(images.reverse(), 'for-you-grid');
                 initAutoSlider('for-you-grid');
             };
-
-            let viewedImageIds = [];
-            try { viewedImageIds = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) {}
-            
-            let imageInteractions = {};
-            try { imageInteractions = JSON.parse(localStorage.getItem('imageInteractions')) || {}; } catch (e) {}
-            
+            let viewedImageIds = []; try { viewedImageIds = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) {}
+            let imageInteractions = {}; try { imageInteractions = JSON.parse(localStorage.getItem('imageInteractions')) || {}; } catch (e) {}
             const userLikesSnap = await db.ref('reactions').once('value');
             const allReactions = userLikesSnap.val() || {};
             const userLikes = {};
-            Object.keys(allReactions).forEach(imgId => {
-                if (allReactions[imgId][deviceID]) {
-                    userLikes[imgId] = allReactions[imgId][deviceID];
-                }
-            });
-
-            if (viewedImageIds.length === 0 && Object.keys(userLikes).length === 0) {
-                await fallbackToRecents();
-                return;
-            }
-
+            Object.keys(allReactions).forEach(imgId => { if (allReactions[imgId][deviceID]) { userLikes[imgId] = allReactions[imgId][deviceID]; } });
+            if (viewedImageIds.length === 0 && Object.keys(userLikes).length === 0) { await fallbackToRecents(); return; }
             const profileImageIds = [...new Set([...viewedImageIds, ...Object.keys(userLikes)])].slice(0, 50);
             const profileImageSnaps = await Promise.all(profileImageIds.map(id => db.ref(`images/${id}`).once('value')));
             const userTagProfile = {};
             profileImageSnaps.forEach(snap => {
                 if (snap.exists() && Array.isArray(snap.val().tags)) {
-                    const isLiked = userLikes[snap.key];
-                    const weight = isLiked ? 3 : 1; 
-                    snap.val().tags.forEach(tag => { 
-                        userTagProfile[tag] = (userTagProfile[tag] || 0) + weight; 
-                    });
+                    const isLiked = userLikes[snap.key]; const weight = isLiked ? 3 : 1;
+                    snap.val().tags.forEach(tag => { userTagProfile[tag] = (userTagProfile[tag] || 0) + weight; });
                 }
             });
-
-            if (Object.keys(userTagProfile).length === 0) {
-                await fallbackToRecents();
-                return;
-            }
-
+            if (Object.keys(userTagProfile).length === 0) { await fallbackToRecents(); return; }
             const candidateSnap = await db.ref('images').limitToLast(200).once('value');
             if (!candidateSnap.exists()) { await fallbackToRecents(); return; }
-            
             const candidates = [];
             const allConsideredIds = new Set(profileImageIds);
-            candidateSnap.forEach(child => {
-                const img = { id: child.key, ...child.val() };
-                if (img.tags && !allConsideredIds.has(img.id)) { candidates.push(img); }
-            });
-
+            candidateSnap.forEach(child => { const img = { id: child.key, ...child.val() }; if (img.tags && !allConsideredIds.has(img.id)) { candidates.push(img); } });
             const scoredCandidates = candidates.map(img => {
-                let tagScore = 0;
-                if (Array.isArray(img.tags)) {
-                    img.tags.forEach(tag => { if (userTagProfile[tag]) tagScore += userTagProfile[tag]; });
-                }
-                
-                const interactionData = imageInteractions[img.id];
-                const timeScore = interactionData ? Math.log10(interactionData.timeSpent / 1000 + 1) * 2 : 0;
-                
-                let totalScore = tagScore + timeScore;
-                return { image: img, score: totalScore };
+                let tagScore = 0; if (Array.isArray(img.tags)) { img.tags.forEach(tag => { if (userTagProfile[tag]) tagScore += userTagProfile[tag]; }); }
+                const interactionData = imageInteractions[img.id]; const timeScore = interactionData ? Math.log10(interactionData.timeSpent / 1000 + 1) * 2 : 0;
+                let totalScore = tagScore + timeScore; return { image: img, score: totalScore };
             }).filter(item => item.score > 0);
-
             scoredCandidates.sort((a, b) => b.score - a.score);
             const recommendedImages = scoredCandidates.slice(0, 15).map(item => item.image);
-
             if (recommendedImages.length > 0) {
-                displayImages(recommendedImages, 'for-you-grid');
-                initAutoSlider('for-you-grid');
-            } else {
-                await fallbackToRecents();
+                displayImages(recommendedImages, 'for-you-grid'); initAutoSlider('for-you-grid');
+            } else { await fallbackToRecents(); }
+        }
+        
+        async function loadFeaturedVideos() {
+            const grid = document.getElementById('featured-videos-grid');
+            generateSkeletons(grid, 5, true, true); 
+            const reactionsSnap = await db.ref('video_reactions').once('value');
+            const reactions = reactionsSnap.val() || {};
+            const likesCount = {};
+            Object.entries(reactions).forEach(([videoId, users]) => { likesCount[videoId] = Object.keys(users).length; });
+            const sortedIds = Object.keys(likesCount).sort((a,b) => likesCount[b] - likesCount[a]).slice(0, 5);
+            if (sortedIds.length === 0) {
+                 grid.innerHTML = '<p class="w-full text-center text-gray-500">Aún no hay videos gustados.</p>';
+                 return;
             }
+            const videoSnaps = await Promise.all(sortedIds.map(id => db.ref(`videos/${id}`).once('value')));
+            const videos = videoSnaps.map(s => ({id: s.key, ...s.val()}));
+            displayVideos(videos, 'featured-videos-grid');
+            initAutoSlider('featured-videos-grid');
         }
 
-
-        // --- Funciones de Renderizado y UI ---
         function displayImages(images, containerId, append = false) {
             const grid = document.getElementById(containerId);
             if (!append) grid.innerHTML = '';
-            
             if (images.length === 0 && !append) {
                 grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes.</div>`;
                 return;
             }
-            
             const isSlider = containerId === 'top-liked-grid' || containerId === 'for-you-grid' || containerId === 'similar-grid';
-
             images.forEach((img, index) => {
-                if (!img || !img.url || !img.title) return; // Skip incomplete data
+                if (!img || !img.url || !img.title) return;
                 const div = document.createElement('div');
-                
                 let classList = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-xl image-card-hover flex-shrink-0';
-                
-                if (isSlider) {
-                    classList += ' w-2/5 sm:w-1/4 md:w-1/5';
-                }
-                if (containerId === 'similar-grid') {
-                    classList = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-xl image-card-hover flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%]';
-                }
-
-                if (containerId === 'top-liked-grid') {
-                    const topClass = index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : '';
-                    if (topClass) classList += ` border-2 border-transparent ${topClass}`;
-                }
-
+                if (isSlider) { classList += ' w-2/5 sm:w-1/4 md:w-1/5'; }
+                if (containerId === 'similar-grid') { classList = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-xl image-card-hover flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%]'; }
+                if (containerId === 'top-liked-grid') { const topClass = index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : ''; if (topClass) classList += ` border-2 border-transparent ${topClass}`; }
                 div.className = classList;
                 div.style.animationDelay = `${(index * 0.05)}s`;
                 div.setAttribute('onclick', `openModal('${img.id}')`);
@@ -886,43 +763,66 @@
             });
         }
         
+        function displayVideos(videos, containerId) {
+            const grid = document.getElementById(containerId);
+            grid.innerHTML = '';
+            if (videos.length === 0) {
+                grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron videos.</div>`;
+                return;
+            }
+            videos.forEach((video, index) => {
+                if (!video || !video.thumbnailUrl || !video.title) return;
+                const div = document.createElement('div');
+                div.className = 'video-item-animation group relative aspect-video cursor-pointer overflow-hidden rounded-xl image-card-hover flex-shrink-0 w-3/4 sm:w-1/2 md:w-2/5 lg:w-1/3';
+                div.style.animationDelay = `${(index * 0.05)}s`;
+
+                // FIX: Construct absolute URL for navigation
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                const videoPageUrl = `${baseUrl}videos.html?id=${video.id}`;
+                div.setAttribute('onclick', `window.location.href='${videoPageUrl}'`);
+                
+                div.innerHTML = `
+                    <img src="${video.thumbnailUrl}" alt="${video.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" onerror="this.src='https://placehold.co/1280x720/1f2937/374151?text=Error'">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent transition duration-300 group-hover:from-black/90 group-hover:to-black/20 pointer-events-none"></div>
+                    <div class="absolute inset-0 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+                        <i class="fas fa-play-circle text-6xl text-white/80 drop-shadow-lg"></i>
+                    </div>
+                    <div class="absolute bottom-0 left-0 p-3 pointer-events-none">
+                        <h4 class="truncate font-bold text-white text-shadow-lg">${video.title}</h4>
+                    </div>
+                     <div class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white pointer-events-none"><i class="fas fa-heart text-red-500"></i><span id="video-reaction-total-${video.id}">0</span></div>
+                `;
+                grid.appendChild(div);
+                db.ref(`video_reactions/${video.id}`).once('value').then(snap => {
+                    const reactionCountEl = document.getElementById(`video-reaction-total-${video.id}`);
+                    if (reactionCountEl) reactionCountEl.textContent = snap.numChildren();
+                });
+            });
+        }
+
         async function openModal(id) {
             const pollWrapper = document.querySelector('[x-data]');
-            if (pollWrapper && pollWrapper.__x) {
-                pollWrapper.__x.data.isPollOpen = false;
-            }
-            
+            if (pollWrapper && pollWrapper.__x) { pollWrapper.__x.data.isPollOpen = false; }
             let img = allImages.find(i => i && i.id === id) || fullGalleryCache.find(i => i && i.id === id);
-            
             if (!img) {
                 const snapshot = await db.ref(`images/${id}`).once('value');
                 if(snapshot.exists()) img = { id: snapshot.key, ...snapshot.val() };
                 else { console.error("Image not found"); return; }
             }
-            
             currentImageId = id;
-            
             const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults;
             currentImageIndex = currentView.findIndex(i => i && i.id === id);
-            
-            modalOpenTime = Date.now(); 
+            modalOpenTime = Date.now();
             document.getElementById('full-img').src = img.url;
             document.getElementById('title').textContent = img.title;
             document.getElementById('desc').textContent = img.desc;
-            
-            loadLikes(id);
-            loadComments(id);
-            loadSimilarImages(img.tags || []);
-            triggerReactionRain(id);
-            trackImageView(id, 'view');
-
-            const prevBtn = document.getElementById('prev-image');
-            const nextBtn = document.getElementById('next-image');
+            loadLikes(id); loadComments(id); loadSimilarImages(img.tags || []);
+            triggerReactionRain(id); trackImageView(id, 'view');
+            const prevBtn = document.getElementById('prev-image'); const nextBtn = document.getElementById('next-image');
             if (prevBtn && nextBtn && currentImageIndex !== -1) {
                 prevBtn.style.display = currentImageIndex > 0 ? 'flex' : 'none';
                 nextBtn.style.display = currentImageIndex < currentView.length - 1 ? 'flex' : 'none';
             }
-
             document.getElementById('scrollToTopBtn').classList.remove('visible');
             document.getElementById('modal').style.display = 'block';
             document.body.style.overflow = 'hidden';
@@ -931,39 +831,25 @@
 
         function trackImageView(imageId, eventType, timeSpent = 0) {
             if (!imageId) return;
-
-            let viewedImages = [];
-            try { viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImages = []; }
-            
+            let viewedImages = []; try { viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImages = []; }
             const existingIndex = viewedImages.indexOf(imageId);
             if (existingIndex > -1) { viewedImages.splice(existingIndex, 1); }
-            
             viewedImages.unshift(imageId);
-            const historyLimit = 50; 
+            const historyLimit = 50;
             if (viewedImages.length > historyLimit) { viewedImages = viewedImages.slice(0, historyLimit); }
-            
             localStorage.setItem('viewedImages', JSON.stringify(viewedImages));
-
-            if (eventType === 'close' && timeSpent > 1000) { 
-                let imageInteractions = {};
-                try { imageInteractions = JSON.parse(localStorage.getItem('imageInteractions')) || {}; } catch(e) { imageInteractions = {}; }
-                
-                if (!imageInteractions[imageId]) {
-                    imageInteractions[imageId] = { timeSpent: 0 };
-                }
+            if (eventType === 'close' && timeSpent > 1000) {
+                let imageInteractions = {}; try { imageInteractions = JSON.parse(localStorage.getItem('imageInteractions')) || {}; } catch(e) { imageInteractions = {}; }
+                if (!imageInteractions[imageId]) { imageInteractions[imageId] = { timeSpent: 0 }; }
                 imageInteractions[imageId].timeSpent += timeSpent;
                 imageInteractions[imageId].lastViewed = Date.now();
-
                 const interactionKeys = Object.keys(imageInteractions);
                 if (interactionKeys.length > 100) {
                     interactionKeys.sort((a, b) => imageInteractions[b].lastViewed - imageInteractions[a].lastViewed);
                     const prunedInteractions = {};
-                    interactionKeys.slice(0, 100).forEach(key => {
-                        prunedInteractions[key] = imageInteractions[key];
-                    });
+                    interactionKeys.slice(0, 100).forEach(key => { prunedInteractions[key] = imageInteractions[key]; });
                     imageInteractions = prunedInteractions;
                 }
-                
                 localStorage.setItem('imageInteractions', JSON.stringify(imageInteractions));
             }
         }
@@ -971,214 +857,89 @@
         function initAutoSlider(containerId) {
             const container = document.getElementById(containerId);
             if (!container || container.children.length < 2) return;
-
-            if (sliderAnimationState[containerId]?.animationFrameId) {
-                cancelAnimationFrame(sliderAnimationState[containerId].animationFrameId);
-            }
-
+            if (sliderAnimationState[containerId]?.animationFrameId) { cancelAnimationFrame(sliderAnimationState[containerId].animationFrameId); }
             if (!container.dataset.cloned) {
                 const originalChildren = Array.from(container.children);
-                originalChildren.forEach(child => {
-                    const clone = child.cloneNode(true);
-                    clone.setAttribute('aria-hidden', 'true');
-                    container.appendChild(clone);
-                });
+                originalChildren.forEach(child => { const clone = child.cloneNode(true); clone.setAttribute('aria-hidden', 'true'); container.appendChild(clone); });
                 container.dataset.cloned = 'true';
             }
-
-            const scrollWidth = container.scrollWidth / 2;
-            let isPaused = false;
-
+            const scrollWidth = container.scrollWidth / 2; let isPaused = false;
             const scroll = () => {
-                if (!isPaused) {
-                    container.scrollLeft += 0.5;
-                    if (container.scrollLeft >= scrollWidth) {
-                        container.scrollLeft = 0;
-                    }
-                }
+                if (!isPaused) { container.scrollLeft += 0.5; if (container.scrollLeft >= scrollWidth) { container.scrollLeft = 0; } }
                 sliderAnimationState[containerId] = { animationFrameId: requestAnimationFrame(scroll) };
             };
-
-            const start = () => { isPaused = false; };
-            const stop = () => { isPaused = true; };
-
-            container.addEventListener('mouseenter', stop);
-            container.addEventListener('mouseleave', start);
-            container.addEventListener('touchstart', stop, { passive: true });
-            container.addEventListener('touchend', start, { passive: true });
-
+            const start = () => { isPaused = false; }; const stop = () => { isPaused = true; };
+            container.addEventListener('mouseenter', stop); container.addEventListener('mouseleave', start);
+            container.addEventListener('touchstart', stop, { passive: true }); container.addEventListener('touchend', start, { passive: true });
             scroll();
         }
 
         async function loadSimilarImages(tags) {
             const grid = document.getElementById('similar-grid');
-            
-            if (sliderAnimationState['similar-grid']?.animationFrameId) {
-                cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId);
-            }
-            grid.innerHTML = '';
-            delete grid.dataset.cloned;
-
-            if (!tags || tags.length === 0) {
-                 grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No hay etiquetas para encontrar similares.</p>';
-                return;
-            }
-
+            if (sliderAnimationState['similar-grid']?.animationFrameId) { cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId); }
+            grid.innerHTML = ''; delete grid.dataset.cloned;
+            if (!tags || tags.length === 0) { grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No hay etiquetas para encontrar similares.</p>'; return; }
             const candidates = fullGalleryCache.filter(img => img.id !== currentImageId && Array.isArray(img.tags));
-            
-            const scoredImages = candidates.map(img => {
-                const commonTags = img.tags.filter(tag => tags.includes(tag));
-                return { image: img, score: commonTags.length };
-            }).filter(item => item.score > 0);
-
+            const scoredImages = candidates.map(img => { const commonTags = img.tags.filter(tag => tags.includes(tag)); return { image: img, score: commonTags.length }; }).filter(item => item.score > 0);
             scoredImages.sort((a, b) => b.score - a.score);
-
             const similarImages = scoredImages.slice(0, 10).map(item => item.image);
-
-            if(similarImages.length > 0) {
-                displayImages(similarImages, 'similar-grid');
-                // CORRECCIÓN: Se elimina la llamada a initAutoSlider para este slider en específico
-            } else {
-                grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No se encontraron imágenes con etiquetas similares.</p>';
-            }
+            if(similarImages.length > 0) { displayImages(similarImages, 'similar-grid'); } else { grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No se encontraron imágenes con etiquetas similares.</p>'; }
         }
-        
-        // --- Event Listeners y Lógica Auxiliar ---
+
         function setupEventListeners() {
             const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-            window.addEventListener('scroll', () => {
-                (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ?
-                    scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible');
-            });
+            window.addEventListener('scroll', () => { (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible'); });
             scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
-            
-            document.getElementById('search-form').addEventListener('submit', e => {
-                e.preventDefault();
-                const query = normalize(document.getElementById('search-input').value);
-                executeSearch(query);
-            });
-
-            // NUEVO: Listener para el botón de limpiar búsqueda
+            document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); const query = normalize(document.getElementById('search-input').value); executeSearch(query); });
             document.getElementById('clear-search-btn').addEventListener('click', resetSearchView);
-
-
-            document.getElementById('search-input').addEventListener('input', e => {
-                if (e.target.value.trim() === '') {
-                    // Solo resetea la vista si no hay resultados activos, para no interferir con una búsqueda ya hecha
-                    if(document.getElementById('search-results-container').classList.contains('hidden')) {
-                        resetSearchView();
-                    }
-                }
-            });
-
+            document.getElementById('search-input').addEventListener('input', e => { if (e.target.value.trim() === '') { if(document.getElementById('search-results-container').classList.contains('hidden')) { resetSearchView(); } } });
             document.getElementById('close-modal').addEventListener('click', () => {
-                if (currentImageId && modalOpenTime) {
-                    const timeSpent = Date.now() - modalOpenTime;
-                    trackImageView(currentImageId, 'close', timeSpent);
-                    modalOpenTime = null;
-                }
-                document.getElementById('modal').style.display = 'none';
-                document.body.style.overflow = 'auto';
-                if (sliderAnimationState['similar-grid']?.animationFrameId) {
-                    cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId);
-                    delete sliderAnimationState['similar-grid'];
-                }
-                if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-                    scrollToTopBtn.classList.add('visible');
-                }
+                if (currentImageId && modalOpenTime) { const timeSpent = Date.now() - modalOpenTime; trackImageView(currentImageId, 'close', timeSpent); modalOpenTime = null; }
+                document.getElementById('modal').style.display = 'none'; document.body.style.overflow = 'auto';
+                if (sliderAnimationState['similar-grid']?.animationFrameId) { cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId); delete sliderAnimationState['similar-grid']; }
+                if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) { scrollToTopBtn.classList.add('visible'); }
             });
-
             document.getElementById('prev-image').addEventListener('click', navigateToPrevious);
             document.getElementById('next-image').addEventListener('click', navigateToNext);
-
             const modal = document.getElementById('modal');
-            modal.addEventListener('touchstart', e => {
-                if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) {
-                    touchStartX = 0;
-                    return;
-                }
-                touchStartX = e.changedTouches[0].screenX;
-            }, { passive: true });
-
-            modal.addEventListener('touchend', e => {
-                if (touchStartX === 0) return;
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-                touchStartX = 0;
-            });
-            
+            modal.addEventListener('touchstart', e => { if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+            modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; });
             document.addEventListener('keydown', e => {
                 if (document.getElementById('modal').style.display !== 'block') return;
-                if (e.key === 'ArrowRight') navigateToNext();
-                else if (e.key === 'ArrowLeft') navigateToPrevious();
-                else if (e.key === 'Escape') document.getElementById('close-modal').click();
+                if (e.key === 'ArrowRight') navigateToNext(); else if (e.key === 'ArrowLeft') navigateToPrevious(); else if (e.key === 'Escape') document.getElementById('close-modal').click();
             });
         }
         
-        // --- NUEVAS FUNCIONES DE BÚSQUEDA Y PAGINACIÓN ---
         function executeSearch(query) {
             const clearBtn = document.getElementById('clear-search-btn');
-            if (!query) {
-                resetSearchView();
-                return;
-            }
-
+            if (!query) { resetSearchView(); return; }
             document.getElementById('main-content-sections').classList.add('hidden');
             document.getElementById('gallery').classList.add('hidden');
             document.getElementById('search-results-container').classList.remove('hidden');
-            clearBtn.classList.remove('hidden');
-            clearBtn.classList.add('flex');
-
-
+            clearBtn.classList.remove('hidden'); clearBtn.classList.add('flex');
             currentSearchResults = fullGalleryCache.filter(item => {
                 const titleMatch = item.title && normalize(item.title).includes(query);
                 const tagMatch = item.tags && Array.isArray(item.tags) && item.tags.some(tag => normalize(tag).includes(query));
                 return titleMatch || tagMatch;
             });
-            
-            searchCurrentPage = 1;
-            displaySearchResultsPage(searchCurrentPage);
+            searchCurrentPage = 1; displaySearchResultsPage(searchCurrentPage);
         }
 
         function displaySearchResultsPage(page) {
-            searchCurrentPage = page;
-            const grid = document.getElementById('search-results-grid');
-            const startIndex = (page - 1) * searchResultsPerPage;
-            const endIndex = startIndex + searchResultsPerPage;
+            searchCurrentPage = page; const grid = document.getElementById('search-results-grid');
+            const startIndex = (page - 1) * searchResultsPerPage; const endIndex = startIndex + searchResultsPerPage;
             const pageItems = currentSearchResults.slice(startIndex, endIndex);
-
-            displayImages(pageItems, 'search-results-grid');
-            renderPaginationControls();
-            window.scrollTo(0,0);
+            displayImages(pageItems, 'search-results-grid'); renderPaginationControls(); window.scrollTo(0,0);
         }
 
         function renderPaginationControls() {
             const paginationContainer = document.getElementById('search-pagination');
             const totalPages = Math.ceil(currentSearchResults.length / searchResultsPerPage);
-            paginationContainer.innerHTML = '';
-
-            if (totalPages <= 1) return;
-
+            paginationContainer.innerHTML = ''; if (totalPages <= 1) return;
             let paginationHTML = '';
-
-            paginationHTML += `
-                <button 
-                    onclick="displaySearchResultsPage(${searchCurrentPage - 1})" 
-                    class="px-4 py-2 bg-gray-700 rounded-md transition hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    ${searchCurrentPage === 1 ? 'disabled' : ''}>
-                    <i class="fas fa-chevron-left mr-2"></i> Anterior
-                </button>`;
-
+            paginationHTML += `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-gray-700 rounded-md transition hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed" ${searchCurrentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left mr-2"></i> Anterior</button>`;
             paginationHTML += `<span class="font-semibold text-gray-300">Página ${searchCurrentPage} de ${totalPages}</span>`;
-
-            paginationHTML += `
-                <button 
-                    onclick="displaySearchResultsPage(${searchCurrentPage + 1})" 
-                    class="px-4 py-2 bg-gray-700 rounded-md transition hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    ${searchCurrentPage === totalPages ? 'disabled' : ''}>
-                    Siguiente <i class="fas fa-chevron-right ml-2"></i>
-                </button>`;
-
+            paginationHTML += `<button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-gray-700 rounded-md transition hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed" ${searchCurrentPage === totalPages ? 'disabled' : ''}>Siguiente <i class="fas fa-chevron-right ml-2"></i></button>`;
             paginationContainer.innerHTML = paginationHTML;
         }
 
@@ -1186,157 +947,95 @@
             const clearBtn = document.getElementById('clear-search-btn');
             document.getElementById('search-input').value = '';
             document.getElementById('search-results-container').classList.add('hidden');
-            document.getElementById('search-results-grid').innerHTML = '';
-            document.getElementById('search-pagination').innerHTML = '';
-            document.getElementById('main-content-sections').classList.remove('hidden');
-            document.getElementById('gallery').classList.remove('hidden');
-            clearBtn.classList.add('hidden');
-            clearBtn.classList.remove('flex');
-            currentSearchResults = [];
-            searchCurrentPage = 1;
+            document.getElementById('search-results-grid').innerHTML = ''; document.getElementById('search-pagination').innerHTML = '';
+            document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden');
+            clearBtn.classList.add('hidden'); clearBtn.classList.remove('flex');
+            currentSearchResults = []; searchCurrentPage = 1;
         }
-        // --- FIN DE NUEVAS FUNCIONES ---
-
-
+        
         function setupIntersectionObserver() {
             const trigger = document.getElementById('load-more-trigger');
-            const options = { rootMargin: '0px 0px 500px 0px' };
             const observer = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting && document.getElementById('search-results-container').classList.contains('hidden')) {
-                    loadMoreImages();
-                }
-            }, options);
+                if (entries[0].isIntersecting && document.getElementById('search-results-container').classList.contains('hidden')) { loadMoreImages(); }
+            }, { rootMargin: '0px 0px 500px 0px' });
             observer.observe(trigger);
         }
-        
+
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
-        
-        function navigateToNext() {
-            const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults;
-            if (currentImageIndex > -1 && currentImageIndex < currentView.length - 1) {
-                const nextImage = currentView[currentImageIndex + 1];
-                if (nextImage) openModal(nextImage.id);
-            }
-        }
 
-        function navigateToPrevious() {
-            const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults;
-            if (currentImageIndex > 0) {
-                const prevImage = currentView[currentImageIndex - 1];
-                if (prevImage) openModal(prevImage.id);
-            }
-        }
+        function navigateToNext() { const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; if (currentImageIndex > -1 && currentImageIndex < currentView.length - 1) { const nextImage = currentView[currentImageIndex + 1]; if (nextImage) openModal(nextImage.id); } }
+        function navigateToPrevious() { const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; if (currentImageIndex > 0) { const prevImage = currentView[currentImageIndex - 1]; if (prevImage) openModal(prevImage.id); } }
+        function handleSwipe() { const deltaX = touchEndX - touchStartX; if (Math.abs(deltaX) > swipeThreshold) { if (deltaX < 0) { navigateToNext(); } else { navigateToPrevious(); } } }
 
-        function handleSwipe() {
-            const deltaX = touchEndX - touchStartX;
-            if (Math.abs(deltaX) > swipeThreshold) {
-                if (deltaX < 0) {
-                    navigateToNext();
-                } else {
-                    navigateToPrevious();
-                }
-            }
-        }
-
-        // --- Reacciones ---
         function animateReactionOnImage(type) {
             const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' };
-            const icon = icons[type];
-            if (!icon) return;
-
+            const icon = icons[type]; if (!icon) return;
             const container = document.getElementById('image-container');
             const existingAnimation = container.querySelector('.punch-animation');
-            if (existingAnimation) {
-                existingAnimation.remove();
-            }
-
+            if (existingAnimation) { existingAnimation.remove(); }
             const animationEl = document.createElement('div');
-            animationEl.className = 'punch-animation';
-            animationEl.textContent = icon;
+            animationEl.className = 'punch-animation'; animationEl.textContent = icon;
             container.appendChild(animationEl);
-
-            setTimeout(() => {
-                if (animationEl) animationEl.remove();
-            }, 500);
+            setTimeout(() => { if (animationEl) animationEl.remove(); }, 500);
         }
 
         function showReactionAnimation(type, container) {
             const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' };
             if (!icons[type]) return;
             const reaction = document.createElement('span');
-            reaction.className = 'reaction-animation';
-            reaction.textContent = icons[type];
-            reaction.style.left = `${Math.random() * 80 + 10}%`;
-            reaction.style.bottom = '20px';
+            reaction.className = 'reaction-animation'; reaction.textContent = icons[type];
+            reaction.style.left = `${Math.random() * 80 + 10}%`; reaction.style.bottom = '20px';
             container.appendChild(reaction);
             setTimeout(() => reaction.remove(), 1500);
         }
 
         function triggerReactionRain(id) {
             db.ref(`reactions/${id}`).once('value', snap => {
-                const container = document.getElementById('image-container');
-                let delay = 0;
-                snap.forEach(childSnap => {
-                    setTimeout(() => showReactionAnimation(childSnap.val(), container), delay);
-                    delay += Math.random() * 200 + 50;
-                });
+                const container = document.getElementById('image-container'); let delay = 0;
+                snap.forEach(childSnap => { setTimeout(() => showReactionAnimation(childSnap.val(), container), delay); delay += Math.random() * 200 + 50; });
             });
         }
-        
+
         function loadLikes(id) {
             db.ref(`reactions/${id}`).on('value', snap => {
                 const reactions = snap.val() || {};
                 const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 };
                 Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; });
-                
-                document.getElementById('reaction-counts-container').innerHTML = Object.entries(counts)
-                    .map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`)
-                    .join('');
-
+                document.getElementById('reaction-counts-container').innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join('');
                 const total = snap.numChildren();
                 const mainGridEl = document.getElementById(`reaction-total-${id}`);
                 if (mainGridEl) mainGridEl.textContent = total;
             });
         }
 
-        document.getElementById('like-btn').addEventListener('click', e => {
-            e.stopPropagation();
-            document.getElementById('reaction-circle-container').classList.toggle('open');
-        });
+        document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); });
         document.querySelectorAll('.reaction').forEach(reaction => {
             reaction.addEventListener('click', e => {
-                e.stopPropagation();
-                if (!currentImageId) return;
+                e.stopPropagation(); if (!currentImageId) return;
                 const type = e.currentTarget.dataset.type;
                 animateReactionOnImage(type);
                 const reactionsRef = db.ref(`reactions/${currentImageId}/${deviceID}`);
-                reactionsRef.once('value', snap => {
-                    (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type);
-                });
+                reactionsRef.once('value', snap => { (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); });
                 document.getElementById('reaction-circle-container').classList.remove('open');
             });
         });
         document.addEventListener('click', () => document.getElementById('reaction-circle-container').classList.remove('open'));
         
-        // --- Comentarios ---
         function loadComments(id) {
              db.ref(`comments/${id}`).orderByChild('timestamp').on('value', snap => {
                 const commentsContainer = document.getElementById('comments');
                 commentsContainer.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500">Aún no hay comentarios. ¡Sé el primero!</p>' : '';
-                
-                const comments = [];
-                snap.forEach(child => { comments.push(child.val()); });
-
+                const comments = []; snap.forEach(child => { comments.push(child.val()); });
                 comments.reverse().forEach(comment => {
                     const div = document.createElement('div');
                     const initial = comment.name ? comment.name.charAt(0).toUpperCase() : 'A';
-                    const avatarBg = 'bg-gradient-to-br from-blue-500 to-sky-500 text-white';
+                    const avatarBg = 'bg-gradient-to-br from-orange-500 to-orange-400 text-white';
                     div.innerHTML = `
                         <div class="flex gap-3">
                             <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${avatarBg} font-bold">${initial}</div>
                             <div class="flex-grow min-w-0">
                                 <div class="rounded-lg rounded-tl-none bg-gray-800 p-3">
-                                    <p class="font-bold text-blue-400">${comment.name || 'Anónimo'}</p>
+                                    <p class="font-bold text-orange-400">${comment.name || 'Anónimo'}</p>
                                     <p class="text-gray-300 whitespace-pre-wrap break-words">${comment.text || ''}</p>
                                 </div>
                                 <small class="pl-2 pt-1 text-xs text-gray-500">${new Date(comment.timestamp).toLocaleString()}</small>
@@ -1352,28 +1051,22 @@
             const comment = document.getElementById('comment-input').value.trim();
             if (!comment || !currentImageId) return;
             const commentData = { name: name || 'Anónimo', text: comment, timestamp: Date.now() };
-            db.ref(`comments/${currentImageId}`).push(commentData)
-              .then(() => document.getElementById('comment-input').value = '');
+            db.ref(`comments/${currentImageId}`).push(commentData).then(() => document.getElementById('comment-input').value = '');
         });
 
-        // --- Batalla ---
         async function initBattleSection() {
             const battleGrid = document.getElementById('battle-grid');
-            battleGrid.innerHTML = `<div class="w-full"><div class="skeleton"></div></div><span class="text-3xl font-black text-sky-400">VS</span><div class="w-full"><div class="skeleton"></div></div>`;
-
+            battleGrid.innerHTML = `<div class="w-full"><div class="skeleton"></div></div><span class="text-3xl font-black text-orange-400">VS</span><div class="w-full"><div class="skeleton"></div></div>`;
             const snap = await db.ref('battle').once('value');
             if (!snap.exists()) {
                 battleGrid.innerHTML = `<p class="text-center text-gray-500 col-span-full">Esperando la próxima batalla...</p>`;
                 document.getElementById('battle-timer').textContent = '';
-                loadPreviousBattleWinner();
-                return;
+                loadPreviousBattleWinner(); return;
             }
-
             const battle = snap.val();
             const snapshots = await Promise.all(battle.images.map(id => db.ref(`images/${id}`).once('value')));
             const battleImages = snapshots.map(snap => ({id: snap.key, ...snap.val()}));
             displayBattle(battleImages, battle.expiry);
-            
             loadPreviousBattleWinner();
         }
 
@@ -1382,137 +1075,74 @@
             const battleGrid = document.getElementById('battle-grid');
             battleGrid.innerHTML = `
                 <div class="battle-item relative w-full" id="battle-item-1" data-image-id="${img1.id}"></div>
-                <span class="text-3xl font-black text-sky-400" style="text-shadow: 0 0 10px var(--accent);">VS</span>
+                <span class="text-3xl font-black text-orange-400" style="text-shadow: 0 0 10px var(--accent);">VS</span>
                 <div class="battle-item relative w-full" id="battle-item-2" data-image-id="${img2.id}"></div>`;
-
             const renderItem = (container, img) => {
                 container.innerHTML = `
                     <i class="fas fa-crown crown-icon"></i>
                     <div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition duration-300 transform hover:scale-105 relative">
                         <img src="${img.url}" alt="${img.title}" onclick="openModal('${img.id}')" class="w-full h-full object-cover cursor-pointer">
                         <div class="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs font-bold" id="vote-count-${img.id}">0</div>
-                        <button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-blue-500 to-sky-500 px-4 py-2 text-sm font-bold text-white transition hover:scale-105" onclick="voteBattle('${img.id}', event)">Votar</button>
+                        <button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 text-sm font-bold text-white transition hover:scale-105" onclick="voteBattle('${img.id}', event)">Votar</button>
                     </div>`;
             };
             renderItem(document.getElementById('battle-item-1'), img1);
             renderItem(document.getElementById('battle-item-2'), img2);
-            
             db.ref('battle').on('value', snap => {
-                if (!snap.exists()) {
-                    initBattleSection(); 
-                    return;
-                }
-                const battle = snap.val();
-                if (!battle || !battle.votes) return;
+                if (!snap.exists()) { initBattleSection(); return; }
+                const battle = snap.val(); if (!battle || !battle.votes) return;
                 document.getElementById(`vote-count-${img1.id}`).textContent = battle.votes[img1.id] || 0;
                 document.getElementById(`vote-count-${img2.id}`).textContent = battle.votes[img2.id] || 0;
-                if (battle.users && battle.users[deviceID]) {
-                    document.querySelectorAll('.battle-vote-btn').forEach(b => b.style.display = 'none');
-                }
+                if (battle.users && battle.users[deviceID]) { document.querySelectorAll('.battle-vote-btn').forEach(b => b.style.display = 'none'); }
                 updateBattleHalo();
             });
-
             const timerEl = document.getElementById('battle-timer');
             if (window.battleTimerInterval) clearInterval(window.battleTimerInterval);
-            
             const updateTimer = () => {
                 const timeLeft = expiry - Date.now();
-                if (timeLeft <= 0) {
-                    clearInterval(window.battleTimerInterval);
-                    timerEl.textContent = "La batalla ha terminado. Esperando la siguiente...";
-                    return;
-                }
+                if (timeLeft <= 0) { clearInterval(window.battleTimerInterval); timerEl.textContent = "La batalla ha terminado. Esperando la siguiente..."; return; }
                 const d = Math.floor(timeLeft / 864e5), h = Math.floor(timeLeft / 36e5 % 24), m = Math.floor(timeLeft / 6e4 % 60);
                 timerEl.textContent = `Tiempo restante: ${d}d ${h}h ${m}m`;
             };
-            updateTimer();
-            window.battleTimerInterval = setInterval(updateTimer, 1000);
+            updateTimer(); window.battleTimerInterval = setInterval(updateTimer, 1000);
         }
 
         function voteBattle(imageId, event) {
             event.stopPropagation();
-
             const imageCard = event.target.closest('.aspect-\\[2\\/3\\]');
-            if (imageCard) {
-                imageCard.classList.add('vote-animation');
-                setTimeout(() => {
-                    imageCard.classList.remove('vote-animation');
-                }, 600);
-            }
-            
+            if (imageCard) { imageCard.classList.add('vote-animation'); setTimeout(() => { imageCard.classList.remove('vote-animation'); }, 600); }
             document.querySelectorAll('.battle-vote-btn').forEach(b => b.style.display = 'none');
-
             db.ref(`battle/users/${deviceID}`).once('value', snap => {
                 if (snap.exists()) return;
                 db.ref(`battle/users/${deviceID}`).set(imageId);
                 db.ref(`battle/votes/${imageId}`).transaction(c => (c || 0) + 1);
             });
         }
-        
+
         function updateBattleHalo() {
             db.ref('battle/votes').once('value').then(snap => {
-                const votes = snap.val();
-                if (!votes) return;
-
-                const item1 = document.getElementById('battle-item-1');
-                const item2 = document.getElementById('battle-item-2');
-                if (!item1 || !item2) return;
-
-                const id1 = item1.dataset.imageId;
-                const id2 = item2.dataset.imageId;
-
-                if (!id1 || !id2) return;
-
-                const img1Container = item1.querySelector('.aspect-\\[2\\/3\\]');
-                const img2Container = item2.querySelector('.aspect-\\[2\\/3\\]');
+                const votes = snap.val(); if (!votes) return;
+                const item1 = document.getElementById('battle-item-1'); const item2 = document.getElementById('battle-item-2');
+                if (!item1 || !item2) return; const id1 = item1.dataset.imageId; const id2 = item2.dataset.imageId; if (!id1 || !id2) return;
+                const img1Container = item1.querySelector('.aspect-\\[2\\/3\\]'); const img2Container = item2.querySelector('.aspect-\\[2\\/3\\]');
                 if (!img1Container || !img2Container) return;
-                
-                img1Container.classList.remove('winning', 'losing');
-                img2Container.classList.remove('winning', 'losing');
-                item1.classList.remove('has-crown');
-                item2.classList.remove('has-crown');
-
-                const votes1 = votes[id1] || 0;
-                const votes2 = votes[id2] || 0;
-
-                if (votes1 > votes2) {
-                    img1Container.classList.add('winning');
-                    img2Container.classList.add('losing');
-                    item1.classList.add('has-crown');
-                } else if (votes2 > votes1) {
-                    img2Container.classList.add('winning');
-                    img1Container.classList.add('losing');
-                    item2.classList.add('has-crown');
-                }
+                img1Container.classList.remove('winning', 'losing'); img2Container.classList.remove('winning', 'losing');
+                item1.classList.remove('has-crown'); item2.classList.remove('has-crown');
+                const votes1 = votes[id1] || 0; const votes2 = votes[id2] || 0;
+                if (votes1 > votes2) { img1Container.classList.add('winning'); img2Container.classList.add('losing'); item1.classList.add('has-crown'); }
+                else if (votes2 > votes1) { img2Container.classList.add('winning'); img1Container.classList.add('losing'); item2.classList.add('has-crown'); }
             });
         }
-        
+
         async function loadPreviousBattleWinner() {
             const winnerDataSnap = await db.ref('previousBattleWinner').once('value');
             const winnerContainer = document.getElementById('battle-winner-container');
-
-            if (!winnerDataSnap.exists()) {
-                winnerContainer.style.display = 'none';
-                return;
-            }
-
+            if (!winnerDataSnap.exists()) { winnerContainer.style.display = 'none'; return; }
             const { winnerId, loserId, winnerVotes, loserVotes } = winnerDataSnap.val();
-
-            const [winnerSnap, loserSnap] = await Promise.all([
-                db.ref(`images/${winnerId}`).once('value'),
-                db.ref(`images/${loserId}`).once('value')
-            ]);
-
-            if (!winnerSnap.exists() || !loserSnap.exists()) {
-                 winnerContainer.style.display = 'none';
-                return;
-            }
-
-            const winner = { id: winnerSnap.key, ...winnerSnap.val() };
-            const loser = { id: loserSnap.key, ...loserSnap.val() };
-            
+            const [winnerSnap, loserSnap] = await Promise.all([ db.ref(`images/${winnerId}`).once('value'), db.ref(`images/${loserId}`).once('value') ]);
+            if (!winnerSnap.exists() || !loserSnap.exists()) { winnerContainer.style.display = 'none'; return; }
+            const winner = { id: winnerSnap.key, ...winnerSnap.val() }; const loser = { id: loserSnap.key, ...loserSnap.val() };
             const container = document.getElementById('battle-winner');
-            
             container.innerHTML = `
                 <div class="relative group aspect-[2/3] rounded-2xl overflow-hidden shadow-lg cursor-pointer" onclick="openModal('${winner.id}')">
                     <img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
@@ -1525,7 +1155,7 @@
                                 <span class="absolute -bottom-2 -right-2 text-2xl drop-shadow-lg">👑</span>
                             </div>
                             <div class="text-center">
-                                <p class="text-2xl font-bold text-sky-300 drop-shadow-md">${winnerVotes}</p>
+                                <p class="text-2xl font-bold text-orange-300 drop-shadow-md">${winnerVotes}</p>
                                 <p class="text-sm font-semibold text-gray-200">VS</p>
                                 <p class="text-xl font-bold text-gray-400 drop-shadow-md">${loserVotes}</p>
                             </div>
@@ -1539,27 +1169,19 @@
             winnerContainer.style.display = 'block';
         }
 
-        // --- SECCIÓN DE ENCUESTA UNIFICADA ---
         async function loadPollSection() {
             const pollContainer = document.getElementById('poll-container');
-            
             db.ref('polls/activePoll').on('value', async snap => {
                 if (snap.exists()) {
                     activePoll = snap.val();
                     const hasAnsweredSnap = await db.ref(`poll_votes/${deviceID}/${activePoll.questionId}`).once('value');
                     const hasAnswered = hasAnsweredSnap.exists();
-                    
                     pollContainer.innerHTML = `
                         <p class="text-xl sm:text-2xl font-semibold text-gray-200 mb-4">${activePoll.question}</p>
-                        <button 
-                                @click.prevent="isPollOpen = true"
-                                class="rounded-full bg-green-600 px-8 py-3 font-semibold text-white transition hover:bg-green-500 hover:scale-105 disabled:bg-gray-500 disabled:cursor-not-allowed" 
-                                ${hasAnswered ? 'disabled' : ''}>
+                        <button @click.prevent="isPollOpen = true" class="rounded-full bg-green-600 px-8 py-3 font-semibold text-white transition hover:bg-green-500 hover:scale-105 disabled:bg-gray-500 disabled:cursor-not-allowed" ${hasAnswered ? 'disabled' : ''}>
                             <i class="fas fa-edit mr-2"></i> ${hasAnswered ? 'Ya Respondiste' : 'Responder'}
-                        </button>
-                    `;
+                        </button>`;
                     document.getElementById('poll-widget-question').textContent = activePoll.question;
-
                     loadPollAnswers(activePoll.questionId);
                 } else {
                     activePoll = null;
@@ -1572,21 +1194,13 @@
         function loadPollAnswers(questionId) {
             db.ref(`poll_answers/${questionId}`).on('value', snap => {
                 const mainContainer = document.getElementById('poll-answers-main-container');
-                mainContainer.innerHTML = '';
-                if (!snap.exists()) return;
-
-                const answers = [];
-                snap.forEach(child => { answers.push({ id: child.key, ...child.val() }); });
-
+                mainContainer.innerHTML = ''; if (!snap.exists()) return;
+                const answers = []; snap.forEach(child => { answers.push({ id: child.key, ...child.val() }); });
                 const totalLikes = answers.reduce((sum, ans) => sum + Object.keys(ans.likes || {}).length, 0);
                 answers.sort((a, b) => (Object.keys(b.likes || {}).length) - (Object.keys(a.likes || {}).length));
-
                 const renderCardHTML = (answer) => {
-                    const likes = answer.likes || {};
-                    const likeCount = Object.keys(likes).length;
-                    const userHasLiked = likes[deviceID];
+                    const likes = answer.likes || {}; const likeCount = Object.keys(likes).length; const userHasLiked = likes[deviceID];
                     const percentage = totalLikes > 0 ? Math.min(100, (likeCount / totalLikes) * 100) : 0;
-                    
                     return `
                         <div class="poll-answer-card bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700 flex-shrink-0">
                             <div class="poll-vote-bar" style="width: ${percentage}%;"></div>
@@ -1595,82 +1209,52 @@
                                 <div class="flex items-center justify-between">
                                     <span class="text-sm font-bold text-green-400">${answer.name || 'Anónimo'}</span>
                                     <button class="poll-like-btn flex items-center gap-2 rounded-full px-3 py-1 text-sm transition ${userHasLiked ? 'bg-green-500 text-white' : 'bg-slate-700 hover:bg-slate-600 text-gray-300'}" data-answer-id="${answer.id}">
-                                        <i class="fas fa-thumbs-up"></i>
-                                        <span>${likeCount}</span>
+                                        <i class="fas fa-thumbs-up"></i> <span>${likeCount}</span>
                                     </button>
                                 </div>
                             </div>
                         </div>`;
                 };
-
                 if (answers.length <= 3) {
-                    const grid = document.createElement('div');
-                    grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+                    const grid = document.createElement('div'); grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
                     answers.forEach((answer, index) => {
-                        const cardWrapper = document.createElement('div');
-                        cardWrapper.className = 'poll-grid-animation';
-                        cardWrapper.style.animationDelay = `${index * 0.07}s`;
-                        cardWrapper.innerHTML = renderCardHTML(answer);
-                        grid.appendChild(cardWrapper);
+                        const cardWrapper = document.createElement('div'); cardWrapper.className = 'poll-grid-animation'; cardWrapper.style.animationDelay = `${index * 0.07}s`;
+                        cardWrapper.innerHTML = renderCardHTML(answer); grid.appendChild(cardWrapper);
                     });
                     mainContainer.appendChild(grid);
                 } else {
-                    const scroller = document.createElement('div');
-                    scroller.className = 'poll-scroller';
-                    const scrollerInner = document.createElement('div');
-                    scrollerInner.className = 'scroller-inner';
-
+                    const scroller = document.createElement('div'); scroller.className = 'poll-scroller';
+                    const scrollerInner = document.createElement('div'); scrollerInner.className = 'scroller-inner';
                     const allCardsHTML = answers.map(renderCardHTML).join('');
                     scrollerInner.innerHTML = allCardsHTML + allCardsHTML;
-                    
-                    scroller.appendChild(scrollerInner);
-                    mainContainer.appendChild(scroller);
+                    scroller.appendChild(scrollerInner); mainContainer.appendChild(scroller);
                 }
-                
-                document.querySelectorAll('.poll-like-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        if (!activePoll) return;
-                        likePollAnswer(activePoll.questionId, btn.dataset.answerId);
-                    });
-                });
+                document.querySelectorAll('.poll-like-btn').forEach(btn => { btn.addEventListener('click', () => { if (!activePoll) return; likePollAnswer(activePoll.questionId, btn.dataset.answerId); }); });
             });
         }
 
         function likePollAnswer(questionId, answerId) {
             if (!deviceID) return;
             const likeRef = db.ref(`poll_answers/${questionId}/${answerId}/likes/${deviceID}`);
-            likeRef.once('value', snap => {
-                snap.exists() ? likeRef.remove() : likeRef.set(true);
-            });
+            likeRef.once('value', snap => { snap.exists() ? likeRef.remove() : likeRef.set(true); });
         }
-        
+
         function handlePollSubmit(e) {
-            e.preventDefault();
-            if (!activePoll) return;
-            
+            e.preventDefault(); if (!activePoll) return;
             const text = document.getElementById('poll-answer-input').value.trim();
             const name = document.getElementById('poll-name-input').value.trim();
-
             if (!text) return;
-
-            const answerData = {
-                text: text,
-                name: name || 'Anónimo',
-                deviceID: deviceID,
-                timestamp: Date.now()
-            };
-            
+            const answerData = { text: text, name: name || 'Anónimo', deviceID: deviceID, timestamp: Date.now() };
             db.ref(`poll_answers/${activePoll.questionId}`).push(answerData);
             db.ref(`poll_votes/${deviceID}/${activePoll.questionId}`).set(true);
-            
             e.target.reset();
         }
 
         function showError(message) {
             const errorEl = document.getElementById('error-message');
-            errorEl.textContent = message;
-            errorEl.style.display = 'block';
+            errorEl.textContent = message; errorEl.style.display = 'block';
         }
     </script>
 </body>
 </html>
+
