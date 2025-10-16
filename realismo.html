@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>exen-E | Realismo</title>
+    <!-- Metatags, Tailwind, Fonts, Icons, Firebase -->
+    <meta property="og:title" content="exen-E | Categoría Anime" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://files.catbox.moe/4ubhtv.jpg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        /* ================================================ */
+        /* == COMIENZO DE LA SECCIÓN PARA PERSONALIZAR == */
+        :root {
+            /* 1. Cambia los colores de acento */
+            --accent: #ef4444; /* red-500 */
+            --accent-neon: #f87171; /* red-400 */
+            /* 2. URL del banner superior */
+            --banner-image-url: url('https://files.catbox.moe/x70qgg.jpg');
+            /* 3. Colores de fondo */
+            --main-bg-color: #121212;
+            --gradient-color-1: rgba(239, 68, 68, 0.1);
+            --gradient-color-2: rgba(248, 113, 113, 0.1);
+        }
+        /* === FIN DE LA SECCIÓN PARA PERSONALIZAR === */
+        /* ================================================ */
+
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--main-bg-color); background-image: radial-gradient(circle at 15% 50%, var(--gradient-color-1), transparent 40%), radial-gradient(circle at 85% 30%, var(--gradient-color-2), transparent 40%); color: #f3f4f6; }
+        .category-banner { width: 100%; aspect-ratio: 3 / 1; max-height: 400px; background-image: var(--banner-image-url); background-size: cover; background-position: center; position: relative; z-index: 1; }
+        .category-banner::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 75%; background: linear-gradient(to bottom, transparent, var(--main-bg-color)); }
+        .category-title-container { position: relative; z-index: 2; margin-top: -5rem; text-align: center; padding-bottom: 2rem; }
+        .category-title-container h1 { font-weight: 900; letter-spacing: 0.025em; background: linear-gradient(90deg, var(--accent-neon), var(--accent) 80%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        header { border-bottom: 1px solid rgba(251, 146, 60, 0.2); box-shadow: 0 5px 20px rgba(249, 115, 22, 0.05); }
+        .nav-link:hover { background-color: rgba(251, 146, 60, 0.1); color: #fff; }
+        .nav-link-active { background-color: #f97316; color: #fff !important; box-shadow: 0 0 15px rgba(251, 146, 60, 0.4); }
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+        .skeleton { background-color: #374151; background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%); background-repeat: no-repeat; background-size: 2000px 100%; animation: shimmer 1.5s linear infinite; border-radius: 0.75rem; aspect-ratio: 2 / 3; }
+        @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
+        @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
+        .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
+        .reaction-animation { position: absolute; font-size: 2rem; pointer-events: none; animation: floatUp 1.5s ease forwards; z-index: 10; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        #reaction-circle-container.open .reaction-circle-item { opacity: 1; transform: scale(1) var(--transform-pos); }
+        #reaction-circle-container.open #reaction-bg { transform: scale(1); }
+        .reaction-circle-item { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform: scale(0); opacity: 0; }
+        #scrollToTopBtn { position: fixed; bottom: 20px; right: 20px; z-index: 100; opacity: 0; visibility: hidden; transform: translateY(20px); transition: opacity 0.3s, visibility 0.3s, transform 0.3s; }
+        #scrollToTopBtn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+        .image-card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .image-card-hover:hover { transform: scale(1.03); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="antialiased">
+    <header class="sticky top-0 z-[100] bg-gray-900/80 p-4 backdrop-blur-lg">
+        <nav class="container mx-auto flex-grow flex justify-center">
+            <ul class="flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
+                <li><a href="index.html" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Galería</a></li>
+                <li><a href="batalla.html" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Batalla</a></li>
+                <li><a href="encuesta.html" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Encuesta</a></li>
+                <li><a href="videos.html" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Música</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="category-banner"></div>
+        <div class="container mx-auto px-2 sm:px-4">
+            <div class="category-title-container">
+                <h1 class="text-4xl md:text-6xl">Realismo</h1>
+            </div>
+            <section id="gallery">
+                <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
+                <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"></div>
+                <div id="loader" class="py-12 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4" style="display: none;"></div>
+                <div id="load-more-trigger" class="h-10"></div>
+            </section>
+        </div>
+    </main>
+    
+    <!-- Modal (Actualizado con sistema de reacciones completo) -->
+    <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90 backdrop-blur-md" style="display: none;">
+        <button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white"><i class="fas fa-chevron-left text-2xl"></i></button>
+        <button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white"><i class="fas fa-chevron-right text-2xl"></i></button>
+        <div id="modal-content" class="h-full w-full overflow-y-auto">
+            <div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4">
+                <header id="modal-header" class="flex items-center justify-between">
+                    <h2 id="title" class="bg-gradient-to-r from-red-400 to-red-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2>
+                    <button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90"><i class="fas fa-times text-2xl"></i></button>
+                </header>
+                <div class="flex flex-col items-center gap-4">
+                    <div id="image-container" class="relative -mx-2 sm:mx-0 sm:rounded-xl overflow-hidden w-full"><img id="full-img" src="" alt="" class="h-auto max-h-[75vh] w-full object-contain"></div>
+                    
+                    <div id="reaction-circle-container" class="relative z-20">
+                        <div class="relative flex items-center justify-center">
+                            <div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="like">❤️</span></div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="hot">🔥</span></div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="wow">😯</span></div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="laugh">😂</span></div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sad">😢</span></div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sexy">🫦</span></div>
+                            <button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-red-400 text-white shadow-lg transition-transform duration-300 hover:scale-110"><i class="fas fa-heart text-2xl"></i></button>
+                        </div>
+                    </div>
+
+                    <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
+                    <p id="desc" class="rounded-xl border-2 border-red-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
+                    <section id="comments-section" class="mt-4 w-full">
+                        <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row"><input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4"><input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white"><button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-red-600 px-5 py-2 font-semibold text-white"><i class="fas fa-paper-plane"></i> Enviar</button></form>
+                        <div id="comments" class="flex flex-col gap-4"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-red-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-red-500"><i class="fas fa-arrow-up"></i></button>
+    <footer class="mt-12 py-8 text-center text-gray-500"><p>&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
+
+    <script>
+        "use strict";
+        // --- CONFIGURACIÓN DE LA PÁGINA DE CATEGORÍA ---
+        // 4. Cambia 'realismo' por el valor de la categoría que corresponde a esta página.
+        const CATEGORY_TO_LOAD = 'realismo';
+
+        const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        firebase.auth().signInAnonymously().catch(console.error);
+
+        const imagesPerLoad = 20;
+        let categoryImages = []; 
+        let displayedImages = [];
+        let isLoading = false;
+        let noMoreImages = false;
+        let currentImageId = '';
+        let currentImageIndex = -1;
+        
+        let deviceID = localStorage.getItem('deviceID');
+        if (!deviceID) {
+            deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            localStorage.setItem('deviceID', deviceID);
+        }
+        let userReactions = {};
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        async function initializeApp() {
+            await fetchUserReactions();
+            await filterImagesByCategory();
+            loadInitialImages();
+            setupIntersectionObserver();
+            setupEventListeners();
+        }
+
+        async function fetchUserReactions() {
+            const snapshot = await db.ref('reactions').once('value');
+            const allReactions = snapshot.val() || {};
+            userReactions = {};
+            Object.keys(allReactions).forEach(imgId => {
+                if(allReactions[imgId][deviceID]) {
+                    userReactions[imgId] = allReactions[imgId][deviceID];
+                }
+            });
+        }
+
+        async function filterImagesByCategory() {
+            const grid = document.getElementById('grid');
+            generateSkeletons(grid, imagesPerLoad);
+            try {
+                const snapshot = await db.ref('images').orderByChild('timestamp').once('value');
+                if (!snapshot.exists()) { showError("No se encontraron imágenes en la base de datos."); return; }
+                const allData = [];
+                snapshot.forEach(child => { allData.push({ id: child.key, ...child.val() }); });
+                categoryImages = allData.reverse().filter(img => Array.isArray(img.categories) && img.categories.includes(CATEGORY_TO_LOAD));
+            } catch (error) { showError("Error al conectar con la base de datos."); console.error(error); }
+        }
+
+        function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton'; } }
+        
+        function loadInitialImages() { if (isLoading) return; isLoading = true; displayedImages = categoryImages.slice(0, imagesPerLoad); displayImages(displayedImages, 'grid'); if (displayedImages.length < imagesPerLoad) { noMoreImages = true; } isLoading = false; }
+
+        function loadMoreImages() {
+            if (isLoading || noMoreImages) return;
+            isLoading = true;
+            const loaderContainer = document.getElementById('loader');
+            loaderContainer.style.display = 'grid';
+            generateSkeletons(loaderContainer, 5);
+            const currentLoadedCount = displayedImages.length;
+            const newImages = categoryImages.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad);
+            setTimeout(() => { if (newImages.length === 0) { noMoreImages = true; } else { displayedImages = displayedImages.concat(newImages); displayImages(newImages, 'grid', true); } loaderContainer.style.display = 'none'; isLoading = false; }, 500);
+        }
+
+        function displayImages(images, containerId, append = false) {
+            const grid = document.getElementById(containerId);
+            if (!append) grid.innerHTML = '';
+            if (images.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes en esta categoría.</div>`; return; }
+            images.forEach((img, index) => { if (!img || !img.url || !img.title) return; const div = document.createElement('div'); div.className = 'image-item-animation group relative aspect-[2/3] overflow-hidden rounded-xl image-card-hover'; div.setAttribute('onclick', `openModal('${img.id}')`); div.style.animationDelay = `${(index * 0.05)}s`; div.innerHTML = `<img src="${img.url}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-3 pointer-events-none"><h4 class="truncate font-bold text-white">${img.title}</h4></div>`; grid.appendChild(div); });
+        }
+
+        async function openModal(id) {
+            let img = categoryImages.find(i => i && i.id === id);
+            if (!img) { const snapshot = await db.ref(`images/${id}`).once('value'); if (snapshot.exists()) img = {id: snapshot.key, ...snapshot.val()}; else { console.error("Image not found"); return; } }
+            currentImageId = id;
+            currentImageIndex = displayedImages.findIndex(i => i && i.id === id);
+            document.getElementById('full-img').src = img.url;
+            document.getElementById('title').textContent = img.title;
+            document.getElementById('desc').textContent = img.desc;
+            loadLikes(id);
+            loadComments(id);
+            triggerReactionRain(id);
+            document.getElementById('prev-image').style.display = currentImageIndex > 0 ? 'flex' : 'none';
+            document.getElementById('next-image').style.display = currentImageIndex < displayedImages.length - 1 ? 'flex' : 'none';
+            document.getElementById('modal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function setupEventListeners() {
+            const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+            window.addEventListener('scroll', () => { (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible'); });
+            scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+            document.getElementById('close-modal').addEventListener('click', () => { document.getElementById('modal').style.display = 'none'; document.body.style.overflow = 'auto'; });
+            document.getElementById('prev-image').addEventListener('click', () => { if (currentImageIndex > 0) openModal(displayedImages[currentImageIndex - 1].id); });
+            document.getElementById('next-image').addEventListener('click', () => { if (currentImageIndex < displayedImages.length - 1) openModal(displayedImages[currentImageIndex + 1].id); });
+            document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); });
+            // --- NUEVO: Listeners para reacciones ---
+            document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); });
+            document.querySelectorAll('.reaction').forEach(reaction => { reaction.addEventListener('click', e => { e.stopPropagation(); if (!currentImageId) return; const type = e.currentTarget.dataset.type; animateReactionOnImage(type); const reactionsRef = db.ref(`reactions/${currentImageId}/${deviceID}`); reactionsRef.once('value', snap => { (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); }); document.getElementById('reaction-circle-container').classList.remove('open'); }); });
+            document.addEventListener('click', () => { if (document.getElementById('reaction-circle-container')) document.getElementById('reaction-circle-container').classList.remove('open'); });
+        }
+
+        function setupIntersectionObserver() { const trigger = document.getElementById('load-more-trigger'); const observer = new IntersectionObserver((entries) => { if (entries[0].isIntersecting) loadMoreImages(); }, { rootMargin: '0px 0px 500px 0px' }); observer.observe(trigger); }
+        function postComment() { const name = document.getElementById('name-input').value.trim(); const comment = document.getElementById('comment-input').value.trim(); if (!comment || !currentImageId) return; const commentData = { name: name || 'Anónimo', text: comment, timestamp: Date.now() }; db.ref(`comments/${currentImageId}`).push(commentData).then(() => { document.getElementById('comment-input').value = ''; }); }
+        function loadLikes(id) { db.ref(`reactions/${id}`).on('value', snap => { const reactions = snap.val() || {}; const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 }; Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; }); const container = document.getElementById('reaction-counts-container'); if (container) container.innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join(''); }); }
+        function loadComments(id) { const commentsRef = db.ref(`comments/${id}`); commentsRef.off(); commentsRef.orderByChild('timestamp').on('value', snap => { const commentsContainer = document.getElementById('comments'); commentsContainer.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500">Sé el primero en comentar.</p>' : ''; const comments = []; snap.forEach(child => { comments.push(child.val()); }); comments.reverse().forEach(comment => { const div = document.createElement('div'); const initial = comment.name ? comment.name.charAt(0).toUpperCase() : 'A'; div.innerHTML = `<div class="flex gap-3"><div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-400 font-bold">${initial}</div><div class="flex-grow min-w-0"><div class="rounded-lg rounded-tl-none bg-gray-800 p-3"><p class="font-bold text-red-400">${comment.name || 'Anónimo'}</p><p class="text-gray-300 break-words">${comment.text || ''}</p></div><small class="pl-2 pt-1 text-xs text-gray-500">${new Date(comment.timestamp).toLocaleString()}</small></div></div>`; commentsContainer.appendChild(div); }); }); }
+        function showError(message) { const errorEl = document.getElementById('error-message'); errorEl.textContent = message; errorEl.style.display = 'block'; document.getElementById('grid').innerHTML = ''; }
+        
+        // --- NUEVO: Funciones de ayuda para reacciones ---
+        function animateReactionOnImage(type) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; const icon = icons[type]; if (!icon) return; const container = document.getElementById('image-container'); const animationEl = document.createElement('div'); animationEl.className = 'punch-animation'; animationEl.textContent = icon; container.appendChild(animationEl); setTimeout(() => { if (animationEl.parentElement) animationEl.remove(); }, 500); }
+        function showReactionAnimation(type, container) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; if (!icons[type]) return; const reaction = document.createElement('span'); reaction.className = 'reaction-animation'; reaction.textContent = icons[type]; reaction.style.left = `${Math.random() * 80 + 10}%`; reaction.style.bottom = '20px'; container.appendChild(reaction); setTimeout(() => reaction.remove(), 1500); }
+        function triggerReactionRain(id) { db.ref(`reactions/${id}`).once('value', snap => { const container = document.getElementById('image-container'); let delay = 0; snap.forEach(childSnap => { setTimeout(() => showReactionAnimation(childSnap.val(), container), delay); delay += Math.random() * 200 + 50; }); }); }
+    </script>
+</body>
+</html>
+
