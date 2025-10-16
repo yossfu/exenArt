@@ -56,7 +56,7 @@
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
         
-        /* --- NUEVO: Estilos para carga progresiva de imagen en el modal --- */
+        /* --- NUEVO EFECTO: Carga progresiva con barrido --- */
         #image-container .progressive-image {
             position: absolute;
             top: 0;
@@ -64,21 +64,36 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            transition: opacity 0.5s ease-out, filter 0.5s ease-out;
         }
         #image-container .thumbnail-img {
-            filter: blur(20px);
-            transform: scale(1.1);
             opacity: 1;
         }
         #image-container .full-res-img {
-            opacity: 0;
-        }
-        #image-container.loaded .thumbnail-img {
-            opacity: 0;
+            opacity: 1;
+            clip-path: inset(0 100% 0 0);
+            transition: clip-path 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         #image-container.loaded .full-res-img {
+            clip-path: inset(0 0 0 0);
+        }
+        #image-container .loading-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 10;
+            pointer-events: none;
             opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        #image-container.loaded .loading-indicator {
+            opacity: 0;
         }
     </style>
 </head>
@@ -120,7 +135,7 @@
                     <button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90"><i class="fas fa-times text-2xl"></i></button>
                 </header>
                 <div class="flex flex-col items-center gap-4">
-                    <!-- MODIFICADO: Contenedor de imagen para carga progresiva -->
+                    <!-- Contenedor de imagen para carga progresiva -->
                     <div id="image-container" class="relative -mx-2 sm:mx-0 sm:rounded-xl overflow-hidden w-full aspect-[2/3] max-h-[75vh]">
                         <!-- Las imágenes se crearán con JS -->
                     </div>
@@ -228,7 +243,7 @@
             images.forEach((img, index) => { if (!img || !img.url || !img.title) return; const div = document.createElement('div'); div.className = 'image-item-animation group relative aspect-[2/3] overflow-hidden rounded-xl image-card-hover'; div.setAttribute('onclick', `openModal('${img.id}')`); div.style.animationDelay = `${(index * 0.05)}s`; const displayUrl = img.thumbnailUrl || img.url; div.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-3 pointer-events-none"><h4 class="truncate font-bold text-white">${img.title}</h4></div>`; grid.appendChild(div); });
         }
 
-        // --- MODIFICADO: Lógica de openModal para carga progresiva ---
+        // --- MODIFICADO: Lógica de openModal para carga progresiva con barrido ---
         async function openModal(id) {
             let img = categoryImages.find(i => i && i.id === id);
             if (!img) { const snapshot = await db.ref(`images/${id}`).once('value'); if (snapshot.exists()) img = {id: snapshot.key, ...snapshot.val()}; else { console.error("Image not found"); return; } }
@@ -239,25 +254,44 @@
             imageContainer.innerHTML = ''; // Limpiar contenedor
             imageContainer.classList.remove('loaded');
 
-            // 1. Crear y mostrar la miniatura borrosa
+            // 1. Crear el indicador de carga
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'loading-indicator';
+            loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Cargando calidad...';
+            
+            // 2. Crear y mostrar la miniatura como base
             const thumbnailEl = document.createElement('img');
             thumbnailEl.src = img.thumbnailUrl || img.url;
             thumbnailEl.className = 'progressive-image thumbnail-img';
-            imageContainer.appendChild(thumbnailEl);
-
-            // 2. Crear la imagen de alta resolución (inicialmente invisible)
+            
+            // 3. Crear la imagen de alta resolución (inicialmente oculta por clip-path)
             const fullResEl = document.createElement('img');
             fullResEl.className = 'progressive-image full-res-img';
-            imageContainer.appendChild(fullResEl);
             
-            // 3. Cargar la imagen completa en segundo plano
+            // 4. Añadir elementos al DOM
+            imageContainer.appendChild(thumbnailEl);
+            imageContainer.appendChild(fullResEl);
+            imageContainer.appendChild(loadingIndicator);
+
+            // 5. Cargar la imagen completa en segundo plano
             const fullImageLoader = new Image();
             fullImageLoader.src = img.url;
             fullImageLoader.onload = () => {
                 fullResEl.src = fullImageLoader.src;
                 imageContainer.classList.add('loaded'); // Activa la transición CSS
+                // Ocultar y eliminar el indicador después de la transición
+                setTimeout(() => {
+                    if (loadingIndicator.parentElement) {
+                        loadingIndicator.remove();
+                    }
+                }, 1000); // 700ms de transición + buffer
             };
-            fullImageLoader.onerror = () => { imageContainer.classList.add('loaded'); }
+            fullImageLoader.onerror = () => {
+                imageContainer.classList.add('loaded'); 
+                if (loadingIndicator.parentElement) {
+                    loadingIndicator.remove();
+                }
+            }
             
             document.getElementById('title').textContent = img.title;
             document.getElementById('desc').textContent = img.desc;
@@ -292,4 +326,3 @@
     </script>
 </body>
 </html>
-
