@@ -52,8 +52,6 @@
         .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
         @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
         .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
-        .reaction-animation { position: absolute; font-size: 2rem; pointer-events: none; animation: floatUp 1.5s ease forwards; z-index: 10; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
         #reaction-circle-container.open .reaction-circle-item { opacity: 1; transform: scale(1) var(--transform-pos); }
         #reaction-circle-container.open #reaction-bg { transform: scale(1); }
         .reaction-circle-item { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform: scale(0); opacity: 0; }
@@ -92,46 +90,34 @@
         #filter-toggle-btn:hover { background-color: var(--accent); border-color: var(--accent-neon); color: #ffffff; }
         #filter-toggle-btn.active { background-color: var(--accent); border-color: var(--accent-neon); color: #ffffff; box-shadow: 0 0 10px var(--accent-neon); }
 
-        #floating-comments-container {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 15;
-        }
-        @keyframes floatCommentUp {
-            0% { opacity: 0.9; transform: translateY(0) scale(0.8); }
-            100% { opacity: 0; transform: translateY(-200px) scale(1); }
-        }
-        .comment-bubble {
-            position: absolute;
-            bottom: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            max-width: 250px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            animation: floatCommentUp 5s ease-out forwards;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.4);
-        }
-        .comment-bubble-author {
-            font-weight: bold;
-            color: #fb923c; /* orange-400 */
-            margin-right: 6px;
-        }
+        #floating-comments-container { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 15; }
+        @keyframes floatCommentUp { 0% { opacity: 0.9; transform: translateY(0) scale(0.8); } 100% { opacity: 0; transform: translateY(-200px) scale(1); } }
+        .comment-bubble { position: absolute; bottom: 10px; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 8px 12px; border-radius: 20px; font-size: 0.9rem; white-space: nowrap; max-width: 250px; overflow: hidden; text-overflow: ellipsis; animation: floatCommentUp 5s ease-out forwards; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+        .comment-bubble-author { font-weight: bold; color: #fb923c; margin-right: 6px; }
 
-        /* --- NUEVO: Estilo para carga progresiva de imagen en el modal --- */
-        #image-container.loading-blur {
+        /* --- NUEVO: Estilos para carga progresiva de imagen en el modal --- */
+        #image-container .progressive-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: opacity 0.5s ease-out, filter 0.5s ease-out;
+        }
+        #image-container .thumbnail-img {
             filter: blur(20px);
             transform: scale(1.1);
-            transition: filter 0.4s ease-out, transform 0.4s ease-out;
+            opacity: 1;
         }
-        #image-container {
-            transition: filter 0.4s ease-out, transform 0.4s ease-out;
+        #image-container .full-res-img {
+            opacity: 0;
+        }
+        #image-container.loaded .thumbnail-img {
+            opacity: 0;
+        }
+        #image-container.loaded .full-res-img {
+            opacity: 1;
         }
     </style>
 </head>
@@ -173,7 +159,6 @@
             </div>
         </form>
 
-        <!-- INICIO: Menú de Categorías Desplegable -->
         <div class="mb-4 flex justify-center">
             <button id="filter-toggle-btn" class="flex items-center gap-2 rounded-full px-6 py-2 font-semibold">
                 <i class="fas fa-filter"></i>
@@ -190,7 +175,6 @@
             <a href="amateur.html" id="cat-btn-amateur" class="category-button"><span>Amateur</span></a>
             <a href="tvgames.html" id="cat-btn-tvgames" class="category-button"><span>TV & Games</span></a>
         </div>
-        <!-- FIN: Menú de Categorías Desplegable -->
 
         <div id="search-results-container" class="hidden">
             <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
@@ -224,7 +208,12 @@
         </section>
     </main>
 
-    <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90 backdrop-blur-md" style="display: none;"><button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white"><i class="fas fa-chevron-left text-2xl"></i></button><button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white"><i class="fas fa-chevron-right text-2xl"></i></button><div id="modal-content" class="h-full w-full overflow-y-auto"><div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4"><header id="modal-header" class="flex items-center justify-between"><h2 id="title" class="bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2><button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90"><i class="fas fa-times text-2xl"></i></button></header><div class="flex flex-col items-center gap-4"><div id="image-container" class="relative -mx-2 sm:mx-0 sm:rounded-xl overflow-hidden w-full"><img id="full-img" src="" alt="" class="h-auto max-h-[75vh] w-full object-contain"><div id="floating-comments-container"></div></div><div id="reaction-circle-container" class="relative z-20"><div class="relative flex items-center justify-center"><div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="like">❤️</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="hot">🔥</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="wow">😯</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="laugh">😂</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sad">😢</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sexy">🫦</span></div><button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-lg transition-transform duration-300 hover:scale-110"><i class="fas fa-heart text-2xl"></i></button></div></div><div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div><p id="desc" class="rounded-xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p><section id="similar-section" class="mt-4 w-full"><h3 class="mb-4 text-center text-xl"><i class="fas fa-th-large text-orange-400"></i> Similares</h3><div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div></section><section id="comments-section" class="mt-4 w-full"><form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row"><input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4"><input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white"><button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white"><i class="fas fa-paper-plane"></i> Enviar</button></form><div id="comments" class="flex flex-col gap-4"></div></section></div></div></div></div>
+    <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90 backdrop-blur-md" style="display: none;"><button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white"><i class="fas fa-chevron-left text-2xl"></i></button><button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white"><i class="fas fa-chevron-right text-2xl"></i></button><div id="modal-content" class="h-full w-full overflow-y-auto"><div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4"><header id="modal-header" class="flex items-center justify-between"><h2 id="title" class="bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2><button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90"><i class="fas fa-times text-2xl"></i></button></header><div class="flex flex-col items-center gap-4">
+        <!-- MODIFICADO: Contenedor de imagen para carga progresiva -->
+        <div id="image-container" class="relative -mx-2 sm:mx-0 sm:rounded-xl overflow-hidden w-full aspect-[2/3] max-h-[75vh]">
+            <!-- Las imágenes se crearán con JS -->
+        </div>
+        <div id="reaction-circle-container" class="relative z-20"><div class="relative flex items-center justify-center"><div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="like">❤️</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="hot">🔥</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="wow">😯</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="laugh">😂</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sad">😢</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sexy">🫦</span></div><button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-lg transition-transform duration-300 hover:scale-110"><i class="fas fa-heart text-2xl"></i></button></div></div><div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div><p id="desc" class="rounded-xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p><section id="similar-section" class="mt-4 w-full"><h3 class="mb-4 text-center text-xl"><i class="fas fa-th-large text-orange-400"></i> Similares</h3><div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div></section><section id="comments-section" class="mt-4 w-full"><form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row"><input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4"><input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white"><button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white"><i class="fas fa-paper-plane"></i> Enviar</button></form><div id="comments" class="flex flex-col gap-4"></div></section></div></div></div></div>
     <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-orange-500"><i class="fas fa-arrow-up"></i></button>
     <footer class="mt-12 py-8 text-center text-gray-500"><p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
 
@@ -252,14 +241,10 @@
         async function loadFeaturedVideos() { const grid = document.getElementById('featured-videos-grid'); grid.innerHTML = ''; try { const videosSnap = await db.ref('videos').once('value'); if (!videosSnap.exists()) { grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay música disponible.</p>'; return; } let allVideos = []; videosSnap.forEach(child => { allVideos.push({ id: child.key, ...child.val() }); }); for (let i = allVideos.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [allVideos[i], allVideos[j]] = [allVideos[j], allVideos[i]]; } const randomVideos = allVideos.slice(0, 10); if (randomVideos.length > 0) { displayVideos(randomVideos, 'featured-videos-grid'); initAutoSlider('featured-videos-grid'); } else { grid.innerHTML = '<p class="w-full text-center text-gray-500">No se pudo cargar la música.</p>'; } } catch (error) { console.error("Error al cargar videos destacados:", error); grid.innerHTML = '<p class="w-full text-center text-red-400">Error al cargar la música.</p>'; } }
         function displayVideos(videos, containerId) { const grid = document.getElementById(containerId); grid.innerHTML = ''; videos.forEach((video) => { if (!video || !video.thumbnailUrl || !video.title) return; const div = document.createElement('div'); div.className = 'flex flex-col items-center gap-2 flex-shrink-0 w-36 sm:w-44 text-center group'; div.setAttribute('onclick', `window.location.href='./videos.html?id=${video.id}'`); div.innerHTML = `<div class="relative w-32 h-32 sm:w-40 sm:h-40 cursor-pointer"><div class="w-full h-full rounded-full bg-gray-700 animate-spin-slow group-hover:[animation-play-state:paused]"><img src="${video.thumbnailUrl}" alt="${video.title}" loading="lazy" class="h-full w-full object-cover rounded-full"></div><div class="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><i class="fas fa-play-circle text-5xl text-white/80"></i></div><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-900 border-2 border-gray-500 flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-gray-800"></div></div></div><h4 class="font-semibold text-white truncate w-32 sm:w-40">${video.title}</h4>`; grid.appendChild(div); }); }
         
-        // --- MODIFICADO: Ahora usa `thumbnailUrl` para la galería principal ---
         function displayImages(images, containerId, append = false) { 
             const grid = document.getElementById(containerId); 
             if (!append) grid.innerHTML = ''; 
-            if (images.length === 0 && !append) { 
-                grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes.</div>`; 
-                return; 
-            } 
+            if (images.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes.</div>`; return; } 
             const isSlider = containerId === 'similar-grid'; 
             images.forEach((img, index) => { 
                 if (!img || !img.url || !img.title) return; 
@@ -270,7 +255,6 @@
                 div.setAttribute('onclick', `openModal('${img.id}')`); 
                 div.style.animationDelay = `${(index * 0.05)}s`; 
                 const isLiked = userReactions[img.id] === 'like';
-                // Usamos la miniatura si existe, si no, la imagen completa como respaldo.
                 const displayUrl = img.thumbnailUrl || img.url;
                 div.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-3 pointer-events-none"><h4 class="truncate font-bold text-white">${img.title}</h4></div><button id="grid-like-btn-${img.id}" onclick="toggleReactionFromGrid('${img.id}', event)" class="grid-like-btn absolute top-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm ${isLiked ? 'liked' : ''}"><i class="fas fa-heart text-gray-300"></i><span id="reaction-count-grid-${img.id}">0</span></button>`; 
                 grid.appendChild(div); 
@@ -283,49 +267,47 @@
 
         function toggleReactionFromGrid(imageId, event) { event.stopPropagation(); const btn = document.getElementById(`grid-like-btn-${imageId}`); const countEl = document.getElementById(`reaction-count-grid-${imageId}`); const reactionsRef = db.ref(`reactions/${imageId}/${deviceID}`); reactionsRef.once('value', snap => { if (snap.val() === 'like') { reactionsRef.remove(); btn.classList.remove('liked'); delete userReactions[imageId]; countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1); } else { reactionsRef.set('like'); btn.classList.add('liked'); userReactions[imageId] = 'like'; countEl.textContent = parseInt(countEl.textContent) + 1; } }); }
         
-        // --- MODIFICADO: Ahora implementa el efecto "blur-up" para carga gradual ---
+        // --- MODIFICADO: Lógica de openModal para carga progresiva ---
         async function openModal(id) {
             trackImageView(id);
             let img = fullGalleryCache.find(i => i.id === id);
-            if (!img) {
-                console.error("Image not found");
-                return;
-            }
+            if (!img) { console.error("Image not found"); return; }
             currentImageId = id;
             const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults;
             currentImageIndex = currentView.findIndex(i => i && i.id === id);
-
-            const fullImgEl = document.getElementById('full-img');
             const imageContainer = document.getElementById('image-container');
+            imageContainer.innerHTML = '';
+            imageContainer.classList.remove('loaded');
 
-            // 1. Mostrar miniatura (o imagen de baja calidad) inmediatamente y aplicar efecto blur
-            const placeholderUrl = img.thumbnailUrl || img.url; // Usa miniatura como placeholder
-            fullImgEl.src = placeholderUrl;
-            imageContainer.classList.add('loading-blur');
+            // 1. Crear y mostrar la miniatura borrosa
+            const thumbnailEl = document.createElement('img');
+            thumbnailEl.src = img.thumbnailUrl || img.url;
+            thumbnailEl.className = 'progressive-image thumbnail-img';
+            imageContainer.appendChild(thumbnailEl);
+
+            // 2. Crear la imagen de alta resolución (inicialmente invisible)
+            const fullResEl = document.createElement('img');
+            fullResEl.className = 'progressive-image full-res-img';
+            imageContainer.appendChild(fullResEl);
+            
+            // 3. Cargar la imagen completa en segundo plano
+            const fullImageLoader = new Image();
+            fullImageLoader.src = img.url;
+            fullImageLoader.onload = () => {
+                fullResEl.src = fullImageLoader.src;
+                imageContainer.classList.add('loaded'); // Activa la transición CSS
+            };
+            fullImageLoader.onerror = () => {
+                // Si la imagen completa falla, simplemente mostramos la miniatura sin blur
+                imageContainer.classList.add('loaded');
+            }
 
             document.getElementById('title').textContent = img.title;
             document.getElementById('desc').textContent = img.desc;
-
-            // Cargar el resto del contenido del modal
             loadLikes(id);
             loadComments(id);
             loadSimilarImages(img.tags || []);
-            triggerReactionRain(id);
             triggerCommentFloat(id);
-
-            // 2. Cargar la imagen completa en segundo plano
-            const fullImageLoader = new Image();
-            fullImageLoader.src = img.url;
-            
-            fullImageLoader.onload = () => {
-                // 3. Una vez cargada, cambiar la fuente de la imagen y quitar el efecto blur
-                fullImgEl.src = fullImageLoader.src;
-                imageContainer.classList.remove('loading-blur');
-            };
-            fullImageLoader.onerror = () => {
-                // Si la imagen completa falla, quitar el blur y dejar la miniatura
-                imageContainer.classList.remove('loading-blur');
-            }
             
             const prevBtn = document.getElementById('prev-image');
             const nextBtn = document.getElementById('next-image');
@@ -342,9 +324,7 @@
         function navigateToPrevious() { const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; if (currentImageIndex > 0) { openModal(currentView[currentImageIndex - 1].id); } }
         function handleSwipe() { const deltaX = touchEndX - touchStartX; if (Math.abs(deltaX) > swipeThreshold) { if (deltaX < 0) navigateToNext(); else navigateToPrevious(); } }
         function animateReactionOnImage(type) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; const icon = icons[type]; if (!icon) return; const container = document.getElementById('image-container'); const animationEl = document.createElement('div'); animationEl.className = 'punch-animation'; animationEl.textContent = icon; container.appendChild(animationEl); setTimeout(() => { if (animationEl.parentElement) animationEl.remove(); }, 500); }
-        function showReactionAnimation(type, container) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; if (!icons[type]) return; const reaction = document.createElement('span'); reaction.className = 'reaction-animation'; reaction.textContent = icons[type]; reaction.style.left = `${Math.random() * 80 + 10}%`; reaction.style.bottom = '20px'; container.appendChild(reaction); setTimeout(() => reaction.remove(), 1500); }
-        function triggerReactionRain(id) { db.ref(`reactions/${id}`).once('value', snap => { const container = document.getElementById('image-container'); let delay = 0; snap.forEach(childSnap => { setTimeout(() => showReactionAnimation(childSnap.val(), container), delay); delay += Math.random() * 200 + 50; }); }); }
-        function triggerCommentFloat(id) { db.ref(`comments/${id}`).once('value', snap => { const container = document.getElementById('floating-comments-container'); if (!container) return; container.innerHTML = ''; let delay = 0; snap.forEach(childSnap => { const comment = childSnap.val(); if (!comment || !comment.text) return; setTimeout(() => { const bubble = document.createElement('div'); bubble.className = 'comment-bubble'; bubble.style.left = `${Math.random() * 75 + 5}%`; const authorSpan = document.createElement('span'); authorSpan.className = 'comment-bubble-author'; authorSpan.textContent = comment.name || 'Anónimo'; const textNode = document.createTextNode(comment.text); bubble.appendChild(authorSpan); bubble.appendChild(textNode); container.appendChild(bubble); setTimeout(() => bubble.remove(), 5000); }, delay); delay += Math.random() * 1000 + 500; }); }); }
+        function triggerCommentFloat(id) { db.ref(`comments/${id}`).once('value', snap => { const container = document.getElementById('image-container'); if (!container) return; let floatingContainer = document.getElementById('floating-comments-container'); if (!floatingContainer) { floatingContainer = document.createElement('div'); floatingContainer.id = 'floating-comments-container'; container.appendChild(floatingContainer); } floatingContainer.innerHTML = ''; let delay = 0; snap.forEach(childSnap => { const comment = childSnap.val(); if (!comment || !comment.text) return; setTimeout(() => { const bubble = document.createElement('div'); bubble.className = 'comment-bubble'; bubble.style.left = `${Math.random() * 75 + 5}%`; const authorSpan = document.createElement('span'); authorSpan.className = 'comment-bubble-author'; authorSpan.textContent = comment.name || 'Anónimo'; const textNode = document.createTextNode(comment.text); bubble.appendChild(authorSpan); bubble.appendChild(textNode); floatingContainer.appendChild(bubble); setTimeout(() => bubble.remove(), 5000); }, delay); delay += Math.random() * 1000 + 500; }); }); }
         function loadLikes(id) { db.ref(`reactions/${id}`).on('value', snap => { const reactions = snap.val() || {}; const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 }; Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; }); const container = document.getElementById('reaction-counts-container'); if (container) container.innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join(''); }); }
         function postComment() { const name = document.getElementById('name-input').value.trim(); const comment = document.getElementById('comment-input').value.trim(); if (!comment || !currentImageId) return; const commentData = { name: name || 'Anónimo', text: comment, timestamp: Date.now() }; db.ref(`comments/${currentImageId}`).push(commentData).then(() => document.getElementById('comment-input').value = ''); }
         function initAutoSlider(containerId) { const container = document.getElementById(containerId); if (!container || container.children.length < 2) return; if (sliderAnimationState[containerId]?.animationFrameId) cancelAnimationFrame(sliderAnimationState[containerId].animationFrameId); if (!container.dataset.cloned) { const originalChildren = Array.from(container.children); originalChildren.forEach(child => { const clone = child.cloneNode(true); container.appendChild(clone); }); container.dataset.cloned = 'true'; } const scrollWidth = container.scrollWidth / 2; let isPaused = false; const scroll = () => { if (!isPaused) { container.scrollLeft += 0.5; if (container.scrollLeft >= scrollWidth) container.scrollLeft = 0; } sliderAnimationState[containerId] = { animationFrameId: requestAnimationFrame(scroll) }; }; container.addEventListener('mouseenter', () => isPaused = true); container.addEventListener('mouseleave', () => isPaused = false); scroll(); }
