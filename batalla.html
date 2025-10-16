@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>exen-E | Batalla</title>
+
+    <!-- Tailwind CSS, Fonts, Icons, Firebase -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --accent: #f97316;
+            --accent-neon: #fb923c;
+            --halo-green: #00ff00;
+            --halo-red: #ff0000;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            background-image: radial-gradient(circle at 15% 50%, rgba(251, 146, 60, 0.1), transparent 40%),
+                              radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.1), transparent 40%);
+            color: #f3f4f6;
+        }
+        header { border-bottom: 1px solid rgba(251, 146, 60, 0.2); box-shadow: 0 5px 20px rgba(249, 115, 22, 0.05); }
+        .nav-link:hover { background-color: rgba(251, 146, 60, 0.1); color: #fff; }
+        .nav-link-active { background-color: var(--accent); color: #fff !important; box-shadow: 0 0 15px rgba(251, 146, 60, 0.4); }
+        main h3, main h4 {
+            font-weight: 900; letter-spacing: 0.025em;
+            background: linear-gradient(90deg, var(--accent-neon), var(--accent) 80%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            position: relative; padding-bottom: 0.75rem;
+        }
+        main h3::after, main h4::after {
+            content: ''; position: absolute; bottom: 0; left: 50%;
+            transform: translateX(-50%); width: 60px; height: 3px;
+            background: var(--accent); border-radius: 2px; box-shadow: 0 0 10px var(--accent-neon);
+        }
+        .skeleton {
+            background-color: #374151;
+            background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%);
+            background-repeat: no-repeat; background-size: 2000px 100%;
+            animation: shimmer 1.5s linear infinite; border-radius: 0.75rem;
+            aspect-ratio: 2 / 3;
+        }
+        .winning { box-shadow: 0 0 20px 5px var(--halo-green); }
+        .losing { box-shadow: 0 0 20px 5px var(--halo-red); }
+        @keyframes vote-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 30px 10px var(--accent-neon); } 100% { transform: scale(1); } }
+        .vote-animation { animation: vote-pulse 0.6s ease-out; }
+        @keyframes crown-appear { 0% { transform: translateX(-50%) translateY(10px) scale(0.5); opacity: 0; } 100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; } }
+        .crown-icon { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); font-size: 2rem; color: #ffd700; text-shadow: 0 2px 10px rgba(0,0,0,0.5); display: none; z-index: 10; pointer-events: none; }
+        .battle-item.has-crown .crown-icon { display: block; animation: crown-appear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="sticky top-0 z-[100] bg-gray-900/80 p-4 backdrop-blur-lg">
+        <div class="container mx-auto flex items-center justify-center">
+            <nav>
+                <ul class="flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
+                    <li><a href="index.html" id="nav-index" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Galería</a></li>
+                    <li><a href="batalla.html" id="nav-batalla" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Batalla</a></li>
+                    <li><a href="encuesta.html" id="nav-encuesta" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Encuesta</a></li>
+                    <li><a href="videos.html" id="nav-videos" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Música</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+         <div class="my-8 flex justify-center">
+             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto">
+        </div>
+        <section id="battle-section" class="mb-12">
+            <h3 class="mb-6 inline-block text-center text-3xl font-extrabold tracking-tight w-full"><i class="fas fa-gavel"></i> Batalla de la Semana</h3>
+            <div id="battle-grid" class="flex items-start justify-center gap-4 md:gap-8 max-w-4xl mx-auto"></div>
+            <div id="battle-timer" class="mt-6 text-center text-lg font-semibold text-gray-400"></div>
+            <div id="battle-winner-container" class="mt-12" style="display: none;">
+                 <h4 class="mb-4 text-center text-2xl font-bold inline-block w-full">Ganador de la Batalla Anterior</h4>
+                <div id="battle-winner" class="relative mx-auto max-w-sm"></div>
+            </div>
+        </section>
+
+        <hr class="border-gray-700/50 my-12">
+
+        <section id="comments-section" class="max-w-3xl mx-auto">
+            <h4 class="mb-6 text-center text-2xl font-bold inline-block w-full"><i class="fas fa-comments"></i> Comentarios de la Batalla</h4>
+            <form id="comment-form" class="mb-8 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4">
+                <input type="text" id="name-input" placeholder="Nombre (opcional, máx 15)" maxlength="15" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none">
+                <textarea id="comment-input" placeholder="Opina sobre la batalla..." rows="3" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none"></textarea>
+                <button type="submit" id="comment-btn" class="group self-end rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white transition hover:bg-orange-500">
+                    <i class="fas fa-paper-plane transition group-hover:rotate-12"></i> Enviar
+                </button>
+            </form>
+            <div id="comments" class="flex flex-col gap-4"></div>
+        </section>
+    </main>
+    <footer class="mt-12 py-8 text-center text-gray-500"><p>&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
+
+    <script>
+        "use strict";
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
+            authDomain: "exene-53e6b.firebaseapp.com",
+            databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
+            projectId: "exene-53e6b",
+            storageBucket: "exene-53e6b.appspot.com",
+            messagingSenderId: "481369419867",
+            appId: "1:481369419867:web:ac5db24c436344262c8f7e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        firebase.auth().signInAnonymously().catch(console.error);
+        
+        let deviceID = localStorage.getItem('deviceID');
+        if (!deviceID) {
+            deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            localStorage.setItem('deviceID', deviceID);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initBattleSection();
+            loadBattleComments();
+            setActiveNavLink();
+            document.getElementById('comment-form').addEventListener('submit', postBattleComment);
+        });
+
+        function setActiveNavLink() {
+            const path = window.location.pathname.split("/").pop();
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('nav-link-active'));
+            if (path.startsWith('batalla.html')) {
+                document.getElementById('nav-batalla')?.classList.add('nav-link-active');
+            }
+        }
+
+        async function initBattleSection() {
+            const battleGrid = document.getElementById('battle-grid');
+            battleGrid.innerHTML = `<div class="w-full"><div class="skeleton"></div></div><span class="text-3xl font-black text-orange-400 self-center">VS</span><div class="w-full"><div class="skeleton"></div></div>`;
+            const snap = await db.ref('battle').once('value');
+            if (!snap.exists()) {
+                battleGrid.innerHTML = `<p class="text-center text-gray-500 col-span-full w-full py-20">Esperando la próxima batalla...</p>`;
+                document.getElementById('battle-timer').textContent = '';
+                loadPreviousBattleWinner(); return;
+            }
+            const battle = snap.val();
+            const snapshots = await Promise.all(battle.images.map(id => db.ref(`images/${id}`).once('value')));
+            const battleImages = snapshots.map(snap => ({id: snap.key, ...snap.val()}));
+            displayBattle(battleImages, battle.expiry);
+            loadPreviousBattleWinner();
+        }
+
+        function displayBattle(images, expiry) {
+            const [img1, img2] = images;
+            const battleGrid = document.getElementById('battle-grid');
+            battleGrid.innerHTML = `
+                <div class="battle-item relative w-full" id="battle-item-1" data-image-id="${img1.id}"></div>
+                <span class="text-3xl font-black text-orange-400 self-center" style="text-shadow: 0 0 10px var(--accent);">VS</span>
+                <div class="battle-item relative w-full" id="battle-item-2" data-image-id="${img2.id}"></div>`;
+            const renderItem = (container, img) => {
+                container.innerHTML = `
+                    <i class="fas fa-crown crown-icon"></i>
+                    <div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition duration-300 transform hover:scale-105 relative">
+                        <img src="${img.url}" alt="${img.title}" class="w-full h-full object-cover">
+                        <div class="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs font-bold" id="vote-count-${img.id}">0</div>
+                        <button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 text-sm font-bold text-white transition hover:scale-105" onclick="voteBattle('${img.id}', event)">Votar</button>
+                    </div>
+                    <h4 class="text-center font-bold mt-2 text-lg truncate">${img.title}</h4>`;
+            };
+            renderItem(document.getElementById('battle-item-1'), img1);
+            renderItem(document.getElementById('battle-item-2'), img2);
+            db.ref('battle').on('value', snap => {
+                if (!snap.exists()) { initBattleSection(); return; }
+                const battle = snap.val(); if (!battle || !battle.votes) return;
+                document.getElementById(`vote-count-${img1.id}`).textContent = battle.votes[img1.id] || 0;
+                document.getElementById(`vote-count-${img2.id}`).textContent = battle.votes[img2.id] || 0;
+                if (battle.users && battle.users[deviceID]) { document.querySelectorAll('.battle-vote-btn').forEach(b => b.style.display = 'none'); }
+                updateBattleHalo();
+            });
+            const timerEl = document.getElementById('battle-timer');
+            if (window.battleTimerInterval) clearInterval(window.battleTimerInterval);
+            const updateTimer = () => {
+                const timeLeft = expiry - Date.now();
+                if (timeLeft <= 0) { clearInterval(window.battleTimerInterval); timerEl.textContent = "La batalla ha terminado. Esperando la siguiente..."; return; }
+                const d = Math.floor(timeLeft / 864e5), h = Math.floor(timeLeft / 36e5 % 24), m = Math.floor(timeLeft / 6e4 % 60);
+                timerEl.textContent = `Tiempo restante: ${d}d ${h}h ${m}m`;
+            };
+            updateTimer(); window.battleTimerInterval = setInterval(updateTimer, 60000);
+        }
+
+        function voteBattle(imageId, event) {
+            event.stopPropagation();
+            const imageCard = event.target.closest('.aspect-\\[2\\/3\\]');
+            if (imageCard) { imageCard.classList.add('vote-animation'); setTimeout(() => { imageCard.classList.remove('vote-animation'); }, 600); }
+            db.ref(`battle/users/${deviceID}`).once('value', snap => {
+                if (snap.exists()) return;
+                db.ref(`battle/users/${deviceID}`).set(imageId);
+                db.ref(`battle/votes/${imageId}`).transaction(c => (c || 0) + 1);
+            });
+        }
+
+        function updateBattleHalo() {
+            db.ref('battle/votes').once('value').then(snap => {
+                const votes = snap.val(); if (!votes) return;
+                const item1 = document.getElementById('battle-item-1'); const item2 = document.getElementById('battle-item-2');
+                if (!item1 || !item2) return; const id1 = item1.dataset.imageId; const id2 = item2.dataset.imageId; if (!id1 || !id2) return;
+                const img1Container = item1.querySelector('.aspect-\\[2\\/3\\]'); const img2Container = item2.querySelector('.aspect-\\[2\\/3\\]');
+                if (!img1Container || !img2Container) return;
+                img1Container.classList.remove('winning', 'losing'); img2Container.classList.remove('winning', 'losing');
+                item1.classList.remove('has-crown'); item2.classList.remove('has-crown');
+                const votes1 = votes[id1] || 0; const votes2 = votes[id2] || 0;
+                if (votes1 > votes2) { img1Container.classList.add('winning'); img2Container.classList.add('losing'); item1.classList.add('has-crown'); }
+                else if (votes2 > votes1) { img2Container.classList.add('winning'); img1Container.classList.add('losing'); item2.classList.add('has-crown'); }
+            });
+        }
+
+        async function loadPreviousBattleWinner() {
+            const winnerDataSnap = await db.ref('previousBattleWinner').once('value');
+            const winnerContainer = document.getElementById('battle-winner-container');
+            if (!winnerDataSnap.exists()) { winnerContainer.style.display = 'none'; return; }
+            const { winnerId, winnerVotes, loserVotes } = winnerDataSnap.val();
+            const winnerSnap = await db.ref(`images/${winnerId}`).once('value');
+            if (!winnerSnap.exists()) { winnerContainer.style.display = 'none'; return; }
+            const winner = { id: winnerSnap.key, ...winnerSnap.val() };
+            document.getElementById('battle-winner').innerHTML = `
+                <div class="relative group aspect-[2/3] rounded-2xl overflow-hidden shadow-lg">
+                    <img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-4 text-center">
+                        <h5 class="text-2xl text-white font-black drop-shadow-lg mb-1">${winner.title}</h5>
+                        <p class="font-bold text-yellow-300 drop-shadow-md">Ganó con ${winnerVotes} votos contra ${loserVotes}</p>
+                    </div>
+                </div>`;
+            winnerContainer.style.display = 'block';
+        }
+
+        function loadBattleComments() {
+            db.ref('battle_comments').orderByChild('timestamp').on('value', snap => {
+                const container = document.getElementById('comments');
+                container.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500">Aún no hay comentarios. ¡Sé el primero!</p>' : '';
+                const comments = [];
+                snap.forEach(child => { comments.push(child.val()); });
+                comments.reverse().forEach(comment => {
+                    const div = document.createElement('div');
+                    const initial = comment.name ? comment.name.charAt(0).toUpperCase() : 'A';
+                    const avatarBg = 'bg-gradient-to-br from-orange-500 to-orange-400 text-white';
+                    div.innerHTML = `
+                        <div class="flex gap-3">
+                            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${avatarBg} font-bold">${initial}</div>
+                            <div class="flex-grow min-w-0">
+                                <div class="rounded-lg rounded-tl-none bg-gray-800 p-3">
+                                    <p class="font-bold text-orange-400">${comment.name || 'Anónimo'}</p>
+                                    <p class="text-gray-300 whitespace-pre-wrap break-words">${comment.text || ''}</p>
+                                </div>
+                                <small class="pl-2 pt-1 text-xs text-gray-500">${new Date(comment.timestamp).toLocaleString()}</small>
+                            </div>
+                        </div>`;
+                    container.appendChild(div);
+                });
+            });
+        }
+        
+        function postBattleComment(e) {
+            e.preventDefault();
+            const name = document.getElementById('name-input').value.trim();
+            const comment = document.getElementById('comment-input').value.trim();
+            if (!comment) return;
+            const commentData = { name: name || 'Anónimo', text: comment, timestamp: Date.now() };
+            db.ref('battle_comments').push(commentData).then(() => {
+                document.getElementById('comment-form').reset();
+            });
+        }
+    </script>
+</body>
+</html>
+

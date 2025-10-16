@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>exen-E | Encuesta</title>
+
+    <!-- Tailwind CSS, Fonts, Icons, Firebase -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.10/dist/cdn.min.js" defer></script>
+
+    <style>
+        :root { --accent: #f97316; --accent-neon: #fb923c; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            background-image: radial-gradient(circle at 15% 50%, rgba(34, 197, 94, 0.1), transparent 40%),
+                              radial-gradient(circle at 85% 30%, rgba(22, 163, 74, 0.1), transparent 40%);
+            color: #f3f4f6;
+        }
+        header { border-bottom: 1px solid rgba(251, 146, 60, 0.2); box-shadow: 0 5px 20px rgba(249, 115, 22, 0.05); }
+        .nav-link:hover { background-color: rgba(251, 146, 60, 0.1); color: #fff; }
+        .nav-link-active { background-color: var(--accent); color: #fff !important; box-shadow: 0 0 15px rgba(251, 146, 60, 0.4); }
+        main h3 {
+            font-weight: 900; letter-spacing: 0.025em;
+            background: linear-gradient(90deg, #22c55e, #16a34a 80%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            position: relative; padding-bottom: 0.75rem;
+        }
+        main h3::after {
+            content: ''; position: absolute; bottom: 0; left: 50%;
+            transform: translateX(-50%); width: 60px; height: 3px;
+            background: #16a34a; border-radius: 2px; box-shadow: 0 0 10px #22c55e;
+        }
+        .poll-answer-card { position: relative; overflow: hidden; z-index: 1; }
+        .poll-vote-bar {
+            position: absolute; left: 0; top: 0; bottom: 0;
+            background: linear-gradient(90deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0));
+            width: 0%; transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1); z-index: -1;
+        }
+        #poll-widget { transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s; }
+        #poll-widget.open { transform: translateY(0); opacity: 1; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased">
+    <header class="sticky top-0 z-[100] bg-gray-900/80 p-4 backdrop-blur-lg">
+        <div class="container mx-auto flex items-center justify-center">
+            <nav>
+                 <ul class="flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
+                    <li><a href="index.html" id="nav-index" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Galería</a></li>
+                    <li><a href="batalla.html" id="nav-batalla" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Batalla</a></li>
+                    <li><a href="encuesta.html" id="nav-encuesta" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Encuesta</a></li>
+                    <li><a href="videos.html" id="nav-videos" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Música</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8" x-data="{ isPollOpen: false }">
+         <div class="my-8 flex justify-center">
+             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto">
+        </div>
+
+        <section id="poll-section" class="mb-12">
+            <h3 class="mb-6 inline-block text-center text-3xl font-extrabold tracking-tight w-full"><i class="fas fa-poll"></i> Encuesta de la Semana</h3>
+            <div id="poll-container" class="max-w-4xl mx-auto text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700"></div>
+        </section>
+
+        <section id="poll-answers-section" class="max-w-3xl mx-auto">
+            <div id="poll-answers-container" class="space-y-4">
+                <!-- Las respuestas se cargarán aquí -->
+            </div>
+        </section>
+        
+        <div id="poll-widget"
+             class="fixed bottom-5 right-5 z-[900] w-full max-w-sm bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 transform translate-y-[calc(100%+20px)] opacity-0"
+             :class="{ 'open': isPollOpen }">
+            <button @click="isPollOpen = false" class="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700/80 text-gray-400 transition hover:bg-slate-600 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 id="poll-widget-question" class="text-xl font-bold mb-4 text-center text-gray-100"></h3>
+            <form id="poll-answer-form" @submit.prevent="handlePollSubmit($event); isPollOpen = false">
+                <textarea id="poll-answer-input" rows="3" placeholder="Tu respuesta (máx 30 caracteres)..." maxlength="30" class="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-2 text-white transition focus:border-green-500 focus:outline-none mb-3"></textarea>
+                <input type="text" id="poll-name-input" placeholder="Nombre (máx 10 caracteres)" maxlength="10" class="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-2 text-white transition focus:border-green-500 focus:outline-none mb-4">
+                <button type="submit" id="poll-submit-btn" class="w-full group rounded-lg bg-green-600 px-5 py-2.5 font-semibold text-white transition hover:bg-green-500">
+                    <i class="fas fa-paper-plane mr-2"></i> Enviar Respuesta
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="mt-12 py-8 text-center text-gray-500"><p>&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
+    
+    <script>
+        "use strict";
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
+            authDomain: "exene-53e6b.firebaseapp.com",
+            databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
+            projectId: "exene-53e6b",
+            storageBucket: "exene-53e6b.appspot.com",
+            messagingSenderId: "481369419867",
+            appId: "1:481369419867:web:ac5db24c436344262c8f7e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        firebase.auth().signInAnonymously().catch(console.error);
+        
+        let activePoll = null;
+        let deviceID = localStorage.getItem('deviceID');
+        if (!deviceID) {
+            deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            localStorage.setItem('deviceID', deviceID);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPollSection();
+            setActiveNavLink();
+        });
+
+        function setActiveNavLink() {
+            const path = window.location.pathname.split("/").pop();
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('nav-link-active'));
+            if (path.startsWith('encuesta.html')) {
+                document.getElementById('nav-encuesta')?.classList.add('nav-link-active');
+            }
+        }
+
+        async function loadPollSection() {
+            const pollContainer = document.getElementById('poll-container');
+            db.ref('polls/activePoll').on('value', async snap => {
+                if (snap.exists()) {
+                    activePoll = snap.val();
+                    const hasAnsweredSnap = await db.ref(`poll_votes/${deviceID}/${activePoll.questionId}`).once('value');
+                    const hasAnswered = hasAnsweredSnap.exists();
+                    pollContainer.innerHTML = `
+                        <p class="text-xl sm:text-2xl font-semibold text-gray-200 mb-4">${activePoll.question}</p>
+                        <button @click.prevent="isPollOpen = true" class="rounded-full bg-green-600 px-8 py-3 font-semibold text-white transition hover:bg-green-500 hover:scale-105 disabled:bg-gray-500 disabled:cursor-not-allowed" ${hasAnswered ? 'disabled' : ''}>
+                            <i class="fas fa-edit mr-2"></i> ${hasAnswered ? 'Ya Respondiste' : 'Responder'}
+                        </button>`;
+                    document.getElementById('poll-widget-question').textContent = activePoll.question;
+                    loadPollAnswers(activePoll.questionId);
+                } else {
+                    activePoll = null;
+                    pollContainer.innerHTML = `<p class="text-lg text-gray-500">No hay ninguna encuesta activa esta semana. ¡Vuelve pronto!</p>`;
+                    document.getElementById('poll-answers-container').innerHTML = '';
+                }
+            });
+        }
+
+        function loadPollAnswers(questionId) {
+            db.ref(`poll_answers/${questionId}`).on('value', snap => {
+                const container = document.getElementById('poll-answers-container');
+                container.innerHTML = ''; 
+                if (!snap.exists()) {
+                    container.innerHTML = `<p class="text-center text-gray-500 py-8">Aún no hay respuestas. ¡Sé el primero en responder!</p>`;
+                    return;
+                }
+                const answers = []; snap.forEach(child => { answers.push({ id: child.key, ...child.val() }); });
+                
+                const allLikes = answers.flatMap(ans => Object.keys(ans.likes || {}));
+                const uniqueLikerCount = new Set(allLikes).size;
+
+                answers.sort((a, b) => (Object.keys(b.likes || {}).length) - (Object.keys(a.likes || {}).length));
+                
+                answers.forEach(answer => {
+                    const likes = answer.likes || {}; 
+                    const likeCount = Object.keys(likes).length; 
+                    const userHasLiked = likes[deviceID];
+                    const percentage = uniqueLikerCount > 0 ? (likeCount / uniqueLikerCount) * 100 : 0;
+                    
+                    const div = document.createElement('div');
+                    div.className = 'poll-answer-card bg-slate-800/70 p-4 rounded-xl shadow-lg border border-slate-700 flex gap-4 items-start';
+                    const initial = answer.name ? answer.name.charAt(0).toUpperCase() : 'A';
+                    const avatarBg = 'bg-gradient-to-br from-green-500 to-emerald-400 text-white';
+
+                    div.innerHTML = `
+                        <div class="poll-vote-bar" style="width: ${percentage}%;"></div>
+                        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${avatarBg} font-bold z-10">${initial}</div>
+                        <div class="flex-grow min-w-0 z-10">
+                            <div class="flex items-center justify-between">
+                                <p class="font-bold text-green-400">${answer.name || 'Anónimo'}</p>
+                                <button class="poll-like-btn flex items-center gap-2 rounded-full px-3 py-1 text-sm transition ${userHasLiked ? 'bg-green-500 text-white' : 'bg-slate-700 hover:bg-slate-600 text-gray-300'}" data-answer-id="${answer.id}">
+                                    <i class="fas fa-thumbs-up"></i> <span>${likeCount}</span>
+                                </button>
+                            </div>
+                            <p class="text-gray-300 mt-1 text-lg break-words">${answer.text}</p>
+                            <small class="text-xs text-gray-500 mt-2 block">${new Date(answer.timestamp).toLocaleString()}</small>
+                        </div>`;
+                    container.appendChild(div);
+                });
+
+                document.querySelectorAll('.poll-like-btn').forEach(btn => { 
+                    btn.addEventListener('click', () => { 
+                        if (!activePoll) return; 
+                        likePollAnswer(activePoll.questionId, btn.dataset.answerId); 
+                    }); 
+                });
+            });
+        }
+
+        function likePollAnswer(questionId, answerId) {
+            if (!deviceID) return;
+            const likeRef = db.ref(`poll_answers/${questionId}/${answerId}/likes/${deviceID}`);
+            likeRef.once('value', snap => { snap.exists() ? likeRef.remove() : likeRef.set(true); });
+        }
+
+        function handlePollSubmit(e) {
+            e.preventDefault(); if (!activePoll) return;
+            const text = document.getElementById('poll-answer-input').value.trim();
+            const name = document.getElementById('poll-name-input').value.trim();
+            if (!text) return;
+            const answerData = { text: text, name: name || 'Anónimo', deviceID: deviceID, timestamp: Date.now() };
+            db.ref(`poll_answers/${activePoll.questionId}`).push(answerData);
+            db.ref(`poll_votes/${deviceID}/${activePoll.questionId}`).set(true);
+            e.target.reset();
+        }
+    </script>
+</body>
+</html>
+
