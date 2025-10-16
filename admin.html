@@ -40,48 +40,29 @@
         th { background: #333; font-weight: 600; position: sticky; top: 0; z-index: 10; }
         td img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; vertical-align: middle; }
         footer { background: linear-gradient(135deg, #1e1e1e, #0a0a0a); padding: 20px; text-align: center; color: #aaa; font-size: 0.9em; margin-top: auto; }
-
-        /* Estilos para Pestañas */
         .tabs { display: flex; border-bottom: 2px solid #333; margin-bottom: 20px; }
         .tab-button { padding: 15px 25px; cursor: pointer; background: transparent; border: none; color: #aaa; font-size: 16px; font-weight: 600; transition: all 0.3s ease; border-bottom: 3px solid transparent; }
         .tab-button.active { color: #2ecc71; border-bottom-color: #2ecc71; }
         .tab-button:hover { color: #fff; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: animate__fadeIn 0.5s; }
-
-        /* ========= NUEVOS ESTILOS PARA MODAL Y CONTENEDOR DE TABLA ========= */
-        .modal-overlay {
-            position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
-            display: none; align-items: center; justify-content: center;
-            animation: animate__fadeIn 0.3s;
-        }
-        .modal-content {
-            background: #1e1e1e; padding: 25px; border-radius: 12px;
-            width: 90%; max-width: 600px; position: relative;
-            max-height: 90vh; overflow-y: auto;
-            border: 1px solid #333;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
-        }
-        .close-modal-btn {
-            position: absolute; top: 15px; right: 20px; color: #aaa;
-            font-size: 28px; font-weight: bold; cursor: pointer; transition: color 0.3s;
-        }
+        .modal-overlay { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; animation: animate__fadeIn 0.3s; }
+        .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 90%; max-width: 600px; position: relative; max-height: 90vh; overflow-y: auto; border: 1px solid #333; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
+        .close-modal-btn { position: absolute; top: 15px; right: 20px; color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; transition: color 0.3s; }
         .close-modal-btn:hover { color: #fff; }
-        .table-container {
-            max-height: 60vh; /* Altura máxima para la tabla antes de que aparezca el scroll */
-            overflow-y: auto;
-            border: 1px solid #333;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-        /* Estilo de Scrollbar */
+        .table-container { max-height: 60vh; overflow-y: auto; border: 1px solid #333; border-radius: 8px; margin-top: 1rem; }
         .table-container::-webkit-scrollbar, .modal-content::-webkit-scrollbar { width: 8px; }
         .table-container::-webkit-scrollbar-track, .modal-content::-webkit-scrollbar-track { background: #2a2a2a; }
         .table-container::-webkit-scrollbar-thumb, .modal-content::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
         .table-container::-webkit-scrollbar-thumb:hover, .modal-content::-webkit-scrollbar-thumb:hover { background: #777; }
-        /* ========= FIN DE NUEVOS ESTILOS ========= */
-
+        
+        /* --- NUEVO: Estilos para checkboxes de categorías --- */
+        .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; background: #2a2a2a; padding: 15px; border-radius: 6px; border: 1px solid #444; }
+        .category-grid label { display: flex; align-items: center; gap: 8px; background: #333; padding: 8px 12px; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; user-select: none; }
+        .category-grid label:hover { background: #444; }
+        .category-grid input[type="checkbox"] { width: 18px; height: 18px; accent-color: #2ecc71; }
+        h3.category-title { font-size: 1em; margin-bottom: 10px; font-weight: 600; color: #ccc; }
+        
         @media (max-width: 768px) {
             body { padding: 5px; }
             #admin-container { padding: 15px; width: 100%; }
@@ -99,7 +80,6 @@
         </div>
         <div id="admin-content" style="display: none;">
             <div id="global-message" class="message-box" style="display: none;"></div>
-
             <div class="tabs">
                 <button class="tab-button active" onclick="openTab('images')"><i class="fas fa-images"></i> Imágenes</button>
                 <button class="tab-button" onclick="openTab('videos')"><i class="fas fa-film"></i> Videos</button>
@@ -114,6 +94,14 @@
                     <input type="text" id="img-title" placeholder="Título" required>
                     <textarea id="img-desc" placeholder="Descripción" required></textarea>
                     <input type="text" id="img-tags" placeholder="Tags (separados por comas)" required>
+                    
+                    <!-- INICIO: Selector de Categorías -->
+                    <div>
+                        <h3 class="category-title">Categorías</h3>
+                        <div id="img-categories" class="category-grid"></div>
+                    </div>
+                    <!-- FIN: Selector de Categorías -->
+
                     <button type="submit"><i class="fas fa-plus"></i> Añadir Imagen</button>
                 </form>
                 <div id="image-list">
@@ -121,7 +109,7 @@
                     <input type="text" id="search-images" placeholder="Buscar por título o tags...">
                     <div class="table-container">
                         <table id="image-table">
-                            <thead><tr><th>Batalla</th><th>Imagen</th><th>Título</th><th>Tags</th><th>Acciones</th></tr></thead>
+                            <thead><tr><th>Batalla</th><th>Imagen</th><th>Título</th><th>Tags</th><th>Categorías</th><th>Acciones</th></tr></thead>
                             <tbody id="image-table-body"></tbody>
                         </table>
                     </div>
@@ -129,7 +117,8 @@
             </div>
 
             <div id="videos-tab" class="tab-content">
-                <form id="video-form">
+                <!-- Contenido de videos sin cambios -->
+                 <form id="video-form">
                     <h2><i class="fas fa-video"></i> Agregar Nuevo Video</h2>
                     <input type="url" id="video-url" placeholder="URL de YouTube o MP4" required>
                     <input type="text" id="video-title" placeholder="Título (se autocompleta con YouTube)" required>
@@ -151,7 +140,8 @@
             </div>
 
             <div id="general-tab" class="tab-content">
-                 <div id="battle-management" class="mb-8">
+                 <!-- Contenido general sin cambios -->
+                  <div id="battle-management" class="mb-8">
                     <h2><i class="fas fa-gavel"></i> Gestionar Batalla (Imágenes)</h2>
                     <div id="current-battle-status" class="mb-4 p-4 rounded-lg" style="background-color: #2a2a2a;"></div>
                     <div>
@@ -185,12 +175,9 @@
         </div>
     </div>
 
-    <!-- ========= NUEVA ESTRUCTURA DE MODAL PARA EDICIÓN ========= -->
     <div id="edit-modal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal-btn" onclick="closeEditModal()">&times;</span>
-
-            <!-- Formulario de Edición de Imagen (dentro del modal) -->
             <div id="edit-image-form-container">
                 <form id="edit-image-form">
                     <h2><i class="fas fa-edit"></i> Editar Imagen</h2>
@@ -201,14 +188,21 @@
                     <input type="text" id="edit-img-title" placeholder="Título" required>
                     <textarea id="edit-img-desc" placeholder="Descripción" required></textarea>
                     <input type="text" id="edit-img-tags" placeholder="Tags (separados por comas)" required>
+                    
+                    <!-- INICIO: Selector de Categorías Edición -->
+                    <div>
+                        <h3 class="category-title">Categorías</h3>
+                        <div id="edit-img-categories" class="category-grid"></div>
+                    </div>
+                    <!-- FIN: Selector de Categorías Edición -->
+
                     <button type="submit"><i class="fas fa-save"></i> Guardar Cambios</button>
                     <button type="button" class="delete-btn" onclick="closeEditModal()"><i class="fas fa-times"></i> Cancelar</button>
                 </form>
             </div>
-
-            <!-- Formulario de Edición de Video (dentro del modal) -->
-             <div id="edit-video-form-container">
-                <form id="edit-video-form">
+            <div id="edit-video-form-container">
+                <!-- Formulario de videos sin cambios -->
+                 <form id="edit-video-form">
                     <h2><i class="fas fa-edit"></i> Editar Video</h2>
                     <input type="hidden" id="edit-video-id">
                     <input type="hidden" id="edit-video-timestamp">
@@ -223,7 +217,6 @@
             </div>
         </div>
     </div>
-
     <footer><p>&copy; 2025 exen-E. Diseñado en la oscuridad.</p></footer>
 
     <script>
@@ -240,6 +233,18 @@
         const db = firebase.database();
         const auth = firebase.auth();
         let selectedForBattle = [];
+
+        // --- NUEVO: Definición de categorías ---
+        const imageCategories = {
+            'anime': 'Anime',
+            'furry': 'Furry',
+            'realismo': 'Realismo',
+            'mecas': 'Mecas',
+            'devils': 'Devils & Angels',
+            'colors': 'ColorFull',
+            'amateur': 'Amateur',
+            'tvgames': 'TV & Games'
+        };
 
         // --- LÓGICA DE PESTAÑAS ---
         function openTab(tabName) {
@@ -263,6 +268,8 @@
         });
 
         function loadInitialData() {
+            populateCategoryCheckboxes('img-categories');
+            populateCategoryCheckboxes('edit-img-categories');
             loadImages();
             loadVideos();
             loadComments();
@@ -276,40 +283,36 @@
                 .catch(error => showLoginError('Error de autenticación: ' + error.message));
         }
 
-        // --- FUNCIONES DE UTILIDAD Y MODAL ---
-        function setupPreview(inputId, previewId) {
-            const urlInput = document.getElementById(inputId);
-            const previewImage = document.getElementById(previewId);
-            urlInput.addEventListener('input', () => {
-                const url = urlInput.value.trim();
-                previewImage.src = isValidUrl(url) ? url : '';
-                previewImage.style.display = isValidUrl(url) ? 'block' : 'none';
-            });
+        // --- NUEVO: Función para generar checkboxes de categorías ---
+        function populateCategoryCheckboxes(containerId, checkedCategories = []) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for (const key in imageCategories) {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = key;
+                checkbox.name = `${containerId}-chk`;
+                if (checkedCategories.includes(key)) {
+                    checkbox.checked = true;
+                }
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(imageCategories[key]));
+                container.appendChild(label);
+            }
         }
+
+        // --- FUNCIONES DE UTILIDAD Y MODAL ---
+        function setupPreview(inputId, previewId) { const urlInput = document.getElementById(inputId); const previewImage = document.getElementById(previewId); urlInput.addEventListener('input', () => { const url = urlInput.value.trim(); previewImage.src = isValidUrl(url) ? url : ''; previewImage.style.display = isValidUrl(url) ? 'block' : 'none'; }); }
         setupPreview('img-url', 'image-preview');
         setupPreview('edit-img-url', 'edit-image-preview');
         setupPreview('video-thumbnail', 'video-preview');
         setupPreview('edit-video-thumbnail', 'edit-video-preview');
-
-        function showMessage(text, isSuccess = false) {
-            const el = document.getElementById('global-message');
-            el.textContent = text;
-            el.className = `message-box ${isSuccess ? 'success' : 'error'}`;
-            el.style.display = 'block';
-            window.scrollTo(0, 0);
-            setTimeout(() => { el.style.display = 'none'; }, 4000);
-        }
-        function showLoginError(text) {
-            const el = document.getElementById('login-error');
-            el.textContent = text;
-            el.style.display = 'block';
-        }
+        function showMessage(text, isSuccess = false) { const el = document.getElementById('global-message'); el.textContent = text; el.className = `message-box ${isSuccess ? 'success' : 'error'}`; el.style.display = 'block'; window.scrollTo(0, 0); setTimeout(() => { el.style.display = 'none'; }, 4000); }
+        function showLoginError(text) { const el = document.getElementById('login-error'); el.textContent = text; el.style.display = 'block'; }
         function isValidUrl(string) { try { new URL(string); return true; } catch (_) { return false; } }
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : ''; }
-
-        function closeEditModal() {
-            document.getElementById('edit-modal').style.display = 'none';
-        }
+        function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
 
         // --- GESTIÓN DE IMÁGENES ---
         document.getElementById('image-form').addEventListener('submit', e => {
@@ -318,13 +321,16 @@
             const title = document.getElementById('img-title').value.trim();
             const desc = document.getElementById('img-desc').value.trim();
             const tags = document.getElementById('img-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+            const categories = Array.from(document.querySelectorAll('#img-categories input:checked')).map(cb => cb.value);
+
             if (!isValidUrl(url) || !title || !desc || tags.length === 0) { showMessage('Todos los campos de imagen son obligatorios.'); return; }
 
-            db.ref('images').push().set({ url, title, desc, tags, timestamp: Date.now() })
+            db.ref('images').push().set({ url, title, desc, tags, categories, timestamp: Date.now() })
                 .then(() => {
                     showMessage('Imagen añadida con éxito', true);
                     e.target.reset();
                     document.getElementById('image-preview').style.display = 'none';
+                    populateCategoryCheckboxes('img-categories'); // Reset checkboxes
                 }).catch(error => showMessage('Error: ' + error.message));
         });
 
@@ -344,11 +350,13 @@
             tableBody.innerHTML = '';
             images.forEach(img => {
                 const row = document.createElement('tr');
+                // --- MODIFICADO: Añadida columna de categorías ---
                 row.innerHTML = `
                     <td><input type="checkbox" class="battle-selection" value="${img.id}" onchange="handleBattleSelection(this)"></td>
                     <td><img src="${img.url}" alt="${img.title}"></td>
                     <td>${img.title}</td>
                     <td>${img.tags ? img.tags.join(', ') : ''}</td>
+                    <td>${img.categories ? img.categories.map(c => imageCategories[c] || c).join(', ') : 'N/A'}</td>
                     <td>
                         <button class="action-btn edit-btn" onclick="openEditModal('image', '${img.id}')"><i class="fas fa-edit"></i></button>
                         <button class="action-btn delete-btn" onclick="deleteContent('image', '${img.id}')"><i class="fas fa-trash"></i></button>
@@ -361,11 +369,13 @@
         document.getElementById('edit-image-form').addEventListener('submit', e => {
             e.preventDefault();
             const id = document.getElementById('edit-img-id').value;
+            const categories = Array.from(document.querySelectorAll('#edit-img-categories input:checked')).map(cb => cb.value);
             const data = {
                 url: document.getElementById('edit-img-url').value.trim(),
                 title: document.getElementById('edit-img-title').value.trim(),
                 desc: document.getElementById('edit-img-desc').value.trim(),
                 tags: document.getElementById('edit-img-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+                categories: categories, // --- MODIFICADO: Guardar categorías
                 timestamp: parseInt(document.getElementById('edit-img-timestamp').value, 10)
             };
             if (!isValidUrl(data.url) || !data.title || !data.desc || data.tags.length === 0) { showMessage('Todos los campos son obligatorios.'); return; }
@@ -374,110 +384,16 @@
                 .catch(error => showMessage('Error: ' + error.message));
         });
 
-        // --- GESTIÓN DE VIDEOS ---
-        document.getElementById('video-url').addEventListener('input', (e) => {
-            const url = e.target.value;
-            const youtubeId = getYoutubeId(url);
-            if(youtubeId) {
-                const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
-                document.getElementById('video-thumbnail').value = thumbnailUrl;
-                document.getElementById('video-preview').src = thumbnailUrl;
-                document.getElementById('video-preview').style.display = 'block';
-                document.getElementById('video-title').placeholder = "Pega el título del video de YouTube aquí";
-            }
-        });
-
-        document.getElementById('video-form').addEventListener('submit', e => {
-            e.preventDefault();
-            const url = document.getElementById('video-url').value.trim();
-            const type = getYoutubeId(url) ? 'youtube' : (url.endsWith('.mp4') ? 'mp4' : null);
-            if(!type) { showMessage('URL no válida. Debe ser de YouTube o terminar en .mp4'); return; }
-            const data = {
-                url, type,
-                title: document.getElementById('video-title').value.trim(),
-                desc: document.getElementById('video-desc').value.trim(),
-                thumbnailUrl: document.getElementById('video-thumbnail').value.trim(),
-                timestamp: Date.now()
-            };
-            if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { showMessage('Todos los campos de video son obligatorios.'); return; }
-
-            db.ref('videos').push().set(data)
-                .then(() => {
-                    showMessage('Video añadido con éxito', true);
-                    e.target.reset();
-                    document.getElementById('video-preview').style.display = 'none';
-                }).catch(error => showMessage('Error: ' + error.message));
-        });
-
-        function loadVideos(query = '') {
-            db.ref('videos').orderByChild('timestamp').on('value', snapshot => {
-                const videos = [];
-                snapshot.forEach(child => { videos.push({ id: child.key, ...child.val() }); });
-                videos.reverse();
-                const normalizedQuery = normalize(query);
-                const filtered = query ? videos.filter(v => normalize(v.title).includes(normalizedQuery)) : videos;
-                displayVideos(filtered);
-            }, error => showMessage('Error al cargar videos: ' + error.message));
-        }
-
-        function displayVideos(videos) {
-            const tableBody = document.getElementById('video-table-body');
-            tableBody.innerHTML = '';
-            videos.forEach(video => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><img src="${video.thumbnailUrl}" alt="${video.title}"></td>
-                    <td>${video.title}</td>
-                    <td><span style="background:#444; padding: 4px 8px; border-radius:4px; font-weight:bold;">${video.type.toUpperCase()}</span></td>
-                    <td>
-                        <button class="action-btn edit-btn" onclick="openEditModal('video', '${video.id}')"><i class="fas fa-edit"></i></button>
-                        <button class="action-btn delete-btn" onclick="deleteContent('video', '${video.id}')"><i class="fas fa-trash"></i></button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-         document.getElementById('edit-video-form').addEventListener('submit', e => {
-            e.preventDefault();
-            const id = document.getElementById('edit-video-id').value;
-            const url = document.getElementById('edit-video-url').value.trim();
-            const type = getYoutubeId(url) ? 'youtube' : (url.endsWith('.mp4') ? 'mp4' : null);
-            if(!type) { showMessage('URL no válida para video.'); return; }
-             const data = {
-                url, type,
-                title: document.getElementById('edit-video-title').value.trim(),
-                desc: document.getElementById('edit-video-desc').value.trim(),
-                thumbnailUrl: document.getElementById('edit-video-thumbnail').value.trim(),
-                timestamp: parseInt(document.getElementById('edit-video-timestamp').value, 10)
-            };
-            if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { showMessage('Todos los campos son obligatorios.'); return; }
-            db.ref(`videos/${id}`).set(data)
-                .then(() => { showMessage('Video actualizado', true); closeEditModal(); })
-                .catch(error => showMessage('Error: ' + error.message));
-        });
-
-        function getYoutubeId(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
-        }
+        // --- GESTIÓN DE VIDEOS (Sin cambios) ---
+        document.getElementById('video-url').addEventListener('input', (e) => { const url = e.target.value; const youtubeId = getYoutubeId(url); if(youtubeId) { const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`; document.getElementById('video-thumbnail').value = thumbnailUrl; document.getElementById('video-preview').src = thumbnailUrl; document.getElementById('video-preview').style.display = 'block'; document.getElementById('video-title').placeholder = "Pega el título del video de YouTube aquí"; } });
+        document.getElementById('video-form').addEventListener('submit', e => { e.preventDefault(); const url = document.getElementById('video-url').value.trim(); const type = getYoutubeId(url) ? 'youtube' : (url.endsWith('.mp4') ? 'mp4' : null); if(!type) { showMessage('URL no válida. Debe ser de YouTube o terminar en .mp4'); return; } const data = { url, type, title: document.getElementById('video-title').value.trim(), desc: document.getElementById('video-desc').value.trim(), thumbnailUrl: document.getElementById('video-thumbnail').value.trim(), timestamp: Date.now() }; if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { showMessage('Todos los campos de video son obligatorios.'); return; } db.ref('videos').push().set(data).then(() => { showMessage('Video añadido con éxito', true); e.target.reset(); document.getElementById('video-preview').style.display = 'none'; }).catch(error => showMessage('Error: ' + error.message)); });
+        function loadVideos(query = '') { db.ref('videos').orderByChild('timestamp').on('value', snapshot => { const videos = []; snapshot.forEach(child => { videos.push({ id: child.key, ...child.val() }); }); videos.reverse(); const normalizedQuery = normalize(query); const filtered = query ? videos.filter(v => normalize(v.title).includes(normalizedQuery)) : videos; displayVideos(filtered); }, error => showMessage('Error al cargar videos: ' + error.message)); }
+        function displayVideos(videos) { const tableBody = document.getElementById('video-table-body'); tableBody.innerHTML = ''; videos.forEach(video => { const row = document.createElement('tr'); row.innerHTML = `<td><img src="${video.thumbnailUrl}" alt="${video.title}"></td><td>${video.title}</td><td><span style="background:#444; padding: 4px 8px; border-radius:4px; font-weight:bold;">${video.type.toUpperCase()}</span></td><td><button class="action-btn edit-btn" onclick="openEditModal('video', '${video.id}')"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="deleteContent('video', '${video.id}')"><i class="fas fa-trash"></i></button></td>`; tableBody.appendChild(row); }); }
+        document.getElementById('edit-video-form').addEventListener('submit', e => { e.preventDefault(); const id = document.getElementById('edit-video-id').value; const url = document.getElementById('edit-video-url').value.trim(); const type = getYoutubeId(url) ? 'youtube' : (url.endsWith('.mp4') ? 'mp4' : null); if(!type) { showMessage('URL no válida para video.'); return; } const data = { url, type, title: document.getElementById('edit-video-title').value.trim(), desc: document.getElementById('edit-video-desc').value.trim(), thumbnailUrl: document.getElementById('edit-video-thumbnail').value.trim(), timestamp: parseInt(document.getElementById('edit-video-timestamp').value, 10) }; if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { showMessage('Todos los campos son obligatorios.'); return; } db.ref(`videos/${id}`).set(data).then(() => { showMessage('Video actualizado', true); closeEditModal(); }).catch(error => showMessage('Error: ' + error.message)); });
+        function getYoutubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
 
         // --- FUNCIONES GENÉRICAS DE EDICIÓN Y BORRADO ---
-        function deleteContent(type, id) {
-            const refPath = type === 'image' ? 'images' : 'videos';
-            const commentsPath = type === 'image' ? 'comments' : 'video_comments';
-            const reactionsPath = type === 'image' ? 'reactions' : 'video_reactions';
-            if (confirm(`¿Seguro que quieres eliminar este ${type}? También se eliminarán sus datos asociados.`)) {
-                const updates = {};
-                updates[`/${refPath}/${id}`] = null;
-                updates[`/${commentsPath}/${id}`] = null;
-                updates[`/${reactionsPath}/${id}`] = null;
-                db.ref().update(updates)
-                    .then(() => showMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} eliminado.`, true))
-                    .catch(error => showMessage('Error: ' + error.message));
-            }
-        }
+        function deleteContent(type, id) { const refPath = type === 'image' ? 'images' : 'videos'; const commentsPath = type === 'image' ? 'comments' : 'video_comments'; const reactionsPath = type === 'image' ? 'reactions' : 'video_reactions'; if (confirm(`¿Seguro que quieres eliminar este ${type}? También se eliminarán sus datos asociados.`)) { const updates = {}; updates[`/${refPath}/${id}`] = null; updates[`/${commentsPath}/${id}`] = null; updates[`/${reactionsPath}/${id}`] = null; db.ref().update(updates).then(() => showMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} eliminado.`, true)).catch(error => showMessage('Error: ' + error.message)); } }
 
         function openEditModal(type, id) {
             const refPath = type === 'image' ? 'images' : 'videos';
@@ -498,6 +414,8 @@
                     document.getElementById('edit-img-timestamp').value = item.timestamp;
                     document.getElementById('edit-image-preview').src = item.url;
                     document.getElementById('edit-image-preview').style.display = 'block';
+                    // --- MODIFICADO: Cargar y marcar las categorías guardadas ---
+                    populateCategoryCheckboxes('edit-img-categories', item.categories || []);
                 } else {
                     imageForm.style.display = 'none';
                     videoForm.style.display = 'block';
@@ -520,154 +438,18 @@
         document.getElementById('search-comments').addEventListener('input', e => loadComments(normalize(e.target.value)));
 
         // --- COMENTARIOS (Solo para Imágenes) ---
-        function loadComments(query = '') {
-            db.ref('comments').once('value', snapshot => {
-                const comments = [];
-                snapshot.forEach(imgSnap => imgSnap.forEach(commSnap => {
-                    comments.push({ imageId: imgSnap.key, commentId: commSnap.key, ...commSnap.val() });
-                }));
-                comments.sort((a,b) => b.timestamp - a.timestamp);
-                const normalizedQuery = normalize(query);
-                const filtered = query ? comments.filter(c => normalize(c.text).includes(normalizedQuery) || (c.name && normalize(c.name).includes(normalizedQuery))) : comments;
-                displayComments(filtered);
-            });
-        }
-        function displayComments(comments) {
-            const tableBody = document.getElementById('comment-table-body');
-            tableBody.innerHTML = '';
-            comments.forEach(comment => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${comment.imageId.substring(0, 6)}...</td>
-                    <td>${comment.text}</td>
-                    <td>${comment.name || 'Anónimo'}</td>
-                    <td><button class="action-btn delete-btn" onclick="deleteComment('${comment.imageId}', '${comment.commentId}')"><i class="fas fa-trash"></i></button></td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-        function deleteComment(imageId, commentId) {
-            if (confirm('¿Eliminar este comentario?')) {
-                db.ref(`comments/${imageId}/${commentId}`).remove()
-                    .then(() => showMessage('Comentario eliminado.', true))
-                    .catch(error => showMessage('Error: ' + error.message));
-            }
-        }
+        function loadComments(query = '') { db.ref('comments').once('value', snapshot => { const comments = []; snapshot.forEach(imgSnap => imgSnap.forEach(commSnap => { comments.push({ imageId: imgSnap.key, commentId: commSnap.key, ...commSnap.val() }); })); comments.sort((a,b) => b.timestamp - a.timestamp); const normalizedQuery = normalize(query); const filtered = query ? comments.filter(c => normalize(c.text).includes(normalizedQuery) || (c.name && normalize(c.name).includes(normalizedQuery))) : comments; displayComments(filtered); }); }
+        function displayComments(comments) { const tableBody = document.getElementById('comment-table-body'); tableBody.innerHTML = ''; comments.forEach(comment => { const row = document.createElement('tr'); row.innerHTML = `<td>${comment.imageId.substring(0, 6)}...</td><td>${comment.text}</td><td>${comment.name || 'Anónimo'}</td><td><button class="action-btn delete-btn" onclick="deleteComment('${comment.imageId}', '${comment.commentId}')"><i class="fas fa-trash"></i></button></td>`; tableBody.appendChild(row); }); }
+        function deleteComment(imageId, commentId) { if (confirm('¿Eliminar este comentario?')) { db.ref(`comments/${imageId}/${commentId}`).remove().then(() => showMessage('Comentario eliminado.', true)).catch(error => showMessage('Error: ' + error.message)); } }
 
-        // --- LÓGICA BATALLA Y ENCUESTA ---
-        async function loadCurrentPollStatus() { /* ...código sin cambios... */ }
-        document.getElementById('set-poll-btn').addEventListener('click', async () => { /* ...código sin cambios... */ });
-        document.getElementById('end-poll-btn').addEventListener('click', async () => { /* ...código sin cambios... */ });
-        function handleBattleSelection(checkbox) { /* ...código sin cambios... */ }
-        document.getElementById('start-battle-btn').addEventListener('click', () => { /* ...código sin cambios... */ });
-        document.getElementById('end-battle-btn').addEventListener('click', async () => { /* ...código sin cambios... */ });
-        async function loadCurrentBattleStatus() { /* ...código sin cambios... */ }
-
-        // --- Pegando las funciones de Batalla y Encuesta que no necesitan cambios ---
-        async function loadCurrentPollStatus() {
-            const statusContainer = document.getElementById('current-poll-status');
-            const endPollBtn = document.getElementById('end-poll-btn');
-            const pollSnap = await db.ref('polls/activePoll').once('value');
-            if (!pollSnap.exists()) {
-                statusContainer.innerHTML = '<p>No hay ninguna encuesta activa.</p>';
-                endPollBtn.style.display = 'none';
-                return;
-            }
-            const poll = pollSnap.val();
-            statusContainer.innerHTML = `<p><b>Encuesta activa:</b> ${poll.question}</p>`;
-            endPollBtn.style.display = 'block';
-        }
-
-        document.getElementById('set-poll-btn').addEventListener('click', async () => {
-            const question = document.getElementById('poll-question').value.trim();
-            if (!question) { showMessage('La pregunta no puede estar vacía.'); return; }
-            if ( (await db.ref('polls/activePoll').once('value')).exists() && !confirm('¿Reemplazar la encuesta activa?')) return;
-
-            db.ref('polls/activePoll').set({ question, questionId: 'poll_' + Date.now() })
-                .then(() => { showMessage('¡Encuesta asignada!', true); document.getElementById('poll-question').value = ''; loadCurrentPollStatus(); })
-                .catch(error => showMessage('Error: ' + error.message));
-        });
-
-        document.getElementById('end-poll-btn').addEventListener('click', async () => {
-            if (!confirm('¿Terminar la encuesta actual? Se borrarán las respuestas.')) return;
-            const pollSnap = await db.ref('polls/activePoll').once('value');
-            if(pollSnap.exists()){
-                const updates = {};
-                updates[`/polls/activePoll`] = null;
-                updates[`/poll_answers/${pollSnap.val().questionId}`] = null;
-                updates[`/poll_votes`] = null;
-                db.ref().update(updates).then(() => { showMessage('Encuesta terminada.', true); loadCurrentPollStatus(); });
-            }
-        });
-
-        function handleBattleSelection(checkbox) {
-            if (checkbox.checked) {
-                if (selectedForBattle.length < 2) selectedForBattle.push(checkbox.value);
-                else { checkbox.checked = false; showMessage('Solo puedes seleccionar dos imágenes.'); }
-            } else {
-                selectedForBattle = selectedForBattle.filter(id => id !== checkbox.value);
-            }
-            document.getElementById('start-battle-btn').disabled = selectedForBattle.length !== 2;
-        }
-
-        document.getElementById('start-battle-btn').addEventListener('click', () => {
-            const durationDays = parseInt(document.getElementById('battle-duration').value, 10);
-            if (isNaN(durationDays) || durationDays <= 0) { showMessage('La duración debe ser un número positivo.'); return; }
-            const expiry = Date.now() + durationDays * 24 * 60 * 60 * 1000;
-            const [id1, id2] = selectedForBattle;
-            db.ref('battle').set({ images: [id1, id2], expiry, votes: { [id1]: 0, [id2]: 0 } })
-                .then(() => {
-                    showMessage('¡Batalla iniciada!', true);
-                    selectedForBattle = [];
-                    document.querySelectorAll('.battle-selection').forEach(cb => cb.checked = false);
-                    document.getElementById('start-battle-btn').disabled = true;
-                    loadCurrentBattleStatus();
-                });
-        });
-
-        document.getElementById('end-battle-btn').addEventListener('click', async () => {
-            if (!confirm('¿Terminar la batalla? El ganador se guardará.')) return;
-            const battleSnap = await db.ref('battle').once('value');
-            if (!battleSnap.exists()) { showMessage('No hay batalla activa.'); return; }
-            const battle = battleSnap.val();
-            const [id1, id2] = battle.images;
-            const votes1 = battle.votes[id1] || 0;
-            const votes2 = battle.votes[id2] || 0;
-            const winnerData = (votes1 >= votes2)
-                ? { winnerId: id1, loserId: id2, winnerVotes: votes1, loserVotes: votes2 }
-                : { winnerId: id2, loserId: id1, winnerVotes: votes2, loserVotes: votes1 };
-
-            const updates = {};
-            updates['/previousBattleWinner'] = winnerData;
-            updates['/battle'] = null;
-            db.ref().update(updates).then(() => { showMessage('Batalla terminada.', true); loadCurrentBattleStatus(); });
-        });
-
-        async function loadCurrentBattleStatus() {
-            db.ref('battle').on('value', async (battleSnap) => {
-                const statusContainer = document.getElementById('current-battle-status');
-                const endBattleBtn = document.getElementById('end-battle-btn');
-                if (!battleSnap.exists()) {
-                    statusContainer.innerHTML = '<p>No hay ninguna batalla activa.</p>';
-                    endBattleBtn.style.display = 'none';
-                    return;
-                }
-                const battle = battleSnap.val();
-                const [id1, id2] = battle.images;
-                const [img1Snap, img2Snap] = await Promise.all([db.ref(`images/${id1}`).once('value'), db.ref(`images/${id2}`).once('value')]);
-                if (!img1Snap.exists() || !img2Snap.exists()) {
-                    statusContainer.innerHTML = '<p class="error">Error: una imagen de la batalla no existe.</p>'; return;
-                }
-                const img1 = img1Snap.val(), img2 = img2Snap.val();
-                const timeLeft = battle.expiry - Date.now();
-                const timeString = timeLeft > 0 ? `${Math.floor(timeLeft / 864e5)}d ${Math.floor(timeLeft / 36e5 % 24)}h` : 'Terminada';
-
-                statusContainer.innerHTML = `
-                    <p><b>Batalla activa:</b> ${img1.title} (V: ${battle.votes[id1] || 0}) vs ${img2.title} (V: ${battle.votes[id2] || 0})</p>
-                    <p>Tiempo restante: <b>${timeString}</b></p>`;
-                endBattleBtn.style.display = 'block';
-            });
-        }
+        // --- LÓGICA BATALLA Y ENCUESTA (Sin cambios) ---
+        async function loadCurrentPollStatus() { const statusContainer = document.getElementById('current-poll-status'); const endPollBtn = document.getElementById('end-poll-btn'); const pollSnap = await db.ref('polls/activePoll').once('value'); if (!pollSnap.exists()) { statusContainer.innerHTML = '<p>No hay ninguna encuesta activa.</p>'; endPollBtn.style.display = 'none'; return; } const poll = pollSnap.val(); statusContainer.innerHTML = `<p><b>Encuesta activa:</b> ${poll.question}</p>`; endPollBtn.style.display = 'block'; }
+        document.getElementById('set-poll-btn').addEventListener('click', async () => { const question = document.getElementById('poll-question').value.trim(); if (!question) { showMessage('La pregunta no puede estar vacía.'); return; } if ( (await db.ref('polls/activePoll').once('value')).exists() && !confirm('¿Reemplazar la encuesta activa?')) return; db.ref('polls/activePoll').set({ question, questionId: 'poll_' + Date.now() }).then(() => { showMessage('¡Encuesta asignada!', true); document.getElementById('poll-question').value = ''; loadCurrentPollStatus(); }).catch(error => showMessage('Error: ' + error.message)); });
+        document.getElementById('end-poll-btn').addEventListener('click', async () => { if (!confirm('¿Terminar la encuesta actual? Se borrarán las respuestas.')) return; const pollSnap = await db.ref('polls/activePoll').once('value'); if(pollSnap.exists()){ const updates = {}; updates[`/polls/activePoll`] = null; updates[`/poll_answers/${pollSnap.val().questionId}`] = null; updates[`/poll_votes`] = null; db.ref().update(updates).then(() => { showMessage('Encuesta terminada.', true); loadCurrentPollStatus(); }); } });
+        function handleBattleSelection(checkbox) { if (checkbox.checked) { if (selectedForBattle.length < 2) selectedForBattle.push(checkbox.value); else { checkbox.checked = false; showMessage('Solo puedes seleccionar dos imágenes.'); } } else { selectedForBattle = selectedForBattle.filter(id => id !== checkbox.value); } document.getElementById('start-battle-btn').disabled = selectedForBattle.length !== 2; }
+        document.getElementById('start-battle-btn').addEventListener('click', () => { const durationDays = parseInt(document.getElementById('battle-duration').value, 10); if (isNaN(durationDays) || durationDays <= 0) { showMessage('La duración debe ser un número positivo.'); return; } const expiry = Date.now() + durationDays * 24 * 60 * 60 * 1000; const [id1, id2] = selectedForBattle; db.ref('battle').set({ images: [id1, id2], expiry, votes: { [id1]: 0, [id2]: 0 } }).then(() => { showMessage('¡Batalla iniciada!', true); selectedForBattle = []; document.querySelectorAll('.battle-selection').forEach(cb => cb.checked = false); document.getElementById('start-battle-btn').disabled = true; loadCurrentBattleStatus(); }); });
+        document.getElementById('end-battle-btn').addEventListener('click', async () => { if (!confirm('¿Terminar la batalla? El ganador se guardará.')) return; const battleSnap = await db.ref('battle').once('value'); if (!battleSnap.exists()) { showMessage('No hay batalla activa.'); return; } const battle = battleSnap.val(); const [id1, id2] = battle.images; const votes1 = battle.votes[id1] || 0; const votes2 = battle.votes[id2] || 0; const winnerData = (votes1 >= votes2) ? { winnerId: id1, loserId: id2, winnerVotes: votes1, loserVotes: votes2 } : { winnerId: id2, loserId: id1, winnerVotes: votes2, loserVotes: votes1 }; const updates = {}; updates['/previousBattleWinner'] = winnerData; updates['/battle'] = null; db.ref().update(updates).then(() => { showMessage('Batalla terminada.', true); loadCurrentBattleStatus(); }); });
+        async function loadCurrentBattleStatus() { db.ref('battle').on('value', async (battleSnap) => { const statusContainer = document.getElementById('current-battle-status'); const endBattleBtn = document.getElementById('end-battle-btn'); if (!battleSnap.exists()) { statusContainer.innerHTML = '<p>No hay ninguna batalla activa.</p>'; endBattleBtn.style.display = 'none'; return; } const battle = battleSnap.val(); const [id1, id2] = battle.images; const [img1Snap, img2Snap] = await Promise.all([db.ref(`images/${id1}`).once('value'), db.ref(`images/${id2}`).once('value')]); if (!img1Snap.exists() || !img2Snap.exists()) { statusContainer.innerHTML = '<p class="error">Error: una imagen de la batalla no existe.</p>'; return; } const img1 = img1Snap.val(), img2 = img2Snap.val(); const timeLeft = battle.expiry - Date.now(); const timeString = timeLeft > 0 ? `${Math.floor(timeLeft / 864e5)}d ${Math.floor(timeLeft / 36e5 % 24)}h` : 'Terminada'; statusContainer.innerHTML = `<p><b>Batalla activa:</b> ${img1.title} (V: ${battle.votes[id1] || 0}) vs ${img2.title} (V: ${battle.votes[id2] || 0})</p><p>Tiempo restante: <b>${timeString}</b></p>`; endBattleBtn.style.display = 'block'; }); }
     </script>
 </body>
 </html>

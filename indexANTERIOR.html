@@ -3,172 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>exen-E | Galería</title>
+    <title>exen-E | Música</title>
 
-    <!-- Metatags -->
-    <meta property="og:title" content="exen-E | Galería " />
+    <meta property="og:title" content="exen-E | Galería de Música" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://yossfu.github.io/exenArt/index.html" />
     <meta property="og:image" content="https://files.catbox.moe/4ubhtv.jpg" />
-    <meta property="og:image:alt" content="Logo de exen-E Galería Premium" />
+    <meta property="og:image:alt" content="Logo de exen-E Galería de Música" />
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
-    <!-- Alpine.js -->
-    <script src="https://unpkg.com/alpinejs@3.13.10/dist/cdn.min.js" defer></script>
-
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-    <!-- Estilos Personalizados y Mejoras -->
     <style>
         :root {
-            --accent: #f97316; /* orange-500 */
-            --accent-neon: #fb923c; /* orange-400 */
-            --diamond: #b9f2ff;
-            --gold: #ffd700;
-            --silver: #c0c0c0;
+            --accent: #f97316;
+            --accent-neon: #fb923c;
+            --bg-image: url('');
         }
-
         html { scroll-behavior: smooth; }
-
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #121212;
-            background-image: radial-gradient(circle at 15% 50%, rgba(251, 146, 60, 0.1), transparent 40%),
-                              radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.1), transparent 40%);
+            background-color: #0a0a0a; /* Un negro más profundo */
             color: #f3f4f6;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr; /* Sidebar un poco más ancha */
+            gap: 1.5rem;
+            height: calc(100vh - 80px); /* Full height minus header */
+        }
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 300px 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
         }
 
-        header {
-            border-bottom: 1px solid rgba(251, 146, 60, 0.2);
-            box-shadow: 0 5px 20px rgba(249, 115, 22, 0.05);
-        }
-        
-        .nav-link { background-color: transparent; border: 2px solid transparent; }
         .nav-link:hover { background-color: rgba(251, 146, 60, 0.1); color: #fff; }
         .nav-link-active {
-            background-color: var(--accent);
-            color: #fff !important;
+            background-color: var(--accent); color: #fff !important;
             box-shadow: 0 0 15px rgba(251, 146, 60, 0.4);
         }
 
-        main h3 {
-            font-weight: 900;
-            letter-spacing: 0.025em;
-            background: linear-gradient(90deg, var(--accent-neon), var(--accent) 80%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
+        .playlist-item.playing {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* --- Player Background --- */
+        #player-section {
             position: relative;
-            padding-bottom: 0.75rem;
+            z-index: 1;
         }
-
-        main h3 i { -webkit-text-fill-color: var(--accent-neon); text-shadow: 0 0 8px var(--accent-neon); }
-
-        main h3::after {
-            content: ''; position: absolute; bottom: 0; left: 0;
-            width: 60px; height: 3px; background: var(--accent);
-            border-radius: 2px; box-shadow: 0 0 10px var(--accent-neon);
-        }
-        
-        main h3.text-center::after { left: 50%; transform: translateX(-50%); }
-
-        .decorative-divider {
-            display: flex; align-items: center; text-align: center; margin: 3rem 0;
-        }
-        .decorative-divider::before, .decorative-divider::after {
-            content: ''; flex: 1; border-bottom: 1px solid;
-            border-image-source: linear-gradient(to right, transparent, var(--accent), transparent);
-            border-image-slice: 1;
-        }
-        .decorative-divider-icon {
-            font-size: 1.5rem; color: var(--accent-neon);
-            text-shadow: 0 0 15px var(--accent-neon); padding: 0 1em;
+        #player-section::before {
+            content: '';
+            position: absolute;
+            top: -20px; left: -20px; right: -20px; bottom: -20px;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            filter: blur(50px) brightness(0.3);
+            z-index: -1;
+            transition: background-image 0.7s ease-in-out;
+            opacity: 0.7;
         }
         
         @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
         .skeleton {
-            background-color: #374151;
-            background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%);
+            background-color: #27272a;
+            background-image: linear-gradient(to right, #27272a 0%, #3f3f46 20%, #27272a 40%, #27272a 100%);
             background-repeat: no-repeat;
             background-size: 2000px 100%;
             animation: shimmer 1.5s linear infinite;
-            border-radius: 0.75rem;
-            aspect-ratio: 2 / 3;
         }
-        .skeleton-video { aspect-ratio: 16 / 9; }
 
-        .top-1 { border-color: var(--diamond); box-shadow: 0 0 15px var(--diamond); }
-        .top-2 { border-color: var(--gold); box-shadow: 0 0 15px var(--gold); }
-        .top-3 { border-color: var(--silver); box-shadow: 0 0 15px var(--silver); }
-
-        @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
-
-        @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
         .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
-
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
-        .reaction-animation { position: absolute; font-size: 2rem; pointer-events: none; animation: floatUp 1.5s ease forwards; z-index: 10; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
-
-        #reaction-circle-container.open .reaction-circle-item { opacity: 1; transform: scale(1) var(--transform-pos); }
-        #reaction-circle-container.open #reaction-bg { transform: scale(1); }
-        .reaction-circle-item { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform: scale(0); opacity: 0; }
-
-        #scrollToTopBtn {
-            position: fixed; bottom: 20px; right: 20px; z-index: 100;
-            opacity: 0; visibility: hidden; transform: translateY(20px);
-            transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
-        }
-        #scrollToTopBtn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
-
-        .image-card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .image-card-hover:hover { transform: scale(1.03); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
 
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-neon); }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-spin-slow { animation: spin-slow 20s linear infinite; }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- ========== OVERLAYS ========== -->
-    <div id="warning-overlay" class="fixed inset-0 z-[2000] flex-col items-center justify-center bg-gray-950/90 p-4 text-center backdrop-blur-sm" style="display: none;">
-        <h1 class="mb-6 text-3xl font-bold text-orange-500 flex items-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
-        <p class="mb-8 max-w-md text-lg text-gray-300">Esta galería contiene material sensible. Debes tener al menos 18 años para continuar.</p>
-        <div class="flex flex-col sm:flex-row gap-4">
-            <button class="w-full rounded-full bg-orange-600 px-8 py-3 font-semibold text-white transition hover:bg-orange-500 hover:scale-105" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Sí, Soy Mayor de Edad</button>
-            <button class="w-full rounded-full bg-gray-700 px-8 py-3 font-semibold text-white transition hover:bg-gray-600 hover:scale-105" onclick="rejectWarning()"><i class="fas fa-times mr-2"></i> No, salir</button>
-        </div>
-    </div>
-
-    <!-- ========== HEADER ========== -->
-    <header class="sticky top-0 z-[100] bg-gray-900/80 p-4 backdrop-blur-lg">
-        <div class="container mx-auto flex items-center justify-between">
-            <div class="w-1/3">
-                 <div id="user-profile" class="hidden sm:flex items-center gap-2 rounded-full bg-gray-800/80 px-4 py-2 text-sm font-semibold text-gray-200"></div>
-            </div>
-            <nav class="w-1/3 flex justify-center">
+    <header class="sticky top-0 z-[100] bg-gray-900/80 p-4 backdrop-blur-lg border-b border-gray-800 h-[80px]">
+        <div class="container mx-auto flex items-center justify-center">
+            <nav>
                 <ul class="flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
                     <li><a href="index.html" id="nav-index" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Galería</a></li>
                     <li><a href="batalla.html" id="nav-batalla" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Batalla</a></li>
@@ -176,126 +109,30 @@
                     <li><a href="videos.html" id="nav-videos" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Música</a></li>
                 </ul>
             </nav>
-            <div class="w-1/3 flex justify-end">
-                <a href="index.html">
-                    <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-12 w-auto transition-transform duration-300 hover:scale-105">
-                </a>
-            </div>
         </div>
     </header>
 
-    <main class="container mx-auto px-2 sm:px-4">
-        <!-- ========== SEARCH ========== -->
-        <form id="search-form" class="my-6 flex justify-center">
-            <div class="relative w-full max-w-xl">
-                <input type="text" id="search-input" placeholder="Buscar en toda la galería..." class="w-full rounded-full border-2 border-gray-700 bg-gray-800 py-3 pl-5 pr-24 text-white transition placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
-                <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-12 hidden items-center justify-center w-12 text-gray-400 hover:text-orange-500 transition-colors" aria-label="Limpiar búsqueda">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-                <button type="submit" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-400 hover:text-orange-500 transition-colors" aria-label="Buscar">
-                    <i class="fas fa-search text-xl"></i>
-                </button>
-            </div>
-        </form>
-
-        <div id="search-results-container" class="hidden">
-            <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
-            <div id="search-pagination" class="mt-8 flex items-center justify-center gap-4"></div>
-        </div>
-
-        <div id="main-content-sections">
-            <!-- ========== SECCIONES RESTAURADAS ========== -->
-            <section id="for-you-section" class="mb-12">
-                <h3 class="mb-4 flex items-center gap-3 text-2xl"><i class="fas fa-star"></i> Para Ti</h3>
-                <div id="for-you-grid" class="grid grid-cols-3 gap-3 md:gap-4"></div>
-            </section>
-
-            <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
-
-            <section id="top-liked-section" class="mb-12">
-                <h3 class="mb-4 flex items-center gap-3 text-2xl"><i class="fas fa-trophy"></i> Más Gustadas</h3>
-                <div id="top-liked-grid" class="grid grid-cols-3 gap-3 md:gap-4"></div>
-            </section>
-
-            <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
-            
-            <section id="featured-videos-section" class="mb-12">
-                <h3 class="mb-4 flex items-center gap-3 text-2xl"><i class="fas fa-music"></i> Musica</h3>
-                <div id="featured-videos-grid" class="flex gap-6 pb-4 overflow-x-auto scrollbar-hide"></div>
-            </section>
-            
-            <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
-
-            <h3 class="mb-6 text-center text-3xl font-extrabold tracking-tight"><i class="fas fa-images"></i> Galería Completa</h3>
-        </div>
-
-        <section id="gallery">
-            <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
-            <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
-            <div id="loader" class="py-12 grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4" style="display: none;"></div>
-            <div id="load-more-trigger" class="h-10"></div>
-        </section>
-    </main>
-
-    <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90 backdrop-blur-md" style="display: none;">
-        <button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:scale-110">
-            <i class="fas fa-chevron-left text-2xl"></i>
-        </button>
-        <button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:scale-110">
-            <i class="fas fa-chevron-right text-2xl"></i>
-        </button>
-
-        <div id="modal-content" class="h-full w-full overflow-y-auto">
-            <div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4">
-                <header id="modal-header" class="flex items-center justify-between">
-                    <h2 id="title" class="bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl font-black text-transparent"></h2>
-                    <button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
-                </header>
-
-                <div class="flex flex-col items-center gap-4">
-                    <div id="image-container" class="relative -mx-2 sm:mx-0 sm:rounded-xl overflow-hidden w-full">
-                        <img id="full-img" src="" alt="" data-zoom="1" class="h-auto max-h-[75vh] w-full object-contain transition-transform duration-300">
-                    </div>
-
-                    <div id="reaction-circle-container" class="relative z-20">
-                        <div class="relative flex items-center justify-center">
-                            <div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div>
-                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="like">❤️</span></div>
-                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="hot">🔥</span></div>
-                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="wow">😯</span></div>
-                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="laugh">😂</span></div>
-                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sad">😢</span></div>
-                             <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sexy">🫦</span></div>
-                            <button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-lg transition-transform duration-300 hover:scale-110"><i class="fas fa-heart text-2xl"></i></button>
-                        </div>
-                    </div>
-
-                    <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
-                    <p id="desc" class="rounded-xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
-
-                    <section id="similar-section" class="mt-4 w-full">
-                        <h3 class="mb-4 text-center text-xl"><i class="fas fa-th-large text-orange-400"></i> Imágenes Similares</h3>
-                        <div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
-                    </section>
-
-                    <section id="comments-section" class="mt-4 w-full">
-                        <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row">
-                            <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 sm:w-1/4">
-                            <input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50">
-                            <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white transition hover:bg-orange-500"><i class="fas fa-paper-plane transition group-hover:rotate-12"></i> Enviar</button>
-                        </form>
-                        <div id="comments" class="flex flex-col gap-4"></div>
-                    </section>
+    <main class="container mx-auto px-4 main-grid">
+        <!-- Columna Izquierda: Cola de Reproducción y Búsqueda -->
+        <aside class="flex flex-col bg-black/30 rounded-lg overflow-hidden h-full border border-gray-800">
+            <div class="p-4 border-b border-gray-800">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input type="text" id="search-input" placeholder="Filtrar..." class="w-full bg-gray-800 border-2 border-transparent rounded-full py-2 pl-10 pr-4 text-white focus:outline-none focus:border-orange-500 transition">
                 </div>
             </div>
-        </div>
-    </div>
+            <div id="playlist" class="flex-grow overflow-y-auto p-4 grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Las carátulas cuadradas se cargarán aquí -->
+            </div>
+        </aside>
 
-    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-orange-500 hover:scale-110"><i class="fas fa-arrow-up"></i></button>
-
-    <footer class="mt-12 py-8 text-center text-gray-500"><p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
+        <!-- Columna Derecha: Reproductor Principal -->
+        <section id="player-section" class="flex flex-col h-full rounded-lg overflow-hidden">
+             <div id="player-content" class="h-full flex items-center justify-center">
+                <!-- El contenido del reproductor se cargará aquí -->
+            </div>
+        </section>
+    </main>
 
     <script>
         "use strict";
@@ -310,23 +147,10 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        firebase.auth().signInAnonymously().catch(console.error);
 
-        firebase.auth().signInAnonymously().catch(error => console.error('Error en autenticación anónima:', error));
-
-        const imagesPerLoad = 21;
-        let allImages = [];
-        let fullGalleryCache = [];
-        let lastImageTimestamp = null;
-        let lastImageKey = null;
-        let isLoading = false;
-        let noMoreImages = false;
-        let currentImageId = '';
-        let currentImageIndex = -1;
-        let touchStartX = 0;
-        let touchEndX = 0;
-        const swipeThreshold = 50;
-        const sliderAnimationState = {};
-        let modalOpenTime = null;
+        let allVideos = [];
+        let currentVideoId = null;
         let deviceID = localStorage.getItem('deviceID');
         if (!deviceID) {
             deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -335,582 +159,199 @@
             });
             localStorage.setItem('deviceID', deviceID);
         }
-        let currentSearchResults = [];
-        let searchCurrentPage = 1;
-        const searchResultsPerPage = 21;
 
         document.addEventListener('DOMContentLoaded', () => {
-            const warningOverlay = document.getElementById('warning-overlay');
-            if (!localStorage.getItem('adultConsent')) {
-                if (warningOverlay) {
-                    warningOverlay.style.display = 'flex';
-                    document.body.style.overflow = 'hidden';
-                }
-            } else {
-                initializeApp();
-            }
+            setActiveNavLink();
+            initializeApp();
+            setupEventListeners();
         });
 
-        function acceptWarning() {
-            localStorage.setItem('adultConsent', 'true');
-            const warningOverlay = document.getElementById('warning-overlay');
-            if (warningOverlay) { warningOverlay.style.display = 'none'; }
-            document.body.style.overflow = 'auto';
-            initializeApp();
-        }
-        function rejectWarning() { window.location.href = 'https://www.google.com'; }
-
-        function initializeApp() {
-            loadInitialImages();
-            loadTopLikedImages();
-            loadForYouImages();
-            loadFeaturedVideos();
-            setupIntersectionObserver();
-            setupEventListeners();
-            cacheFullGalleryForSearch();
-            setActiveNavLink();
-        }
-        
         function setActiveNavLink() {
-            const path = window.location.pathname.split("/").pop();
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('nav-link-active'));
-            if (path === 'index.html' || path === '' || path.startsWith('index.html')) {
-                document.getElementById('nav-index')?.classList.add('nav-link-active');
-            } else if (path.startsWith('batalla.html')) {
-                document.getElementById('nav-batalla')?.classList.add('nav-link-active');
-            } else if (path.startsWith('encuesta.html')) {
-                document.getElementById('nav-encuesta')?.classList.add('nav-link-active');
-            } else if (path.startsWith('videos.html')) {
-                document.getElementById('nav-videos')?.classList.add('nav-link-active');
-            }
+            document.getElementById('nav-videos')?.classList.add('nav-link-active');
         }
 
-        function cacheFullGalleryForSearch() {
-            const searchInput = document.getElementById('search-input');
-            searchInput.disabled = true;
-            searchInput.placeholder = "Cargando base de datos para búsqueda...";
-            db.ref('images').once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    const allData = [];
-                    snapshot.forEach(child => { allData.push({ id: child.key, ...child.val() }); });
-                    fullGalleryCache = allData;
-                    searchInput.disabled = false;
-                    searchInput.placeholder = "Buscar en toda la galería...";
-                }
-            }).catch(error => {
-                console.error("Error al cachear la galería:", error);
-                searchInput.placeholder = "Error al cargar la búsqueda.";
-            });
-        }
-
-        function generateSkeletons(container, count, isSlider = false, isVideo = false) {
-            container.innerHTML = '';
-            for (let i = 0; i < count; i++) {
-                const skeleton = document.createElement('div');
-                let classList = 'skeleton';
-                if (isSlider) {
-                    classList += isVideo ? ' flex-shrink-0 w-3/4 sm:w-1/2 md:w-2/5 lg:w-1/3' : ' flex-shrink-0 w-2/5 sm:w-1/4 md:w-1/5';
-                }
-                if (isVideo) { classList += ' skeleton-video'; }
-                skeleton.className = classList;
-                container.appendChild(skeleton);
-            }
-        }
-        
-        function loadInitialImages() {
-            if (isLoading) return;
-            isLoading = true;
-            const grid = document.getElementById('grid');
-            generateSkeletons(grid, imagesPerLoad);
-            db.ref('images').orderByChild('timestamp').limitToLast(imagesPerLoad).once('value').then(snapshot => {
+        async function initializeApp() {
+            showSkeletons();
+            try {
+                const snapshot = await db.ref('videos').orderByChild('timestamp').once('value');
                 if (!snapshot.exists()) {
-                    showError('No se encontraron imágenes.');
-                    grid.innerHTML = ''; isLoading = false; return;
-                }
-                const images = [];
-                snapshot.forEach(child => { images.push({ id: child.key, ...child.val() }); });
-                if (images.length > 0) {
-                    lastImageTimestamp = images[0].timestamp;
-                    lastImageKey = images[0].id;
-                }
-                images.reverse();
-                allImages = images;
-                displayImages(allImages, 'grid');
-                isLoading = false;
-            }).catch(error => {
-                showError('Error al conectar con Firebase: ' + error.message);
-                grid.innerHTML = ''; isLoading = false;
-            });
-        }
-
-        function loadMoreImages() {
-            if (isLoading || noMoreImages) return;
-            isLoading = true;
-            const loaderContainer = document.getElementById('loader');
-            loaderContainer.style.display = 'grid';
-            generateSkeletons(loaderContainer, 3);
-            db.ref('images').orderByChild('timestamp').endBefore(lastImageTimestamp, lastImageKey).limitToLast(imagesPerLoad).once('value').then(snapshot => {
-                loaderContainer.style.display = 'none';
-                if (!snapshot.exists() || snapshot.numChildren() === 0) {
-                    noMoreImages = true; isLoading = false; return;
-                }
-                const newImages = [];
-                snapshot.forEach(child => { newImages.push({ id: child.key, ...child.val() }); });
-                if (newImages.length < imagesPerLoad) { noMoreImages = true; }
-                if (newImages.length > 0) {
-                    lastImageTimestamp = newImages[0].timestamp;
-                    lastImageKey = newImages[0].id;
-                    newImages.reverse();
-                    allImages = allImages.concat(newImages);
-                    displayImages(newImages, 'grid', true);
-                }
-                isLoading = false;
-            }).catch(error => {
-                console.error("Error loading more images:", error);
-                isLoading = false; loaderContainer.style.display = 'none';
-            });
-        }
-        
-        async function loadTopLikedImages() {
-            const grid = document.getElementById('top-liked-grid');
-            generateSkeletons(grid, 9);
-            const reactionsSnap = await db.ref('reactions').once('value');
-            const reactions = reactionsSnap.val() || {};
-            const likesCount = {};
-            Object.entries(reactions).forEach(([imgId, users]) => { likesCount[imgId] = Object.keys(users).length; });
-            const sortedIds = Object.keys(likesCount).sort((a,b) => likesCount[b] - likesCount[a]).slice(0, 9);
-            if (sortedIds.length === 0) {
-                 grid.innerHTML = '<p class="w-full col-span-3 text-center text-gray-500">Aún no hay imágenes gustadas.</p>';
-                 return;
-            }
-            const imageSnaps = await Promise.all(sortedIds.map(id => db.ref(`images/${id}`).once('value')));
-            const images = imageSnaps.map(s => ({id: s.key, ...s.val()}));
-            displayImages(images, 'top-liked-grid');
-        }
-
-        async function loadForYouImages() {
-            const grid = document.getElementById('for-you-grid');
-            generateSkeletons(grid, 9);
-
-            const fallbackToRecents = async () => {
-                const imageSnap = await db.ref('images').orderByChild('timestamp').limitToLast(9).once('value');
-                if (!imageSnap.exists()) {
-                    grid.innerHTML = '<p class="w-full col-span-3 text-center text-gray-500">No hay imágenes para mostrar.</p>';
+                    document.getElementById('playlist').innerHTML = '<p class="p-4 text-center text-gray-500 col-span-full">No hay música disponible.</p>';
+                    document.getElementById('player-content').innerHTML = '';
                     return;
                 }
-                const images = [];
-                imageSnap.forEach(child => { images.push({id: child.key, ...child.val()}); });
-                displayImages(images.reverse(), 'for-you-grid');
-            };
-
-            let viewedImageIds = new Set(JSON.parse(localStorage.getItem('viewedImages')) || []);
-            let imageInteractions = JSON.parse(localStorage.getItem('imageInteractions')) || {};
-            
-            const userLikesSnap = await db.ref('reactions').once('value');
-            const allReactions = userLikesSnap.val() || {};
-            const userLikes = {};
-            Object.keys(allReactions).forEach(imgId => {
-                if (allReactions[imgId][deviceID]) {
-                    userLikes[imgId] = allReactions[imgId][deviceID];
-                }
-            });
-
-            if (viewedImageIds.size === 0 && Object.keys(userLikes).length === 0) {
-                await fallbackToRecents();
-                return;
-            }
-
-            const profileImageIds = [...new Set([...Array.from(viewedImageIds), ...Object.keys(userLikes)])].slice(0, 50);
-            const profileImageSnaps = await Promise.all(profileImageIds.map(id => db.ref(`images/${id}`).once('value')));
-            
-            const userTagProfile = {};
-            profileImageSnaps.forEach(snap => {
-                if (snap.exists() && Array.isArray(snap.val().tags)) {
-                    const isLiked = userLikes[snap.key];
-                    const weight = isLiked ? 3 : 1; 
-                    snap.val().tags.forEach(tag => {
-                        userTagProfile[tag] = (userTagProfile[tag] || 0) + weight;
-                    });
-                }
-            });
-
-            if (Object.keys(userTagProfile).length === 0) {
-                await fallbackToRecents();
-                return;
-            }
-
-            const allImagesSnap = await db.ref('images').once('value');
-             if (!allImagesSnap.exists()) {
-                await fallbackToRecents();
-                return;
-            }
-            
-            const candidates = [];
-            allImagesSnap.forEach(child => {
-                const img = { id: child.key, ...child.val() };
-                if (!viewedImageIds.has(img.id)) {
-                    candidates.push(img);
-                }
-            });
-
-            const scoredCandidates = candidates.map(img => {
-                let score = 0;
-                if (img.tags) {
-                    img.tags.forEach(tag => {
-                        if (userTagProfile[tag]) score += userTagProfile[tag];
-                    });
-                }
-                return { image: img, score };
-            }).filter(c => c.score > 0)
-              .sort((a, b) => b.score - a.score);
-            
-            let recommendedImages = scoredCandidates.map(c => c.image).slice(0, 9);
-
-            if (recommendedImages.length < 9) {
-                const needed = 9 - recommendedImages.length;
-                const seenImages = [];
-                allImagesSnap.forEach(child => {
-                     const img = { id: child.key, ...child.val() };
-                     if(viewedImageIds.has(img.id)) {
-                         seenImages.push(img);
-                     }
-                });
+                snapshot.forEach(child => { allVideos.push({ id: child.key, ...child.val() }); });
+                allVideos.reverse(); // Mostrar los más recientes primero
                 
-                const filler = seenImages.sort(() => 0.5 - Math.random()).slice(0, needed);
-                recommendedImages.push(...filler);
-            }
+                renderPlaylist(allVideos);
 
-            if (recommendedImages.length > 0) {
-                displayImages(recommendedImages, 'for-you-grid');
-            } else {
-                await fallbackToRecents();
+                const urlParams = new URLSearchParams(window.location.search);
+                const videoIdFromUrl = urlParams.get('id');
+                const videoToPlay = allVideos.find(v => v.id === videoIdFromUrl) || allVideos[0];
+                
+                if(videoToPlay) {
+                    playVideo(videoToPlay.id);
+                }
+
+            } catch(error) {
+                console.error("Error al inicializar la app:", error);
+                 document.getElementById('playlist').innerHTML = `<p class="p-4 text-center text-red-400 col-span-full">Error al cargar la música: ${error.message}</p>`;
             }
         }
         
-        async function loadFeaturedVideos() {
-            const grid = document.getElementById('featured-videos-grid');
-            generateSkeletons(grid, 5, true, true); 
-            const reactionsSnap = await db.ref('video_reactions').once('value');
-            const reactions = reactionsSnap.val() || {};
-            const likesCount = {};
-            Object.entries(reactions).forEach(([videoId, users]) => { likesCount[videoId] = Object.keys(users).length; });
-            const sortedIds = Object.keys(likesCount).sort((a,b) => likesCount[b] - likesCount[a]).slice(0, 5);
-            if (sortedIds.length === 0) {
-                 grid.innerHTML = '<p class="w-full text-center text-gray-500">Aún no hay videos gustados.</p>';
-                 return;
-            }
-            const videoSnaps = await Promise.all(sortedIds.map(id => db.ref(`videos/${id}`).once('value')));
-            const videos = videoSnaps.map(s => ({id: s.key, ...s.val()}));
-            displayVideos(videos, 'featured-videos-grid');
-            initAutoSlider('featured-videos-grid');
+        function showSkeletons() {
+            const playlistContainer = document.getElementById('playlist');
+            playlistContainer.innerHTML = Array(9).fill('').map(() => `
+                <div class="flex flex-col gap-2">
+                    <div class="aspect-square w-full skeleton rounded-lg"></div>
+                    <div class="h-4 w-3/4 skeleton rounded"></div>
+                </div>`).join('');
+
+            const playerContainer = document.getElementById('player-content');
+            playerContainer.innerHTML = `<div class="text-center"><i class="fas fa-spinner fa-spin text-4xl text-gray-500"></i><p class="mt-4 text-gray-500">Cargando música...</p></div>`;
         }
         
-        function displayVideos(videos, containerId) {
-            const grid = document.getElementById(containerId);
-            grid.innerHTML = '';
+        function renderPlaylist(videos) {
+            const playlistContainer = document.getElementById('playlist');
             if (videos.length === 0) {
-                grid.innerHTML = `<div class="w-full text-center py-8 text-gray-400">No se encontraron videos.</div>`;
+                playlistContainer.innerHTML = '<p class="p-4 text-center text-gray-500 col-span-full">No se encontraron videos.</p>';
                 return;
             }
-            videos.forEach((video, index) => {
-                if (!video || !video.thumbnailUrl || !video.title) return;
-                const div = document.createElement('div');
-                div.className = 'flex flex-col items-center gap-2 flex-shrink-0 w-36 sm:w-44 text-center group';
-                div.style.animationDelay = `${(index * 0.05)}s`;
-
-                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-                const videoPageUrl = `${baseUrl}videos.html?id=${video.id}`;
-                div.setAttribute('onclick', `window.location.href='${videoPageUrl}'`);
-                
-                div.innerHTML = `
-                    <div class="relative w-32 h-32 sm:w-40 sm:h-40 cursor-pointer">
-                        <div class="w-full h-full rounded-full bg-gray-700 animate-spin-slow group-hover:[animation-play-state:paused] shadow-lg">
-                            <img src="${video.thumbnailUrl}" alt="${video.title}" loading="lazy" class="h-full w-full object-cover rounded-full" onerror="this.src='https://placehold.co/160x160/1f2937/374151?text=Error'">
+            playlistContainer.innerHTML = videos.map(video => `
+                 <div id="playlist-item-${video.id}" class="playlist-item group cursor-pointer rounded-lg transition-all duration-300" onclick="playVideo('${video.id}')">
+                    <div class="relative aspect-square w-full overflow-hidden rounded-lg shadow-lg">
+                        <img src="${video.thumbnailUrl}" alt="${video.title}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fas fa-play text-4xl text-white drop-shadow-lg"></i>
                         </div>
-                        <div class="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                            <i class="fas fa-play-circle text-5xl text-white/80 drop-shadow-lg"></i>
-                        </div>
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-900 border-2 border-gray-500"></div>
                     </div>
-                    <h4 class="font-semibold text-white truncate w-32 sm:w-40">${video.title}</h4>
-                `;
-                grid.appendChild(div);
-            });
+                    <p class="text-white font-semibold truncate mt-2 text-sm">${video.title}</p>
+                    <p class="text-xs text-gray-400">Exen-E Music</p>
+                </div>
+            `).join('');
         }
 
-        function displayImages(images, containerId, append = false) {
-            const grid = document.getElementById(containerId);
-            if (!append) grid.innerHTML = '';
-            if (images.length === 0 && !append) {
-                grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes.</div>`;
-                return;
+        function playVideo(id) {
+            if (currentVideoId === id && document.getElementById('video-player-container')) return; 
+            currentVideoId = id;
+            const video = allVideos.find(v => v.id === id);
+            if (!video) return;
+
+            // --- Set background image ---
+            const playerSection = document.getElementById('player-section');
+            playerSection.style.setProperty('--bg-image', `url('${video.thumbnailUrl}')`);
+
+            const playerContainer = document.getElementById('player-content');
+            playerContainer.innerHTML = ''; // Clear previous content
+
+            const youtubeId = getYoutubeId(video.url);
+            let videoPlayerHTML = '';
+            if (video.type === 'youtube' && youtubeId) {
+                videoPlayerHTML = `<iframe class="w-full aspect-video rounded-lg shadow-2xl" src="https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&iv_load_policy=3&modestbranding=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            } else if (video.type === 'mp4') {
+                videoPlayerHTML = `<video class="w-full aspect-video rounded-lg shadow-2xl" src="${video.url}" controls autoplay playsinline></video>`;
+            } else {
+                videoPlayerHTML = `<div class="w-full aspect-video rounded-lg bg-black flex items-center justify-center"><p class="text-red-400">Error: Formato de video no soportado.</p></div>`;
             }
-            const isSlider = containerId === 'similar-grid';
-            images.forEach((img, index) => {
-                if (!img || !img.url || !img.title) return;
-                const div = document.createElement('div');
-                let classList = 'image-item-animation group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-xl image-card-hover';
-                if (isSlider) { classList += ' flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%]'; }
-                if (containerId === 'top-liked-grid') { const topClass = index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : ''; if (topClass) classList += ` border-2 border-transparent ${topClass}`; }
-                div.className = classList;
-                div.style.animationDelay = `${(index * 0.05)}s`;
-                div.setAttribute('onclick', `openModal('${img.id}')`);
-                div.innerHTML = `
-                    <img src="${img.url}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" onerror="this.src='https://placehold.co/400x600/1f2937/374151?text=Error'">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent transition duration-300 group-hover:bg-black/50 pointer-events-none"></div>
-                    <div class="absolute bottom-0 left-0 p-3 pointer-events-none">
-                        <h4 class="truncate font-bold text-white text-shadow-lg">${img.title}</h4>
-                    </div>
-                     <div class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white pointer-events-none"><i class="fas fa-heart text-red-500"></i><span id="reaction-total-${img.id}">0</span></div>
-                `;
-                grid.appendChild(div);
-                db.ref(`reactions/${img.id}`).once('value').then(snap => {
-                    const reactionCountEl = document.getElementById(`reaction-total-${img.id}`);
-                    if (reactionCountEl) reactionCountEl.textContent = snap.numChildren();
-                });
-            });
-        }
 
-        async function openModal(id) {
-            let img = allImages.find(i => i && i.id === id) || fullGalleryCache.find(i => i && i.id === id);
-            if (!img) {
-                const snapshot = await db.ref(`images/${id}`).once('value');
-                if(snapshot.exists()) img = { id: snapshot.key, ...snapshot.val() };
-                else { console.error("Image not found"); return; }
-            }
-            currentImageId = id;
-            const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults;
-            currentImageIndex = currentView.findIndex(i => i && i.id === id);
-            modalOpenTime = Date.now();
-            document.getElementById('full-img').src = img.url;
-            document.getElementById('title').textContent = img.title;
-            document.getElementById('desc').textContent = img.desc;
-            loadLikes(id); loadComments(id); loadSimilarImages(img.tags || []);
-            triggerReactionRain(id); trackImageView(id, 'view');
-            const prevBtn = document.getElementById('prev-image'); const nextBtn = document.getElementById('next-image');
-            if (prevBtn && nextBtn && currentImageIndex !== -1) {
-                prevBtn.style.display = currentImageIndex > 0 ? 'flex' : 'none';
-                nextBtn.style.display = currentImageIndex < currentView.length - 1 ? 'flex' : 'none';
-            }
-            document.getElementById('scrollToTopBtn').classList.remove('visible');
-            document.getElementById('modal').style.display = 'block';
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => document.getElementById('modal-content').scrollTop = 0, 50);
-        }
-
-        function trackImageView(imageId, eventType, timeSpent = 0) {
-            if (!imageId) return;
-            let viewedImages = []; try { viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImages = []; }
-            const existingIndex = viewedImages.indexOf(imageId);
-            if (existingIndex > -1) { viewedImages.splice(existingIndex, 1); }
-            viewedImages.unshift(imageId);
-            const historyLimit = 50;
-            if (viewedImages.length > historyLimit) { viewedImages = viewedImages.slice(0, historyLimit); }
-            localStorage.setItem('viewedImages', JSON.stringify(viewedImages));
-            if (eventType === 'close' && timeSpent > 1000) {
-                let imageInteractions = {}; try { imageInteractions = JSON.parse(localStorage.getItem('imageInteractions')) || {}; } catch(e) { imageInteractions = {}; }
-                if (!imageInteractions[imageId]) { imageInteractions[imageId] = { timeSpent: 0 }; }
-                imageInteractions[imageId].timeSpent += timeSpent;
-                imageInteractions[imageId].lastViewed = Date.now();
-                localStorage.setItem('imageInteractions', JSON.stringify(imageInteractions));
-            }
-        }
-
-        function initAutoSlider(containerId) {
-            const container = document.getElementById(containerId);
-            if (!container || container.children.length < 2) return;
-            if (sliderAnimationState[containerId]?.animationFrameId) { cancelAnimationFrame(sliderAnimationState[containerId].animationFrameId); }
-            if (!container.dataset.cloned) {
-                const originalChildren = Array.from(container.children);
-                originalChildren.forEach(child => { const clone = child.cloneNode(true); clone.setAttribute('aria-hidden', 'true'); container.appendChild(clone); });
-                container.dataset.cloned = 'true';
-            }
-            const scrollWidth = container.scrollWidth / 2; let isPaused = false;
-            const scroll = () => {
-                if (!isPaused) { container.scrollLeft += 0.5; if (container.scrollLeft >= scrollWidth) { container.scrollLeft = 0; } }
-                sliderAnimationState[containerId] = { animationFrameId: requestAnimationFrame(scroll) };
-            };
-            container.addEventListener('mouseenter', () => isPaused = true); 
-            container.addEventListener('mouseleave', () => isPaused = false);
-            scroll();
-        }
-
-        async function loadSimilarImages(tags) {
-            const grid = document.getElementById('similar-grid');
-            if (sliderAnimationState['similar-grid']?.animationFrameId) { cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId); }
-            grid.innerHTML = ''; delete grid.dataset.cloned;
-            if (!tags || tags.length === 0) { grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No hay etiquetas para encontrar similares.</p>'; return; }
-            const candidates = fullGalleryCache.filter(img => img.id !== currentImageId && Array.isArray(img.tags));
-            const scoredImages = candidates.map(img => { const commonTags = img.tags.filter(tag => tags.includes(tag)); return { image: img, score: commonTags.length }; }).filter(item => item.score > 0);
-            scoredImages.sort((a, b) => b.score - a.score);
-            const similarImages = scoredImages.slice(0, 10).map(item => item.image);
-            if(similarImages.length > 0) { displayImages(similarImages, 'similar-grid'); } else { grid.innerHTML = '<p class="w-full flex-shrink-0 text-center text-gray-500">No se encontraron imágenes con etiquetas similares.</p>'; }
-        }
-
-        function setupEventListeners() {
-            const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-            window.addEventListener('scroll', () => { (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible'); });
-            scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
-            document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); const query = normalize(document.getElementById('search-input').value); executeSearch(query); });
-            document.getElementById('clear-search-btn').addEventListener('click', resetSearchView);
-            document.getElementById('search-input').addEventListener('input', e => { if (e.target.value.trim() === '') { if(!document.getElementById('search-results-container').classList.contains('hidden')) { resetSearchView(); } } });
-            document.getElementById('close-modal').addEventListener('click', () => {
-                if (currentImageId && modalOpenTime) { const timeSpent = Date.now() - modalOpenTime; trackImageView(currentImageId, 'close', timeSpent); modalOpenTime = null; }
-                document.getElementById('modal').style.display = 'none'; document.body.style.overflow = 'auto';
-                if (sliderAnimationState['similar-grid']?.animationFrameId) { cancelAnimationFrame(sliderAnimationState['similar-grid'].animationFrameId); delete sliderAnimationState['similar-grid']; }
-                if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) { scrollToTopBtn.classList.add('visible'); }
-            });
-            document.getElementById('prev-image').addEventListener('click', navigateToPrevious);
-            document.getElementById('next-image').addEventListener('click', navigateToNext);
-            const modal = document.getElementById('modal');
-            modal.addEventListener('touchstart', e => { if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true });
-            modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; });
-            document.addEventListener('keydown', e => {
-                if (document.getElementById('modal').style.display !== 'block') return;
-                if (e.key === 'ArrowRight') navigateToNext(); else if (e.key === 'ArrowLeft') navigateToPrevious(); else if (e.key === 'Escape') document.getElementById('close-modal').click();
-            });
-        }
-        
-        function executeSearch(query) {
-            const clearBtn = document.getElementById('clear-search-btn');
-            if (!query) { resetSearchView(); return; }
-            document.getElementById('main-content-sections').classList.add('hidden');
-            document.getElementById('gallery').classList.add('hidden');
-            document.getElementById('search-results-container').classList.remove('hidden');
-            clearBtn.classList.remove('hidden'); clearBtn.classList.add('flex');
-            currentSearchResults = fullGalleryCache.filter(item => {
-                const titleMatch = item.title && normalize(item.title).includes(query);
-                const tagMatch = item.tags && Array.isArray(item.tags) && item.tags.some(tag => normalize(tag).includes(query));
-                return titleMatch || tagMatch;
-            });
-            searchCurrentPage = 1; displaySearchResultsPage(searchCurrentPage);
-        }
-
-        function displaySearchResultsPage(page) {
-            searchCurrentPage = page; const grid = document.getElementById('search-results-grid');
-            const startIndex = (page - 1) * searchResultsPerPage; const endIndex = startIndex + searchResultsPerPage;
-            const pageItems = currentSearchResults.slice(startIndex, endIndex);
-            displayImages(pageItems, 'search-results-grid'); renderPaginationControls(); window.scrollTo(0,0);
-        }
-
-        function renderPaginationControls() {
-            const paginationContainer = document.getElementById('search-pagination');
-            const totalPages = Math.ceil(currentSearchResults.length / searchResultsPerPage);
-            paginationContainer.innerHTML = ''; if (totalPages <= 1) return;
-            let paginationHTML = '';
-            paginationHTML += `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-gray-700 rounded-md transition hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed" ${searchCurrentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left mr-2"></i> Anterior</button>`;
-            paginationHTML += `<span class="font-semibold text-gray-300">Página ${searchCurrentPage} de ${totalPages}</span>`;
-            paginationHTML += `<button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-gray-700 rounded-md transition hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed" ${searchCurrentPage === totalPages ? 'disabled' : ''}>Siguiente <i class="fas fa-chevron-right ml-2"></i></button>`;
-            paginationContainer.innerHTML = paginationHTML;
-        }
-
-        function resetSearchView() {
-            const clearBtn = document.getElementById('clear-search-btn');
-            document.getElementById('search-input').value = '';
-            document.getElementById('search-results-container').classList.add('hidden');
-            document.getElementById('search-results-grid').innerHTML = ''; document.getElementById('search-pagination').innerHTML = '';
-            document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden');
-            clearBtn.classList.add('hidden'); clearBtn.classList.remove('flex');
-            currentSearchResults = []; searchCurrentPage = 1;
-        }
-        
-        function setupIntersectionObserver() {
-            const trigger = document.getElementById('load-more-trigger');
-            const observer = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting && document.getElementById('search-results-container').classList.contains('hidden')) { loadMoreImages(); }
-            }, { rootMargin: '0px 0px 500px 0px' });
-            observer.observe(trigger);
-        }
-
-        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
-        function navigateToNext() { const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; if (currentImageIndex > -1 && currentImageIndex < currentView.length - 1) { const nextImage = currentView[currentImageIndex + 1]; if (nextImage) openModal(nextImage.id); } }
-        function navigateToPrevious() { const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; if (currentImageIndex > 0) { const prevImage = currentView[currentImageIndex - 1]; if (prevImage) openModal(prevImage.id); } }
-        function handleSwipe() { const deltaX = touchEndX - touchStartX; if (Math.abs(deltaX) > swipeThreshold) { if (deltaX < 0) { navigateToNext(); } else { navigateToPrevious(); } } }
-        function animateReactionOnImage(type) {
-            const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; const icon = icons[type]; if (!icon) return;
-            const container = document.getElementById('image-container');
-            const existingAnimation = container.querySelector('.punch-animation'); if (existingAnimation) { existingAnimation.remove(); }
-            const animationEl = document.createElement('div'); animationEl.className = 'punch-animation'; animationEl.textContent = icon;
-            container.appendChild(animationEl);
-            setTimeout(() => { if (animationEl) animationEl.remove(); }, 500);
-        }
-
-        function showReactionAnimation(type, container) {
-            const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; if (!icons[type]) return;
-            const reaction = document.createElement('span'); reaction.className = 'reaction-animation'; reaction.textContent = icons[type];
-            reaction.style.left = `${Math.random() * 80 + 10}%`; reaction.style.bottom = '20px';
-            container.appendChild(reaction);
-            setTimeout(() => reaction.remove(), 1500);
-        }
-
-        function triggerReactionRain(id) {
-            db.ref(`reactions/${id}`).once('value', snap => {
-                const container = document.getElementById('image-container'); let delay = 0;
-                snap.forEach(childSnap => { setTimeout(() => showReactionAnimation(childSnap.val(), container), delay); delay += Math.random() * 200 + 50; });
-            });
-        }
-
-        function loadLikes(id) {
-            db.ref(`reactions/${id}`).on('value', snap => {
-                const reactions = snap.val() || {};
-                const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 };
-                Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; });
-                document.getElementById('reaction-counts-container').innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join('');
-                const total = snap.numChildren();
-                const mainGridEl = document.getElementById(`reaction-total-${id}`); if (mainGridEl) mainGridEl.textContent = total;
-            });
-        }
-
-        document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); });
-        document.querySelectorAll('.reaction').forEach(reaction => {
-            reaction.addEventListener('click', e => {
-                e.stopPropagation(); if (!currentImageId) return;
-                const type = e.currentTarget.dataset.type;
-                animateReactionOnImage(type);
-                const reactionsRef = db.ref(`reactions/${currentImageId}/${deviceID}`);
-                reactionsRef.once('value', snap => { (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); });
-                document.getElementById('reaction-circle-container').classList.remove('open');
-            });
-        });
-        document.addEventListener('click', () => document.getElementById('reaction-circle-container').classList.remove('open'));
-        
-        function loadComments(id) {
-             db.ref(`comments/${id}`).orderByChild('timestamp').on('value', snap => {
-                const commentsContainer = document.getElementById('comments');
-                commentsContainer.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500">Aún no hay comentarios. ¡Sé el primero!</p>' : '';
-                const comments = []; snap.forEach(child => { comments.push(child.val()); });
-                comments.reverse().forEach(comment => {
-                    const div = document.createElement('div');
-                    const initial = comment.name ? comment.name.charAt(0).toUpperCase() : 'A';
-                    const avatarBg = 'bg-gradient-to-br from-orange-500 to-orange-400 text-white';
-                    div.innerHTML = `
-                        <div class="flex gap-3">
-                            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${avatarBg} font-bold">${initial}</div>
-                            <div class="flex-grow min-w-0">
-                                <div class="rounded-lg rounded-tl-none bg-gray-800 p-3">
-                                    <p class="font-bold text-orange-400">${comment.name || 'Anónimo'}</p>
-                                    <p class="text-gray-300 whitespace-pre-wrap break-words">${comment.text || ''}</p>
-                                </div>
-                                <small class="pl-2 pt-1 text-xs text-gray-500">${new Date(comment.timestamp).toLocaleString()}</small>
+            playerContainer.innerHTML = `
+                <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 md:p-8 overflow-y-auto">
+                    <div id="video-player-container" class="w-full max-w-3xl mx-auto mb-6">${videoPlayerHTML}</div>
+                    
+                    <div class="flex-grow flex flex-col justify-end">
+                         <div class="w-full max-w-3xl mx-auto bg-black/30 backdrop-blur-md rounded-lg p-4 flex items-center gap-4 mb-6 border border-gray-800">
+                            <img src="${video.thumbnailUrl}" alt="${video.title}" class="w-16 h-16 rounded-md object-cover flex-shrink-0">
+                            <div class="min-w-0">
+                                <h2 class="text-2xl font-bold text-white truncate">${video.title}</h2>
+                                <p class="text-gray-300 truncate">${video.desc || 'Disfruta de la mejor música.'}</p>
                             </div>
-                        </div>`;
-                    commentsContainer.appendChild(div);
-                });
+                        </div>
+
+                        <div class="flex flex-col items-center justify-center gap-4">
+                            <div id="reaction-buttons" class="flex items-center gap-6">
+                                <span class="reaction-btn cursor-pointer text-4xl transition hover:scale-125" data-type="like">❤️</span>
+                                <span class="reaction-btn cursor-pointer text-4xl transition hover:scale-125" data-type="hot">🔥</span>
+                                <span class="reaction-btn cursor-pointer text-4xl transition hover:scale-125" data-type="wow">😯</span>
+                                <span class="reaction-btn cursor-pointer text-4xl transition hover:scale-125" data-type="laugh">😂</span>
+                            </div>
+                            <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-black/30 px-4 py-2 text-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?id=' + id;
+            // window.history.pushState({path:newUrl}, '', newUrl); // Comentado para evitar errores en el entorno de ejecución
+
+            document.querySelectorAll('.playlist-item').forEach(item => item.classList.remove('playing'));
+            document.getElementById(`playlist-item-${id}`)?.classList.add('playing');
+
+            loadReactions(id);
+            document.querySelectorAll('.reaction-btn').forEach(reaction => {
+                reaction.addEventListener('click', e => handleReactionClick(e, id));
             });
         }
-        document.getElementById('comment-form').addEventListener('submit', e => {
-            e.preventDefault();
-            const name = document.getElementById('name-input').value.trim();
-            const comment = document.getElementById('comment-input').value.trim();
-            if (!comment || !currentImageId) return;
-            const commentData = { name: name || 'Anónimo', text: comment, timestamp: Date.now() };
-            db.ref(`comments/${currentImageId}`).push(commentData).then(() => document.getElementById('comment-input').value = '');
-        });
         
-        function showError(message) {
-            const errorEl = document.getElementById('error-message');
-            errorEl.textContent = message; errorEl.style.display = 'block';
+        function handleReactionClick(e, videoId) {
+            e.stopPropagation();
+            const type = e.currentTarget.dataset.type;
+            animateReactionOnPlayer(type);
+            const reactionsRef = db.ref(`video_reactions/${videoId}/${deviceID}`);
+            reactionsRef.once('value', snap => {
+                (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type);
+            });
         }
+        
+        function setupEventListeners() {
+            document.getElementById('search-input').addEventListener('input', e => {
+                const query = e.target.value.toLowerCase().trim();
+                const filteredVideos = allVideos.filter(video => 
+                    video.title.toLowerCase().includes(query)
+                );
+                renderPlaylist(filteredVideos);
+                if (currentVideoId) {
+                     document.getElementById(`playlist-item-${currentVideoId}`)?.classList.add('playing');
+                }
+            });
+        }
+
+        function getYoutubeId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function loadReactions(id) {
+            const reactionCountsContainer = document.getElementById('reaction-counts-container');
+            if (!reactionCountsContainer) return;
+
+            db.ref(`video_reactions/${id}`).on('value', snap => {
+                const reactions = snap.val() || {};
+                const counts = { hot: 0, like: 0, wow: 0, laugh: 0 };
+                Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; });
+                if (reactionCountsContainer) {
+                    reactionCountsContainer.innerHTML = Object.entries(counts)
+                        .map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂'}[type]} <span class="font-bold">${count}</span></span>`)
+                        .join('');
+                }
+            });
+        }
+
+        function animateReactionOnPlayer(type) {
+            const icons = { hot: '🔥', like: '❤️', wow: '😯', laugh: '😂' };
+            const icon = icons[type]; if (!icon) return;
+            const container = document.getElementById('video-player-container');
+            if (!container) return;
+            const existingAnimation = container.querySelector('.punch-animation');
+            if (existingAnimation) existingAnimation.remove();
+            
+            const animationEl = document.createElement('div');
+            animationEl.className = 'punch-animation';
+            animationEl.textContent = icon;
+            container.appendChild(animationEl);
+            setTimeout(() => animationEl.remove(), 500);
+        }
+
     </script>
 </body>
 </html>
