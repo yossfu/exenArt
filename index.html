@@ -68,7 +68,6 @@
         .grid-like-btn:hover i { transform: scale(1.2); }
         @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .animate-spin-slow { animation: spin-slow 20s linear infinite; }
-        
         .category-drawer { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); max-height: 0; opacity: 0; overflow: hidden; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
         @media (min-width: 640px) { .category-drawer { grid-template-columns: repeat(4, 1fr); } }
         .category-drawer.open { max-height: 500px; opacity: 1; margin-top: 1rem; margin-bottom: 2rem; }
@@ -89,13 +88,57 @@
         #filter-toggle-btn { border: 2px solid #4b5563; color: #d1d5db; background-color: transparent; transition: all 0.3s ease; }
         #filter-toggle-btn:hover { background-color: var(--accent); border-color: var(--accent-neon); color: #ffffff; }
         #filter-toggle-btn.active { background-color: var(--accent); border-color: var(--accent-neon); color: #ffffff; box-shadow: 0 0 10px var(--accent-neon); }
+        
+        /* --- NUEVA ANIMACIÓN FLUIDA PARA REACCIONES Y COMENTARIOS --- */
+        @keyframes liveFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0.5) rotate(var(--r-start));
+            }
+            10% {
+                opacity: 1;
+                transform: scale(1) rotate(var(--r-start));
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(var(--ty)) translateX(var(--tx)) scale(1.2) rotate(var(--r-end));
+            }
+        }
+        .floating-element {
+            position: absolute;
+            bottom: 20px;
+            animation-name: liveFloat;
+            animation-timing-function: linear;
+            animation-fill-mode: forwards;
+            pointer-events: none;
+            will-change: transform, opacity; /* Optimización de rendimiento */
+        }
+        .floating-reaction {
+            font-size: 2.5rem;
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+        }
+        .floating-comment-bubble {
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        }
+        .floating-comment-bubble .author {
+            font-weight: bold;
+            color: var(--accent-neon);
+            margin-right: 6px;
+        }
 
-        #floating-comments-container { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 15; }
-        @keyframes floatCommentUp { 0% { opacity: 0.9; transform: translateY(0) scale(0.8); } 100% { opacity: 0; transform: translateY(-200px) scale(1); } }
-        .comment-bubble { position: absolute; bottom: 10px; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 8px 12px; border-radius: 20px; font-size: 0.9rem; white-space: nowrap; max-width: 250px; overflow: hidden; text-overflow: ellipsis; animation: floatCommentUp 5s ease-out forwards; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
-        .comment-bubble-author { font-weight: bold; color: #fb923c; margin-right: 6px; }
-
-        /* --- NUEVO EFECTO: Carga progresiva con barrido --- */
+        /* --- Carga progresiva con barrido --- */
         #image-container .progressive-image {
             position: absolute;
             top: 0;
@@ -104,36 +147,11 @@
             height: 100%;
             object-fit: contain;
         }
-        #image-container .thumbnail-img {
-            opacity: 1;
-        }
-        #image-container .full-res-img {
-            opacity: 1;
-            clip-path: inset(0 100% 0 0);
-            transition: clip-path 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        #image-container.loaded .full-res-img {
-            clip-path: inset(0 0 0 0);
-        }
-        #image-container .loading-indicator {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            z-index: 10;
-            pointer-events: none;
-            opacity: 1;
-            transition: opacity 0.5s ease;
-        }
-        #image-container.loaded .loading-indicator {
-            opacity: 0;
-        }
+        #image-container .thumbnail-img { opacity: 1; }
+        #image-container .full-res-img { opacity: 1; clip-path: inset(0 100% 0 0); transition: clip-path 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        #image-container.loaded .full-res-img { clip-path: inset(0 0 0 0); }
+        #image-container .loading-indicator { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; z-index: 10; pointer-events: none; opacity: 1; transition: opacity 0.5s ease; }
+        #image-container.loaded .loading-indicator { opacity: 0; }
     </style>
 </head>
 <body class="antialiased">
@@ -227,6 +245,8 @@
         <!-- Contenedor de imagen para carga progresiva -->
         <div id="image-container" class="relative -mx-2 sm:mx-0 sm:rounded-xl overflow-hidden w-full aspect-[2/3] max-h-[75vh]">
             <!-- Las imágenes se crearán con JS -->
+            <!-- CONTENEDOR PARA LA LLUVIA DE ELEMENTOS -->
+            <div id="floating-elements-container" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
         </div>
         <div id="reaction-circle-container" class="relative z-20"><div class="relative flex items-center justify-center"><div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="like">❤️</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="hot">🔥</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="wow">😯</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="laugh">😂</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sad">😢</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sexy">🫦</span></div><button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-lg transition-transform duration-300 hover:scale-110"><i class="fas fa-heart text-2xl"></i></button></div></div><div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div><p id="desc" class="rounded-xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p><section id="similar-section" class="mt-4 w-full"><h3 class="mb-4 text-center text-xl"><i class="fas fa-th-large text-orange-400"></i> Similares</h3><div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div></section><section id="comments-section" class="mt-4 w-full"><form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 sm:flex-row"><input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4"><input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white"><button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white"><i class="fas fa-paper-plane"></i> Enviar</button></form><div id="comments" class="flex flex-col gap-4"></div></section></div></div></div></div>
     <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-orange-500"><i class="fas fa-arrow-up"></i></button>
@@ -241,6 +261,8 @@
         const imagesPerLoad = 21; let allImages = []; let fullGalleryCache = []; let isLoading = false; let noMoreImages = false; let currentImageId = ''; let currentImageIndex = -1;
         let deviceID = localStorage.getItem('deviceID'); if (!deviceID) { deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); localStorage.setItem('deviceID', deviceID); }
         let userReactions = {}; let currentSearchResults = []; let searchCurrentPage = 1; const searchResultsPerPage = 21; const sliderAnimationState = {}; let touchStartX = 0; let touchEndX = 0; const swipeThreshold = 50;
+        let liveListeners = {}; // Objeto para guardar los listeners activos
+        
         document.addEventListener('DOMContentLoaded', () => { const warningOverlay = document.getElementById('warning-overlay'); if (!localStorage.getItem('adultConsent')) { warningOverlay.style.display = 'flex'; document.body.style.overflow = 'hidden'; } else { initializeApp(); } });
         function acceptWarning() { localStorage.setItem('adultConsent', 'true'); document.getElementById('warning-overlay').style.display = 'none'; document.body.style.overflow = 'auto'; initializeApp(); }
         function rejectWarning() { window.location.href = 'https://www.google.com'; }
@@ -255,34 +277,9 @@
         async function loadForYouImages() { const grid = document.getElementById('for-you-grid'); generateSkeletons(grid, 9); const userLikedTags = {}; Object.keys(userReactions).forEach(id => { const img = fullGalleryCache.find(i => i.id === id); if (img && img.tags) { img.tags.forEach(tag => { userLikedTags[tag] = (userLikedTags[tag] || 0) + 3; }); } }); if (Object.keys(userLikedTags).length === 0) { const recentImages = [...fullGalleryCache].slice(0, 50); for (let i = recentImages.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [recentImages[i], recentImages[j]] = [recentImages[j], recentImages[i]]; } displayImages(recentImages.slice(0, 9), 'for-you-grid'); return; } let candidates = fullGalleryCache.map(img => { let score = 0; if(img.tags) { img.tags.forEach(tag => { if(userLikedTags[tag]) score += userLikedTags[tag]; }); } score += Math.random() * 0.5; return { img, score }; }).filter(item => item.score > 0); candidates.sort((a,b) => b.score - a.score); let topCandidates = candidates.slice(0, 50).map(item => item.img); for (let i = topCandidates.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [topCandidates[i], topCandidates[j]] = [topCandidates[j], topCandidates[i]]; } let finalSelection = topCandidates.slice(0, 9); if (finalSelection.length < 9) { const needed = 9 - finalSelection.length; const recentFiller = fullGalleryCache.filter(img => !finalSelection.find(r => r.id === img.id)).slice(0, needed); finalSelection.push(...recentFiller); } displayImages(finalSelection, 'for-you-grid'); }
         async function loadFeaturedVideos() { const grid = document.getElementById('featured-videos-grid'); grid.innerHTML = ''; try { const videosSnap = await db.ref('videos').once('value'); if (!videosSnap.exists()) { grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay música disponible.</p>'; return; } let allVideos = []; videosSnap.forEach(child => { allVideos.push({ id: child.key, ...child.val() }); }); for (let i = allVideos.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [allVideos[i], allVideos[j]] = [allVideos[j], allVideos[i]]; } const randomVideos = allVideos.slice(0, 10); if (randomVideos.length > 0) { displayVideos(randomVideos, 'featured-videos-grid'); initAutoSlider('featured-videos-grid'); } else { grid.innerHTML = '<p class="w-full text-center text-gray-500">No se pudo cargar la música.</p>'; } } catch (error) { console.error("Error al cargar videos destacados:", error); grid.innerHTML = '<p class="w-full text-center text-red-400">Error al cargar la música.</p>'; } }
         function displayVideos(videos, containerId) { const grid = document.getElementById(containerId); grid.innerHTML = ''; videos.forEach((video) => { if (!video || !video.thumbnailUrl || !video.title) return; const div = document.createElement('div'); div.className = 'flex flex-col items-center gap-2 flex-shrink-0 w-36 sm:w-44 text-center group'; div.setAttribute('onclick', `window.location.href='./videos.html?id=${video.id}'`); div.innerHTML = `<div class="relative w-32 h-32 sm:w-40 sm:h-40 cursor-pointer"><div class="w-full h-full rounded-full bg-gray-700 animate-spin-slow group-hover:[animation-play-state:paused]"><img src="${video.thumbnailUrl}" alt="${video.title}" loading="lazy" class="h-full w-full object-cover rounded-full"></div><div class="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><i class="fas fa-play-circle text-5xl text-white/80"></i></div><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-900 border-2 border-gray-500 flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-gray-800"></div></div></div><h4 class="font-semibold text-white truncate w-32 sm:w-40">${video.title}</h4>`; grid.appendChild(div); }); }
-        
-        function displayImages(images, containerId, append = false) { 
-            const grid = document.getElementById(containerId); 
-            if (!append) grid.innerHTML = ''; 
-            if (images.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes.</div>`; return; } 
-            const isSlider = containerId === 'similar-grid'; 
-            images.forEach((img, index) => { 
-                if (!img || !img.url || !img.title) return; 
-                const div = document.createElement('div'); 
-                let classList = 'image-item-animation group relative aspect-[2/3] overflow-hidden rounded-xl image-card-hover'; 
-                if (isSlider) classList += ' flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%] cursor-pointer'; 
-                div.className = classList; 
-                div.setAttribute('onclick', `openModal('${img.id}')`); 
-                div.style.animationDelay = `${(index * 0.05)}s`; 
-                const isLiked = userReactions[img.id] === 'like';
-                const displayUrl = img.thumbnailUrl || img.url;
-                div.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-3 pointer-events-none"><h4 class="truncate font-bold text-white">${img.title}</h4></div><button id="grid-like-btn-${img.id}" onclick="toggleReactionFromGrid('${img.id}', event)" class="grid-like-btn absolute top-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm ${isLiked ? 'liked' : ''}"><i class="fas fa-heart text-gray-300"></i><span id="reaction-count-grid-${img.id}">0</span></button>`; 
-                grid.appendChild(div); 
-                db.ref(`reactions/${img.id}`).once('value', snap => { 
-                    const countEl = document.getElementById(`reaction-count-grid-${img.id}`); 
-                    if (countEl) countEl.textContent = snap.numChildren(); 
-                }); 
-            }); 
-        }
-
+        function displayImages(images, containerId, append = false) { const grid = document.getElementById(containerId); if (!append) grid.innerHTML = ''; if (images.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes.</div>`; return; } const isSlider = containerId === 'similar-grid'; images.forEach((img, index) => { if (!img || !img.url || !img.title) return; const div = document.createElement('div'); let classList = 'image-item-animation group relative aspect-[2/3] overflow-hidden rounded-xl image-card-hover'; if (isSlider) classList += ' flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%] cursor-pointer'; div.className = classList; div.setAttribute('onclick', `openModal('${img.id}')`); div.style.animationDelay = `${(index * 0.05)}s`; const isLiked = userReactions[img.id] === 'like'; const displayUrl = img.thumbnailUrl || img.url; div.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-3 pointer-events-none"><h4 class="truncate font-bold text-white">${img.title}</h4></div><button id="grid-like-btn-${img.id}" onclick="toggleReactionFromGrid('${img.id}', event)" class="grid-like-btn absolute top-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm ${isLiked ? 'liked' : ''}"><i class="fas fa-heart text-gray-300"></i><span id="reaction-count-grid-${img.id}">0</span></button>`; grid.appendChild(div); db.ref(`reactions/${img.id}`).once('value', snap => { const countEl = document.getElementById(`reaction-count-grid-${img.id}`); if (countEl) countEl.textContent = snap.numChildren(); }); }); }
         function toggleReactionFromGrid(imageId, event) { event.stopPropagation(); const btn = document.getElementById(`grid-like-btn-${imageId}`); const countEl = document.getElementById(`reaction-count-grid-${imageId}`); const reactionsRef = db.ref(`reactions/${imageId}/${deviceID}`); reactionsRef.once('value', snap => { if (snap.val() === 'like') { reactionsRef.remove(); btn.classList.remove('liked'); delete userReactions[imageId]; countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1); } else { reactionsRef.set('like'); btn.classList.add('liked'); userReactions[imageId] = 'like'; countEl.textContent = parseInt(countEl.textContent) + 1; } }); }
         
-        // --- MODIFICADO: Lógica de openModal para carga progresiva con barrido ---
         async function openModal(id) {
             trackImageView(id);
             let img = fullGalleryCache.find(i => i.id === id);
@@ -291,57 +288,34 @@
             const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults;
             currentImageIndex = currentView.findIndex(i => i && i.id === id);
             const imageContainer = document.getElementById('image-container');
-            imageContainer.innerHTML = '';
+            imageContainer.innerHTML = '<div id="floating-elements-container" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>'; // Limpiar y añadir contenedor de lluvia
             imageContainer.classList.remove('loaded');
-
-            // 1. Crear el indicador de carga
+            
             const loadingIndicator = document.createElement('div');
             loadingIndicator.className = 'loading-indicator';
             loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Cargando calidad...';
-            
-            // 2. Crear y mostrar la miniatura como base
             const thumbnailEl = document.createElement('img');
             thumbnailEl.src = img.thumbnailUrl || img.url;
             thumbnailEl.className = 'progressive-image thumbnail-img';
-            
-            // 3. Crear la imagen de alta resolución (inicialmente oculta por clip-path)
             const fullResEl = document.createElement('img');
             fullResEl.className = 'progressive-image full-res-img';
-
-            // 4. Añadir elementos al DOM
+            
             imageContainer.appendChild(thumbnailEl);
             imageContainer.appendChild(fullResEl);
             imageContainer.appendChild(loadingIndicator);
             
-            // 5. Cargar la imagen completa en segundo plano
             const fullImageLoader = new Image();
             fullImageLoader.src = img.url;
-            fullImageLoader.onload = () => {
-                fullResEl.src = fullImageLoader.src;
-                imageContainer.classList.add('loaded'); // Activa la transición CSS
-                // Ocultar y eliminar el indicador después de la transición
-                setTimeout(() => {
-                    if (loadingIndicator.parentElement) {
-                        loadingIndicator.remove();
-                    }
-                }, 1000); // 700ms de transición + buffer
-            };
-            fullImageLoader.onerror = () => {
-                // Si la imagen completa falla, la dejamos como está (mostrando la thumbnail)
-                // y eliminamos el indicador de carga.
-                imageContainer.classList.add('loaded');
-                 if (loadingIndicator.parentElement) {
-                    loadingIndicator.remove();
-                }
-            }
+            fullImageLoader.onload = () => { fullResEl.src = fullImageLoader.src; imageContainer.classList.add('loaded'); setTimeout(() => { if (loadingIndicator.parentElement) { loadingIndicator.remove(); } }, 1000); };
+            fullImageLoader.onerror = () => { imageContainer.classList.add('loaded'); if (loadingIndicator.parentElement) { loadingIndicator.remove(); } }
 
             document.getElementById('title').textContent = img.title;
             document.getElementById('desc').textContent = img.desc;
             loadLikes(id);
             loadComments(id);
             loadSimilarImages(img.tags || []);
-            triggerCommentFloat(id);
-            
+            listenForLiveActivity(id); // INICIAR LOS LISTENERS PARA LA LLUVIA
+
             const prevBtn = document.getElementById('prev-image');
             const nextBtn = document.getElementById('next-image');
             prevBtn.style.display = currentImageIndex > 0 ? 'flex' : 'none';
@@ -350,14 +324,110 @@
             document.body.style.overflow = 'hidden';
         }
 
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            detachLiveListeners(); // DETENER LOS LISTENERS AL CERRAR
+        }
+
         function trackImageView(imageId) { if (!imageId) return; let viewedImages = []; try { viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImages = []; } if (!viewedImages.includes(imageId)) { viewedImages.unshift(imageId); if (viewedImages.length > 200) { viewedImages = viewedImages.slice(0, 200); } localStorage.setItem('viewedImages', JSON.stringify(viewedImages)); } }
-        function setupEventListeners() { const scrollToTopBtn = document.getElementById('scrollToTopBtn'); window.addEventListener('scroll', () => { (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible'); }); scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'})); document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); const query = normalize(document.getElementById('search-input').value); executeSearch(query); }); document.getElementById('clear-search-btn').addEventListener('click', resetSearchView); document.getElementById('close-modal').addEventListener('click', () => { document.getElementById('modal').style.display = 'none'; document.body.style.overflow = 'auto'; }); document.getElementById('prev-image').addEventListener('click', navigateToPrevious); document.getElementById('next-image').addEventListener('click', navigateToNext); document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); }); const modal = document.getElementById('modal'); modal.addEventListener('touchstart', e => { if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true }); modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; }); document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); }); document.querySelectorAll('.reaction').forEach(reaction => { reaction.addEventListener('click', e => { e.stopPropagation(); if (!currentImageId) return; const type = e.currentTarget.dataset.type; animateReactionOnImage(type); const reactionsRef = db.ref(`reactions/${currentImageId}/${deviceID}`); reactionsRef.once('value', snap => { (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); }); document.getElementById('reaction-circle-container').classList.remove('open'); }); }); document.addEventListener('click', () => { if (document.getElementById('reaction-circle-container')) document.getElementById('reaction-circle-container').classList.remove('open'); }); const filterBtn = document.getElementById('filter-toggle-btn'); const categoryDrawer = document.getElementById('category-drawer'); filterBtn.addEventListener('click', () => { categoryDrawer.classList.toggle('open'); filterBtn.classList.toggle('active'); }); }
+        
+        function setupEventListeners() { 
+            const scrollToTopBtn = document.getElementById('scrollToTopBtn'); window.addEventListener('scroll', () => { (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible'); }); 
+            scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'})); 
+            document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); const query = normalize(document.getElementById('search-input').value); executeSearch(query); }); 
+            document.getElementById('clear-search-btn').addEventListener('click', resetSearchView); 
+            document.getElementById('close-modal').addEventListener('click', closeModal); // Usar la nueva función closeModal
+            document.getElementById('prev-image').addEventListener('click', navigateToPrevious); 
+            document.getElementById('next-image').addEventListener('click', navigateToNext); 
+            document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); }); 
+            const modal = document.getElementById('modal'); 
+            modal.addEventListener('touchstart', e => { if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true }); 
+            modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; }); 
+            document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); }); 
+            document.querySelectorAll('.reaction').forEach(reaction => { reaction.addEventListener('click', e => { e.stopPropagation(); if (!currentImageId) return; const type = e.currentTarget.dataset.type; animateReactionOnImage(type); const reactionsRef = db.ref(`reactions/${currentImageId}/${deviceID}`); reactionsRef.once('value', snap => { (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); }); document.getElementById('reaction-circle-container').classList.remove('open'); }); }); 
+            document.addEventListener('click', () => { if (document.getElementById('reaction-circle-container')) document.getElementById('reaction-circle-container').classList.remove('open'); }); 
+            const filterBtn = document.getElementById('filter-toggle-btn'); const categoryDrawer = document.getElementById('category-drawer'); filterBtn.addEventListener('click', () => { categoryDrawer.classList.toggle('open'); filterBtn.classList.toggle('active'); }); 
+        }
+        
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
         function navigateToNext() { const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; if (currentImageIndex > -1 && currentImageIndex < currentView.length - 1) { openModal(currentView[currentImageIndex + 1].id); } }
         function navigateToPrevious() { const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; if (currentImageIndex > 0) { openModal(currentView[currentImageIndex - 1].id); } }
         function handleSwipe() { const deltaX = touchEndX - touchStartX; if (Math.abs(deltaX) > swipeThreshold) { if (deltaX < 0) navigateToNext(); else navigateToPrevious(); } }
         function animateReactionOnImage(type) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; const icon = icons[type]; if (!icon) return; const container = document.getElementById('image-container'); const animationEl = document.createElement('div'); animationEl.className = 'punch-animation'; animationEl.textContent = icon; container.appendChild(animationEl); setTimeout(() => { if (animationEl.parentElement) animationEl.remove(); }, 500); }
-        function triggerCommentFloat(id) { db.ref(`comments/${id}`).once('value', snap => { const container = document.getElementById('image-container'); if (!container) return; let floatingContainer = document.getElementById('floating-comments-container'); if (!floatingContainer) { floatingContainer = document.createElement('div'); floatingContainer.id = 'floating-comments-container'; container.appendChild(floatingContainer); } floatingContainer.innerHTML = ''; let delay = 0; snap.forEach(childSnap => { const comment = childSnap.val(); if (!comment || !comment.text) return; setTimeout(() => { const bubble = document.createElement('div'); bubble.className = 'comment-bubble'; bubble.style.left = `${Math.random() * 75 + 5}%`; const authorSpan = document.createElement('span'); authorSpan.className = 'comment-bubble-author'; authorSpan.textContent = comment.name || 'Anónimo'; const textNode = document.createTextNode(comment.text); bubble.appendChild(authorSpan); bubble.appendChild(textNode); floatingContainer.appendChild(bubble); setTimeout(() => bubble.remove(), 5000); }, delay); delay += Math.random() * 1000 + 500; }); }); }
+        
+        // --- FUNCIONES MEJORADAS PARA LA ANIMACIÓN FLUIDA ---
+        function listenForLiveActivity(imageId) {
+            detachLiveListeners(); 
+            const reactionsRef = db.ref(`reactions/${imageId}`);
+            const commentsRef = db.ref(`comments/${imageId}`);
+            const startTime = Date.now();
+            
+            liveListeners.reactions = { ref: reactionsRef, type: 'child_added' };
+            liveListeners.comments = { ref: commentsRef.orderByChild('timestamp').startAt(startTime), type: 'child_added' };
+
+            reactionsRef.on('child_added', (snapshot) => {
+                if (snapshot.key !== deviceID) {
+                    createFloatingElement(snapshot.val(), 'reaction');
+                }
+            });
+
+            commentsRef.orderByChild('timestamp').startAt(startTime).on('child_added', (snapshot) => {
+                createFloatingElement(snapshot.val(), 'comment');
+            });
+        }
+
+        function detachLiveListeners() {
+            Object.values(liveListeners).forEach(listener => {
+                if (listener.ref) {
+                    listener.ref.off(listener.type);
+                }
+            });
+            liveListeners = {};
+        }
+
+        function createFloatingElement(data, type) {
+            const container = document.getElementById('floating-elements-container');
+            if (!container) return;
+            const element = document.createElement('div');
+            element.className = 'floating-element';
+
+            // --- Lógica para generar una trayectoria única y fluida ---
+            const duration = Math.random() * 3 + 5; // Duración entre 5s y 8s
+            const finalX = (Math.random() - 0.5) * 100; // Desplazamiento horizontal
+            const finalY = -(container.offsetHeight * 0.7 + Math.random() * 60); // Sube un 70-80% de la altura
+            const startRotation = (Math.random() - 0.5) * 20;
+            const endRotation = (Math.random() - 0.5) * 20;
+
+            element.style.setProperty('--tx', `${finalX}px`);
+            element.style.setProperty('--ty', `${finalY}px`);
+            element.style.setProperty('--r-start', `${startRotation}deg`);
+            element.style.setProperty('--r-end', `${endRotation}deg`);
+            element.style.animationDuration = `${duration}s`;
+            element.style.left = `${Math.random() * 85 + 5}%`;
+            
+            if (type === 'reaction') {
+                const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' };
+                element.textContent = icons[data] || '❤️';
+                element.classList.add('floating-reaction');
+            } else if (type === 'comment' && data.text) {
+                element.classList.add('floating-comment-bubble');
+                const authorSpan = document.createElement('span');
+                authorSpan.className = 'author';
+                authorSpan.textContent = data.name || 'Anónimo';
+                const textNode = document.createTextNode(`: ${data.text}`);
+                element.appendChild(authorSpan);
+                element.appendChild(textNode);
+            } else {
+                return; 
+            }
+            
+            container.appendChild(element);
+            setTimeout(() => {
+                if (element.parentElement) element.remove();
+            }, duration * 1000); // Se auto-elimina al terminar su animación
+        }
+        
         function loadLikes(id) { db.ref(`reactions/${id}`).on('value', snap => { const reactions = snap.val() || {}; const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 }; Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; }); const container = document.getElementById('reaction-counts-container'); if (container) container.innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join(''); }); }
         function postComment() { const name = document.getElementById('name-input').value.trim(); const comment = document.getElementById('comment-input').value.trim(); if (!comment || !currentImageId) return; const commentData = { name: name || 'Anónimo', text: comment, timestamp: Date.now() }; db.ref(`comments/${currentImageId}`).push(commentData).then(() => document.getElementById('comment-input').value = ''); }
         function initAutoSlider(containerId) { const container = document.getElementById(containerId); if (!container || container.children.length < 2) return; if (sliderAnimationState[containerId]?.animationFrameId) cancelAnimationFrame(sliderAnimationState[containerId].animationFrameId); if (!container.dataset.cloned) { const originalChildren = Array.from(container.children); originalChildren.forEach(child => { const clone = child.cloneNode(true); container.appendChild(clone); }); container.dataset.cloned = 'true'; } const scrollWidth = container.scrollWidth / 2; let isPaused = false; const scroll = () => { if (!isPaused) { container.scrollLeft += 0.5; if (container.scrollLeft >= scrollWidth) container.scrollLeft = 0; } sliderAnimationState[containerId] = { animationFrameId: requestAnimationFrame(scroll) }; }; container.addEventListener('mouseenter', () => isPaused = true); container.addEventListener('mouseleave', () => isPaused = false); scroll(); }
@@ -371,3 +441,4 @@
     </script>
 </body>
 </html>
+
