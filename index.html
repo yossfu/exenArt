@@ -89,32 +89,28 @@
         #filter-toggle-btn:hover { background-color: var(--accent); border-color: var(--accent-neon); color: #ffffff; }
         #filter-toggle-btn.active { background-color: var(--accent); border-color: var(--accent-neon); color: #ffffff; box-shadow: 0 0 10px var(--accent-neon); }
         
-        /* --- NUEVA ANIMACIÓN FLUIDA PARA REACCIONES Y COMENTARIOS --- */
-        @keyframes liveFloat {
-            0% {
-                opacity: 0;
-                transform: translateY(0) scale(0.5) rotate(var(--r-start));
-            }
-            10% {
+        /* --- NUEVA ANIMACIÓN DE GLOBOS PARA REACCIONES --- */
+        @keyframes balloonFloatUp {
+            from {
                 opacity: 1;
-                transform: scale(1) rotate(var(--r-start));
+                transform: translateY(0) scale(0.7);
             }
-            90% {
-                opacity: 1;
-            }
-            100% {
+            to {
                 opacity: 0;
-                transform: translateY(var(--ty)) translateX(var(--tx)) scale(1.2) rotate(var(--r-end));
+                /* Sube a lo largo de la pantalla y se desvía lateralmente */
+                transform: translateY(-90vh) scale(1.1) translateX(var(--sway-amount));
             }
         }
         .floating-element {
             position: absolute;
             bottom: 20px;
-            animation-name: liveFloat;
-            animation-timing-function: linear;
+            animation-name: balloonFloatUp;
+            animation-timing-function: cubic-bezier(0.1, 0.5, 0.7, 1); /* Curva suave para fluidez */
             animation-fill-mode: forwards;
             pointer-events: none;
-            will-change: transform, opacity; /* Optimización de rendimiento */
+            will-change: transform, opacity;
+            /* Variable para la desviación, se asigna en JS */
+            --sway-amount: 0px; 
         }
         .floating-reaction {
             font-size: 2.5rem;
@@ -261,7 +257,7 @@
         const imagesPerLoad = 21; let allImages = []; let fullGalleryCache = []; let isLoading = false; let noMoreImages = false; let currentImageId = ''; let currentImageIndex = -1;
         let deviceID = localStorage.getItem('deviceID'); if (!deviceID) { deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); localStorage.setItem('deviceID', deviceID); }
         let userReactions = {}; let currentSearchResults = []; let searchCurrentPage = 1; const searchResultsPerPage = 21; const sliderAnimationState = {}; let touchStartX = 0; let touchEndX = 0; const swipeThreshold = 50;
-        let liveListeners = {}; // Objeto para guardar los listeners activos
+        let liveListeners = {};
         
         document.addEventListener('DOMContentLoaded', () => { const warningOverlay = document.getElementById('warning-overlay'); if (!localStorage.getItem('adultConsent')) { warningOverlay.style.display = 'flex'; document.body.style.overflow = 'hidden'; } else { initializeApp(); } });
         function acceptWarning() { localStorage.setItem('adultConsent', 'true'); document.getElementById('warning-overlay').style.display = 'none'; document.body.style.overflow = 'auto'; initializeApp(); }
@@ -281,6 +277,10 @@
         function toggleReactionFromGrid(imageId, event) { event.stopPropagation(); const btn = document.getElementById(`grid-like-btn-${imageId}`); const countEl = document.getElementById(`reaction-count-grid-${imageId}`); const reactionsRef = db.ref(`reactions/${imageId}/${deviceID}`); reactionsRef.once('value', snap => { if (snap.val() === 'like') { reactionsRef.remove(); btn.classList.remove('liked'); delete userReactions[imageId]; countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1); } else { reactionsRef.set('like'); btn.classList.add('liked'); userReactions[imageId] = 'like'; countEl.textContent = parseInt(countEl.textContent) + 1; } }); }
         
         async function openModal(id) {
+            // --- CORRECCIÓN DE SCROLL ---
+            // Se resetea el scroll del modal para asegurar que la nueva imagen esté encuadrada.
+            document.getElementById('modal-content').scrollTop = 0;
+
             trackImageView(id);
             let img = fullGalleryCache.find(i => i.id === id);
             if (!img) { console.error("Image not found"); return; }
@@ -288,7 +288,7 @@
             const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults;
             currentImageIndex = currentView.findIndex(i => i && i.id === id);
             const imageContainer = document.getElementById('image-container');
-            imageContainer.innerHTML = '<div id="floating-elements-container" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>'; // Limpiar y añadir contenedor de lluvia
+            imageContainer.innerHTML = '<div id="floating-elements-container" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>';
             imageContainer.classList.remove('loaded');
             
             const loadingIndicator = document.createElement('div');
@@ -314,7 +314,7 @@
             loadLikes(id);
             loadComments(id);
             loadSimilarImages(img.tags || []);
-            listenForLiveActivity(id); // INICIAR LOS LISTENERS PARA LA LLUVIA
+            listenForLiveActivity(id);
 
             const prevBtn = document.getElementById('prev-image');
             const nextBtn = document.getElementById('next-image');
@@ -327,7 +327,7 @@
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
             document.body.style.overflow = 'auto';
-            detachLiveListeners(); // DETENER LOS LISTENERS AL CERRAR
+            detachLiveListeners();
         }
 
         function trackImageView(imageId) { if (!imageId) return; let viewedImages = []; try { viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImages = []; } if (!viewedImages.includes(imageId)) { viewedImages.unshift(imageId); if (viewedImages.length > 200) { viewedImages = viewedImages.slice(0, 200); } localStorage.setItem('viewedImages', JSON.stringify(viewedImages)); } }
@@ -337,7 +337,7 @@
             scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'})); 
             document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); const query = normalize(document.getElementById('search-input').value); executeSearch(query); }); 
             document.getElementById('clear-search-btn').addEventListener('click', resetSearchView); 
-            document.getElementById('close-modal').addEventListener('click', closeModal); // Usar la nueva función closeModal
+            document.getElementById('close-modal').addEventListener('click', closeModal);
             document.getElementById('prev-image').addEventListener('click', navigateToPrevious); 
             document.getElementById('next-image').addEventListener('click', navigateToNext); 
             document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); }); 
@@ -356,7 +356,7 @@
         function handleSwipe() { const deltaX = touchEndX - touchStartX; if (Math.abs(deltaX) > swipeThreshold) { if (deltaX < 0) navigateToNext(); else navigateToPrevious(); } }
         function animateReactionOnImage(type) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; const icon = icons[type]; if (!icon) return; const container = document.getElementById('image-container'); const animationEl = document.createElement('div'); animationEl.className = 'punch-animation'; animationEl.textContent = icon; container.appendChild(animationEl); setTimeout(() => { if (animationEl.parentElement) animationEl.remove(); }, 500); }
         
-        // --- FUNCIONES MEJORADAS PARA LA ANIMACIÓN FLUIDA ---
+        // --- FUNCIONES MEJORADAS PARA LA ANIMACIÓN DE GLOBOS ---
         function listenForLiveActivity(imageId) {
             detachLiveListeners(); 
             const reactionsRef = db.ref(`reactions/${imageId}`);
@@ -392,19 +392,14 @@
             const element = document.createElement('div');
             element.className = 'floating-element';
 
-            // --- Lógica para generar una trayectoria única y fluida ---
-            const duration = Math.random() * 3 + 5; // Duración entre 5s y 8s
-            const finalX = (Math.random() - 0.5) * 100; // Desplazamiento horizontal
-            const finalY = -(container.offsetHeight * 0.7 + Math.random() * 60); // Sube un 70-80% de la altura
-            const startRotation = (Math.random() - 0.5) * 20;
-            const endRotation = (Math.random() - 0.5) * 20;
+            // --- Lógica para la nueva animación de globos ascendentes ---
+            const duration = Math.random() * 6 + 8; // Duración rápida y fluida: entre 2s y 3.5s
+            const swayAmount = (Math.random() - 0.5) * 120; // Desviación lateral entre -60px y +60px para un efecto más natural
 
-            element.style.setProperty('--tx', `${finalX}px`);
-            element.style.setProperty('--ty', `${finalY}px`);
-            element.style.setProperty('--r-start', `${startRotation}deg`);
-            element.style.setProperty('--r-end', `${endRotation}deg`);
             element.style.animationDuration = `${duration}s`;
-            element.style.left = `${Math.random() * 85 + 5}%`;
+            // Posiciona el elemento aleatoriamente en la parte inferior para que no todos salgan del mismo sitio
+            element.style.left = `${Math.random() * 85 + 7.5}%`; // Del 7.5% al 92.5% del ancho
+            element.style.setProperty('--sway-amount', `${swayAmount}px`);
             
             if (type === 'reaction') {
                 const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' };
@@ -425,7 +420,7 @@
             container.appendChild(element);
             setTimeout(() => {
                 if (element.parentElement) element.remove();
-            }, duration * 1000); // Se auto-elimina al terminar su animación
+            }, duration * 1000);
         }
         
         function loadLikes(id) { db.ref(`reactions/${id}`).on('value', snap => { const reactions = snap.val() || {}; const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 }; Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; }); const container = document.getElementById('reaction-counts-container'); if (container) container.innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join(''); }); }
@@ -441,4 +436,3 @@
     </script>
 </body>
 </html>
-
