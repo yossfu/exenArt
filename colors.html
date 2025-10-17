@@ -3,8 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>exen-E | ColorFull</title>
+    <!-- ================================================================== -->
+    <!-- 1. CAMBIAR TÍTULO DE LA PÁGINA (PESTAÑA DEL NAVEGADOR)             -->
+    <!-- Cambia "Anime" por el nombre de tu nueva categoría.                -->
+    <!-- ================================================================== -->
+    <title>exen-E | Colors</title>
+
     <!-- Metatags, Tailwind, Fonts, Icons, Firebase -->
+    <!-- ================================================================== -->
+    <!-- 2. CAMBIAR TÍTULO PARA REDES SOCIALES (OPCIONAL)                   -->
+    <!-- Cambia "Categoría Anime" para cuando compartas el enlace.          -->
+    <!-- ================================================================== -->
     <meta property="og:title" content="exen-E | Categoría Anime" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://files.catbox.moe/4ubhtv.jpg" />
@@ -19,22 +28,32 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <style>
-        /* ================================================ */
-        /* == COMIENZO DE LA SECCIÓN PARA PERSONALIZAR == */
         :root {
-            /* 1. Cambia los colores de acento */
+            /* ================================================================== */
+            /* 3. PERSONALIZAR COLORES Y BANNER                                 */
+            /* */
+            /* --accent: color principal (botones, scroll, etc.)                */
+            /* --accent-neon: color secundario o de brillo.                     */
+            /* --banner-image-url: URL de la imagen para el banner superior.    */
+            /* */
+            /* Puedes usar colores hexadecimales (#RRGGBB) o de Tailwind.       */
+            /* Por ejemplo, para un tema azul:                                  */
+            /* --accent: #3b82f6; (blue-500)                                    */
+            /* --accent-neon: #60a5fa; (blue-400)                               */
+            /* */
+            /* Puedes encontrar más colores en: https://tailwindcss.com/docs/customizing-colors */
+            /* ================================================================== */
             --accent: #ef4444; /* red-500 */
             --accent-neon: #f87171; /* red-400 */
-            /* 2. URL del banner superior */
             --banner-image-url: url('https://files.catbox.moe/x70qgg.jpg');
-            /* 3. Colores de fondo */
+
+
+            /* --- Estas variables de gradiente usan los colores de arriba. --- */
+            /* --- No es necesario cambiarlas si solo cambias el acento.   --- */
             --main-bg-color: #121212;
             --gradient-color-1: rgba(239, 68, 68, 0.1);
             --gradient-color-2: rgba(248, 113, 113, 0.1);
         }
-        /* === FIN DE LA SECCIÓN PARA PERSONALIZAR === */
-        /* ================================================ */
-
         html { scroll-behavior: smooth; }
         body { font-family: 'Inter', sans-serif; background-color: var(--main-bg-color); background-image: radial-gradient(circle at 15% 50%, var(--gradient-color-1), transparent 40%), radial-gradient(circle at 85% 30%, var(--gradient-color-2), transparent 40%); color: #f3f4f6; }
         .category-banner { width: 100%; aspect-ratio: 3 / 1; max-height: 400px; background-image: var(--banner-image-url); background-size: cover; background-position: center; position: relative; z-index: 1; }
@@ -44,14 +63,15 @@
         header { border-bottom: 1px solid rgba(251, 146, 60, 0.2); box-shadow: 0 5px 20px rgba(249, 115, 22, 0.05); }
         .nav-link:hover { background-color: rgba(251, 146, 60, 0.1); color: #fff; }
         .nav-link-active { background-color: #f97316; color: #fff !important; box-shadow: 0 0 15px rgba(251, 146, 60, 0.4); }
+        .decorative-divider { display: flex; align-items: center; text-align: center; margin-bottom: 3rem; }
+        .decorative-divider::before, .decorative-divider::after { content: ''; flex: 1; border-bottom: 1px solid; border-image-source: linear-gradient(to right, transparent, var(--accent), transparent); border-image-slice: 1; }
+        .decorative-divider-icon { font-size: 1.5rem; color: var(--accent-neon); text-shadow: 0 0 15px var(--accent-neon); padding: 0 1em; }
         @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
         .skeleton { background-color: #374151; background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%); background-repeat: no-repeat; background-size: 2000px 100%; animation: shimmer 1.5s linear infinite; border-radius: 0.75rem; aspect-ratio: 2 / 3; }
         @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
         @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
         .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
-        .reaction-animation { position: absolute; font-size: 2rem; pointer-events: none; animation: floatUp 1.5s ease forwards; z-index: 10; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
         #reaction-circle-container.open .reaction-circle-item { opacity: 1; transform: scale(1) var(--transform-pos); }
         #reaction-circle-container.open #reaction-bg { transform: scale(1); }
         .reaction-circle-item { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform: scale(0); opacity: 0; }
@@ -62,7 +82,12 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        #image-container .progressive-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #image-container .thumbnail-img { opacity: 1; }
+        #image-container .full-res-img { opacity: 1; clip-path: inset(0 100% 0 0); transition: clip-path 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        #image-container.loaded .full-res-img { clip-path: inset(0 0 0 0); }
+        #image-container .loading-indicator { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; z-index: 10; pointer-events: none; opacity: 1; transition: opacity 0.5s ease; }
+        #image-container.loaded .loading-indicator { opacity: 0; }
     </style>
 </head>
 <body class="antialiased">
@@ -81,8 +106,13 @@
         <div class="category-banner"></div>
         <div class="container mx-auto px-2 sm:px-4">
             <div class="category-title-container">
-                <h1 class="text-4xl md:text-6xl">Colorfull</h1>
+                <!-- ================================================================== -->
+                <!-- 4. CAMBIAR TÍTULO PRINCIPAL (SOBRE EL BANNER)                    -->
+                <!-- Cambia "Anime" por el nombre que desees mostrar en la página.  -->
+                <!-- ================================================================== -->
+                <h1 class="text-4xl md:text-6xl">Colors</h1>
             </div>
+            <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             <section id="gallery">
                 <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
                 <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"></div>
@@ -92,7 +122,7 @@
         </div>
     </main>
     
-    <!-- Modal (Actualizado con sistema de reacciones completo) -->
+    <!-- El resto del modal y otros elementos HTML no necesitan cambios para tu solicitud -->
     <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90 backdrop-blur-md" style="display: none;">
         <button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white"><i class="fas fa-chevron-left text-2xl"></i></button>
         <button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white"><i class="fas fa-chevron-right text-2xl"></i></button>
@@ -103,8 +133,7 @@
                     <button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90"><i class="fas fa-times text-2xl"></i></button>
                 </header>
                 <div class="flex flex-col items-center gap-4">
-                    <div id="image-container" class="relative -mx-2 sm:mx-0 sm:rounded-xl overflow-hidden w-full"><img id="full-img" src="" alt="" class="h-auto max-h-[75vh] w-full object-contain"></div>
-                    
+                    <div id="image-container" class="relative -mx-2 sm:mx-0 sm:rounded-xl overflow-hidden w-full aspect-[2/3] max-h-[75vh]"></div>
                     <div id="reaction-circle-container" class="relative z-20">
                         <div class="relative flex items-center justify-center">
                             <div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div>
@@ -117,7 +146,6 @@
                             <button id="like-btn" class="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-red-400 text-white shadow-lg transition-transform duration-300 hover:scale-110"><i class="fas fa-heart text-2xl"></i></button>
                         </div>
                     </div>
-
                     <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
                     <p id="desc" class="rounded-xl border-2 border-red-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
                     <section id="comments-section" class="mt-4 w-full">
@@ -134,15 +162,21 @@
 
     <script>
         "use strict";
-        // --- CONFIGURACIÓN DE LA PÁGINA DE CATEGORÍA ---
-        // 4. Cambia 'anime' por el valor de la categoría que corresponde a esta página.
+        // ==================================================================
+        // 5. CAMBIAR LA CATEGORÍA A CARGAR                                 
+        //                                                                  
+        // Este es el cambio más importante. Debes reemplazar 'colors' por el 
+        // nombre exacto de la categoría que definiste en tu base de datos  
+        // de Firebase (por ejemplo: 'furry', 'realismo', 'mecas', etc.).  
+        //                                                                  
+        // ¡IMPORTANTE! El nombre debe coincidir exactamente.                 
+        // ==================================================================
         const CATEGORY_TO_LOAD = 'colors';
 
         const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         firebase.auth().signInAnonymously().catch(console.error);
-
         const imagesPerLoad = 20;
         let categoryImages = []; 
         let displayedImages = [];
@@ -150,7 +184,6 @@
         let noMoreImages = false;
         let currentImageId = '';
         let currentImageIndex = -1;
-        
         let deviceID = localStorage.getItem('deviceID');
         if (!deviceID) {
             deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -160,7 +193,6 @@
             localStorage.setItem('deviceID', deviceID);
         }
         let userReactions = {};
-
         document.addEventListener('DOMContentLoaded', initializeApp);
 
         async function initializeApp() {
@@ -213,20 +245,51 @@
             const grid = document.getElementById(containerId);
             if (!append) grid.innerHTML = '';
             if (images.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes en esta categoría.</div>`; return; }
-            images.forEach((img, index) => { if (!img || !img.url || !img.title) return; const div = document.createElement('div'); div.className = 'image-item-animation group relative aspect-[2/3] overflow-hidden rounded-xl image-card-hover'; div.setAttribute('onclick', `openModal('${img.id}')`); div.style.animationDelay = `${(index * 0.05)}s`; div.innerHTML = `<img src="${img.url}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-3 pointer-events-none"><h4 class="truncate font-bold text-white">${img.title}</h4></div>`; grid.appendChild(div); });
+            images.forEach((img, index) => { if (!img || !img.url || !img.title) return; const div = document.createElement('div'); div.className = 'image-item-animation group relative aspect-[2/3] overflow-hidden rounded-xl image-card-hover'; div.setAttribute('onclick', `openModal('${img.id}')`); div.style.animationDelay = `${(index * 0.05)}s`; const displayUrl = img.thumbnailUrl || img.url; div.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-3 pointer-events-none"><h4 class="truncate font-bold text-white">${img.title}</h4></div>`; grid.appendChild(div); });
         }
-
+        
         async function openModal(id) {
             let img = categoryImages.find(i => i && i.id === id);
             if (!img) { const snapshot = await db.ref(`images/${id}`).once('value'); if (snapshot.exists()) img = {id: snapshot.key, ...snapshot.val()}; else { console.error("Image not found"); return; } }
             currentImageId = id;
             currentImageIndex = displayedImages.findIndex(i => i && i.id === id);
-            document.getElementById('full-img').src = img.url;
+            
+            const imageContainer = document.getElementById('image-container');
+            imageContainer.innerHTML = '';
+            imageContainer.classList.remove('loaded');
+
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'loading-indicator';
+            loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Cargando calidad...';
+            
+            const thumbnailEl = document.createElement('img');
+            thumbnailEl.src = img.thumbnailUrl || img.url;
+            thumbnailEl.className = 'progressive-image thumbnail-img';
+            
+            const fullResEl = document.createElement('img');
+            fullResEl.className = 'progressive-image full-res-img';
+            
+            imageContainer.appendChild(thumbnailEl);
+            imageContainer.appendChild(fullResEl);
+            imageContainer.appendChild(loadingIndicator);
+
+            const fullImageLoader = new Image();
+            fullImageLoader.src = img.url;
+            fullImageLoader.onload = () => {
+                fullResEl.src = fullImageLoader.src;
+                imageContainer.classList.add('loaded');
+                setTimeout(() => { if (loadingIndicator.parentElement) { loadingIndicator.remove(); } }, 1000);
+            };
+            fullImageLoader.onerror = () => {
+                imageContainer.classList.add('loaded'); 
+                if (loadingIndicator.parentElement) { loadingIndicator.remove(); }
+            }
+            
             document.getElementById('title').textContent = img.title;
             document.getElementById('desc').textContent = img.desc;
             loadLikes(id);
             loadComments(id);
-            triggerReactionRain(id);
+            
             document.getElementById('prev-image').style.display = currentImageIndex > 0 ? 'flex' : 'none';
             document.getElementById('next-image').style.display = currentImageIndex < displayedImages.length - 1 ? 'flex' : 'none';
             document.getElementById('modal').style.display = 'block';
@@ -241,7 +304,6 @@
             document.getElementById('prev-image').addEventListener('click', () => { if (currentImageIndex > 0) openModal(displayedImages[currentImageIndex - 1].id); });
             document.getElementById('next-image').addEventListener('click', () => { if (currentImageIndex < displayedImages.length - 1) openModal(displayedImages[currentImageIndex + 1].id); });
             document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); });
-            // --- NUEVO: Listeners para reacciones ---
             document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); });
             document.querySelectorAll('.reaction').forEach(reaction => { reaction.addEventListener('click', e => { e.stopPropagation(); if (!currentImageId) return; const type = e.currentTarget.dataset.type; animateReactionOnImage(type); const reactionsRef = db.ref(`reactions/${currentImageId}/${deviceID}`); reactionsRef.once('value', snap => { (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); }); document.getElementById('reaction-circle-container').classList.remove('open'); }); });
             document.addEventListener('click', () => { if (document.getElementById('reaction-circle-container')) document.getElementById('reaction-circle-container').classList.remove('open'); });
@@ -252,12 +314,7 @@
         function loadLikes(id) { db.ref(`reactions/${id}`).on('value', snap => { const reactions = snap.val() || {}; const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 }; Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; }); const container = document.getElementById('reaction-counts-container'); if (container) container.innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join(''); }); }
         function loadComments(id) { const commentsRef = db.ref(`comments/${id}`); commentsRef.off(); commentsRef.orderByChild('timestamp').on('value', snap => { const commentsContainer = document.getElementById('comments'); commentsContainer.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500">Sé el primero en comentar.</p>' : ''; const comments = []; snap.forEach(child => { comments.push(child.val()); }); comments.reverse().forEach(comment => { const div = document.createElement('div'); const initial = comment.name ? comment.name.charAt(0).toUpperCase() : 'A'; div.innerHTML = `<div class="flex gap-3"><div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-400 font-bold">${initial}</div><div class="flex-grow min-w-0"><div class="rounded-lg rounded-tl-none bg-gray-800 p-3"><p class="font-bold text-red-400">${comment.name || 'Anónimo'}</p><p class="text-gray-300 break-words">${comment.text || ''}</p></div><small class="pl-2 pt-1 text-xs text-gray-500">${new Date(comment.timestamp).toLocaleString()}</small></div></div>`; commentsContainer.appendChild(div); }); }); }
         function showError(message) { const errorEl = document.getElementById('error-message'); errorEl.textContent = message; errorEl.style.display = 'block'; document.getElementById('grid').innerHTML = ''; }
-        
-        // --- NUEVO: Funciones de ayuda para reacciones ---
         function animateReactionOnImage(type) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; const icon = icons[type]; if (!icon) return; const container = document.getElementById('image-container'); const animationEl = document.createElement('div'); animationEl.className = 'punch-animation'; animationEl.textContent = icon; container.appendChild(animationEl); setTimeout(() => { if (animationEl.parentElement) animationEl.remove(); }, 500); }
-        function showReactionAnimation(type, container) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; if (!icons[type]) return; const reaction = document.createElement('span'); reaction.className = 'reaction-animation'; reaction.textContent = icons[type]; reaction.style.left = `${Math.random() * 80 + 10}%`; reaction.style.bottom = '20px'; container.appendChild(reaction); setTimeout(() => reaction.remove(), 1500); }
-        function triggerReactionRain(id) { db.ref(`reactions/${id}`).once('value', snap => { const container = document.getElementById('image-container'); let delay = 0; snap.forEach(childSnap => { setTimeout(() => showReactionAnimation(childSnap.val(), container), delay); delay += Math.random() * 200 + 50; }); }); }
     </script>
 </body>
 </html>
-
