@@ -39,9 +39,19 @@
         #top-liked-section h3 { background-color: #2e281b; background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23facc15' fill-opacity='0.1'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
         #top-liked-section h3 .title-text { background: linear-gradient(90deg, #fde047, var(--top-liked-glow) 80%); -webkit-background-clip: text; }
         #top-liked-section h3 i { color: var(--top-liked-glow); text-shadow: 0 0 8px var(--top-liked-glow); }
-        #featured-videos-section h3 { background-color: #112d2d; background-image: url("data:image/svg+xml,%3Csvg width='44' height='12' viewBox='0 0 44 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 12v-2L0 0v2l4 4 4-4 4 4 4-4 4 4v2l-4-4-4 4-4-4-4 4-4-4v2l4 4 4-4 4 4 4-4 4 4v2l-4-4-4 4-4-4-4 4-4-4v2l20 10z' fill='%232dd4bf' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E"); }
+        
+        /* CAMBIO: Estilos para la sección de música */
+        #featured-videos-section {
+            background-color: #11201e;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%232dd4bf' fill-opacity='0.07'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(45, 212, 191, 0.2);
+        }
+        #featured-videos-section h3 { border: none; } /* Quitar borde del h3 para que se integre */
         #featured-videos-section h3 .title-text { background: linear-gradient(90deg, #5eead4, var(--videos-glow) 80%); -webkit-background-clip: text; }
         #featured-videos-section h3 i { color: var(--videos-glow); text-shadow: 0 0 8px var(--videos-glow); }
+
         #gallery-title { background-color: #222; background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E"); }
         .decorative-divider { display: flex; align-items: center; text-align: center; margin: 3rem 0; }
         .decorative-divider::before, .decorative-divider::after { content: ''; flex: 1; border-bottom: 1px solid; border-image-source: linear-gradient(to right, transparent, var(--accent), transparent); border-image-slice: 1; }
@@ -264,7 +274,39 @@
 
         async function loadForYouImages() { const grid = document.getElementById('for-you-grid'); generateSkeletons(grid, 9); const userLikedTags = {}; Object.keys(userReactions).forEach(id => { const img = fullGalleryCache.find(i => i.id === id); if (img && img.tags) { img.tags.forEach(tag => { userLikedTags[tag] = (userLikedTags[tag] || 0) + 3; }); } }); if (Object.keys(userLikedTags).length === 0) { const recentImages = [...fullGalleryCache].slice(0, 50); for (let i = recentImages.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [recentImages[i], recentImages[j]] = [recentImages[j], recentImages[i]]; } displayImages(recentImages.slice(0, 9), 'for-you-grid'); return; } let candidates = fullGalleryCache.map(img => { let score = 0; if(img.tags) { img.tags.forEach(tag => { if(userLikedTags[tag]) score += userLikedTags[tag]; }); } score += Math.random() * 0.5; return { img, score }; }).filter(item => item.score > 0); candidates.sort((a,b) => b.score - a.score); let topCandidates = candidates.slice(0, 50).map(item => item.img); for (let i = topCandidates.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [topCandidates[i], topCandidates[j]] = [topCandidates[j], topCandidates[i]]; } let finalSelection = topCandidates.slice(0, 9); if (finalSelection.length < 9) { const needed = 9 - finalSelection.length; const recentFiller = fullGalleryCache.filter(img => !finalSelection.find(r => r.id === img.id)).slice(0, needed); finalSelection.push(...recentFiller); } displayImages(finalSelection, 'for-you-grid'); }
         async function loadFeaturedVideos() { const grid = document.getElementById('featured-videos-grid'); grid.innerHTML = ''; try { const videosSnap = await db.ref('videos').once('value'); if (!videosSnap.exists()) { grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay música disponible.</p>'; return; } let allVideos = []; videosSnap.forEach(child => { allVideos.push({ id: child.key, ...child.val() }); }); for (let i = allVideos.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [allVideos[i], allVideos[j]] = [allVideos[j], allVideos[i]]; } const randomVideos = allVideos.slice(0, 10); if (randomVideos.length > 0) { displayVideos(randomVideos, 'featured-videos-grid'); initAutoSlider('featured-videos-grid'); } else { grid.innerHTML = '<p class="w-full text-center text-gray-500">No se pudo cargar la música.</p>'; } } catch (error) { console.error("Error al cargar videos destacados:", error); grid.innerHTML = '<p class="w-full text-center text-red-400">Error al cargar la música.</p>'; } }
-        function displayVideos(videos, containerId) { const grid = document.getElementById(containerId); grid.innerHTML = ''; videos.forEach((video) => { if (!video || !video.thumbnailUrl || !video.title) return; const div = document.createElement('div'); div.className = 'flex flex-col items-center gap-2 flex-shrink-0 w-36 sm:w-44 text-center group'; div.setAttribute('onclick', `window.location.href='./videos.html?id=${video.id}'`); div.innerHTML = `<div class="relative w-32 h-32 sm:w-40 sm:h-40 cursor-pointer"><div class="w-full h-full rounded-full bg-gray-700 animate-spin-slow group-hover:[animation-play-state:paused]"><img src="${video.thumbnailUrl}" alt="${video.title}" loading="lazy" class="h-full w-full object-cover rounded-full"></div><div class="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><i class="fas fa-play-circle text-5xl text-white/80"></i></div><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-900 border-2 border-gray-500 flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-gray-800"></div></div></div><h4 class="font-semibold text-white truncate w-32 sm:w-40">${video.title}</h4>`; grid.appendChild(div); }); }
+        
+        // CAMBIO: Función displayVideos actualizada para mostrar el género
+        function displayVideos(videos, containerId) {
+            const grid = document.getElementById(containerId);
+            grid.innerHTML = '';
+            videos.forEach((video) => {
+                if (!video || !video.thumbnailUrl || !video.title) return;
+                const div = document.createElement('div');
+                div.className = 'flex flex-col items-center gap-1 flex-shrink-0 w-36 sm:w-44 text-center group';
+                div.setAttribute('onclick', `window.location.href='./videos.html?id=${video.id}'`);
+                
+                const genreHtml = video.genre ? `<p class="text-xs font-semibold text-orange-400 uppercase tracking-wider truncate w-full">${video.genre}</p>` : '';
+
+                div.innerHTML = `
+                    <div class="relative w-32 h-32 sm:w-40 sm:h-40 cursor-pointer">
+                        <div class="w-full h-full rounded-full bg-gray-700 animate-spin-slow group-hover:[animation-play-state:paused]">
+                            <img src="${video.thumbnailUrl}" alt="${video.title}" loading="lazy" class="h-full w-full object-cover rounded-full">
+                        </div>
+                        <div class="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <i class="fas fa-play-circle text-5xl text-white/80"></i>
+                        </div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-900 border-2 border-gray-500 flex items-center justify-center">
+                            <div class="w-2 h-2 rounded-full bg-gray-800"></div>
+                        </div>
+                    </div>
+                    <div class="w-full px-1">
+                        <h4 class="font-semibold text-white truncate w-full">${video.title}</h4>
+                        ${genreHtml}
+                    </div>
+                `;
+                grid.appendChild(div);
+            });
+        }
         
         function displayImages(images, containerId, append = false) {
             const grid = document.getElementById(containerId);
@@ -414,4 +456,3 @@
     </script>
 </body>
 </html>
-

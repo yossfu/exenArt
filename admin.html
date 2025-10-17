@@ -92,7 +92,6 @@
                     <input type="url" id="img-url" placeholder="URL de la Imagen (Completa)" required>
                     <img id="image-preview" src="" alt="Vista previa" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
                     
-                    <!-- NUEVO: Campo para la miniatura -->
                     <input type="url" id="img-thumbnail-url" placeholder="URL de la Miniatura (Opcional)">
                     <img id="thumbnail-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 150px; margin: 10px auto; border-radius: 8px;" />
                     
@@ -124,6 +123,8 @@
                     <h2><i class="fas fa-video"></i> Agregar Nuevo Video</h2>
                     <input type="url" id="video-url" placeholder="URL de YouTube o MP4" required>
                     <input type="text" id="video-title" placeholder="Título (se autocompleta con YouTube)" required>
+                    <!-- CAMBIO: Campo para género/ritmo -->
+                    <input type="text" id="video-genre" placeholder="Género o Ritmo (ej. Rock, Pop, 80s)">
                     <textarea id="video-desc" placeholder="Descripción" required></textarea>
                     <input type="url" id="video-thumbnail" placeholder="URL de Miniatura (se autocompleta con YouTube)" required>
                     <img id="video-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
@@ -187,7 +188,6 @@
                     <input type="url" id="edit-img-url" placeholder="URL de la Imagen (Completa)" required>
                     <img id="edit-image-preview" src="" alt="Vista previa" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
 
-                    <!-- NUEVO: Campo de edición para la miniatura -->
                     <input type="url" id="edit-img-thumbnail-url" placeholder="URL de la Miniatura (Opcional)">
                     <img id="edit-thumbnail-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 150px; margin: 10px auto; border-radius: 8px;" />
 
@@ -211,6 +211,8 @@
                     <input type="hidden" id="edit-video-timestamp">
                     <input type="url" id="edit-video-url" placeholder="URL de YouTube o MP4" required>
                     <input type="text" id="edit-video-title" placeholder="Título" required>
+                    <!-- CAMBIO: Campo de edición para género/ritmo -->
+                    <input type="text" id="edit-video-genre" placeholder="Género o Ritmo">
                     <textarea id="edit-video-desc" placeholder="Descripción" required></textarea>
                     <input type="url" id="edit-video-thumbnail" placeholder="URL de Miniatura" required>
                     <img id="edit-video-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
@@ -298,7 +300,6 @@
         setupPreview('edit-img-url', 'edit-image-preview');
         setupPreview('video-thumbnail', 'video-preview');
         setupPreview('edit-video-thumbnail', 'edit-video-preview');
-        // NUEVO: Activar vista previa para las miniaturas
         setupPreview('img-thumbnail-url', 'thumbnail-preview');
         setupPreview('edit-img-thumbnail-url', 'edit-thumbnail-preview');
 
@@ -312,7 +313,7 @@
         document.getElementById('image-form').addEventListener('submit', e => {
             e.preventDefault();
             const url = document.getElementById('img-url').value.trim();
-            const thumbnailUrl = document.getElementById('img-thumbnail-url').value.trim(); // NUEVO
+            const thumbnailUrl = document.getElementById('img-thumbnail-url').value.trim(); 
             const title = document.getElementById('img-title').value.trim();
             const desc = document.getElementById('img-desc').value.trim();
             const tags = document.getElementById('img-tags').value.split(',').map(t => t.trim()).filter(Boolean);
@@ -323,7 +324,6 @@
             }
 
             const imageData = { url, title, desc, tags, categories, timestamp: Date.now() };
-            // NUEVO: Añadir thumbnailUrl si es una URL válida
             if (isValidUrl(thumbnailUrl)) {
                 imageData.thumbnailUrl = thumbnailUrl;
             }
@@ -333,7 +333,7 @@
                     showMessage('Imagen añadida con éxito', true);
                     e.target.reset();
                     document.getElementById('image-preview').style.display = 'none';
-                    document.getElementById('thumbnail-preview').style.display = 'none'; // NUEVO
+                    document.getElementById('thumbnail-preview').style.display = 'none';
                     populateCategoryCheckboxes('img-categories');
                 }).catch(error => showMessage('Error: ' + error.message));
         });
@@ -354,7 +354,6 @@
             tableBody.innerHTML = '';
             images.forEach(img => {
                 const row = document.createElement('tr');
-                // MODIFICADO: Mostrar miniatura si existe, si no, la imagen principal
                 const displayUrl = img.thumbnailUrl || img.url;
                 row.innerHTML = `
                     <td><input type="checkbox" class="battle-selection" value="${img.id}" onchange="handleBattleSelection(this)"></td>
@@ -375,7 +374,7 @@
             e.preventDefault();
             const id = document.getElementById('edit-img-id').value;
             const url = document.getElementById('edit-img-url').value.trim();
-            const thumbnailUrl = document.getElementById('edit-img-thumbnail-url').value.trim(); // NUEVO
+            const thumbnailUrl = document.getElementById('edit-img-thumbnail-url').value.trim();
             
             if (!isValidUrl(url)) {
                 showMessage('La URL de la imagen principal no es válida.'); return;
@@ -390,11 +389,10 @@
                 timestamp: parseInt(document.getElementById('edit-img-timestamp').value, 10)
             };
             
-            // NUEVO: Añadir o eliminar thumbnailUrl
             if (isValidUrl(thumbnailUrl)) {
                 data.thumbnailUrl = thumbnailUrl;
             } else {
-                data.thumbnailUrl = null; // Borrar si no es válida o está vacía
+                data.thumbnailUrl = null; 
             }
 
             db.ref(`images/${id}`).set(data)
@@ -402,6 +400,67 @@
                 .catch(error => showMessage('Error: ' + error.message));
         });
 
+        // --- GESTIÓN DE VIDEOS (CON CAMBIOS) ---
+        document.getElementById('video-url').addEventListener('input', (e) => { const url = e.target.value; const youtubeId = getYoutubeId(url); if(youtubeId) { const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`; document.getElementById('video-thumbnail').value = thumbnailUrl; document.getElementById('video-preview').src = thumbnailUrl; document.getElementById('video-preview').style.display = 'block'; document.getElementById('video-title').placeholder = "Pega el título del video de YouTube aquí"; } });
+        
+        document.getElementById('video-form').addEventListener('submit', e => { 
+            e.preventDefault(); 
+            const url = document.getElementById('video-url').value.trim(); 
+            const type = getYoutubeId(url) ? 'youtube' : (url.endsWith('.mp4') ? 'mp4' : null); 
+            if(!type) { showMessage('URL no válida. Debe ser de YouTube o terminar en .mp4'); return; } 
+            
+            const data = { 
+                url, 
+                type, 
+                title: document.getElementById('video-title').value.trim(), 
+                genre: document.getElementById('video-genre').value.trim(), // CAMBIO: Añadido género
+                desc: document.getElementById('video-desc').value.trim(), 
+                thumbnailUrl: document.getElementById('video-thumbnail').value.trim(), 
+                timestamp: Date.now() 
+            }; 
+            
+            if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { 
+                showMessage('Todos los campos de video son obligatorios.'); return; 
+            } 
+            
+            db.ref('videos').push().set(data).then(() => { 
+                showMessage('Video añadido con éxito', true); 
+                e.target.reset(); 
+                document.getElementById('video-preview').style.display = 'none'; 
+            }).catch(error => showMessage('Error: ' + error.message)); 
+        });
+
+        function loadVideos(query = '') { db.ref('videos').orderByChild('timestamp').on('value', snapshot => { const videos = []; snapshot.forEach(child => { videos.push({ id: child.key, ...child.val() }); }); videos.reverse(); const normalizedQuery = normalize(query); const filtered = query ? videos.filter(v => normalize(v.title).includes(normalizedQuery)) : videos; displayVideos(filtered); }, error => showMessage('Error al cargar videos: ' + error.message)); }
+        function displayVideos(videos) { const tableBody = document.getElementById('video-table-body'); tableBody.innerHTML = ''; videos.forEach(video => { const row = document.createElement('tr'); row.innerHTML = `<td><img src="${video.thumbnailUrl}" alt="${video.title}"></td><td>${video.title}</td><td><span style="background:#444; padding: 4px 8px; border-radius:4px; font-weight:bold;">${video.type.toUpperCase()}</span></td><td><button class="action-btn edit-btn" onclick="openEditModal('video', '${video.id}')"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="deleteContent('video', '${video.id}')"><i class="fas fa-trash"></i></button></td>`; tableBody.appendChild(row); }); }
+
+        document.getElementById('edit-video-form').addEventListener('submit', e => { 
+            e.preventDefault(); 
+            const id = document.getElementById('edit-video-id').value; 
+            const url = document.getElementById('edit-video-url').value.trim(); 
+            const type = getYoutubeId(url) ? 'youtube' : (url.endsWith('.mp4') ? 'mp4' : null); 
+            if(!type) { showMessage('URL no válida para video.'); return; } 
+            
+            const data = { 
+                url, 
+                type, 
+                title: document.getElementById('edit-video-title').value.trim(), 
+                genre: document.getElementById('edit-video-genre').value.trim(), // CAMBIO: Añadido género
+                desc: document.getElementById('edit-video-desc').value.trim(), 
+                thumbnailUrl: document.getElementById('edit-video-thumbnail').value.trim(), 
+                timestamp: parseInt(document.getElementById('edit-video-timestamp').value, 10) 
+            }; 
+            
+            if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { 
+                showMessage('Todos los campos son obligatorios.'); return; 
+            } 
+            
+            db.ref(`videos/${id}`).set(data).then(() => { 
+                showMessage('Video actualizado', true); 
+                closeEditModal(); 
+            }).catch(error => showMessage('Error: ' + error.message)); 
+        });
+        
+        // --- MODAL Y OTROS ---
         function openEditModal(type, id) {
             const refPath = type === 'image' ? 'images' : 'videos';
             const modal = document.getElementById('edit-modal');
@@ -420,19 +479,17 @@
                     document.getElementById('edit-img-timestamp').value = item.timestamp;
                     document.getElementById('edit-image-preview').src = item.url;
                     document.getElementById('edit-image-preview').style.display = 'block';
-                    
-                    // NUEVO: Cargar datos de la miniatura en el modal de edición
                     document.getElementById('edit-img-thumbnail-url').value = item.thumbnailUrl || '';
                     const thumbPreview = document.getElementById('edit-thumbnail-preview');
                     thumbPreview.src = item.thumbnailUrl || '';
                     thumbPreview.style.display = item.thumbnailUrl ? 'block' : 'none';
-                    
                     populateCategoryCheckboxes('edit-img-categories', item.categories || []);
                 } else {
                     imageForm.style.display = 'none'; videoForm.style.display = 'block';
                     document.getElementById('edit-video-id').value = item.id;
                     document.getElementById('edit-video-url').value = item.url;
                     document.getElementById('edit-video-title').value = item.title;
+                    document.getElementById('edit-video-genre').value = item.genre || ''; // CAMBIO: Cargar género
                     document.getElementById('edit-video-desc').value = item.desc;
                     document.getElementById('edit-video-thumbnail').value = item.thumbnailUrl;
                     document.getElementById('edit-video-timestamp').value = item.timestamp;
@@ -443,7 +500,6 @@
             });
         }
         
-        // --- SECCIONES SIN CAMBIOS SIGNIFICATIVOS ---
         function deleteContent(type, id) { const refPath = type === 'image' ? 'images' : 'videos'; const commentsPath = type === 'image' ? 'comments' : 'video_comments'; const reactionsPath = type === 'image' ? 'reactions' : 'video_reactions'; if (confirm(`¿Seguro que quieres eliminar este ${type}? También se eliminarán sus datos asociados.`)) { const updates = {}; updates[`/${refPath}/${id}`] = null; updates[`/${commentsPath}/${id}`] = null; updates[`/${reactionsPath}/${id}`] = null; db.ref().update(updates).then(() => showMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} eliminado.`, true)).catch(error => showMessage('Error: ' + error.message)); } }
         document.getElementById('search-images').addEventListener('input', e => loadImages(normalize(e.target.value)));
         document.getElementById('search-videos').addEventListener('input', e => loadVideos(normalize(e.target.value)));
@@ -451,11 +507,6 @@
         function loadComments(query = '') { db.ref('comments').once('value', snapshot => { const comments = []; snapshot.forEach(imgSnap => imgSnap.forEach(commSnap => { comments.push({ imageId: imgSnap.key, commentId: commSnap.key, ...commSnap.val() }); })); comments.sort((a,b) => b.timestamp - a.timestamp); const normalizedQuery = normalize(query); const filtered = query ? comments.filter(c => normalize(c.text).includes(normalizedQuery) || (c.name && normalize(c.name).includes(normalizedQuery))) : comments; displayComments(filtered); }); }
         function displayComments(comments) { const tableBody = document.getElementById('comment-table-body'); tableBody.innerHTML = ''; comments.forEach(comment => { const row = document.createElement('tr'); row.innerHTML = `<td>${comment.imageId.substring(0, 6)}...</td><td>${comment.text}</td><td>${comment.name || 'Anónimo'}</td><td><button class="action-btn delete-btn" onclick="deleteComment('${comment.imageId}', '${comment.commentId}')"><i class="fas fa-trash"></i></button></td>`; tableBody.appendChild(row); }); }
         function deleteComment(imageId, commentId) { if (confirm('¿Eliminar este comentario?')) { db.ref(`comments/${imageId}/${commentId}`).remove().then(() => showMessage('Comentario eliminado.', true)).catch(error => showMessage('Error: ' + error.message)); } }
-        document.getElementById('video-url').addEventListener('input', (e) => { const url = e.target.value; const youtubeId = getYoutubeId(url); if(youtubeId) { const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`; document.getElementById('video-thumbnail').value = thumbnailUrl; document.getElementById('video-preview').src = thumbnailUrl; document.getElementById('video-preview').style.display = 'block'; document.getElementById('video-title').placeholder = "Pega el título del video de YouTube aquí"; } });
-        document.getElementById('video-form').addEventListener('submit', e => { e.preventDefault(); const url = document.getElementById('video-url').value.trim(); const type = getYoutubeId(url) ? 'youtube' : (url.endsWith('.mp4') ? 'mp4' : null); if(!type) { showMessage('URL no válida. Debe ser de YouTube o terminar en .mp4'); return; } const data = { url, type, title: document.getElementById('video-title').value.trim(), desc: document.getElementById('video-desc').value.trim(), thumbnailUrl: document.getElementById('video-thumbnail').value.trim(), timestamp: Date.now() }; if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { showMessage('Todos los campos de video son obligatorios.'); return; } db.ref('videos').push().set(data).then(() => { showMessage('Video añadido con éxito', true); e.target.reset(); document.getElementById('video-preview').style.display = 'none'; }).catch(error => showMessage('Error: ' + error.message)); });
-        function loadVideos(query = '') { db.ref('videos').orderByChild('timestamp').on('value', snapshot => { const videos = []; snapshot.forEach(child => { videos.push({ id: child.key, ...child.val() }); }); videos.reverse(); const normalizedQuery = normalize(query); const filtered = query ? videos.filter(v => normalize(v.title).includes(normalizedQuery)) : videos; displayVideos(filtered); }, error => showMessage('Error al cargar videos: ' + error.message)); }
-        function displayVideos(videos) { const tableBody = document.getElementById('video-table-body'); tableBody.innerHTML = ''; videos.forEach(video => { const row = document.createElement('tr'); row.innerHTML = `<td><img src="${video.thumbnailUrl}" alt="${video.title}"></td><td>${video.title}</td><td><span style="background:#444; padding: 4px 8px; border-radius:4px; font-weight:bold;">${video.type.toUpperCase()}</span></td><td><button class="action-btn edit-btn" onclick="openEditModal('video', '${video.id}')"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="deleteContent('video', '${video.id}')"><i class="fas fa-trash"></i></button></td>`; tableBody.appendChild(row); }); }
-        document.getElementById('edit-video-form').addEventListener('submit', e => { e.preventDefault(); const id = document.getElementById('edit-video-id').value; const url = document.getElementById('edit-video-url').value.trim(); const type = getYoutubeId(url) ? 'youtube' : (url.endsWith('.mp4') ? 'mp4' : null); if(!type) { showMessage('URL no válida para video.'); return; } const data = { url, type, title: document.getElementById('edit-video-title').value.trim(), desc: document.getElementById('edit-video-desc').value.trim(), thumbnailUrl: document.getElementById('edit-video-thumbnail').value.trim(), timestamp: parseInt(document.getElementById('edit-video-timestamp').value, 10) }; if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { showMessage('Todos los campos son obligatorios.'); return; } db.ref(`videos/${id}`).set(data).then(() => { showMessage('Video actualizado', true); closeEditModal(); }).catch(error => showMessage('Error: ' + error.message)); });
         function getYoutubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
         async function loadCurrentPollStatus() { const statusContainer = document.getElementById('current-poll-status'); const endPollBtn = document.getElementById('end-poll-btn'); const pollSnap = await db.ref('polls/activePoll').once('value'); if (!pollSnap.exists()) { statusContainer.innerHTML = '<p>No hay ninguna encuesta activa.</p>'; endPollBtn.style.display = 'none'; return; } const poll = pollSnap.val(); statusContainer.innerHTML = `<p><b>Encuesta activa:</b> ${poll.question}</p>`; endPollBtn.style.display = 'block'; }
         document.getElementById('set-poll-btn').addEventListener('click', async () => { const question = document.getElementById('poll-question').value.trim(); if (!question) { showMessage('La pregunta no puede estar vacía.'); return; } if ( (await db.ref('polls/activePoll').once('value')).exists() && !confirm('¿Reemplazar la encuesta activa?')) return; db.ref('polls/activePoll').set({ question, questionId: 'poll_' + Date.now() }).then(() => { showMessage('¡Encuesta asignada!', true); document.getElementById('poll-question').value = ''; loadCurrentPollStatus(); }).catch(error => showMessage('Error: ' + error.message)); });
