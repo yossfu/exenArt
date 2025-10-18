@@ -252,7 +252,7 @@
         }
 
         auth.onAuthStateChanged(user => {
-            if (user && user.email === 'admin123@exene.com') {
+            if (user && user.email === 'ezequiel@exen.com') {
                 document.getElementById('login-form').style.display = 'none';
                 document.getElementById('admin-content').style.display = 'block';
                 loadInitialData();
@@ -275,7 +275,7 @@
 
         function checkAdmin() {
             const password = document.getElementById('admin-pass').value;
-            auth.signInWithEmailAndPassword("admin123@exene.com", password)
+            auth.signInWithEmailAndPassword("ezequiel@exen.com", password)
                 .catch(error => showLoginError('Error de autenticación: ' + error.message));
         }
 
@@ -318,12 +318,21 @@
             const desc = document.getElementById('img-desc').value.trim();
             const tags = document.getElementById('img-tags').value.split(',').map(t => t.trim()).filter(Boolean);
             const categories = Array.from(document.querySelectorAll('#img-categories input:checked')).map(cb => cb.value);
+            const ownerId = "loY4qn9UH8fqp3loKcEYRIDslsg2"; // ID del propietario AÑADIDO
 
             if (!isValidUrl(url) || !title || !desc || tags.length === 0) {
                 showMessage('Los campos de URL, título, descripción y tags son obligatorios.'); return;
             }
 
-            const imageData = { url, title, desc, tags, categories, timestamp: Date.now() };
+            const imageData = { 
+                url, 
+                title, 
+                desc, 
+                tags, 
+                categories, 
+                ownerId: ownerId, // AÑADIDO
+                timestamp: Date.now() 
+            };
             if (isValidUrl(thumbnailUrl)) {
                 imageData.thumbnailUrl = thumbnailUrl;
             }
@@ -375,6 +384,7 @@
             const id = document.getElementById('edit-img-id').value;
             const url = document.getElementById('edit-img-url').value.trim();
             const thumbnailUrl = document.getElementById('edit-img-thumbnail-url').value.trim();
+            const ownerId = "loY4qn9UH8fqp3loKcEYRIDslsg2"; // ID del propietario AÑADIDO
             
             if (!isValidUrl(url)) {
                 showMessage('La URL de la imagen principal no es válida.'); return;
@@ -386,6 +396,7 @@
                 desc: document.getElementById('edit-img-desc').value.trim(),
                 tags: document.getElementById('edit-img-tags').value.split(',').map(t => t.trim()).filter(Boolean),
                 categories: Array.from(document.querySelectorAll('#edit-img-categories input:checked')).map(cb => cb.value),
+                ownerId: ownerId, // AÑADIDO
                 timestamp: parseInt(document.getElementById('edit-img-timestamp').value, 10)
             };
             

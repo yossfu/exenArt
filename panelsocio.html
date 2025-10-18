@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>exen-E - Panel de Socio</title>
+    <!-- Librerías -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        /* Estilos generales y reutilizados */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: #121212; color: #ffffff; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh; padding: 10px; }
+        #admin-container { width: 100%; max-width: 1200px; margin: auto; padding: 20px; background: #1e1e1e; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: animate__fadeIn 0.5s ease; }
+        input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="number"], textarea { width: 100%; padding: 12px; background: #333; border: 1px solid #555; color: #fff; font-size: 16px; border-radius: 6px; margin-bottom: 15px; font-family: 'Inter', sans-serif; transition: border-color 0.3s; }
+        input:focus, textarea:focus { border-color: #4caf50; outline: none; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        textarea { resize: vertical; min-height: 100px; }
+        button { padding: 12px; background: linear-gradient(135deg, #333, #444); border: none; color: #fff; font-size: 16px; cursor: pointer; border-radius: 6px; transition: all 0.3s ease; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        button:hover:not(:disabled) { background: linear-gradient(135deg, #444, #555); transform: scale(1.02); }
+        button:disabled { background: #2a2a2a; color: #777; cursor: not-allowed; transform: none; }
+        .action-btn { padding: 8px; font-size: 14px; margin: 0 5px; }
+        .delete-btn { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+        .delete-btn:hover { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .edit-btn { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .edit-btn:hover { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .message-box { text-align: center; padding: 10px; font-size: 14px; border-radius: 6px; margin-top: 10px; }
+        .error { color: #e74c3c; background: rgba(231, 76, 60, 0.1); }
+        .success { color: #2ecc71; background: rgba(46, 204, 113, 0.1); }
+        header { background: linear-gradient(135deg, #1e1e1e, #0a0a0a); padding: 15px 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); margin-bottom: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 1.8em; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5); font-weight: 600; }
+        #logout-btn { background: linear-gradient(135deg, #c0392b, #e74c3c); padding: 8px 16px; font-size: 14px; }
+        h2 { font-size: 1.5em; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; background: #2a2a2a; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #555; white-space: nowrap; }
+        th { background: #333; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+        td img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; vertical-align: middle; }
+        .modal-overlay { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; animation: animate__fadeIn 0.3s; }
+        .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 90%; max-width: 600px; position: relative; max-height: 90vh; overflow-y: auto; border: 1px solid #333; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
+        .close-modal-btn { position: absolute; top: 15px; right: 20px; color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; transition: color 0.3s; }
+        .close-modal-btn:hover { color: #fff; }
+        .table-container { max-height: 60vh; overflow-y: auto; border: 1px solid #333; border-radius: 8px; margin-top: 1rem; }
+        .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; background: #2a2a2a; padding: 15px; border-radius: 6px; border: 1px solid #444; }
+        .category-grid label { display: flex; align-items: center; gap: 8px; background: #333; padding: 8px 12px; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; user-select: none; }
+        .category-grid label:hover { background: #444; }
+        .category-grid input[type="checkbox"] { width: 18px; height: 18px; accent-color: #2ecc71; }
+        h3.category-title { font-size: 1em; margin-bottom: 10px; font-weight: 600; color: #ccc; }
+    </style>
+</head>
+<body>
+    <div id="admin-container">
+        <div id="login-form">
+            <header><h1><i class="fas fa-user-lock"></i> Acceso de Socio</h1></header>
+            <input type="email" id="partner-email" placeholder="Correo Electrónico">
+            <input type="password" id="partner-pass" placeholder="Contraseña">
+            <button onclick="loginPartner()"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+            <div id="login-error" class="message-box error" style="display: none;"></div>
+        </div>
+        <div id="admin-content" style="display: none;">
+            <header>
+                <h1><i class="fas fa-images"></i> Mi Contenido</h1>
+                <button id="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Salir</button>
+            </header>
+            <div id="global-message" class="message-box" style="display: none;"></div>
+            
+            <form id="image-form">
+                <h2><i class="fas fa-upload"></i> Agregar Nueva Imagen</h2>
+                <input type="url" id="img-url" placeholder="URL de la Imagen (Completa)" required>
+                <img id="image-preview" src="" alt="Vista previa" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
+                
+                <input type="url" id="img-thumbnail-url" placeholder="URL de la Miniatura (Opcional)">
+                <img id="thumbnail-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 150px; margin: 10px auto; border-radius: 8px;" />
+                
+                <input type="text" id="img-title" placeholder="Título" required>
+                <textarea id="img-desc" placeholder="Descripción" required></textarea>
+                <input type="text" id="img-tags" placeholder="Tags (separados por comas)" required>
+                
+                <div>
+                    <h3 class="category-title">Categorías</h3>
+                    <div id="img-categories" class="category-grid"></div>
+                </div>
+
+                <button type="submit"><i class="fas fa-plus"></i> Añadir Imagen</button>
+            </form>
+
+            <div id="image-list">
+                <h2><i class="fas fa-list"></i> Mis Imágenes</h2>
+                <input type="text" id="search-images" placeholder="Buscar en mis imágenes...">
+                <div class="table-container">
+                    <table id="image-table">
+                        <thead><tr><th>Imagen</th><th>Título</th><th>Tags</th><th>Categorías</th><th>Acciones</th></tr></thead>
+                        <tbody id="image-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal-btn" onclick="closeEditModal()">&times;</span>
+            <form id="edit-image-form">
+                <h2><i class="fas fa-edit"></i> Editar Imagen</h2>
+                <input type="hidden" id="edit-img-id">
+                <input type="hidden" id="edit-img-ownerId">
+                <input type="url" id="edit-img-url" placeholder="URL de la Imagen (Completa)" required>
+                <img id="edit-image-preview" src="" alt="Vista previa" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
+
+                <input type="url" id="edit-img-thumbnail-url" placeholder="URL de la Miniatura (Opcional)">
+                <img id="edit-thumbnail-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 150px; margin: 10px auto; border-radius: 8px;" />
+
+                <input type="text" id="edit-img-title" placeholder="Título" required>
+                <textarea id="edit-img-desc" placeholder="Descripción" required></textarea>
+                <input type="text" id="edit-img-tags" placeholder="Tags (separados por comas)" required>
+                
+                <div>
+                    <h3 class="category-title">Categorías</h3>
+                    <div id="edit-img-categories" class="category-grid"></div>
+                </div>
+
+                <button type="submit"><i class="fas fa-save"></i> Guardar Cambios</button>
+                <button type="button" class="delete-btn" onclick="closeEditModal()"><i class="fas fa-times"></i> Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
+            authDomain: "exene-53e6b.firebaseapp.com",
+            databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
+            projectId: "exene-53e6b",
+            storageBucket: "exene-53e6b.appspot.com",
+            messagingSenderId: "481369419867",
+            appId: "1:481369419867:web:ac5db24c436344262c8f7e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        const imageCategories = {
+            'anime': 'Anime', 'furry': 'Furry', 'realismo': 'Realismo', 'mecas': 'Mecas',
+            'devils': 'Devils & Angels', 'colors': 'ColorFull', 'amateur': 'Amateur', 'tvgames': 'TV & Games'
+        };
+        
+        // --- AUTENTICACIÓN ---
+        function loginPartner() {
+            const email = document.getElementById('partner-email').value;
+            const password = document.getElementById('partner-pass').value;
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => showLoginError('Error: ' + error.message));
+        }
+        
+        function logout() {
+            auth.signOut();
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                loadInitialData();
+            } else {
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('admin-content').style.display = 'none';
+            }
+        });
+
+        function loadInitialData() {
+            populateCategoryCheckboxes('img-categories');
+            populateCategoryCheckboxes('edit-img-categories');
+            loadImages();
+        }
+        
+        // --- LÓGICA DE IMÁGENES (FILTRADA POR DUEÑO) ---
+        function loadImages(query = '') {
+            const currentUser = auth.currentUser;
+            if (!currentUser) return;
+
+            // Esta es la consulta clave: filtra las imágenes por el 'ownerId' del usuario actual
+            db.ref('images').orderByChild('ownerId').equalTo(currentUser.uid)
+              .on('value', snapshot => {
+                const images = [];
+                snapshot.forEach(child => {
+                    images.push({ id: child.key, ...child.val() });
+                });
+                images.sort((a, b) => b.timestamp - a.timestamp); // Ordenar por más reciente
+
+                const normalizedQuery = normalize(query);
+                const filtered = query 
+                    ? images.filter(img => normalize(img.title).includes(normalizedQuery) || (img.tags && img.tags.some(tag => normalize(tag).includes(normalizedQuery)))) 
+                    : images;
+                
+                displayImages(filtered);
+            }, error => showMessage('Error al cargar imágenes: ' + error.message));
+        }
+
+        function displayImages(images) {
+            const tableBody = document.getElementById('image-table-body');
+            tableBody.innerHTML = '';
+            images.forEach(img => {
+                const row = document.createElement('tr');
+                const displayUrl = img.thumbnailUrl || img.url;
+                row.innerHTML = `
+                    <td><img src="${displayUrl}" alt="${img.title}"></td>
+                    <td>${img.title}</td>
+                    <td>${img.tags ? img.tags.join(', ') : ''}</td>
+                    <td>${img.categories ? img.categories.map(c => imageCategories[c] || c).join(', ') : 'N/A'}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="openEditModal('${img.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn delete-btn" onclick="deleteImage('${img.id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        document.getElementById('image-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                showMessage('Error: Debes estar autenticado para subir imágenes.');
+                return;
+            }
+
+            const url = document.getElementById('img-url').value.trim();
+            const thumbnailUrl = document.getElementById('img-thumbnail-url').value.trim(); 
+            const title = document.getElementById('img-title').value.trim();
+            const desc = document.getElementById('img-desc').value.trim();
+            const tags = document.getElementById('img-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+            const categories = Array.from(document.querySelectorAll('#img-categories input:checked')).map(cb => cb.value);
+
+            if (!isValidUrl(url) || !title || !desc || tags.length === 0) {
+                showMessage('Los campos de URL, título, descripción y tags son obligatorios.'); return;
+            }
+
+            const imageData = { 
+                url, title, desc, tags, categories, 
+                timestamp: Date.now(),
+                ownerId: currentUser.uid // Se añade el ID del dueño automáticamente
+            };
+            if (isValidUrl(thumbnailUrl)) {
+                imageData.thumbnailUrl = thumbnailUrl;
+            }
+
+            db.ref('images').push().set(imageData)
+                .then(() => {
+                    showMessage('Imagen añadida con éxito', true);
+                    e.target.reset();
+                    document.getElementById('image-preview').style.display = 'none';
+                    document.getElementById('thumbnail-preview').style.display = 'none';
+                    populateCategoryCheckboxes('img-categories');
+                }).catch(error => showMessage('Error: ' + error.message));
+        });
+
+        function openEditModal(id) {
+            db.ref(`images/${id}`).once('value', snapshot => {
+                const item = {id: snapshot.key, ...snapshot.val()};
+                document.getElementById('edit-img-id').value = item.id;
+                document.getElementById('edit-img-ownerId').value = item.ownerId; // Guardamos el ownerId
+                document.getElementById('edit-img-url').value = item.url;
+                document.getElementById('edit-img-title').value = item.title;
+                document.getElementById('edit-img-desc').value = item.desc;
+                document.getElementById('edit-img-tags').value = item.tags ? item.tags.join(', ') : '';
+                document.getElementById('edit-image-preview').src = item.url;
+                document.getElementById('edit-image-preview').style.display = 'block';
+                document.getElementById('edit-img-thumbnail-url').value = item.thumbnailUrl || '';
+                const thumbPreview = document.getElementById('edit-thumbnail-preview');
+                thumbPreview.src = item.thumbnailUrl || '';
+                thumbPreview.style.display = item.thumbnailUrl ? 'block' : 'none';
+                populateCategoryCheckboxes('edit-img-categories', item.categories || []);
+                document.getElementById('edit-modal').style.display = 'flex';
+            });
+        }
+
+        document.getElementById('edit-image-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const id = document.getElementById('edit-img-id').value;
+            const url = document.getElementById('edit-img-url').value.trim();
+            const thumbnailUrl = document.getElementById('edit-img-thumbnail-url').value.trim();
+            
+            if (!isValidUrl(url)) {
+                showMessage('La URL de la imagen principal no es válida.'); return;
+            }
+            
+            // Se recupera el ownerId para asegurar que se mantenga.
+            // Las reglas de seguridad lo harían de todas formas, pero es una buena práctica.
+            const ownerId = document.getElementById('edit-img-ownerId').value;
+            if (!ownerId) {
+                showMessage('Error: no se pudo encontrar el dueño de la imagen.');
+                return;
+            }
+            
+            const data = {
+                ownerId: ownerId, // Se mantiene el dueño original
+                url: url,
+                title: document.getElementById('edit-img-title').value.trim(),
+                desc: document.getElementById('edit-img-desc').value.trim(),
+                tags: document.getElementById('edit-img-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+                categories: Array.from(document.querySelectorAll('#edit-img-categories input:checked')).map(cb => cb.value),
+                timestamp: firebase.database.ServerValue.TIMESTAMP // Se actualiza la fecha de modificación
+            };
+            
+            if (isValidUrl(thumbnailUrl)) {
+                data.thumbnailUrl = thumbnailUrl;
+            } else {
+                data.thumbnailUrl = null; 
+            }
+
+            db.ref(`images/${id}`).set(data)
+                .then(() => { showMessage('Imagen actualizada', true); closeEditModal(); })
+                .catch(error => showMessage('Error: ' + error.message));
+        });
+        
+        function deleteImage(id) {
+            if (confirm(`¿Seguro que quieres eliminar esta imagen? Esta acción es irreversible.`)) {
+                db.ref(`images/${id}`).remove()
+                    .then(() => showMessage(`Imagen eliminada.`, true))
+                    .catch(error => showMessage('Error: ' + error.message));
+            }
+        }
+
+        // --- FUNCIONES UTILITARIAS ---
+        function populateCategoryCheckboxes(containerId, checkedCategories = []) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for (const key in imageCategories) {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = key;
+                checkbox.name = `${containerId}-chk`;
+                if (checkedCategories.includes(key)) checkbox.checked = true;
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(imageCategories[key]));
+                container.appendChild(label);
+            }
+        }
+        function setupPreview(inputId, previewId) { const urlInput = document.getElementById(inputId); const previewImage = document.getElementById(previewId); urlInput.addEventListener('input', () => { const url = urlInput.value.trim(); previewImage.src = isValidUrl(url) ? url : ''; previewImage.style.display = isValidUrl(url) ? 'block' : 'none'; }); }
+        setupPreview('img-url', 'image-preview');
+        setupPreview('edit-img-url', 'edit-image-preview');
+        setupPreview('img-thumbnail-url', 'thumbnail-preview');
+        setupPreview('edit-img-thumbnail-url', 'edit-thumbnail-preview');
+        function showMessage(text, isSuccess = false) { const el = document.getElementById('global-message'); el.textContent = text; el.className = `message-box ${isSuccess ? 'success' : 'error'}`; el.style.display = 'block'; window.scrollTo(0, 0); setTimeout(() => { el.style.display = 'none'; }, 4000); }
+        function showLoginError(text) { const el = document.getElementById('login-error'); el.textContent = text; el.style.display = 'block'; }
+        function isValidUrl(string) { try { new URL(string); return true; } catch (_) { return false; } }
+        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : ''; }
+        function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
+        document.getElementById('search-images').addEventListener('input', e => loadImages(e.target.value));
+
+    </script>
+</body>
+</html>
