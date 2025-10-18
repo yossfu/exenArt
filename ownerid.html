@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Prompts para Automatic1111 v6</title>
+    <title>Generador de Prompts para Automatic1111 v7.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
@@ -49,8 +49,8 @@
     <div class="w-full max-w-4xl mx-auto my-8 glass-container rounded-2xl shadow-2xl p-8 space-y-8">
         <!-- Encabezado -->
         <div class="text-center">
-            <h1 class="text-5xl font-bold gradient-text">Generador de Prompts v6</h1>
-            <p class="text-gray-400 mt-2">Ahora con tipos de personaje para mayor variedad (demonio, ángel, cyborg, etc.).</p>
+            <h1 class="text-5xl font-bold gradient-text">Generador de Prompts v7.2</h1>
+            <p class="text-gray-400 mt-2">Ahora con más variedad, fetiches y personajes tipo furry.</p>
         </div>
 
         <!-- Área de resultado -->
@@ -73,24 +73,30 @@
     </div>
 
     <script>
-        // --- BASE DE DATOS DE TAGS (EXPANDIDA) ---
+        // --- BASE DE DATOS DE TAGS ---
         const tags = {
-            obligatorioCompleto: "1boy, solo, male focus, masterpiece, <lora:Penis Bulge Slider_alpha1.0_rank4_noxattn_last:2> <lora:lightingSlider:2> <lora:DetailerILv2:1> <lora:add-detail-xl:4> masterpiece, best quality, ultra-detailed, 8k resolution, high dynamic range, absurdres, stunningly beautiful, intricate details, sharp focus, detailed eyes, cinematic color grading, high-resolution texture",
+            obligatorioCompleto: " (man:4) (male focus), ((1boy)), solo, (full body:1.2), masterpiece, <lora:Penis Bulge Slider_alpha1.0_rank4_noxattn_last:2> <lora:lightingSlider:2> <lora:DetailerILv2:1> <lora:add-detail-xl:4> masterpiece, best quality, ultra-detailed, 8k resolution, high dynamic range, absurdres, stunningly beautiful, intricate details, sharp focus, cinematic color grading, high-resolution texture",
             
             clothingOptions: {
-                nude: ["(big penis:1.2)", "(erect penis:1.2)", "(flacid penis:1.2)", "(penis:1.1)"],
-                underwear: ["(brief underwear:1.2)", "(thong:1.2)", "(sexy bodysuit:1.2)", "(jockstrap:1.2)", "(boxer briefs:1.2)", "(harness:1.2)"]
+                nude: ["(big penis:1.2)", "(erect penis:1.2)", "(flaccid penis:1.2)", "(penis:1.1)", "testicles", "completely nude", "uncensored", "(male pubic hair:1.2)", "foreskin", "dripping", "animal penis", "precum"],
+                underwear: ["(brief underwear:1.2)", "(thong:1.2)", "sexy bodysuit", "(jockstrap:1.2)", "(boxer briefs:1.2)", "harness", "chest harness", "socks", "white socks", "black male underwear", "white male underwear", "fundoshi", "(bulge:1.2)", "erection under clothes", "male swimwear", "see-through", "clothes pull", "pulled by self", "gloves", "fingerless gloves", "black gloves"],
+                outfits: ["japanese clothes", "kimono", "open kimono", "blue kimono", "yukata", "open pants", "hoodie", "topless male", "underwear only", "open clothes", "dressing", "undersized clothes"]
             },
             
-            // NUEVA CATEGORÍA: Tipos de personaje para añadir variedad.
-            characterTypes: ["", "demon", "angel", "gnome", "monster", "elf", "orc", "vampire", "werewolf", "cyborg", "android", "alien", "fairy", "goblin", "dwarf", "centaur", "minotaur", "ghost", "zombie", "elemental", "satyr", "golem", "harpy", "nephilim", "construct"],
+            kinkAndToys: ["", "anal", "dildo", "sex toy", "anal object insertion", "object insertion"],
+            
+            characterTypes: ["", "demon", "angel", "gnome", "monster", "elf", "orc", "vampire", "werewolf", "cyborg", "android", "alien", "fairy", "goblin", "dwarf", "centaur", "minotaur", "ghost", "zombie", "elemental", "satyr", "golem", "harpy", "nephilim", "construct", "demon boy", "mature male", "dark-skinned male", "wolf boy", "furry", "furry male"],
+
+            bodyAndPose: ["", "(muscular:1.2)", "(bara:1.1)", "toned", "large pectorals", "abs", "(thighs:1.1)", "thick thighs", "ass", "back", "chest hair", "facial hair", "beard", "hairy", "veins", "scar", "shiny skin", "wet", "armpits", "collarbone", "navel", "standing", "sitting", "lying", "on stomach", "on back", "spread legs", "looking at viewer", "looking back", "from behind", "cowboy shot", "arm up", "arms up", "undressing", "ass focus", "feet", "toes", "barefoot", "smile", "blue eyes", "red eyes", "white hair", "thick eyebrows", "hands on own hips", "from below", "one eye covered"],
+            
+            sceneAndDetails: ["", "indoors", "outdoors", "poolside", "water", "simple background", "white background", "red background", "yellow background", "chair", "bed", "on bed", "pillow", "day", "shadow", "tentacles", "horns", "wings", "tail", "wolf ears", "animal ears", "wolf tail", "tattoo", "arm tattoo", "jewelry", "earrings", "restrained", "bound", "short hair", "long hair", "medium hair", "undercut", "ponytail", "black hair", "brown hair", "blush", "artist name", "signature", "bandages", "mask", "eyepatch"],
             
             eras: ["", "1400s", "1500s", "1700s", "90s", "archaic", "chenla", "fantastic realism", "joseon dynasty", "yoruba", "renaissance", "baroque", "victorian era", "edwardian era", "art nouveau", "art deco", "cyberpunk era", "stone age", "bronze age", "roman empire"],
             textures: ["", "3d fractals", "animal prints", "blistered", "blotchy", "brittle", "brushed", "bumpy", "chalky", "chipped", "chiseled", "coarse", "corded", "corky", "corroded", "cracked", "creased", "crinkled", "crumbly", "crusty", "elastic", "embossed", "embroidered", "feathery", "fibrous", "flaky", "fluffy", "frosted", "furrowed", "fuzzy", "glistening", "glittering", "glossy", "glowing", "granular", "gritty", "honeycombed", "iridescent", "jagged", "knitted", "leathery", "lustrous", "marbled", "matte", "metallic", "gelatinous", "powdery", "woven", "mossy", "pitted", "plush", "polished", "porous", "prickly", "ribbed", "rough", "rusted", "sandy", "scaly", "shining", "shiny", "silky", "slick", "slimy", "smooth", "sparkling", "spongy", "stained", "suede-like", "veined", "velvety", "viscous", "wavy", "weathered"],
             colors: ["ablaze colors", "apricot color", "aqua colors", "ash gray", "auburn color", "baby blue", "baby pink", "beaming colors", "beige colors", "black and white", "bleached colors", "blood red", "blue violet", "bold colors", "bright colors", "bronze colors", "brown", "burgundy colors", "burnt sienna", "canary yellow", "candy colors", "cerulean blue", "chartreuse color", "chestnut color", "cobalt blue", "cold colors", "colorful", "colorless", "cool colors", "coral color", "crimson red", "cyan", "danish pastel colors", "dark colors", "deep colors", "desaturated", "dim colors", "earth tones", "electric blue", "electric colors", "fiery colors", "fluorescent colors", "forest green", "golden yellow", "gradient colors", "hot pink", "hunter green", "indigo", "ivory", "monochromatic", "triadic colors", "analogous colors", "complementary colors", "viridian", "celadon", "vermilion", "lavender blush", "light colors", "lime colors", "magenta color", "mahogany", "maroon", "mauve", "midnight blue", "mint color", "mocha", "muted colors", "navy blue", "neon colors", "neutral colors", "olive color", "orange red", "pale colors", "pastel colors", "peach color", "pink color", "platinum color", "prismatic colors", "prussian blue", "radiant colors", "red", "retro colors", "rich colors", "rose color", "royal blue", "sepia colors", "silver colors", "sky blue", "slate gray", "smoky black", "spectrum colors", "spring green", "tan color", "taupe", "teal", "technicolor", "tropical colors", "turquoise color", "vantablack", "vibrant colors", "vintage colors", "violet", "vivid colors", "warm colors", "washed out colors"],
             themes: ["", "academicism", "acid pixie", "acidwave", "adventurecore", "afrofuturism", "agropunk", "anachronism", "astropunk", "atompunk", "autumn", "biopunk", "bloomcore", "bohemian", "bronzepunk", "byzantine", "chaotic", "contemporary realism", "cosmic horror", "crusaderpunk", "crustpunk", "cybergoth", "dark fantasy", "dark nautical", "decopunk", "dieselpunk", "dreamy", "emo", "ethereal", "evil-theme", "extraterrestrial", "fairytale", "fantasy", "farmcore", "flowercore", "futuristic", "goblincore", "gothic", "hallyu", "happycore", "haunting", "hikecore", "lo-fi", "magic-realism", "mannerism", "mythology", "orientalism", "prehistoricore", "rainbowcore", "retro", "retrofuturism", "robotic", "romanticism", "solarpunk", "minimalism", "maximalism", "bioluminescent", "slimepunk", "socialist realism", "space opera", "sparklecore", "spring", "steampunk", "summer", "synthwave", "tiki", "tribal art", "tropical", "urbancore", "vaporwave", "winter", "witchcore", "wonderland"],
-            compositions: ["", "album cover", "book cover", "brand identity", "character design", "character sheet", "coloring book page", "comic strip", "commercial ad", "diagram", "enamel pin", "fashion mockup", "flowchart", "full body character design", "game assets", "game UI", "house plan", "icon set", "infographic", "interior design", "jewelry design", "knolling", "logo design", "magazine cover", "menu design", "mood board", "poster", "propaganda poster", "seamless pattern", "golden ratio", "rule of thirds", "isometric view", "blueprint schematic", "architectural drawing", "technical illustration", "concept art", "storyboard"],
-            extra: ["ultra detail", "ultra realism", "cinematic", "photorealistic", "no reflection", "perfect details", "volumetric lighting", "depth of field", "caustics", "god rays", "sharp focus", "soft lighting", "hard lighting", "dramatic lighting", "subsurface scattering"],
+            compositions: ["", "full body character design", "wide shot", "game assets", "album cover", "book cover", "brand identity", "character sheet", "coloring book page", "comic strip", "commercial ad", "diagram", "enamel pin", "fashion mockup", "flowchart", "game UI", "house plan", "icon set", "infographic", "interior design", "jewelry design", "knolling", "logo design", "magazine cover", "menu design", "mood board", "poster", "propaganda poster", "seamless pattern", "golden ratio", "rule of thirds", "isometric view", "blueprint schematic", "architectural drawing", "technical illustration", "concept art", "storyboard"],
+            extra: ["ultra detail", "ultra realism", "cinematic", "photorealistic", "no reflection", "perfect details", "volumetric lighting", "depth of field", "caustics", "god rays", "soft lighting", "hard lighting", "dramatic lighting", "subsurface scattering", "realistic"],
         };
 
         const generateBtn = document.getElementById('generate-btn');
@@ -103,8 +109,11 @@
         }
 
         function generatePrompt() {
-            // --- SELECCIÓN ALEATORIA DE TAGS OPCIONALES ---
-            const selectedCharacterType = getRandomElement(tags.characterTypes); // SELECCIÓN DEL TIPO DE PERSONAJE
+            // --- 1. SELECCIÓN ALEATORIA DE TAGS OPCIONALES ---
+            const selectedCharacterType = getRandomElement(tags.characterTypes); 
+            const selectedKinkAndToys = getRandomElement(tags.kinkAndToys);
+            const selectedBodyAndPose = getRandomElement(tags.bodyAndPose);
+            const selectedSceneAndDetails = getRandomElement(tags.sceneAndDetails);
             const selectedTexture = getRandomElement(tags.textures);
             const selectedColor = getRandomElement(tags.colors);
             const selectedTheme = getRandomElement(tags.themes);
@@ -112,15 +121,15 @@
             const selectedExtra = getRandomElement(tags.extra);
             const selectedEra = getRandomElement(tags.eras);
 
-            // --- CONSTRUCCIÓN DEL PROMPT ---
+            // --- 2. CONSTRUCCIÓN DEL PROMPT ---
             const promptParts = [];
             
-            // 1. Base obligatoria con LoRAs y calidad
+            // Base obligatoria con LoRAs y calidad
             promptParts.push(tags.obligatorioCompleto);
             
-            // 2. REGLA FUNDAMENTAL: Desnudo o Ropa Interior (con pesos)
-            if (Math.random() < 0.5) {
-                // Opción: Desnudo
+            // REGLA FUNDAMENTAL: Desnudo, Ropa Interior o Atuendo (con pesos)
+            const clothingChoice = Math.random();
+            if (clothingChoice < 0.4) { // 40% chance for nude
                 const primaryNudeTag = getRandomElement(tags.clothingOptions.nude);
                 promptParts.push(primaryNudeTag);
 
@@ -131,16 +140,24 @@
                     } while (secondaryNudeTag === primaryNudeTag);
                     promptParts.push(secondaryNudeTag);
                 }
-            } else {
-                // Opción: Ropa interior
+            } else if (clothingChoice < 0.8) { // 40% chance for underwear
                 const selectedUnderwear = getRandomElement(tags.clothingOptions.underwear);
                 promptParts.push(selectedUnderwear);
+            } else { // 20% chance for outfit
+                const selectedOutfit = getRandomElement(tags.clothingOptions.outfits);
+                promptParts.push(selectedOutfit);
             }
 
-            // 3. Añadir tipo de personaje si se seleccionó uno
+            // --- 3. AÑADIR TAGS SELECCIONADOS AL PROMPT ---
             if (selectedCharacterType) promptParts.push(selectedCharacterType);
+            
+            // Añade un tag de fetiche/juguete con una probabilidad del 25%
+            if (selectedKinkAndToys && Math.random() < 0.25) {
+                promptParts.push(selectedKinkAndToys);
+            }
 
-            // 4. Añadir resto de categorías opcionales
+            if (selectedBodyAndPose) promptParts.push(selectedBodyAndPose);
+            if (selectedSceneAndDetails) promptParts.push(selectedSceneAndDetails);
             if (selectedTexture) promptParts.push(`${selectedTexture} texture`);
             if (selectedColor) promptParts.push(`${selectedColor} palette`);
             if (selectedTheme) promptParts.push(`${selectedTheme} ambient`);
@@ -150,7 +167,7 @@
 
             const finalPrompt = promptParts.join(', ');
             
-            // --- MOSTRAR RESULTADO CON ANIMACIÓN ---
+            // --- 4. MOSTRAR RESULTADO ---
             promptOutput.classList.add('prompt-enter');
             setTimeout(() => {
                 promptOutput.textContent = finalPrompt;
