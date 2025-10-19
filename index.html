@@ -15,8 +15,7 @@
     <!-- Google Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Usando Poppins para títulos y manteniendo Inter para el cuerpo -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -26,98 +25,91 @@
     <style>
         :root { 
             --accent: #f97316; 
-            --accent-neon: #fb923c; 
-            --for-you-glow: #8b5cf6; 
-            --top-liked-glow: #facc15; 
-            --videos-glow: #2dd4bf; 
+            --accent-glow: rgba(251, 146, 60, 0.6);
             --title-font: 'Poppins', sans-serif;
             --body-font: 'Inter', sans-serif;
         }
         html { scroll-behavior: smooth; }
         body { 
             font-family: var(--body-font); 
-            background-color: #121212; 
+            background-color: #0c0c0c;
+            background-image: radial-gradient(circle at 25% 25%, rgba(249, 115, 22, 0.05) 0%, transparent 40%), 
+                              radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
             color: #f3f4f6;
-            /* Espacio para la barra de navegación inferior */
             padding-bottom: 80px;
         }
         
-        /* --- ESTILOS "APP-LIKE" --- */
-        /* Títulos con fuente más expresiva */
         .section-title {
             font-family: var(--title-font);
             font-weight: 800;
             letter-spacing: -0.02em;
         }
-        /* Tarjetas con más redondeo y sombra persistente */
         .image-card {
-            border-radius: 1rem; /* rounded-2xl */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            will-change: transform; /* GPU acceleration */
         }
         .image-card:hover {
             transform: scale(1.03);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 25px -5px var(--accent-glow);
         }
-        /* Feedback táctil en botones y elementos clickables */
         .touch-feedback {
-            transition: transform 0.15s cubic-bezier(0.22, 0.61, 0.36, 1), background-color 0.15s;
+            transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .touch-feedback:active {
             transform: scale(0.95);
-            filter: brightness(0.8);
         }
 
-        /* --- BARRA DE NAVEGACIÓN INFERIOR --- */
         .bottom-nav {
-            background-color: rgba(17, 24, 39, 0.8); /* bg-gray-900/80 */
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(55, 65, 81, 0.5); /* border-gray-700/50 */
+            background-color: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(55, 65, 81, 0.3);
         }
         .bottom-nav-link {
-            color: #9ca3af; /* text-gray-400 */
-            transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
-        }
-        .bottom-nav-link:hover {
-            color: #ffffff;
+            color: #9ca3af;
+            transition: color 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .bottom-nav-link.active {
             color: var(--accent);
-            transform: scale(1.1);
+            transform: translateY(-4px);
         }
-        .bottom-nav-link.active span {
-            font-weight: 600;
-        }
+        .bottom-nav-link.active span { font-weight: 700; }
+        .bottom-nav-link svg { transition: transform 0.2s ease; }
+        .bottom-nav-link.active svg { transform: scale(1.1); }
 
-        /* --- MODAL CON ANIMACIÓN DE ENTRADA (CORREGIDO) --- */
         #modal {
-            display: none; /* Oculto por defecto */
+            display: none;
+            --tw-bg-opacity: 0.8;
+            background-color: rgba(0,0,0,var(--tw-bg-opacity));
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
         @keyframes modal-enter {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
         #modal.visible {
-            display: block; /* Se hace visible con la clase */
-            animation: modal-enter 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+            display: block;
+        }
+        #modal.visible #modal-content {
+             animation: modal-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* --- ESTILOS DE COMPONENTES MEJORADOS --- */
-        main h3 { font-weight: 900; }
         .decorative-divider { display: flex; align-items: center; text-align: center; margin: 3rem 0; }
-        .decorative-divider::before, .decorative-divider::after { content: ''; flex: 1; border-bottom: 1px solid; border-image-source: linear-gradient(to right, transparent, var(--accent), transparent); border-image-slice: 1; }
-        .decorative-divider-icon { font-size: 1.5rem; color: var(--accent-neon); text-shadow: 0 0 15px var(--accent-neon); padding: 0 1em; }
+        .decorative-divider::before, .decorative-divider::after { content: ''; flex: 1; border-bottom: 1px solid; border-image-source: linear-gradient(to right, transparent, var(--accent), transparent); border-image-slice: 1; opacity: 0.5; }
+        .decorative-divider-icon { font-size: 1.5rem; color: var(--accent); text-shadow: 0 0 15px var(--accent-glow); padding: 0 1em; }
         @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
         .skeleton { background-color: #374151; background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%); background-repeat: no-repeat; background-size: 2000px 100%; animation: shimmer 1.5s linear infinite; border-radius: 1rem; aspect-ratio: 2 / 3; }
-        @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
+        @keyframes loadImage { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .image-item-animation { animation: loadImage 0.6s ease-out forwards; }
         @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
-        .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
+        .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; will-change: transform, opacity; }
         #reaction-circle-container.open .reaction-circle-item { opacity: 1; transform: scale(1) var(--transform-pos); }
         #reaction-circle-container.open #reaction-bg { transform: scale(1); }
         .reaction-circle-item { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform: scale(0); opacity: 0; }
-        #scrollToTopBtn { position: fixed; bottom: 90px; right: 20px; z-index: 100; opacity: 0; visibility: hidden; transform: translateY(20px); transition: opacity 0.3s, visibility 0.3s, transform 0.3s; }
+        #scrollToTopBtn { opacity: 0; visibility: hidden; transform: translateY(20px); transition: opacity 0.3s, visibility 0.3s, transform 0.3s; }
         #scrollToTopBtn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
@@ -130,7 +122,7 @@
         @media (min-width: 640px) { .category-drawer { grid-template-columns: repeat(4, 1fr); } }
         .category-drawer.open { max-height: 500px; opacity: 1; margin-top: 1rem; margin-bottom: 2rem; }
         .category-button { text-decoration: none; aspect-ratio: 16 / 9; border-radius: 1rem; background-size: cover; background-position: center; position: relative; display: flex; align-items: flex-end; justify-content: center; padding: 0.75rem; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .category-button:hover { transform: scale(1.05); box-shadow: 0 8px 25px rgba(0,0,0,0.5); }
+        .category-button:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(0,0,0,0.5); }
         .category-button::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 10%, transparent 70%); transition: background 0.3s ease; }
         .category-button:hover::after { background: linear-gradient(to top, rgba(0,0,0,0.7) 5%, transparent 60%); }
         .category-button span { color: white; font-weight: 700; font-size: 1rem; text-shadow: 0 2px 4px rgba(0,0,0,0.8); position: relative; z-index: 2; text-align: center; }
@@ -143,21 +135,13 @@
         #cat-btn-mecas { background-image: url('https://files.catbox.moe/jjljml.jpg'); }
         #cat-btn-devils { background-image: url('https://files.catbox.moe/z60qih.jpg'); }
         #cat-btn-tvgames { background-image: url('https://files.catbox.moe/q4setk.jpg'); }
-        #filter-toggle-btn { border-radius: 9999px; width: 56px; height: 56px; border: 2px solid #4b5563; color: #d1d5db; background-color: transparent; transition: all 0.3s ease; }
-        #filter-toggle-btn:hover { background-color: var(--accent); border-color: var(--accent-neon); color: #ffffff; }
-        #filter-toggle-btn.active { background-color: var(--accent); border-color: var(--accent-neon); color: #ffffff; box-shadow: 0 0 10px var(--accent-neon); }
-        @keyframes floatUpExpressive { 0% { opacity: 0; transform: translateY(20px) scale(0.6) rotate(-10deg); } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; transform: translateY(-90vh) scale(1.2) rotate(15deg); } }
-        @keyframes glowPulse { 0%, 100% { filter: drop-shadow(0 0 4px currentColor); } 50% { filter: drop-shadow(0 0 12px currentColor); } }
-        .floating-element { position: absolute; bottom: 20px; animation: floatUpExpressive 2.5s cubic-bezier(0.22, 0.61, 0.36, 1) forwards, glowPulse 1.2s ease-in-out; pointer-events: none; will-change: transform, opacity, filter; z-index: 30; left: var(--start-x, 50%); }
-        .floating-element svg { display: block; width: 100%; height: auto; }
-        .floating-comment-bubble { background-color: rgba(0, 0, 0, 0.75); color: white; padding: 8px 12px; border-radius: 20px; font-size: 0.9rem; white-space: nowrap; max-width: 250px; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
-        .floating-comment-bubble .author { font-weight: bold; color: var(--accent-neon); margin-right: 6px; }
+        #filter-toggle-btn.active { box-shadow: 0 0 15px var(--accent-glow); }
         #image-container .progressive-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #image-container .thumbnail-img { opacity: 1; }
         .full-res-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: inset(0 100% 0 0); transition: clip-path 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
         #image-container.loaded .full-res-container { clip-path: inset(0 0 0 0); }
-        .sweep-line { position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(to bottom, transparent, var(--accent-neon), transparent); box-shadow: 0 0 8px var(--accent-neon); }
-        #image-container .loading-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; z-index: 10; pointer-events: none; opacity: 1; transition: opacity 0.5s ease; }
+        .sweep-line { position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(to bottom, transparent, var(--accent), transparent); box-shadow: 0 0 8px var(--accent-glow); }
+        #image-container .loading-indicator { opacity: 1; transition: opacity 0.5s ease; }
         #image-container.loaded .loading-indicator { opacity: 0; }
     </style>
 </head>
@@ -175,17 +159,17 @@
     <!-- CONTENIDO PRINCIPAL -->
     <main class="container mx-auto px-2 sm:px-4">
         <div class="my-8 flex justify-center">
-             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto">
+             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
         </div>
         <form id="search-form" class="mb-6 flex justify-center">
             <div class="relative w-full max-w-xl">
-                <input type="text" id="search-input" placeholder="Buscar en toda la galería..." class="w-full rounded-full border-2 border-gray-700 bg-gray-800 py-3 pl-5 pr-24 text-white transition placeholder:text-gray-500 focus:border-orange-500 focus:outline-none">
+                <input type="text" id="search-input" placeholder="Buscar en toda la galería..." class="w-full rounded-full border-2 border-gray-700 bg-gray-800/50 py-3 pl-5 pr-24 text-white transition placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
                 <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-12 hidden items-center justify-center w-12 text-gray-400 hover:text-orange-500" aria-label="Limpiar búsqueda"><i class="fas fa-times text-xl"></i></button>
                 <button type="submit" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-400 hover:text-orange-500 touch-feedback" aria-label="Buscar"><i class="fas fa-search text-xl"></i></button>
             </div>
         </form>
         <div class="mb-4 flex justify-center">
-            <button id="filter-toggle-btn" class="flex items-center justify-center text-2xl touch-feedback">
+            <button id="filter-toggle-btn" class="flex items-center justify-center rounded-full h-14 w-14 border-2 border-gray-800 text-2xl text-gray-400 bg-gray-900/50 hover:border-orange-500 hover:text-orange-400 transition-all duration-300 touch-feedback">
                 <i class="fas fa-filter"></i>
             </button>
         </div>
@@ -228,32 +212,28 @@
             <div id="load-more-trigger" class="h-10"></div>
         </section>
     </main>
-    <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90"><button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-left text-2xl"></i></button><button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-right text-2xl"></i></button><div id="modal-content" class="h-full w-full overflow-y-auto"><div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4"><header id="modal-header" class="flex items-center justify-between"><h2 id="title" class="section-title bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl text-transparent"></h2><button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90 touch-feedback"><i class="fas fa-times text-2xl"></i></button></header><div class="flex flex-col items-center gap-4">
-        <div id="image-container" class="relative -mx-2 sm:mx-0 rounded-2xl overflow-hidden w-full aspect-[2/3] max-h-[75vh]">
-            <div id="floating-elements-container" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
-        </div>
-        <div id="reaction-circle-container" class="relative z-20"><div class="relative flex items-center justify-center"><div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="like">❤️</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="hot">🔥</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="wow">😯</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="laugh">😂</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sad">😢</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sexy">🫦</span></div><button id="like-btn" class="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-lg touch-feedback"><i class="fas fa-heart text-3xl"></i></button></div></div><div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div><p id="desc" class="rounded-2xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p><section id="similar-section" class="mt-4 w-full"><h3 class="section-title mb-4 text-center text-xl text-orange-400"><i class="fas fa-th-large"></i> Similares</h3><div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div></section><section id="comments-section" class="mt-4 w-full"><form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-2xl bg-gray-800/50 p-4 sm:flex-row"><input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4"><input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white"><button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white touch-feedback"><i class="fas fa-paper-plane"></i> Enviar</button></form><div id="comments" class="flex flex-col gap-4"></div></section></div></div></div></div>
-    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm touch-feedback"><i class="fas fa-arrow-up"></i></button>
+    <div id="modal" class="fixed inset-0 z-[1000]"><button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-left text-2xl"></i></button><button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-right text-2xl"></i></button><div id="modal-content" class="h-full w-full overflow-y-auto"><div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4"><header id="modal-header" class="flex items-center justify-between"><h2 id="title" class="section-title bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl text-transparent"></h2><button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition-all duration-300 hover:bg-gray-700 hover:text-white hover:rotate-90 touch-feedback"><i class="fas fa-times text-2xl"></i></button></header><div class="flex flex-col items-center gap-4">
+        <div id="image-container" class="relative -mx-2 sm:mx-0 rounded-2xl overflow-hidden w-full aspect-[2/3] max-h-[75vh]"></div>
+        <div id="reaction-circle-container" class="relative z-20"><div class="relative flex items-center justify-center"><div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="like">❤️</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="hot">🔥</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="wow">😯</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="laugh">😂</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sad">😢</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sexy">🫦</span></div><button id="like-btn" class="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-400 text-white shadow-lg shadow-orange-500/30 touch-feedback"><i class="fas fa-heart text-3xl"></i></button></div></div><div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div><p id="desc" class="rounded-2xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p><section id="similar-section" class="mt-4 w-full"><h3 class="section-title mb-4 text-center text-xl text-orange-400"><i class="fas fa-th-large"></i> Similares</h3><div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div></section><section id="comments-section" class="mt-4 w-full"><form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-2xl bg-gray-800/50 p-4 sm:flex-row"><input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4"><input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white"><button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white touch-feedback"><i class="fas fa-paper-plane"></i> Enviar</button></form><div id="comments" class="flex flex-col gap-4"></div></section></div></div></div></div>
+    <button id="scrollToTopBtn" class="fixed bottom-[90px] right-5 h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm touch-feedback z-[100]" title="Ir arriba"><i class="fas fa-arrow-up"></i></button>
     <footer class="mt-12 py-8 text-center text-gray-500"><p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
 
     <!-- BARRA DE NAVEGACIÓN INFERIOR -->
     <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around">
         <a href="index.html" id="nav-index" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <img src="images/galeria.png" class="h-6 w-6 mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             <span class="text-xs">Galería</span>
         </a>
         <a href="batalla.html" id="nav-batalla" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <img src="images/batalla.png" class="h-6 w-6 mb-1">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12.01 2.011H12v1.99M12.01 20.011H12v1.99M6.35 4.931l1.41 1.41m9.9 9.9l1.41 1.41M4.93 17.651l1.41-1.41m9.9-9.9l1.41-1.41M2.01 12.011H4v-1.99m18 .011h-1.99v-1.99M9.5 8.5l5 7m-5 0l5-7" /></svg>
             <span class="text-xs">Batalla</span>
         </a>
         <a href="videos.html" id="nav-videos" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <img src="images/musica.png" class="h-6 w-6 mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
             <span class="text-xs">Música</span>
         </a>
     </nav>
     <script>
-        // El script de index.html permanece sin cambios significativos en su lógica interna.
-        // La única modificación es en el HTML para los enlaces de categorías.
         "use strict";
         // --- CONFIGURACIÓN Y VARIABLES GLOBALES ---
         const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
@@ -263,7 +243,6 @@
         const imagesPerLoad = 21; let allImages = []; let fullGalleryCache = []; let isLoading = false; let noMoreImages = false; let currentImageId = ''; let currentImageIndex = -1;
         let deviceID = localStorage.getItem('deviceID'); if (!deviceID) { deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); localStorage.setItem('deviceID', deviceID); }
         let userReactions = {}; let allReactionCounts = {}; let currentSearchResults = []; let searchCurrentPage = 1; const searchResultsPerPage = 21; const sliderAnimationState = {}; let touchStartX = 0; let touchEndX = 0; const swipeThreshold = 50;
-        let liveListeners = {};
         
         // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => { 
@@ -295,12 +274,9 @@
             document.querySelectorAll('.bottom-nav-link').forEach(l => l.classList.remove('active'));
             if (path === 'index.html' || path === '') document.getElementById('nav-index')?.classList.add('active');
             else if (path.startsWith('batalla.html')) document.getElementById('nav-batalla')?.classList.add('active');
-            else if (path.startsWith('encuesta.html')) document.getElementById('nav-encuesta')?.classList.add('active');
             else if (path.startsWith('videos.html')) document.getElementById('nav-videos')?.classList.add('active');
         }
 
-        // ... El resto del script de index.html ...
-        // (Toda la lógica de carga de imágenes, modal, interacciones, etc., sigue aquí)
         async function cacheFullGalleryForSearch() { const searchInput = document.getElementById('search-input'); searchInput.disabled = true; searchInput.placeholder = "Cargando base de datos..."; const snapshot = await db.ref('images').once('value'); if (snapshot.exists()) { const allData = []; snapshot.forEach(child => { allData.push({ id: child.key, ...child.val() }); }); fullGalleryCache = allData.sort((a,b) => b.timestamp - a.timestamp); } searchInput.disabled = false; searchInput.placeholder = "Buscar en toda la galería..."; }
         async function fetchUserReactions() { const snapshot = await db.ref('reactions').once('value'); const allReactions = snapshot.val() || {}; userReactions = {}; Object.keys(allReactions).forEach(imgId => { if(allReactions[imgId][deviceID]) { userReactions[imgId] = allReactions[imgId][deviceID]; } }); }
         async function cacheAllReactionCounts() { const reactionsSnap = await db.ref('reactions').once('value'); const reactions = reactionsSnap.val() || {}; const counts = {}; Object.entries(reactions).forEach(([imgId, users]) => { counts[imgId] = Object.keys(users).length; }); allReactionCounts = counts; }
@@ -314,10 +290,10 @@
         function displayVideos(videos, containerId) { const grid = document.getElementById(containerId); grid.innerHTML = ''; videos.forEach((video) => { if (!video || !video.thumbnailUrl || !video.title) return; const div = document.createElement('div'); div.className = 'flex flex-col items-center gap-1 flex-shrink-0 w-36 sm:w-44 text-center group touch-feedback'; div.setAttribute('onclick', `window.location.href='./videos.html?id=${video.id}'`); const genreHtml = video.genre ? `<p class="text-xs font-semibold text-orange-400 uppercase tracking-wider truncate w-full">${video.genre}</p>` : ''; div.innerHTML = `<div class="relative w-32 h-32 sm:w-40 sm:h-40 cursor-pointer"><div class="w-full h-full rounded-full bg-gray-700 animate-spin-slow group-hover:[animation-play-state:paused]"><img src="${video.thumbnailUrl}" alt="${video.title}" loading="lazy" class="h-full w-full object-cover rounded-full"></div><div class="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><i class="fas fa-play-circle text-5xl text-white/80"></i></div><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-900 border-2 border-gray-500 flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-gray-800"></div></div></div><div class="w-full px-1"><h4 class="font-semibold text-white truncate w-full">${video.title}</h4>${genreHtml}</div>`; grid.appendChild(div); }); }
         function displayImages(images, containerId, append = false) { const grid = document.getElementById(containerId); if (!append) grid.innerHTML = ''; if (images.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes.</div>`; return; } const isSlider = containerId === 'similar-grid'; images.forEach((img, index) => { if (!img || !img.url || !img.title) return; const div = document.createElement('div'); let classList = 'image-item-animation group relative aspect-[2/3] overflow-hidden image-card'; if (isSlider) classList += ' flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%] cursor-pointer'; div.className = classList; div.setAttribute('onclick', `openModal('${img.id}')`); div.style.animationDelay = `${(index * 0.05)}s`; const isLiked = userReactions[img.id] === 'like'; const displayUrl = img.thumbnailUrl || img.url; const reactionCount = allReactionCounts[img.id] || 0; div.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-3 pointer-events-none"><h4 class="truncate font-bold text-white">${img.title}</h4></div><button id="grid-like-btn-${img.id}" onclick="toggleReactionFromGrid('${img.id}', event)" class="grid-like-btn absolute top-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm touch-feedback ${isLiked ? 'liked' : ''}"><i class="fas fa-heart text-gray-300"></i><span id="reaction-count-grid-${img.id}">${reactionCount}</span></button>`; grid.appendChild(div); }); }
         function toggleReactionFromGrid(imageId, event) { event.stopPropagation(); const btn = document.getElementById(`grid-like-btn-${imageId}`); const countEl = document.getElementById(`reaction-count-grid-${imageId}`); const reactionsRef = db.ref(`reactions/${imageId}/${deviceID}`); reactionsRef.once('value', snap => { if (snap.val() === 'like') { reactionsRef.remove(); btn.classList.remove('liked'); delete userReactions[imageId]; const newCount = Math.max(0, (allReactionCounts[imageId] || 1) - 1); allReactionCounts[imageId] = newCount; countEl.textContent = newCount; } else { reactionsRef.set('like'); btn.classList.add('liked'); userReactions[imageId] = 'like'; const newCount = (allReactionCounts[imageId] || 0) + 1; allReactionCounts[imageId] = newCount; countEl.textContent = newCount; } }); }
-        async function openModal(id) { document.getElementById('modal-content').scrollTop = 0; trackImageView(id); let img = fullGalleryCache.find(i => i.id === id); if (!img) { console.error("Image not found"); return; } currentImageId = id; const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; currentImageIndex = currentView.findIndex(i => i && i.id === id); const imageContainer = document.getElementById('image-container'); imageContainer.innerHTML = '<div id="floating-elements-container" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>'; imageContainer.classList.remove('loaded'); const loadingIndicator = document.createElement('div'); loadingIndicator.className = 'loading-indicator'; loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Cargando calidad...'; const thumbnailEl = document.createElement('img'); thumbnailEl.src = img.thumbnailUrl || img.url; thumbnailEl.className = 'progressive-image thumbnail-img'; const fullResContainer = document.createElement('div'); fullResContainer.className = 'full-res-container'; const fullResEl = document.createElement('img'); fullResEl.className = 'progressive-image'; const sweepLine = document.createElement('div'); sweepLine.className = 'sweep-line'; fullResContainer.append(fullResEl, sweepLine); imageContainer.append(thumbnailEl, fullResContainer, loadingIndicator); const fullImageLoader = new Image(); fullImageLoader.src = img.url; fullImageLoader.onload = () => { fullResEl.src = fullImageLoader.src; imageContainer.classList.add('loaded'); setTimeout(() => loadingIndicator.remove(), 1000); }; fullImageLoader.onerror = () => { imageContainer.classList.add('loaded'); loadingIndicator.remove(); }
-            document.getElementById('title').textContent = img.title; document.getElementById('desc').textContent = img.desc; loadLikes(id); loadComments(id); loadSimilarImages(img.tags || []); listenForLiveActivity(id); document.getElementById('prev-image').style.display = currentImageIndex > 0 ? 'flex' : 'none'; document.getElementById('next-image').style.display = currentImageIndex < currentView.length - 1 ? 'flex' : 'none'; const modal = document.getElementById('modal'); modal.classList.add('visible'); document.body.style.overflow = 'hidden';
+        async function openModal(id) { document.getElementById('modal-content').scrollTop = 0; trackImageView(id); let img = fullGalleryCache.find(i => i.id === id); if (!img) { console.error("Image not found"); return; } currentImageId = id; const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; currentImageIndex = currentView.findIndex(i => i && i.id === id); const imageContainer = document.getElementById('image-container'); imageContainer.innerHTML = ''; imageContainer.classList.remove('loaded'); const loadingIndicator = document.createElement('div'); loadingIndicator.className = 'loading-indicator absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900/70 text-white px-4 py-2 rounded-full font-semibold z-10'; loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Cargando calidad...'; const thumbnailEl = document.createElement('img'); thumbnailEl.src = img.thumbnailUrl || img.url; thumbnailEl.className = 'progressive-image thumbnail-img'; const fullResContainer = document.createElement('div'); fullResContainer.className = 'full-res-container'; const fullResEl = document.createElement('img'); fullResEl.className = 'progressive-image'; const sweepLine = document.createElement('div'); sweepLine.className = 'sweep-line'; fullResContainer.append(fullResEl, sweepLine); imageContainer.append(thumbnailEl, fullResContainer, loadingIndicator); const fullImageLoader = new Image(); fullImageLoader.src = img.url; fullImageLoader.onload = () => { fullResEl.src = fullImageLoader.src; imageContainer.classList.add('loaded'); setTimeout(() => loadingIndicator.remove(), 1000); }; fullImageLoader.onerror = () => { imageContainer.classList.add('loaded'); loadingIndicator.remove(); }
+            document.getElementById('title').textContent = img.title; document.getElementById('desc').textContent = img.desc; loadLikes(id); loadComments(id); loadSimilarImages(img.tags || []); document.getElementById('prev-image').style.display = currentImageIndex > 0 ? 'flex' : 'none'; document.getElementById('next-image').style.display = currentImageIndex < currentView.length - 1 ? 'flex' : 'none'; const modal = document.getElementById('modal'); modal.classList.add('visible'); document.body.style.overflow = 'hidden';
         }
-        function closeModal() { const modal = document.getElementById('modal'); modal.classList.remove('visible'); document.body.style.overflow = 'auto'; detachLiveListeners(); }
+        function closeModal() { const modal = document.getElementById('modal'); modal.classList.remove('visible'); document.body.style.overflow = 'auto'; }
         function setupEventListeners() { const scrollToTopBtn = document.getElementById('scrollToTopBtn'); window.addEventListener('scroll', () => { (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible'); }); scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'})); document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); const query = normalize(document.getElementById('search-input').value); executeSearch(query); }); document.getElementById('clear-search-btn').addEventListener('click', resetSearchView); document.getElementById('close-modal').addEventListener('click', closeModal); document.getElementById('prev-image').addEventListener('click', navigateToPrevious); document.getElementById('next-image').addEventListener('click', navigateToNext); document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); }); const imageContainer = document.getElementById('image-container'); imageContainer.addEventListener('dblclick', handleDoubleTapLike); const modal = document.getElementById('modal'); modal.addEventListener('touchstart', e => { if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true }); modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; }); document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); }); document.querySelectorAll('.reaction').forEach(reaction => { reaction.addEventListener('click', e => { e.stopPropagation(); if (!currentImageId) return; const type = e.currentTarget.dataset.type; handleReaction(type); }); }); document.addEventListener('click', () => { if (document.getElementById('reaction-circle-container')) document.getElementById('reaction-circle-container').classList.remove('open'); }); const filterBtn = document.getElementById('filter-toggle-btn'); const categoryDrawer = document.getElementById('category-drawer'); filterBtn.addEventListener('click', () => { categoryDrawer.classList.toggle('open'); filterBtn.classList.toggle('active'); }); }
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
         function navigateToNext() { const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; if (currentImageIndex > -1 && currentImageIndex < currentView.length - 1) { openModal(currentView[currentImageIndex + 1].id); } }
@@ -326,9 +302,6 @@
         function handleReaction(type) { animateReactionOnImage(type); const reactionsRef = db.ref(`reactions/${currentImageId}/${deviceID}`); reactionsRef.once('value', snap => { (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); }); document.getElementById('reaction-circle-container').classList.remove('open'); }
         function handleDoubleTapLike() { if (!currentImageId) return; handleReaction('like'); }
         function animateReactionOnImage(type) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; const icon = icons[type]; if (!icon) return; const container = document.getElementById('image-container'); const animationEl = document.createElement('div'); animationEl.className = 'punch-animation'; animationEl.textContent = icon; container.appendChild(animationEl); setTimeout(() => { if (animationEl.parentElement) animationEl.remove(); }, 500); }
-        function listenForLiveActivity(imageId) { detachLiveListeners(); const reactionsRef = db.ref(`reactions/${imageId}`); const commentsRef = db.ref(`comments/${imageId}`); const startTime = Date.now(); liveListeners.reactions = { ref: reactionsRef, type: 'child_added' }; liveListeners.comments = { ref: commentsRef.orderByChild('timestamp').startAt(startTime), type: 'child_added' }; reactionsRef.on('child_added', (snapshot) => { if (snapshot.key !== deviceID) createFloatingElement(snapshot.val(), 'reaction'); }); commentsRef.orderByChild('timestamp').startAt(startTime).on('child_added', (snapshot) => createFloatingElement(snapshot.val(), 'comment')); }
-        function detachLiveListeners() { Object.values(liveListeners).forEach(listener => listener.ref?.off(listener.type)); liveListeners = {}; }
-        function createFloatingElement(data, type) { const container = document.getElementById('floating-elements-container'); if (!container) return; const element = document.createElement('div'); element.className = 'floating-element'; const startX = Math.random() * 85 + 7.5; element.style.setProperty('--start-x', `${startX}%`); if (type === 'reaction') { const reactionIcons = { like: `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>`, hot: `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5c.9-.9 2.1-.9 3 0s.9 2.1 0 3L12 13l-5.5-5.5c-.9-.9-.9-2.1 0-3s2.1-.9 3 0L12 7l2.5-2.5z"/><path d="M12 13v9"/><path d="M17 22H7"/></svg>`, wow: `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v.01" /><path d="M12 8a4 4 0 0 0-4 4h8a4 4 0 0 0-4-4z" /></svg>`, laugh: `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>`, sad: `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m8 14 1.5-1.5"/><path d="m14.5 12.5-1.5 1.5"/><path d="M9 9l-1 1"/><path d="M15 9l1 1"/></svg>`, sexy: `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`}; const icon = reactionIcons[data] || reactionIcons.like; element.innerHTML = icon; const colors = { like: '#ef4444', hot: '#f97316', wow: '#8b5cf6', laugh: '#22c55e', sad: '#6b7280', sexy: '#ec4899' }; element.style.color = colors[data] || '#ef4444'; } else if (type === 'comment' && data.text) { element.classList.add('floating-comment-bubble'); element.innerHTML = `<span class="author">${data.name || 'Anónimo'}</span>: ${data.text}`; } else { return; } container.appendChild(element); setTimeout(() => { if (element.parentNode) element.remove(); }, 2600); }
         function loadLikes(id) { db.ref(`reactions/${id}`).on('value', snap => { const reactions = snap.val() || {}; const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 }; Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; }); const container = document.getElementById('reaction-counts-container'); if (container) container.innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join(''); }); }
         function postComment() { const name = document.getElementById('name-input').value.trim(); const comment = document.getElementById('comment-input').value.trim(); if (!comment || !currentImageId) return; const commentData = { name: name || 'Anónimo', text: comment, timestamp: Date.now() }; db.ref(`comments/${currentImageId}`).push(commentData).then(() => document.getElementById('comment-input').value = ''); }
         function initAutoSlider(containerId) { const container = document.getElementById(containerId); if (!container || container.children.length < 2) return; if (sliderAnimationState[containerId]?.animationFrameId) cancelAnimationFrame(sliderAnimationState[containerId].animationFrameId); if (!container.dataset.cloned) { const originalChildren = Array.from(container.children); originalChildren.forEach(child => { const clone = child.cloneNode(true); container.appendChild(clone); }); container.dataset.cloned = 'true'; } const scrollWidth = container.scrollWidth / 2; let isPaused = false; const scroll = () => { if (!isPaused) { container.scrollLeft += 0.5; if (container.scrollLeft >= scrollWidth) container.scrollLeft = 0; } sliderAnimationState[containerId] = { animationFrameId: requestAnimationFrame(scroll) }; }; container.addEventListener('mouseenter', () => isPaused = true); container.addEventListener('mouseleave', () => isPaused = false); scroll(); }
@@ -343,3 +316,4 @@
     </script>
 </body>
 </html>
+
