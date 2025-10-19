@@ -5,17 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>exen-E - Panel de Administración</title>
     <!-- Librerías -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Estilos generales y reutilizados */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: #121212; color: #ffffff; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh; padding: 10px; }
-        #admin-container { width: 100%; max-width: 1200px; margin: auto; padding: 20px; background: #1e1e1e; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: animate__fadeIn 0.5s ease; }
+        #admin-container { width: 100%; max-width: 1400px; margin: auto; padding: 20px; background: #1e1e1e; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: animate__fadeIn 0.5s ease; }
         input[type="text"], input[type="password"], input[type="url"], input[type="number"], textarea { width: 100%; padding: 12px; background: #333; border: 1px solid #555; color: #fff; font-size: 16px; border-radius: 6px; margin-bottom: 15px; font-family: 'Inter', sans-serif; transition: border-color 0.3s; }
         input:focus, textarea:focus { border-color: #4caf50; outline: none; }
         form { display: flex; flex-direction: column; gap: 15px; }
@@ -36,7 +37,7 @@
         h2 { font-size: 1.5em; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .mb-8 { margin-bottom: 2rem; }
         table { width: 100%; border-collapse: collapse; background: #2a2a2a; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #555; white-space: nowrap; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #555; }
         th { background: #333; font-weight: 600; position: sticky; top: 0; z-index: 10; }
         td img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; vertical-align: middle; }
         footer { background: linear-gradient(135deg, #1e1e1e, #0a0a0a); padding: 20px; text-align: center; color: #aaa; font-size: 0.9em; margin-top: auto; }
@@ -55,18 +56,47 @@
         .table-container::-webkit-scrollbar-track, .modal-content::-webkit-scrollbar-track { background: #2a2a2a; }
         .table-container::-webkit-scrollbar-thumb, .modal-content::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
         .table-container::-webkit-scrollbar-thumb:hover, .modal-content::-webkit-scrollbar-thumb:hover { background: #777; }
-        
-        /* --- ESTILOS PARA CHECKBOXES DE CATEGORÍAS --- */
         .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; background: #2a2a2a; padding: 15px; border-radius: 6px; border: 1px solid #444; }
         .category-grid label { display: flex; align-items: center; gap: 8px; background: #333; padding: 8px 12px; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; user-select: none; }
         .category-grid label:hover { background: #444; }
         .category-grid input[type="checkbox"] { width: 18px; height: 18px; accent-color: #2ecc71; }
         h3.category-title { font-size: 1em; margin-bottom: 10px; font-weight: 600; color: #ccc; }
         
+        /* Dashboard Styles */
+        .stat-card {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border: 1px solid #333;
+        }
+        .stat-card i {
+            font-size: 2.5em;
+            color: #2ecc71;
+        }
+        .stat-title {
+            font-size: 0.9em;
+            color: #aaa;
+            font-weight: 600;
+        }
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        .chart-container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
         @media (max-width: 768px) {
             body { padding: 5px; }
             #admin-container { padding: 15px; width: 100%; }
             header h1 { font-size: 1.5em; }
+            td, th { white-space: normal; }
         }
     </style>
 </head>
@@ -81,12 +111,51 @@
         <div id="admin-content" style="display: none;">
             <div id="global-message" class="message-box" style="display: none;"></div>
             <div class="tabs">
-                <button class="tab-button active" onclick="openTab('images')"><i class="fas fa-images"></i> Imágenes</button>
+                <button class="tab-button active" onclick="openTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</button>
+                <button class="tab-button" onclick="openTab('images')"><i class="fas fa-images"></i> Imágenes</button>
                 <button class="tab-button" onclick="openTab('videos')"><i class="fas fa-film"></i> Videos</button>
                 <button class="tab-button" onclick="openTab('general')"><i class="fas fa-cogs"></i> General</button>
             </div>
 
-            <div id="images-tab" class="tab-content active">
+            <div id="dashboard-tab" class="tab-content active">
+                <h2><i class="fas fa-tachometer-alt"></i> Resumen del Sitio</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card">
+                        <i class="fas fa-images"></i>
+                        <div>
+                            <h3 class="stat-title">Imágenes Totales</h3>
+                            <p id="stats-total-images" class="stat-value">0</p>
+                        </div>
+                    </div>
+                     <div class="stat-card">
+                        <i class="fas fa-video"></i>
+                        <div>
+                            <h3 class="stat-title">Videos Totales</h3>
+                            <p id="stats-total-videos" class="stat-value">0</p>
+                        </div>
+                    </div>
+                     <div class="stat-card">
+                        <i class="fas fa-heart"></i>
+                        <div>
+                            <h3 class="stat-title">Reacciones Totales</h3>
+                            <p id="stats-total-reactions" class="stat-value">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-comments"></i>
+                        <div>
+                            <h3 class="stat-title">Comentarios Totales</h3>
+                            <p id="stats-total-comments" class="stat-value">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h2 class="text-xl mb-4">Reacciones por Categoría</h2>
+                    <canvas id="category-reactions-chart"></canvas>
+                </div>
+            </div>
+
+            <div id="images-tab" class="tab-content">
                 <form id="image-form">
                     <h2><i class="fas fa-upload"></i> Agregar Nueva Imagen</h2>
                     <input type="url" id="img-url" placeholder="URL de la Imagen (Completa)" required>
@@ -123,7 +192,6 @@
                     <h2><i class="fas fa-video"></i> Agregar Nuevo Video</h2>
                     <input type="url" id="video-url" placeholder="URL de YouTube o MP4" required>
                     <input type="text" id="video-title" placeholder="Título (se autocompleta con YouTube)" required>
-                    <!-- CAMBIO: Campo para género/ritmo -->
                     <input type="text" id="video-genre" placeholder="Género o Ritmo (ej. Rock, Pop, 80s)">
                     <textarea id="video-desc" placeholder="Descripción" required></textarea>
                     <input type="url" id="video-thumbnail" placeholder="URL de Miniatura (se autocompleta con YouTube)" required>
@@ -202,7 +270,6 @@
                     <input type="hidden" id="edit-video-timestamp">
                     <input type="url" id="edit-video-url" placeholder="URL de YouTube o MP4" required>
                     <input type="text" id="edit-video-title" placeholder="Título" required>
-                    <!-- CAMBIO: Campo de edición para género/ritmo -->
                     <input type="text" id="edit-video-genre" placeholder="Género o Ritmo">
                     <textarea id="edit-video-desc" placeholder="Descripción" required></textarea>
                     <input type="url" id="edit-video-thumbnail" placeholder="URL de Miniatura" required>
@@ -229,6 +296,7 @@
         const db = firebase.database();
         const auth = firebase.auth();
         let selectedForBattle = [];
+        let categoryChart = null;
 
         const imageCategories = {
             'anime': 'Anime', 'furry': 'Furry', 'realismo': 'Realismo', 'mecas': 'Mecas',
@@ -261,7 +329,7 @@
             loadVideos();
             loadComments();
             loadCurrentBattleStatus();
-            loadCurrentPollStatus();
+            loadDashboardStats();
         }
 
         function checkAdmin() {
@@ -299,6 +367,106 @@
         function isValidUrl(string) { try { new URL(string); return true; } catch (_) { return false; } }
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : ''; }
         function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
+        
+        // --- DASHBOARD ---
+        async function loadDashboardStats() {
+            try {
+                const [imagesSnap, videosSnap, reactionsSnap, commentsSnap] = await Promise.all([
+                    db.ref('images').once('value'),
+                    db.ref('videos').once('value'),
+                    db.ref('reactions').once('value'),
+                    db.ref('comments').once('value')
+                ]);
+
+                const imagesData = imagesSnap.val() || {};
+                
+                document.getElementById('stats-total-images').textContent = imagesSnap.numChildren();
+                document.getElementById('stats-total-videos').textContent = videosSnap.numChildren();
+
+                let totalReactions = 0;
+                reactionsSnap.forEach(imgReactions => {
+                    totalReactions += imgReactions.numChildren();
+                });
+                document.getElementById('stats-total-reactions').textContent = totalReactions;
+                
+                let totalComments = 0;
+                commentsSnap.forEach(imgComments => {
+                    totalComments += imgComments.numChildren();
+                });
+                document.getElementById('stats-total-comments').textContent = totalComments;
+
+                // Chart Logic
+                const categoryCounts = {};
+                for (const catKey in imageCategories) {
+                    categoryCounts[catKey] = 0;
+                }
+
+                reactionsSnap.forEach(imgReactions => {
+                    const imgId = imgReactions.key;
+                    const image = imagesData[imgId];
+                    if (image && image.categories) {
+                        const reactionCount = imgReactions.numChildren();
+                        image.categories.forEach(catKey => {
+                            if(categoryCounts.hasOwnProperty(catKey)) {
+                                categoryCounts[catKey] += reactionCount;
+                            }
+                        });
+                    }
+                });
+
+                renderCategoryChart(categoryCounts);
+
+            } catch(error) {
+                showMessage("Error al cargar las estadísticas: " + error.message);
+            }
+        }
+        
+        function renderCategoryChart(categoryData) {
+            const ctx = document.getElementById('category-reactions-chart').getContext('2d');
+            const labels = Object.keys(categoryData).map(key => imageCategories[key]);
+            const data = Object.values(categoryData);
+
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
+
+            categoryChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total de Reacciones',
+                        data: data,
+                        backgroundColor: 'rgba(46, 204, 113, 0.6)',
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
 
         // --- GESTIÓN DE IMÁGENES ---
         document.getElementById('image-form').addEventListener('submit', e => {
@@ -309,21 +477,13 @@
             const desc = document.getElementById('img-desc').value.trim();
             const tags = document.getElementById('img-tags').value.split(',').map(t => t.trim()).filter(Boolean);
             const categories = Array.from(document.querySelectorAll('#img-categories input:checked')).map(cb => cb.value);
-            const ownerId = "loY4qn9UH8fqp3loKcEYRIDslsg2"; // ID del propietario AÑADIDO
+            const ownerId = "loY4qn9UH8fqp3loKcEYRIDslsg2";
 
             if (!isValidUrl(url) || !title || !desc || tags.length === 0) {
                 showMessage('Los campos de URL, título, descripción y tags son obligatorios.'); return;
             }
 
-            const imageData = { 
-                url, 
-                title, 
-                desc, 
-                tags, 
-                categories, 
-                ownerId: ownerId, // AÑADIDO
-                timestamp: Date.now() 
-            };
+            const imageData = { url, title, desc, tags, categories, ownerId, timestamp: Date.now() };
             if (isValidUrl(thumbnailUrl)) {
                 imageData.thumbnailUrl = thumbnailUrl;
             }
@@ -375,7 +535,7 @@
             const id = document.getElementById('edit-img-id').value;
             const url = document.getElementById('edit-img-url').value.trim();
             const thumbnailUrl = document.getElementById('edit-img-thumbnail-url').value.trim();
-            const ownerId = "loY4qn9UH8fqp3loKcEYRIDslsg2"; // ID del propietario AÑADIDO
+            const ownerId = "loY4qn9UH8fqp3loKcEYRIDslsg2";
             
             if (!isValidUrl(url)) {
                 showMessage('La URL de la imagen principal no es válida.'); return;
@@ -387,7 +547,7 @@
                 desc: document.getElementById('edit-img-desc').value.trim(),
                 tags: document.getElementById('edit-img-tags').value.split(',').map(t => t.trim()).filter(Boolean),
                 categories: Array.from(document.querySelectorAll('#edit-img-categories input:checked')).map(cb => cb.value),
-                ownerId: ownerId, // AÑADIDO
+                ownerId: ownerId,
                 timestamp: parseInt(document.getElementById('edit-img-timestamp').value, 10)
             };
             
@@ -402,7 +562,7 @@
                 .catch(error => showMessage('Error: ' + error.message));
         });
 
-        // --- GESTIÓN DE VIDEOS (CON CAMBIOS) ---
+        // --- GESTIÓN DE VIDEOS ---
         document.getElementById('video-url').addEventListener('input', (e) => { const url = e.target.value; const youtubeId = getYoutubeId(url); if(youtubeId) { const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`; document.getElementById('video-thumbnail').value = thumbnailUrl; document.getElementById('video-preview').src = thumbnailUrl; document.getElementById('video-preview').style.display = 'block'; document.getElementById('video-title').placeholder = "Pega el título del video de YouTube aquí"; } });
         
         document.getElementById('video-form').addEventListener('submit', e => { 
@@ -411,15 +571,7 @@
             const type = getYoutubeId(url) ? 'youtube' : (url.endsWith('.mp4') ? 'mp4' : null); 
             if(!type) { showMessage('URL no válida. Debe ser de YouTube o terminar en .mp4'); return; } 
             
-            const data = { 
-                url, 
-                type, 
-                title: document.getElementById('video-title').value.trim(), 
-                genre: document.getElementById('video-genre').value.trim(), // CAMBIO: Añadido género
-                desc: document.getElementById('video-desc').value.trim(), 
-                thumbnailUrl: document.getElementById('video-thumbnail').value.trim(), 
-                timestamp: Date.now() 
-            }; 
+            const data = { url, type, title: document.getElementById('video-title').value.trim(), genre: document.getElementById('video-genre').value.trim(), desc: document.getElementById('video-desc').value.trim(), thumbnailUrl: document.getElementById('video-thumbnail').value.trim(), timestamp: Date.now() }; 
             
             if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { 
                 showMessage('Todos los campos de video son obligatorios.'); return; 
@@ -442,15 +594,7 @@
             const type = getYoutubeId(url) ? 'youtube' : (url.endsWith('.mp4') ? 'mp4' : null); 
             if(!type) { showMessage('URL no válida para video.'); return; } 
             
-            const data = { 
-                url, 
-                type, 
-                title: document.getElementById('edit-video-title').value.trim(), 
-                genre: document.getElementById('edit-video-genre').value.trim(), // CAMBIO: Añadido género
-                desc: document.getElementById('edit-video-desc').value.trim(), 
-                thumbnailUrl: document.getElementById('edit-video-thumbnail').value.trim(), 
-                timestamp: parseInt(document.getElementById('edit-video-timestamp').value, 10) 
-            }; 
+            const data = { url, type, title: document.getElementById('edit-video-title').value.trim(), genre: document.getElementById('edit-video-genre').value.trim(), desc: document.getElementById('edit-video-desc').value.trim(), thumbnailUrl: document.getElementById('edit-video-thumbnail').value.trim(), timestamp: parseInt(document.getElementById('edit-video-timestamp').value, 10) }; 
             
             if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { 
                 showMessage('Todos los campos son obligatorios.'); return; 
@@ -491,7 +635,7 @@
                     document.getElementById('edit-video-id').value = item.id;
                     document.getElementById('edit-video-url').value = item.url;
                     document.getElementById('edit-video-title').value = item.title;
-                    document.getElementById('edit-video-genre').value = item.genre || ''; // CAMBIO: Cargar género
+                    document.getElementById('edit-video-genre').value = item.genre || '';
                     document.getElementById('edit-video-desc').value = item.desc;
                     document.getElementById('edit-video-thumbnail').value = item.thumbnailUrl;
                     document.getElementById('edit-video-timestamp').value = item.timestamp;
@@ -510,9 +654,6 @@
         function displayComments(comments) { const tableBody = document.getElementById('comment-table-body'); tableBody.innerHTML = ''; comments.forEach(comment => { const row = document.createElement('tr'); row.innerHTML = `<td>${comment.imageId.substring(0, 6)}...</td><td>${comment.text}</td><td>${comment.name || 'Anónimo'}</td><td><button class="action-btn delete-btn" onclick="deleteComment('${comment.imageId}', '${comment.commentId}')"><i class="fas fa-trash"></i></button></td>`; tableBody.appendChild(row); }); }
         function deleteComment(imageId, commentId) { if (confirm('¿Eliminar este comentario?')) { db.ref(`comments/${imageId}/${commentId}`).remove().then(() => showMessage('Comentario eliminado.', true)).catch(error => showMessage('Error: ' + error.message)); } }
         function getYoutubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
-        async function loadCurrentPollStatus() { const statusContainer = document.getElementById('current-poll-status'); const endPollBtn = document.getElementById('end-poll-btn'); const pollSnap = await db.ref('polls/activePoll').once('value'); if (!pollSnap.exists()) { statusContainer.innerHTML = '<p>No hay ninguna encuesta activa.</p>'; endPollBtn.style.display = 'none'; return; } const poll = pollSnap.val(); statusContainer.innerHTML = `<p><b>Encuesta activa:</b> ${poll.question}</p>`; endPollBtn.style.display = 'block'; }
-        document.getElementById('set-poll-btn').addEventListener('click', async () => { const question = document.getElementById('poll-question').value.trim(); if (!question) { showMessage('La pregunta no puede estar vacía.'); return; } if ( (await db.ref('polls/activePoll').once('value')).exists() && !confirm('¿Reemplazar la encuesta activa?')) return; db.ref('polls/activePoll').set({ question, questionId: 'poll_' + Date.now() }).then(() => { showMessage('¡Encuesta asignada!', true); document.getElementById('poll-question').value = ''; loadCurrentPollStatus(); }).catch(error => showMessage('Error: ' + error.message)); });
-        document.getElementById('end-poll-btn').addEventListener('click', async () => { if (!confirm('¿Terminar la encuesta actual? Se borrarán las respuestas.')) return; const pollSnap = await db.ref('polls/activePoll').once('value'); if(pollSnap.exists()){ const updates = {}; updates[`/polls/activePoll`] = null; updates[`/poll_answers/${pollSnap.val().questionId}`] = null; updates[`/poll_votes`] = null; db.ref().update(updates).then(() => { showMessage('Encuesta terminada.', true); loadCurrentPollStatus(); }); } });
         function handleBattleSelection(checkbox) { if (checkbox.checked) { if (selectedForBattle.length < 2) selectedForBattle.push(checkbox.value); else { checkbox.checked = false; showMessage('Solo puedes seleccionar dos imágenes.'); } } else { selectedForBattle = selectedForBattle.filter(id => id !== checkbox.value); } document.getElementById('start-battle-btn').disabled = selectedForBattle.length !== 2; }
         document.getElementById('start-battle-btn').addEventListener('click', () => { const durationDays = parseInt(document.getElementById('battle-duration').value, 10); if (isNaN(durationDays) || durationDays <= 0) { showMessage('La duración debe ser un número positivo.'); return; } const expiry = Date.now() + durationDays * 24 * 60 * 60 * 1000; const [id1, id2] = selectedForBattle; db.ref('battle').set({ images: [id1, id2], expiry, votes: { [id1]: 0, [id2]: 0 } }).then(() => { showMessage('¡Batalla iniciada!', true); selectedForBattle = []; document.querySelectorAll('.battle-selection').forEach(cb => cb.checked = false); document.getElementById('start-battle-btn').disabled = true; loadCurrentBattleStatus(); }); });
         document.getElementById('end-battle-btn').addEventListener('click', async () => { if (!confirm('¿Terminar la batalla? El ganador se guardará.')) return; const battleSnap = await db.ref('battle').once('value'); if (!battleSnap.exists()) { showMessage('No hay batalla activa.'); return; } const battle = battleSnap.val(); const [id1, id2] = battle.images; const votes1 = battle.votes[id1] || 0; const votes2 = battle.votes[id2] || 0; const winnerData = (votes1 >= votes2) ? { winnerId: id1, loserId: id2, winnerVotes: votes1, loserVotes: votes2 } : { winnerId: id2, loserId: id1, winnerVotes: votes2, loserVotes: votes1 }; const updates = {}; updates['/previousBattleWinner'] = winnerData; updates['/battle'] = null; db.ref().update(updates).then(() => { showMessage('Batalla terminada.', true); loadCurrentBattleStatus(); }); });
@@ -520,3 +661,4 @@
     </script>
 </body>
 </html>
+
