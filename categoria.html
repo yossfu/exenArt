@@ -44,6 +44,8 @@
             border-radius: 1rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background-color: #1e1e1e;
+            overflow: hidden;
         }
         .image-card:hover {
             transform: scale(1.03);
@@ -56,21 +58,6 @@
             transform: scale(0.95);
             filter: brightness(0.8);
         }
-        .bottom-nav {
-            background-color: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(55, 65, 81, 0.5);
-        }
-        .bottom-nav-link {
-            color: #9ca3af;
-            transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
-        }
-        .bottom-nav-link.active {
-            color: var(--accent);
-            transform: scale(1.1);
-        }
-        .bottom-nav-link.active span { font-weight: 600; }
         #modal { display: none; }
         @keyframes modal-enter {
             from { opacity: 0; transform: scale(0.95); }
@@ -89,10 +76,27 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+        /* Copied styles from index.html for modal */
+        #reaction-circle-container.open .reaction-circle-item { opacity: 1; transform: scale(1) var(--transform-pos); }
+        #reaction-circle-container.open #reaction-bg { transform: scale(1); }
+        .reaction-circle-item { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform: scale(0); opacity: 0; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        #image-container .progressive-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #image-container .thumbnail-img { opacity: 1; }
+        .full-res-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: inset(0 100% 0 0); transition: clip-path 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        #image-container.loaded .full-res-container { clip-path: inset(0 0 0 0); }
+        .sweep-line { position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(to bottom, transparent, var(--accent-neon), transparent); box-shadow: 0 0 8px var(--accent-neon); }
+        #image-container .loading-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; z-index: 10; pointer-events: none; opacity: 1; transition: opacity 0.5s ease; }
+        #image-container.loaded .loading-indicator { opacity: 0; }
+        .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
+        @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
+        .fade-in { animation: fadeIn 0.5s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-out { animation: fadeOut 0.5s ease-in-out forwards; }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
     </style>
 </head>
 <body class="antialiased">
-    
     <main class="container mx-auto px-2 sm:px-4">
         <div class="my-8 flex justify-center">
              <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto">
@@ -102,36 +106,139 @@
 
         <section id="gallery">
             <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
-            <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
+            <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
         </section>
     </main>
 
-    <!-- El modal es idéntico al de index.html, se puede copiar y pegar o mantener aquí -->
-    <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90"><!-- Contenido del modal aquí... --></div>
+    <!-- Modal copied from index.html -->
+    <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90">
+        <button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-left text-2xl"></i></button>
+        <button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-right text-2xl"></i></button>
+        <div id="modal-content" class="h-full w-full overflow-y-auto">
+            <div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4">
+                <header id="modal-header" class="flex items-center justify-between">
+                    <h2 id="title" class="section-title bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl text-transparent"></h2>
+                    <button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90 touch-feedback"><i class="fas fa-times text-2xl"></i></button>
+                </header>
+                <div class="flex flex-col items-center gap-4">
+                    <div id="image-container" class="relative -mx-2 sm:mx-0 rounded-2xl overflow-hidden w-full aspect-[2/3] max-h-[75vh]">
+                        <div id="floating-elements-container" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
+                    </div>
+                    <div id="reaction-circle-container" class="relative z-20">
+                        <div class="relative flex items-center justify-center">
+                            <div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="like">❤️</span>
+                            </div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="hot">🔥</span>
+                            </div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="wow">😯</span>
+                            </div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="laugh">😂</span>
+                            </div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sad">😢</span>
+                            </div>
+                            <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);">
+                                <span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sexy">🫦</span>
+                            </div>
+                            <button id="like-btn" class="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-lg touch-feedback">
+                                <i class="fas fa-heart text-3xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
+                    <p id="desc" class="rounded-2xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p>
+                    <section id="similar-section" class="mt-4 w-full">
+                        <h3 class="section-title mb-4 text-center text-xl text-orange-400"><i class="fas fa-th-large"></i> Similares</h3>
+                        <div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
+                    </section>
+                    <section id="comments-section" class="mt-4 w-full">
+                        <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-2xl bg-gray-800/50 p-4 sm:flex-row">
+                            <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4">
+                            <input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white">
+                            <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white touch-feedback">
+                                <i class="fas fa-paper-plane"></i> Enviar
+                            </button>
+                        </form>
+                        <div id="comments" class="flex flex-col gap-4"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm touch-feedback"><i class="fas fa-arrow-up"></i></button>
+    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm touch-feedback">
+        <i class="fas fa-arrow-up"></i>
+    </button>
     
-    <footer class="mt-12 py-8 text-center text-gray-500"><p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
+    <footer class="mt-12 py-8 text-center text-gray-500">
+        <p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p>
+    </footer>
 
-    <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around">
-        <a href="index.html" id="nav-index" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <img src="images/galeria.png" class="h-6 w-6 mb-1">
-            <span class="text-xs">Galería</span>
+    <!-- MENÚ INFERIOR MODERNO (REEMPLAZADO) -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item" id="nav-index">
+            <i class="fas fa-images"></i>
+            <span>Galería</span>
         </a>
-        <a href="batalla.html" id="nav-batalla" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <img src="images/batalla.png" class="h-6 w-6 mb-1">
-            <span class="text-xs">Batalla</span>
+        <a href="batalla.html" class="nav-item" id="nav-batalla">
+            <i class="fas fa-fist-raised"></i>
+            <span>Batalla</span>
         </a>
-        <a href="encuesta.html" id="nav-encuesta" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <img src="images/pregunta.png" class="h-6 w-6 mb-1">
-            <span class="text-xs">Encuesta</span>
-        </a>
-        <a href="videos.html" id="nav-videos" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <img src="images/musica.png" class="h-6 w-6 mb-1">
-            <span class="text-xs">Música</span>
+        <a href="videos.html" class="nav-item" id="nav-videos">
+            <i class="fas fa-music"></i>
+            <span>Música</span>
         </a>
     </nav>
-
+    <style>
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid rgba(55, 65, 81, 0.4);
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 500;
+            /* width: 25%; */ /* Ancho eliminado para distribución automática */
+            flex-grow: 1; /* Agregado para que los elementos ocupen el espacio */
+            height: 100%;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-align: center;
+        }
+        .nav-item.active {
+            color: #f97316;
+            transform: translateY(-6px);
+            text-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+        }
+        .nav-item i {
+            font-size: 20px;
+            margin-bottom: 4px;
+            transition: transform 0.2s;
+        }
+        .nav-item.active i {
+            transform: scale(1.2);
+        }
+    </style>
+    
     <script>
         "use strict";
         const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
@@ -140,6 +247,9 @@
         firebase.auth().signInAnonymously().catch(console.error);
         
         let fullGalleryCache = [];
+        let categoryImages = [];
+        let currentImageId = '';
+        let currentImageIndex = -1;
         let deviceID = localStorage.getItem('deviceID'); 
         if (!deviceID) { 
             deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { 
@@ -148,16 +258,14 @@
             }); 
             localStorage.setItem('deviceID', deviceID); 
         }
+        let liveListeners = {};
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const swipeThreshold = 50;
 
         const categoryNames = {
-            anime: 'Anime',
-            furry: 'Furry',
-            realismo: 'Realismo',
-            mecas: 'Mecas',
-            devils: 'Devils & Angels',
-            colors: 'ColorFull',
-            amateur: 'Amateur',
-            tvgames: 'TV & Games'
+            anime: 'Anime', furry: 'Furry', realismo: 'Realismo', mecas: 'Mecas',
+            devils: 'Devils & Angels', colors: 'ColorFull', amateur: 'Amateur', tvgames: 'TV & Games'
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -165,30 +273,23 @@
             setupEventListeners();
         });
 
-        function setActiveNavLink() {
-            // En una página de categoría, la galería sigue siendo la sección principal
-            document.getElementById('nav-index')?.classList.add('active');
-        }
-
         async function initializeApp() {
             const urlParams = new URLSearchParams(window.location.search);
             const category = urlParams.get('cat');
 
             if (!category || !categoryNames[category]) {
-                document.getElementById('grid').innerHTML = `<div class="col-span-full text-center py-10 text-red-400">Categoría no válida o no encontrada. <a href="index.html" class="text-orange-500 underline">Volver a la galería</a>.</div>`;
+                document.getElementById('grid').innerHTML = `<div class="col-span-full text-center py-10 text-red-400">Categoría no válida. <a href="index.html" class="text-orange-500 underline">Volver</a>.</div>`;
                 document.getElementById('category-title').textContent = 'Error';
                 document.title = 'exen-E | Error';
                 return;
             }
             
-            // Actualizar títulos
             const title = categoryNames[category];
             document.title = `exen-E | ${title}`;
             document.getElementById('category-title').textContent = title;
 
             await cacheFullGallery();
             loadCategoryImages(category);
-            setActiveNavLink();
         }
 
         async function cacheFullGallery() {
@@ -197,25 +298,23 @@
             const snapshot = await db.ref('images').once('value');
             if (snapshot.exists()) {
                 const allData = [];
-                snapshot.forEach(child => {
-                    allData.push({ id: child.key, ...child.val() });
-                });
+                snapshot.forEach(child => { allData.push({ id: child.key, ...child.val() }); });
                 fullGalleryCache = allData.sort((a, b) => b.timestamp - a.timestamp);
             }
         }
         
         function loadCategoryImages(category) {
-            const filteredImages = fullGalleryCache.filter(img => 
+            categoryImages = fullGalleryCache.filter(img => 
                 img.categories && img.categories.includes(category)
             );
-            displayImages(filteredImages, 'grid');
+            displayImages(categoryImages, 'grid');
         }
 
         function displayImages(images, containerId) {
             const grid = document.getElementById(containerId);
             grid.innerHTML = '';
             if (images.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">No hay imágenes en esta categoría todavía.</div>`;
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">No hay imágenes aquí.</div>`;
                 return;
             }
             images.forEach((img, index) => {
@@ -241,7 +340,7 @@
                 container.appendChild(document.createElement('div')).className = 'skeleton';
             }
         }
-
+        
         function setupEventListeners() {
             const scrollToTopBtn = document.getElementById('scrollToTopBtn');
             window.addEventListener('scroll', () => {
@@ -249,15 +348,192 @@
                 scrollToTopBtn.classList.add('visible'): scrollToTopBtn.classList.remove('visible');
             });
             scrollToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+            
+            document.getElementById('close-modal').addEventListener('click', closeModal);
+            document.getElementById('prev-image').addEventListener('click', navigateToPrevious);
+            document.getElementById('next-image').addEventListener('click', navigateToNext);
+            document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); });
+            
+            const imageContainer = document.getElementById('image-container');
+            imageContainer.addEventListener('dblclick', handleDoubleTapLike);
+            
+            const modal = document.getElementById('modal');
+            modal.addEventListener('touchstart', e => { if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+            modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; });
+            
+            document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); });
+            document.querySelectorAll('.reaction').forEach(reaction => { reaction.addEventListener('click', e => { e.stopPropagation(); if (!currentImageId) return; const type = e.currentTarget.dataset.type; handleReaction(type); }); });
+            document.addEventListener('click', () => { if (document.getElementById('reaction-circle-container')) document.getElementById('reaction-circle-container').classList.remove('open'); });
+        }
+        
+        function openModal(id) {
+            document.getElementById('modal-content').scrollTop = 0;
+            let img = fullGalleryCache.find(i => i.id === id);
+            if (!img) { console.error("Image not found"); return; }
+            currentImageId = id;
+            currentImageIndex = categoryImages.findIndex(i => i && i.id === id);
+            const imageContainer = document.getElementById('image-container');
+            imageContainer.innerHTML = '<div id="floating-elements-container" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>';
+            imageContainer.classList.remove('loaded');
+            
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'loading-indicator';
+            loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Cargando calidad...';
+            
+            const thumbnailEl = document.createElement('img');
+            thumbnailEl.src = img.thumbnailUrl || img.url;
+            thumbnailEl.className = 'progressive-image thumbnail-img';
+            
+            const fullResContainer = document.createElement('div');
+            fullResContainer.className = 'full-res-container';
+            const fullResEl = document.createElement('img');
+            fullResEl.className = 'progressive-image';
+            const sweepLine = document.createElement('div');
+            sweepLine.className = 'sweep-line';
+            fullResContainer.append(fullResEl, sweepLine);
+            imageContainer.append(thumbnailEl, fullResContainer, loadingIndicator);
+            
+            const fullImageLoader = new Image();
+            fullImageLoader.src = img.url;
+            fullImageLoader.onload = () => { fullResEl.src = fullImageLoader.src; imageContainer.classList.add('loaded'); setTimeout(() => loadingIndicator.remove(), 1000); };
+            fullImageLoader.onerror = () => { imageContainer.classList.add('loaded'); loadingIndicator.remove(); }
+            
+            document.getElementById('title').textContent = img.title; 
+            document.getElementById('desc').textContent = img.desc;
+            loadLikes(id);
+            loadComments(id);
+            loadSimilarImages(img.tags || []);
+            listenForLiveActivity(id);
+            
+            document.getElementById('prev-image').style.display = currentImageIndex > 0 ? 'flex' : 'none';
+            document.getElementById('next-image').style.display = currentImageIndex < categoryImages.length - 1 ? 'flex' : 'none';
+            
+            const modal = document.getElementById('modal');
+            modal.classList.add('visible');
+            document.body.style.overflow = 'hidden';
         }
 
-        // Aquí iría la lógica del MODAL, que es idéntica a la de index.html
-        // Para brevedad, no se repite aquí, pero debería incluir openModal, closeModal, etc.
-        function openModal(id) {
-            // Lógica para abrir el modal, cargando los datos de la imagen con ese 'id'
-            console.log(`Abrir modal para imagen: ${id}`);
-            // Esta función debería ser implementada copiándola desde index.html
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('visible');
+            document.body.style.overflow = 'auto';
+            detachLiveListeners();
+        }
+
+        function navigateToNext() {
+            if (currentImageIndex > -1 && currentImageIndex < categoryImages.length - 1) {
+                openModal(categoryImages[currentImageIndex + 1].id);
+            }
+        }
+        function navigateToPrevious() {
+            if (currentImageIndex > 0) {
+                openModal(categoryImages[currentImageIndex - 1].id);
+            }
+        }
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            if (Math.abs(deltaX) > swipeThreshold) {
+                if (deltaX < 0) navigateToNext();
+                else navigateToPrevious();
+            }
+        }
+
+        function handleReaction(type) {
+            animateReactionOnImage(type);
+            const reactionsRef = db.ref(`reactions/${currentImageId}/${deviceID}`);
+            reactionsRef.once('value', snap => {
+                (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type);
+            });
+            document.getElementById('reaction-circle-container').classList.remove('open');
+        }
+
+        function handleDoubleTapLike() {
+            if (!currentImageId) return;
+            handleReaction('like');
+        }
+
+        function animateReactionOnImage(type) {
+            const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' };
+            const icon = icons[type];
+            if (!icon) return;
+            const container = document.getElementById('image-container');
+            const animationEl = document.createElement('div');
+            animationEl.className = 'punch-animation';
+            animationEl.textContent = icon;
+            container.appendChild(animationEl);
+            setTimeout(() => { if (animationEl.parentElement) animationEl.remove(); }, 500);
+        }
+
+        function listenForLiveActivity(imageId) {
+            detachLiveListeners();
+        }
+
+        function detachLiveListeners() {
+            Object.values(liveListeners).forEach(listener => listener.ref?.off(listener.type));
+            liveListeners = {};
+        }
+
+        function loadLikes(id) {
+            db.ref(`reactions/${id}`).on('value', snap => {
+                const reactions = snap.val() || {};
+                const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 };
+                Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; });
+                const container = document.getElementById('reaction-counts-container');
+                if (container) container.innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join('');
+            });
+        }
+
+        function loadComments(id) {
+            db.ref(`comments/${id}`).orderByChild('timestamp').on('value', snap => {
+                const commentsContainer = document.getElementById('comments');
+                commentsContainer.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500">Sé el primero en comentar.</p>' : '';
+                const comments = []; snap.forEach(child => { comments.push(child.val()); });
+                comments.reverse().forEach(comment => {
+                    const div = document.createElement('div');
+                    const initial = comment.name ? comment.name.charAt(0).toUpperCase() : 'A';
+                    div.innerHTML = `<div class="flex gap-3"><div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-400 font-bold">${initial}</div><div class="flex-grow min-w-0"><div class="rounded-2xl rounded-tl-none bg-gray-800 p-3"><p class="font-bold text-orange-400">${comment.name || 'Anónimo'}</p><p class="text-gray-300 break-words">${comment.text || ''}</p></div><small class="pl-2 pt-1 text-xs text-gray-500">${new Date(comment.timestamp).toLocaleString()}</small></div></div>`;
+                    commentsContainer.appendChild(div);
+                });
+            });
+        }
+
+        function postComment() {
+            const name = document.getElementById('name-input').value.trim();
+            const comment = document.getElementById('comment-input').value.trim();
+            if (!comment || !currentImageId) return;
+            const commentData = { name: name || 'Anónimo', text: comment, timestamp: Date.now() };
+            db.ref(`comments/${currentImageId}`).push(commentData).then(() => document.getElementById('comment-input').value = '');
+        }
+
+        async function loadSimilarImages(tags) {
+            const grid = document.getElementById('similar-grid');
+            grid.innerHTML = '';
+            if (!tags || tags.length === 0) return;
+            const candidates = fullGalleryCache.filter(img => img.id !== currentImageId && Array.isArray(img.tags));
+            const scoredImages = candidates.map(img => {
+                const commonTags = img.tags.filter(tag => tags.includes(tag));
+                return { image: img, score: commonTags.length };
+            }).filter(item => item.score > 0);
+            scoredImages.sort((a, b) => b.score - a.score);
+            const similarImages = scoredImages.slice(0, 10).map(item => item.image);
+            if(similarImages.length > 0) displaySimilar(similarImages, 'similar-grid');
+        }
+        
+        function displaySimilar(images, containerId) {
+             const grid = document.getElementById(containerId);
+             grid.innerHTML = '';
+             images.forEach((img) => {
+                 if (!img || !img.url || !img.title) return;
+                 const div = document.createElement('div');
+                 let classList = 'group relative aspect-[2/3] overflow-hidden image-card flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%] cursor-pointer';
+                 div.className = classList;
+                 div.setAttribute('onclick', `openModal('${img.id}')`);
+                 const displayUrl = img.thumbnailUrl || img.url;
+                 div.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-3 pointer-events-none"><h4 class="truncate font-bold text-white">${img.title}</h4></div>`;
+                 grid.appendChild(div);
+             });
         }
     </script>
 </body>
 </html>
+

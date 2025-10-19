@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>exen-E | Música</title>
+    <meta property="og:title" content="exen-E | Galería de Música" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://files.catbox.moe/4ubhtv.jpg" />
+    <meta property="og:image:alt" content="Logo de exen-E Galería de Música" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root { 
+            --accent: #f97316; 
+            --accent-neon: #fb923c; 
+            --title-font: 'Poppins', sans-serif;
+            --body-font: 'Inter', sans-serif;
+        }
+        html { scroll-behavior: smooth; }
+        body { 
+            font-family: var(--body-font); 
+            background-color: #121212; 
+            color: #f3f4f6;
+            padding-bottom: 80px;
+        }
+        .section-title {
+            font-family: var(--title-font);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .touch-feedback {
+            transition: transform 0.15s cubic-bezier(0.22, 0.61, 0.36, 1), background-color 0.15s;
+        }
+        .touch-feedback:active {
+            transform: scale(0.95);
+            filter: brightness(0.8);
+        }
+        .bottom-nav {
+            background-color: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(55, 65, 81, 0.5);
+        }
+        .bottom-nav-link {
+            color: #9ca3af;
+            transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+        .bottom-nav-link.active {
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+        .bottom-nav-link.active span { font-weight: 600; }
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+        .skeleton {
+            background-color: #374151;
+            background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%);
+            background-repeat: no-repeat; background-size: 2000px 100%;
+            animation: shimmer 1.5s linear infinite; border-radius: 0.75rem;
+        }
+        .skeleton-video { aspect-ratio: 1 / 1; }
+        .video-item-animation { animation: loadItem 0.5s ease-out forwards; }
+        @keyframes loadItem { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+        #scrollToTopBtn { position: fixed; bottom: 90px; right: 20px; z-index: 100; opacity: 0; visibility: hidden; transform: translateY(20px); transition: opacity 0.3s, visibility 0.3s, transform 0.3s; }
+        #scrollToTopBtn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+        .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
+        @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
+    </style>
+</head>
+<body class="antialiased">
+
+    <main class="container mx-auto px-2 sm:px-4">
+        <div class="my-8 flex justify-center">
+             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto">
+        </div>
+
+        <div class="mb-8 text-center">
+            <h3 class="section-title inline-block text-3xl md:text-4xl tracking-tight text-teal-400"><i class="fas fa-music"></i> Música</h3>
+        </div>
+
+        <section id="video-gallery">
+            <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
+            <div id="video-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-8"></div>
+            <div id="loader" class="py-12 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-8" style="display: none;"></div>
+            <div id="load-more-trigger" class="h-10"></div>
+        </section>
+    </main>
+
+    <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90" style="display: none;">
+        <div id="modal-content" class="h-full w-full overflow-y-auto p-4 flex items-center justify-center">
+            <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col gap-4 p-6 overflow-hidden relative shadow-2xl shadow-black/50">
+                <header id="modal-header" class="flex items-start justify-between">
+                    <div class="flex-grow">
+                        <h2 id="title" class="section-title bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-3xl text-transparent pr-8"></h2>
+                    </div>
+                    <button id="close-modal" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white hover:rotate-90 flex-shrink-0 z-10 touch-feedback">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </header>
+                <div id="video-player-container" class="w-full rounded-lg overflow-hidden shadow-lg"></div>
+                <div class="flex flex-col items-center justify-center gap-4 mt-4">
+                    <div class="flex items-center gap-4">
+                         <span class="reaction-btn cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="like">❤️</span>
+                         <span class="reaction-btn cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="hot">🔥</span>
+                         <span class="reaction-btn cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="wow">😯</span>
+                         <span class="reaction-btn cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="laugh">😂</span>
+                    </div>
+                    <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm touch-feedback">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <footer class="mt-12 py-8 text-center text-gray-500">
+        <p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p>
+    </footer>
+
+    <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around">
+        <a href="index.html" id="nav-index" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/galeria.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Galería</span>
+        </a>
+        <a href="batalla.html" id="nav-batalla" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/batalla.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Batalla</span>
+        </a>
+        <a href="videos.html" id="nav-videos" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/musica.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Música</span>
+        </a>
+    </nav>
+
+    <script>
+        "use strict";
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
+            authDomain: "exene-53e6b.firebaseapp.com",
+            databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
+            projectId: "exene-53e6b",
+            storageBucket: "exene-53e6b.appspot.com",
+            messagingSenderId: "481369419867",
+            appId: "1:481369419867:web:ac5db24c436344262c8f7e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        firebase.auth().signInAnonymously().catch(console.error);
+
+        const videosPerLoad = 15;
+        let allVideos = [];
+        let lastVideoTimestamp = null;
+        let lastVideoKey = null;
+        let isLoading = false;
+        let noMoreVideos = false;
+        let currentVideoId = '';
+        let deviceID = localStorage.getItem('deviceID');
+        if (!deviceID) {
+            deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            localStorage.setItem('deviceID', deviceID);
+        }
+
+        function setActiveNavLink() {
+            const path = window.location.pathname.split("/").pop();
+            document.querySelectorAll('.bottom-nav-link').forEach(l => l.classList.remove('active'));
+            if (path.startsWith('videos.html')) {
+                document.getElementById('nav-videos')?.classList.add('active');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoIdFromUrl = urlParams.get('id');
+            loadInitialVideos().then(() => {
+                if (videoIdFromUrl) { openModal(videoIdFromUrl); }
+            });
+            setupIntersectionObserver();
+            setupEventListeners();
+            setActiveNavLink();
+        });
+
+        function generateSkeletons(container, count) {
+            container.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.innerHTML = `
+                    <div class="skeleton skeleton-video mb-2"></div>
+                    <div class="h-5 w-3/4 skeleton mt-2"></div>
+                    <div class="h-4 w-1/2 skeleton mt-1"></div>`;
+                 container.appendChild(skeleton);
+            }
+        }
+
+        async function loadInitialVideos() {
+            if (isLoading) return;
+            isLoading = true;
+            const grid = document.getElementById('video-grid');
+            generateSkeletons(grid, videosPerLoad);
+            try {
+                const snapshot = await db.ref('videos').orderByChild('timestamp').limitToLast(videosPerLoad).once('value');
+                if (!snapshot.exists()) {
+                    showError('No se encontraron videos.');
+                    grid.innerHTML = ''; isLoading = false; noMoreVideos = true; return;
+                }
+                const videos = [];
+                snapshot.forEach(child => { videos.push({ id: child.key, ...child.val() }); });
+                if (videos.length > 0) { lastVideoTimestamp = videos[0].timestamp; lastVideoKey = videos[0].id; }
+                videos.reverse();
+                allVideos = videos;
+                displayVideos(allVideos, 'video-grid');
+                isLoading = false;
+            } catch (error) {
+                showError('Error al conectar con Firebase: ' + error.message);
+                grid.innerHTML = '';
+                isLoading = false;
+            }
+        }
+
+        function loadMoreVideos() {
+            if (isLoading || noMoreVideos) return;
+            isLoading = true;
+            const loaderContainer = document.getElementById('loader');
+            loaderContainer.style.display = 'grid';
+            generateSkeletons(loaderContainer, 5);
+            db.ref('videos').orderByChild('timestamp').endBefore(lastVideoTimestamp, lastVideoKey).limitToLast(videosPerLoad).once('value').then(snapshot => {
+                loaderContainer.style.display = 'none';
+                if (!snapshot.exists() || snapshot.numChildren() === 0) { noMoreVideos = true; isLoading = false; return; }
+                const newVideos = [];
+                snapshot.forEach(child => { newVideos.push({ id: child.key, ...child.val() }); });
+                if (newVideos.length < videosPerLoad) { noMoreVideos = true; }
+                if (newVideos.length > 0) {
+                    lastVideoTimestamp = newVideos[0].timestamp;
+                    lastVideoKey = newVideos[0].id;
+                    newVideos.reverse();
+                    allVideos = allVideos.concat(newVideos);
+                    displayVideos(newVideos, 'video-grid', true);
+                }
+                isLoading = false;
+            }).catch(error => { console.error("Error cargando más videos:", error); isLoading = false; loaderContainer.style.display = 'none'; });
+        }
+
+        function displayVideos(videos, containerId, append = false) {
+            const grid = document.getElementById(containerId);
+            if (!append) grid.innerHTML = '';
+            videos.forEach((video, index) => {
+                if (!video || !video.thumbnailUrl || !video.title) return;
+                const div = document.createElement('div');
+                div.className = 'video-item-animation group cursor-pointer';
+                div.style.animationDelay = `${(index * 0.05)}s`;
+                div.setAttribute('onclick', `openModal('${video.id}')`);
+                
+                const genreText = video.genre ? video.genre : 'Exen-E Music';
+
+                div.innerHTML = `
+                    <div class="relative overflow-hidden rounded-lg shadow-lg transition-transform duration-300 group-hover:scale-105 aspect-square">
+                        <img src="${video.thumbnailUrl}" alt="${video.title}" loading="lazy" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x400/1f2937/374151?text=Error'">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i class="fas fa-play-circle text-6xl text-white/80 opacity-0 transition duration-300 group-hover:opacity-100 group-hover:scale-110 drop-shadow-lg"></i>
+                        </div>
+                        <div class="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white"><i class="fas fa-heart text-red-500"></i><span id="reaction-total-${video.id}">0</span></div>
+                    </div>
+                    <div class="mt-3">
+                        <h4 class="font-bold text-white truncate">${video.title}</h4>
+                        <p class="text-sm text-gray-400 truncate">${genreText}</p>
+                    </div>`;
+                grid.appendChild(div);
+                db.ref(`video_reactions/${video.id}`).once('value').then(snap => {
+                    const reactionCountEl = document.getElementById(`reaction-total-${video.id}`);
+                    if (reactionCountEl) reactionCountEl.textContent = snap.numChildren();
+                });
+            });
+        }
+        
+        async function openModal(id) {
+            let video = allVideos.find(v => v && v.id === id);
+            if (!video) {
+                const snapshot = await db.ref(`videos/${id}`).once('value');
+                if(snapshot.exists()) video = { id: snapshot.key, ...snapshot.val() };
+                else { console.error("Video no encontrado"); return; }
+            }
+            currentVideoId = id;
+            
+            const titleEl = document.getElementById('title');
+            titleEl.textContent = video.title;
+
+            const existingGenreEl = document.getElementById('video-modal-genre');
+            if (existingGenreEl) existingGenreEl.remove();
+            
+            if (video.genre) {
+                const genreEl = document.createElement('p');
+                genreEl.id = 'video-modal-genre';
+                genreEl.className = 'text-base text-orange-400 font-semibold uppercase tracking-wider -mt-2';
+                genreEl.textContent = video.genre;
+                titleEl.after(genreEl);
+            }
+
+            const playerContainer = document.getElementById('video-player-container');
+            playerContainer.innerHTML = '';
+            if (video.type === 'youtube') {
+                const youtubeId = getYoutubeId(video.url);
+                if (youtubeId) { playerContainer.innerHTML = `<iframe class="w-full aspect-video" src="https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`; }
+            } else if (video.type === 'mp4') {
+                playerContainer.innerHTML = `<video class="w-full aspect-video" src="${video.url}" controls autoplay playsinline></video>`;
+            }
+            loadReactions(id);
+            document.getElementById('scrollToTopBtn').classList.remove('visible');
+            document.getElementById('modal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            document.getElementById('video-player-container').innerHTML = '';
+            currentVideoId = '';
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                document.getElementById('scrollToTopBtn').classList.add('visible');
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('close-modal').addEventListener('click', closeModal);
+            document.addEventListener('keydown', e => { if (document.getElementById('modal').style.display === 'block' && e.key === 'Escape') { closeModal(); } });
+            const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+            window.addEventListener('scroll', () => { (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible'); });
+            scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+             document.querySelectorAll('.reaction-btn').forEach(reaction => {
+                reaction.addEventListener('click', e => {
+                    e.stopPropagation(); if (!currentVideoId) return;
+                    const type = e.currentTarget.dataset.type;
+                    animateReactionOnPlayer(type);
+                    const reactionsRef = db.ref(`video_reactions/${currentVideoId}/${deviceID}`);
+                    reactionsRef.once('value', snap => { (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); });
+                });
+            });
+        }
+
+        function setupIntersectionObserver() {
+            const trigger = document.getElementById('load-more-trigger');
+            const observer = new IntersectionObserver((entries) => { if (entries[0].isIntersecting) { loadMoreVideos(); } }, { rootMargin: '0px 0px 500px 0px' });
+            observer.observe(trigger);
+        }
+
+        function getYoutubeId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function loadReactions(id) {
+            db.ref(`video_reactions/${id}`).on('value', snap => {
+                const reactions = snap.val() || {};
+                const counts = { hot: 0, like: 0, wow: 0, laugh: 0 };
+                Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; });
+                document.getElementById('reaction-counts-container').innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂'}[type]} <span class="font-bold">${count}</span></span>`).join('');
+                const total = snap.numChildren();
+                const mainGridEl = document.getElementById(`reaction-total-${id}`);
+                if (mainGridEl) mainGridEl.textContent = total;
+            });
+        }
+
+        function animateReactionOnPlayer(type) {
+            const icons = { hot: '🔥', like: '❤️', wow: '😯', laugh: '😂' };
+            const icon = icons[type]; if (!icon) return;
+            const container = document.getElementById('video-player-container');
+            const existingAnimation = container.querySelector('.punch-animation');
+            if (existingAnimation) existingAnimation.remove();
+            const animationEl = document.createElement('div');
+            animationEl.className = 'punch-animation'; animationEl.textContent = icon;
+            container.appendChild(animationEl);
+            setTimeout(() => animationEl.remove(), 500);
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message; errorEl.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
