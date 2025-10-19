@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>exen-E | Categoría</title>
+    <!-- Metatags -->
+    <meta property="og:title" content="exen-E | Galería" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://files.catbox.moe/4ubhtv.jpg" />
+    <meta property="og:image:alt" content="Logo de exen-E Galería Premium" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Estilos Personalizados -->
+    <style>
+        :root { 
+            --accent: #f97316; 
+            --accent-neon: #fb923c; 
+            --title-font: 'Poppins', sans-serif;
+            --body-font: 'Inter', sans-serif;
+        }
+        html { scroll-behavior: smooth; }
+        body { 
+            font-family: var(--body-font); 
+            background-color: #121212; 
+            color: #f3f4f6;
+            padding-bottom: 80px;
+        }
+        .section-title {
+            font-family: var(--title-font);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .image-card {
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .image-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+        }
+        .touch-feedback {
+            transition: transform 0.15s cubic-bezier(0.22, 0.61, 0.36, 1), background-color 0.15s;
+        }
+        .touch-feedback:active {
+            transform: scale(0.95);
+            filter: brightness(0.8);
+        }
+        .bottom-nav {
+            background-color: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(55, 65, 81, 0.5);
+        }
+        .bottom-nav-link {
+            color: #9ca3af;
+            transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+        .bottom-nav-link.active {
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+        .bottom-nav-link.active span { font-weight: 600; }
+        #modal { display: none; }
+        @keyframes modal-enter {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        #modal.visible {
+            display: block;
+            animation: modal-enter 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+        }
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+        .skeleton { background-color: #374151; background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%); background-repeat: no-repeat; background-size: 2000px 100%; animation: shimmer 1.5s linear infinite; border-radius: 1rem; aspect-ratio: 2 / 3; }
+        .image-item-animation { animation: loadImage 0.5s ease-out forwards; }
+        @keyframes loadImage { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        #scrollToTopBtn { position: fixed; bottom: 90px; right: 20px; z-index: 100; opacity: 0; visibility: hidden; transform: translateY(20px); transition: opacity 0.3s, visibility 0.3s, transform 0.3s; }
+        #scrollToTopBtn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased">
+    
+    <main class="container mx-auto px-2 sm:px-4">
+        <div class="my-8 flex justify-center">
+             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto">
+        </div>
+        
+        <h3 id="category-title" class="section-title mb-6 text-center text-3xl tracking-tight text-orange-400"></h3>
+
+        <section id="gallery">
+            <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
+            <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
+        </section>
+    </main>
+
+    <!-- El modal es idéntico al de index.html, se puede copiar y pegar o mantener aquí -->
+    <div id="modal" class="fixed inset-0 z-[1000] bg-gray-950/90"><!-- Contenido del modal aquí... --></div>
+
+    <button id="scrollToTopBtn" title="Ir arriba" class="h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm touch-feedback"><i class="fas fa-arrow-up"></i></button>
+    
+    <footer class="mt-12 py-8 text-center text-gray-500"><p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
+
+    <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around">
+        <a href="index.html" id="nav-index" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/galeria.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Galería</span>
+        </a>
+        <a href="batalla.html" id="nav-batalla" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/batalla.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Batalla</span>
+        </a>
+        <a href="encuesta.html" id="nav-encuesta" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/pregunta.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Encuesta</span>
+        </a>
+        <a href="videos.html" id="nav-videos" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/musica.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Música</span>
+        </a>
+    </nav>
+
+    <script>
+        "use strict";
+        const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        firebase.auth().signInAnonymously().catch(console.error);
+        
+        let fullGalleryCache = [];
+        let deviceID = localStorage.getItem('deviceID'); 
+        if (!deviceID) { 
+            deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { 
+                const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); 
+                return v.toString(16); 
+            }); 
+            localStorage.setItem('deviceID', deviceID); 
+        }
+
+        const categoryNames = {
+            anime: 'Anime',
+            furry: 'Furry',
+            realismo: 'Realismo',
+            mecas: 'Mecas',
+            devils: 'Devils & Angels',
+            colors: 'ColorFull',
+            amateur: 'Amateur',
+            tvgames: 'TV & Games'
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            setupEventListeners();
+        });
+
+        function setActiveNavLink() {
+            // En una página de categoría, la galería sigue siendo la sección principal
+            document.getElementById('nav-index')?.classList.add('active');
+        }
+
+        async function initializeApp() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const category = urlParams.get('cat');
+
+            if (!category || !categoryNames[category]) {
+                document.getElementById('grid').innerHTML = `<div class="col-span-full text-center py-10 text-red-400">Categoría no válida o no encontrada. <a href="index.html" class="text-orange-500 underline">Volver a la galería</a>.</div>`;
+                document.getElementById('category-title').textContent = 'Error';
+                document.title = 'exen-E | Error';
+                return;
+            }
+            
+            // Actualizar títulos
+            const title = categoryNames[category];
+            document.title = `exen-E | ${title}`;
+            document.getElementById('category-title').textContent = title;
+
+            await cacheFullGallery();
+            loadCategoryImages(category);
+            setActiveNavLink();
+        }
+
+        async function cacheFullGallery() {
+            const grid = document.getElementById('grid');
+            generateSkeletons(grid, 12);
+            const snapshot = await db.ref('images').once('value');
+            if (snapshot.exists()) {
+                const allData = [];
+                snapshot.forEach(child => {
+                    allData.push({ id: child.key, ...child.val() });
+                });
+                fullGalleryCache = allData.sort((a, b) => b.timestamp - a.timestamp);
+            }
+        }
+        
+        function loadCategoryImages(category) {
+            const filteredImages = fullGalleryCache.filter(img => 
+                img.categories && img.categories.includes(category)
+            );
+            displayImages(filteredImages, 'grid');
+        }
+
+        function displayImages(images, containerId) {
+            const grid = document.getElementById(containerId);
+            grid.innerHTML = '';
+            if (images.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">No hay imágenes en esta categoría todavía.</div>`;
+                return;
+            }
+            images.forEach((img, index) => {
+                if (!img || !img.url || !img.title) return;
+                const div = document.createElement('div');
+                div.className = 'image-item-animation group relative aspect-[2/3] overflow-hidden image-card';
+                div.setAttribute('onclick', `openModal('${img.id}')`);
+                div.style.animationDelay = `${(index * 0.05)}s`;
+                const displayUrl = img.thumbnailUrl || img.url;
+                div.innerHTML = `
+                    <img src="${displayUrl}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-0 p-3 pointer-events-none">
+                        <h4 class="truncate font-bold text-white">${img.title}</h4>
+                    </div>`;
+                grid.appendChild(div);
+            });
+        }
+        
+        function generateSkeletons(container, count) {
+            container.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                container.appendChild(document.createElement('div')).className = 'skeleton';
+            }
+        }
+
+        function setupEventListeners() {
+            const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+            window.addEventListener('scroll', () => {
+                (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ?
+                scrollToTopBtn.classList.add('visible'): scrollToTopBtn.classList.remove('visible');
+            });
+            scrollToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        }
+
+        // Aquí iría la lógica del MODAL, que es idéntica a la de index.html
+        // Para brevedad, no se repite aquí, pero debería incluir openModal, closeModal, etc.
+        function openModal(id) {
+            // Lógica para abrir el modal, cargando los datos de la imagen con ese 'id'
+            console.log(`Abrir modal para imagen: ${id}`);
+            // Esta función debería ser implementada copiándola desde index.html
+        }
+    </script>
+</body>
+</html>

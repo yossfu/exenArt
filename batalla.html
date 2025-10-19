@@ -4,46 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>exen-E | Batalla</title>
-
-    <!-- Tailwind CSS, Fonts, Icons, Firebase -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
     <style>
-        :root {
-            --accent: #f97316;
-            --accent-neon: #fb923c;
+        :root { 
+            --accent: #f97316; 
+            --accent-neon: #fb923c; 
+            --title-font: 'Poppins', sans-serif;
+            --body-font: 'Inter', sans-serif;
             --halo-green: #00ff00;
             --halo-red: #ff0000;
         }
         html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #121212;
-            background-image: radial-gradient(circle at 15% 50%, rgba(251, 146, 60, 0.1), transparent 40%),
-                              radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.1), transparent 40%);
+        body { 
+            font-family: var(--body-font); 
+            background-color: #121212; 
             color: #f3f4f6;
+            padding-bottom: 80px;
         }
-        header { border-bottom: 1px solid rgba(251, 146, 60, 0.2); box-shadow: 0 5px 20px rgba(249, 115, 22, 0.05); }
-        .nav-link:hover { background-color: rgba(251, 146, 60, 0.1); color: #fff; }
-        .nav-link-active { background-color: var(--accent); color: #fff !important; box-shadow: 0 0 15px rgba(251, 146, 60, 0.4); }
-        main h3, main h4 {
-            font-weight: 900; letter-spacing: 0.025em;
-            background: linear-gradient(90deg, var(--accent-neon), var(--accent) 80%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            position: relative; padding-bottom: 0.75rem;
+        .section-title {
+            font-family: var(--title-font);
+            font-weight: 800;
+            letter-spacing: -0.02em;
         }
-        main h3::after, main h4::after {
-            content: ''; position: absolute; bottom: 0; left: 50%;
-            transform: translateX(-50%); width: 60px; height: 3px;
-            background: var(--accent); border-radius: 2px; box-shadow: 0 0 10px var(--accent-neon);
+        .touch-feedback {
+            transition: transform 0.15s cubic-bezier(0.22, 0.61, 0.36, 1), background-color 0.15s;
         }
+        .touch-feedback:active {
+            transform: scale(0.95);
+            filter: brightness(0.8);
+        }
+        .bottom-nav {
+            background-color: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(55, 65, 81, 0.5);
+        }
+        .bottom-nav-link {
+            color: #9ca3af;
+            transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+        .bottom-nav-link.active {
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+        .bottom-nav-link.active span { font-weight: 600; }
         .skeleton {
             background-color: #374151;
             background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%);
@@ -65,41 +76,26 @@
 </head>
 <body class="antialiased">
 
-    <header class="sticky top-0 z-[100] bg-gray-900/80 p-4 backdrop-blur-lg">
-        <div class="container mx-auto flex items-center justify-center">
-            <nav>
-                <ul class="flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
-                    <li><a href="index.html" id="nav-index" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Galería</a></li>
-                    <li><a href="batalla.html" id="nav-batalla" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Batalla</a></li>
-                    <li><a href="encuesta.html" id="nav-encuesta" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Encuesta</a></li>
-                    <li><a href="videos.html" id="nav-videos" class="nav-link font-semibold text-gray-300 transition-all duration-300 px-3 py-2 rounded-lg">Música</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
     <main class="container mx-auto px-4 py-8">
-         <div class="my-8 flex justify-center">
+        <div class="my-8 flex justify-center">
              <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto">
         </div>
         <section id="battle-section" class="mb-12">
-            <h3 class="mb-6 inline-block text-center text-3xl font-extrabold tracking-tight w-full"><i class="fas fa-gavel"></i> Batalla de la Semana</h3>
+            <h3 class="section-title mb-6 text-center text-3xl tracking-tight text-orange-400"><i class="fas fa-gavel"></i> Batalla de la Semana</h3>
             <div id="battle-grid" class="flex items-start justify-center gap-4 md:gap-8 max-w-4xl mx-auto"></div>
             <div id="battle-timer" class="mt-6 text-center text-lg font-semibold text-gray-400"></div>
             <div id="battle-winner-container" class="mt-12" style="display: none;">
-                 <h4 class="mb-4 text-center text-2xl font-bold inline-block w-full">Ganador de la Batalla Anterior</h4>
+                 <h4 class="section-title mb-4 text-center text-2xl text-orange-400">Ganador Anterior</h4>
                 <div id="battle-winner" class="relative mx-auto max-w-sm"></div>
             </div>
         </section>
-
         <hr class="border-gray-700/50 my-12">
-
         <section id="comments-section" class="max-w-3xl mx-auto">
-            <h4 class="mb-6 text-center text-2xl font-bold inline-block w-full"><i class="fas fa-comments"></i> Comentarios de la Batalla</h4>
+            <h4 class="section-title mb-6 text-center text-2xl text-orange-400"><i class="fas fa-comments"></i> Comentarios</h4>
             <form id="comment-form" class="mb-8 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4">
                 <input type="text" id="name-input" placeholder="Nombre (opcional, máx 15)" maxlength="15" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none">
                 <textarea id="comment-input" placeholder="Opina sobre la batalla..." rows="3" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none"></textarea>
-                <button type="submit" id="comment-btn" class="group self-end rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white transition hover:bg-orange-500">
+                <button type="submit" id="comment-btn" class="group self-end rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white transition hover:bg-orange-500 touch-feedback">
                     <i class="fas fa-paper-plane transition group-hover:rotate-12"></i> Enviar
                 </button>
             </form>
@@ -107,7 +103,25 @@
         </section>
     </main>
     <footer class="mt-12 py-8 text-center text-gray-500"><p>&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
-
+    
+    <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around">
+        <a href="index.html" id="nav-index" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/galeria.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Galería</span>
+        </a>
+        <a href="batalla.html" id="nav-batalla" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/batalla.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Batalla</span>
+        </a>
+        <a href="encuesta.html" id="nav-encuesta" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/pregunta.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Encuesta</span>
+        </a>
+        <a href="videos.html" id="nav-videos" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <img src="images/musica.png" class="h-6 w-6 mb-1">
+            <span class="text-xs">Música</span>
+        </a>
+    </nav>
     <script>
         "use strict";
         const firebaseConfig = {
@@ -141,9 +155,9 @@
 
         function setActiveNavLink() {
             const path = window.location.pathname.split("/").pop();
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('nav-link-active'));
+            document.querySelectorAll('.bottom-nav-link').forEach(l => l.classList.remove('active'));
             if (path.startsWith('batalla.html')) {
-                document.getElementById('nav-batalla')?.classList.add('nav-link-active');
+                document.getElementById('nav-batalla')?.classList.add('active');
             }
         }
 
@@ -176,7 +190,7 @@
                     <div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition duration-300 transform hover:scale-105 relative">
                         <img src="${img.url}" alt="${img.title}" class="w-full h-full object-cover">
                         <div class="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs font-bold" id="vote-count-${img.id}">0</div>
-                        <button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 text-sm font-bold text-white transition hover:scale-105" onclick="voteBattle('${img.id}', event)">Votar</button>
+                        <button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 text-sm font-bold text-white transition hover:scale-105 touch-feedback" onclick="voteBattle('${img.id}', event)">Votar</button>
                     </div>
                     <h4 class="text-center font-bold mt-2 text-lg truncate">${img.title}</h4>`;
             };
@@ -286,4 +300,3 @@
     </script>
 </body>
 </html>
-
