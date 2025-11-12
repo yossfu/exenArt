@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-    <title>Genexenart v3</title>
+    <title>Genexenart v4</title>
     <!-- Cargar Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -226,6 +226,10 @@
             object-fit: contain; width: 100%; height: auto;
             max-height: 100%; border-radius: 12px;
         }
+        /* (NUEVO) Hacer clic en la imagen de salida */
+        #output-image.clickable {
+            cursor: zoom-in;
+        }
         #image-container {
             min-height: 300px; aspect-ratio: 1 / 1;
         }
@@ -271,7 +275,7 @@
     <!-- ======================= -->
     <div id="splash-screen" class="fixed inset-0 bg-gray-900 flex items-center justify-center p-4 z-50">
         <div class="w-full max-w-sm bg-gray-800 shadow-2xl rounded-xl p-6 text-white">
-            <h1 class="text-2xl font-bold text-center mb-6 text-blue-400">Genexenart v3</h1>
+            <h1 class="text-2xl font-bold text-center mb-6 text-blue-400">Genexenart v4</h1>
             
             <label for="gradio-url" class="block text-sm font-medium text-gray-400 mb-2">URL de Gradio (https://)</label>
             <input type="text" id="gradio-url" class="input-base" placeholder="Ej: https://xxxxxxxxx.gradio.app">
@@ -429,10 +433,26 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- (NUEVO) Subseed -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="subseed-t2i" class="label-base">Sub-Semilla</label>
+                                        <input type="number" id="subseed-t2i" value="-1" class="input-base">
+                                    </div>
+                                    <div>
+                                        <label for="subseed-strength-t2i" class="label-base">Fuerza Sub-Semilla</label>
+                                        <input type="number" id="subseed-strength-t2i" step="0.05" min="0" max="1" value="0.0" class="input-base">
+                                    </div>
+                                </div>
                                 <!-- (NUEVO) Restaurar Caras Dropdown -->
                                 <div>
                                     <label for="face-restorer-t2i" class="label-base">Restaurar Caras</label>
                                     <select id="face-restorer-t2i" class="input-base"></select>
+                                </div>
+                                <!-- (NUEVO) Tiling Checkbox -->
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="tiling-t2i" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2">
+                                    <label for="tiling-t2i" class="ml-2 text-sm font-medium text-gray-300">Tiling (Mosaico)</label>
                                 </div>
                             </div>
                         </div>
@@ -445,6 +465,17 @@
                                     <div>
                                         <label for="hr-upscaler-t2i" class="label-base">Upscaler</label>
                                         <select id="hr-upscaler-t2i" class="input-base"></select>
+                                    </div>
+                                    <!-- (NUEVO) Hires Sampler/Scheduler -->
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="hr-sampler-t2i" class="label-base">Sampler Hires</label>
+                                            <select id="hr-sampler-t2i" class="input-base"></select>
+                                        </div>
+                                        <div>
+                                            <label for="hr-scheduler-t2i" class="label-base">Scheduler Hires</label>
+                                            <select id="hr-scheduler-t2i" class="input-base"></select>
+                                        </div>
                                     </div>
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
@@ -464,6 +495,23 @@
                             </details>
                         </div>
                         
+                        <!-- (NUEVO) Refiner (SDXL) -->
+                        <div class="content-card collapsible-card">
+                            <details id="refiner-details-t2i">
+                                <summary>Refiner (SDXL)</summary>
+                                <div id="refiner-options-t2i" class="space-y-4 pt-4">
+                                    <div>
+                                        <label for="refiner-model-t2i" class="label-base">Modelo Refiner</label>
+                                        <select id="refiner-model-t2i" class="input-base"></select>
+                                    </div>
+                                    <div>
+                                        <label for="refiner-switch-at-t2i" class="label-base">Refiner Switch At</label>
+                                        <input type="number" id="refiner-switch-at-t2i" step="0.05" min="0" max="1" value="0.8" class="input-base">
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+
                         <!-- (NUEVO) ControlNet -->
                         <div class="content-card collapsible-card">
                             <details id="controlnet-details-t2i">
@@ -519,6 +567,16 @@
                                 <div>
                                     <label for="denoising-i2i" class="label-base">Denoising Strength</label>
                                     <input type="number" id="denoising-i2i" step="0.05" min="0" max="1" value="0.75" class="input-base">
+                                </div>
+                                <!-- (NUEVO) Modo de Escalado -->
+                                <div>
+                                    <label for="resize-mode-i2i" class="label-base">Modo de Escalado (Entrada)</label>
+                                    <select id="resize-mode-i2i" class="input-base">
+                                        <option value="0">Solo redimensionar</option>
+                                        <option value="1">Recortar y redimensionar</option>
+                                        <option value="2">Redimensionar y rellenar</option>
+                                        <option value="3">Escalado Latente</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -614,11 +672,44 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- (NUEVO) Subseed -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="subseed-i2i" class="label-base">Sub-Semilla</label>
+                                        <input type="number" id="subseed-i2i" value="-1" class="input-base">
+                                    </div>
+                                    <div>
+                                        <label for="subseed-strength-i2i" class="label-base">Fuerza Sub-Semilla</label>
+                                        <input type="number" id="subseed-strength-i2i" step="0.05" min="0" max="1" value="0.0" class="input-base">
+                                    </div>
+                                </div>
                                 <div>
                                     <label for="face-restorer-i2i" class="label-base">Restaurar Caras</label>
                                     <select id="face-restorer-i2i" class="input-base"></select>
                                 </div>
+                                <!-- (NUEVO) Tiling Checkbox -->
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="tiling-i2i" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2">
+                                    <label for="tiling-i2i" class="ml-2 text-sm font-medium text-gray-300">Tiling (Mosaico)</label>
+                                </div>
                             </div>
+                        </div>
+                        
+                        <!-- (NUEVO) Refiner (SDXL) -->
+                        <div class="content-card collapsible-card">
+                            <details id="refiner-details-i2i">
+                                <summary>Refiner (SDXL)</summary>
+                                <div id="refiner-options-i2i" class="space-y-4 pt-4">
+                                    <div>
+                                        <label for="refiner-model-i2i" class="label-base">Modelo Refiner</label>
+                                        <select id="refiner-model-i2i" class="input-base"></select>
+                                    </div>
+                                    <div>
+                                        <label for="refiner-switch-at-i2i" class="label-base">Refiner Switch At</label>
+                                        <input type="number" id="refiner-switch-at-i2i" step="0.05" min="0" max="1" value="0.8" class="input-base">
+                                    </div>
+                                </div>
+                            </details>
                         </div>
                         
                         <!-- (NUEVO) ControlNet -->
@@ -740,7 +831,8 @@
 
                 <!-- COLUMNA 2: RESULTADO -->
                 <div class="h-fit sticky top-[70px]">
-                    <div class="content-card">
+                    <!-- (NUEVO) ID añadido para el scroll -->
+                    <div id="resultado-card" class="content-card">
                         <h2 class="text-xl font-bold mb-4 text-white">Resultado</h2>
                         
                         <!-- Mensaje de Estado -->
@@ -806,6 +898,12 @@
                 Escalar
             </button>
         </div>
+    </div>
+
+    <!-- (NUEVO) Visor de Imagen Lightbox -->
+    <div id="image-lightbox" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[999]" style="display: none; cursor: zoom-out;">
+        <img id="lightbox-image" src="" class="max-w-full max-h-full object-contain" style="cursor: default;">
+        <button id="close-lightbox-btn" class="absolute top-4 right-4 text-white text-5xl font-bold" style="cursor: pointer;">&times;</button>
     </div>
 
     <script>
@@ -922,6 +1020,12 @@
         const generateExtrasBtn = document.getElementById('generate-btn-extras');
         const allGenerateBtns = [generateTxt2ImgBtn, generateImg2ImgBtn, generateExtrasBtn];
 
+        // --- (NUEVO) Lightbox ---
+        const imageLightbox = document.getElementById('image-lightbox');
+        const lightboxImage = document.getElementById('lightbox-image');
+        const closeLightboxBtn = document.getElementById('close-lightbox-btn');
+        const resultadoCard = document.getElementById('resultado-card');
+
         // --- Prompts y Tags ---
         const promptT2I = document.getElementById('prompt-t2i');
         const promptI2I = document.getElementById('prompt-i2i');
@@ -940,6 +1044,10 @@
             extrasUpscaler2: [document.getElementById('extras-upscaler-2')],
             controlNetModel: [document.getElementById('controlnet-model-t2i'), document.getElementById('controlnet-model-i2i')],
             controlNetModule: [document.getElementById('controlnet-module-t2i'), document.getElementById('controlnet-module-i2i')],
+            // (NUEVO) Selectores de Hires y Refiner
+            hrSampler: [document.getElementById('hr-sampler-t2i')],
+            hrScheduler: [document.getElementById('hr-scheduler-t2i')],
+            refinerModel: [document.getElementById('refiner-model-t2i'), document.getElementById('refiner-model-i2i')],
         };
         
         // --- Helpers de UI ---
@@ -985,6 +1093,9 @@
                 </svg>
                 Generando...
             `;
+            
+            // (NUEVO) Scroll a la vista de resultado
+            resultadoCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function hideGenerationProgress(button, originalText) {
@@ -1085,6 +1196,12 @@
                 populateSelect(E_SELECTORS_NODES.extrasUpscaler2, upscalers, 'name', 'name', "None");
                 populateSelect(E_SELECTORS_NODES.controlNetModel, cnModels, val => val, val => val, "None");
                 populateSelect(E_SELECTORS_NODES.controlNetModule, cnModules, val => val, val => val, "None");
+                
+                // (NUEVO) Rellenar selectores de Hires y Refiner
+                populateSelect(E_SELECTORS_NODES.hrSampler, samplers, 'name', 'name', "None", G_STATE.currentConfig.hr_sampler_name);
+                populateSelect(E_SELECTORS_NODES.hrScheduler, schedulers, 'name', 'label', "None", G_STATE.currentConfig.hr_scheduler);
+                populateSelect(E_SELECTORS_NODES.refinerModel, models, 'name', 'title', "None"); // Refiner usa la lista de modelos
+
 
                 showStatus('Recursos cargados. ¡Listo!', false);
                 
@@ -1315,8 +1432,25 @@
             }
         });
 
+        // --- (NUEVO) Lógica del Visor (Lightbox) ---
+        outputImage.addEventListener('click', () => {
+            if (outputImage.src && !outputImage.classList.contains('hidden') && G_STATE.lastMetadata) { // Solo abrir si hay una imagen final
+                lightboxImage.src = outputImage.src;
+                imageLightbox.style.display = 'flex';
+            }
+        });
+        closeLightboxBtn.addEventListener('click', () => {
+            imageLightbox.style.display = 'none';
+        });
+        imageLightbox.addEventListener('click', (e) => {
+            // Ocultar si se hace clic en el fondo, no en la imagen
+            if (e.target.id === 'image-lightbox') { 
+                imageLightbox.style.display = 'none';
+            }
+        });
 
-        // --- Lógica de Progreso (MODIFICADA) ---
+
+        // --- Lógica de Progreso (MODIFICADA para Vistas Previas) ---
         function startProgressCheck() {
             if (G_STATE.progressInterval) return;
             progressContainer.style.display = 'block';
@@ -1331,7 +1465,9 @@
                     return;
                 }
                 try {
-                    const data = await apiGet('/sdapi/v1/progress');
+                    // (NUEVO) Pedir la imagen de vista previa
+                    const data = await apiGet('/sdapi/v1/progress', { skip_current_image: false });
+                    
                     if (data.progress > 0) {
                         const percent = Math.round(data.progress * 100);
                         progressBar.style.width = `${percent}%`;
@@ -1343,10 +1479,19 @@
                          progressBar.style.width = '5%';
                          progressLabel.textContent = 'Esperando en la cola...';
                     }
+                    
+                    // (NUEVO) Lógica de vista previa en vivo
+                    if (data.current_image) {
+                        outputImage.src = 'data:image/png;base64,' + data.current_image;
+                        outputImage.classList.remove('hidden');
+                        outputImage.classList.remove('clickable'); // No se puede hacer clic en la vista previa
+                        placeholder.classList.add('hidden');
+                    }
+                    
                 } catch (e) {
                     console.error("Error al consultar progreso:", e.message);
                 }
-            }, 500);
+            }, 500); // 500ms para vistas previas más fluidas
         }
         
         function stopProgressCheck() {
@@ -1477,6 +1622,9 @@
         async function handleGeneration(mode) {
             if (G_STATE.isGenerating) return;
             
+            // Limpiar metadata anterior
+            G_STATE.lastMetadata = ''; 
+            
             startProgressCheck();
             
             let payload;
@@ -1490,6 +1638,11 @@
                     "prompt": document.getElementById(`prompt-${prefix}`).value,
                     "negative_prompt": document.getElementById(`negative-prompt-${prefix}`).value,
                     "styles": [document.getElementById(`styles-${prefix}`).value].filter(s => s && s !== "None"),
+                    
+                    "seed": parseInt(document.getElementById(`seed-${prefix}`).value, 10),
+                    "subseed": parseInt(document.getElementById(`subseed-${prefix}`).value, 10), // NUEVO
+                    "subseed_strength": parseFloat(document.getElementById(`subseed-strength-${prefix}`).value), // NUEVO
+                    
                     "sampler_name": document.getElementById(`sampler-${prefix}`).value,
                     "scheduler": document.getElementById(`scheduler-${prefix}`).value,
                     "steps": parseInt(document.getElementById(`steps-${prefix}`).value, 10),
@@ -1498,8 +1651,10 @@
                     "height": parseInt(document.getElementById(`height-${prefix}`).value, 10),
                     "n_iter": parseInt(document.getElementById(`batch-count-${prefix}`).value, 10),
                     "batch_size": 1, 
-                    "seed": parseInt(document.getElementById(`seed-${prefix}`).value, 10),
+                    
                     "restore_faces": document.getElementById(`face-restorer-${prefix}`).value !== "None",
+                    "tiling": document.getElementById(`tiling-${prefix}`).checked, // NUEVO
+                    
                     "send_images": true,
                     "save_images": false,
                     "override_settings": {
@@ -1509,6 +1664,15 @@
                     },
                     "alwayson_scripts": {}
                 };
+
+                // (NUEVO) Refiner
+                const refinerDetails = document.getElementById(`refiner-details-${prefix}`);
+                const refinerModel = document.getElementById(`refiner-model-${prefix}`).value;
+                if (refinerDetails && refinerDetails.open && refinerModel !== "None") {
+                    p.refiner_checkpoint = refinerModel;
+                    p.refiner_switch_at = parseFloat(document.getElementById(`refiner-switch-at-${prefix}`).value);
+                }
+
                 return p;
             };
             
@@ -1545,7 +1709,13 @@
                     payload.hr_scale = parseFloat(document.getElementById('hr-scale-t2i').value);
                     payload.hr_upscaler = document.getElementById('hr-upscaler-t2i').value;
                     payload.hr_second_pass_steps = parseInt(document.getElementById('hr-steps-t2i').value, 10);
-                    payload.denoising_strength = parseFloat(document.getElementById('hr-denoising-t2i').value); 
+                    payload.denoising_strength = parseFloat(document.getElementById('hr-denoising-t2i').value);
+                    
+                    // (NUEVO) Hires sampler/scheduler
+                    const hrSampler = document.getElementById('hr-sampler-t2i').value;
+                    const hrScheduler = document.getElementById('hr-scheduler-t2i').value;
+                    if (hrSampler !== "None") payload.hr_sampler_name = hrSampler;
+                    if (hrScheduler !== "None") payload.hr_scheduler = hrScheduler;
                 }
                 
                 // ControlNet
@@ -1564,6 +1734,7 @@
                 payload = buildBasePayload('i2i');
                 payload.init_images = [ G_STATE.uploadedImageBase64.i2i ];
                 payload.denoising_strength = parseFloat(document.getElementById('denoising-i2i').value);
+                payload.resize_mode = parseInt(document.getElementById('resize-mode-i2i').value, 10); // NUEVO
                 
                 // ControlNet
                 const cnPayload = buildControlNetPayload('i2i');
@@ -1601,6 +1772,7 @@
             copyMetadataBtn.style.display = 'none';
             metadataDisplay.classList.add('hidden');
             outputImage.classList.add('hidden');
+            outputImage.classList.remove('clickable'); // (NUEVO)
             placeholder.classList.remove('hidden');
 
             try {
@@ -1622,6 +1794,7 @@
                     const dataUrl = 'data:image/png;base64,' + base64Image;
                     outputImage.src = dataUrl;
                     outputImage.classList.remove('hidden');
+                    outputImage.classList.add('clickable'); // (NUEVO) Hacer clicable la imagen final
                     placeholder.classList.add('hidden');
                     
                     if (info) {
@@ -1631,7 +1804,7 @@
                         } else {
                              try {
                                 const infoParsed = JSON.parse(info);
-                                metadataText = `**Prompt:** ${infoParsed.prompt}\n**Negative Prompt:** ${infoParsed.negative_prompt}\n---\n**Seed:** ${infoParsed.seed}\n**Steps:** ${infoParsed.steps}\n**CFG Scale:** ${infoParsed.cfg_scale}\n**Sampler:** ${infoParsed.sampler_name}\n**Scheduler:** ${infoParsed.scheduler_name || 'N/A'}\n**Model:** ${infoParsed.sd_model_name || 'N/A'}\n**VAE:** ${infoParsed.sd_vae_name || 'N/A'}\n**Size:** ${infoParsed.width}x${infoParsed.height}`;
+                                metadataText = `**Prompt:** ${infoParsed.prompt}\n**Negative Prompt:** ${infoParsed.negative_prompt}\n---\n**Seed:** ${infoParsed.seed}\n**Subseed:** ${infoParsed.subseed} **Fuerza:** ${infoParsed.subseed_strength}\n**Steps:** ${infoParsed.steps}\n**CFG Scale:** ${infoParsed.cfg_scale}\n**Sampler:** ${infoParsed.sampler_name}\n**Scheduler:** ${infoParsed.scheduler_name || 'N/A'}\n**Model:** ${infoParsed.sd_model_name || 'N/A'}\n**VAE:** ${infoParsed.sd_vae_name || 'N/A'}\n**Size:** ${infoParsed.width}x${infoParsed.height}`;
                             } catch (e) {
                                 metadataText = `Raw Info: ${info}`;
                             }
