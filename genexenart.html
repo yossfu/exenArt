@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-    <title>Genexenart v4</title>
+    <title>Genexenart v3</title>
     <!-- Cargar Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- (NUEVO) Cargar Material Icons (Outlined) -->
+    <!-- Cargar Material Icons (Outlined) -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
     
-    <!-- (NUEVO) Cargar Gradio (para Tagger) -->
+    <!-- Cargar Gradio (para Tagger) -->
     <script type="module" src="https://gradio.s3-us-west-2.amazonaws.com/5.29.0/gradio.js"></script>
 
     <style>
@@ -26,6 +26,11 @@
             --accent-primary: #82b1ff; /* Azul Material */
             --accent-secondary: #448aff;
             --accent-danger: #ff5252;
+        }
+
+        /* (NUEVO) Scroll suave */
+        html {
+            scroll-behavior: smooth;
         }
 
         body, html {
@@ -45,7 +50,7 @@
             padding-bottom: 120px; /* Espacio para el botón de generar fijo */
         }
 
-        /* (NUEVO) HEADER/NAV ESTILO ANDROID */
+        /* HEADER/NAV ESTILO ANDROID */
         .app-header {
             background-color: var(--bg-dark-surface-1);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -96,7 +101,7 @@
             margin-bottom: 1.5rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
-        /* (NUEVO) Tarjeta colapsable */
+        /* Tarjeta colapsable */
         .collapsible-card details summary {
             cursor: pointer;
             font-size: 1.25rem; font-weight: 700;
@@ -132,7 +137,7 @@
             background-color: #3a3a3a;
         }
         select.input-base {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23BDBDBD' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='http://www.w3.org/2000/svg'%3e%3cpath stroke='%23BDBDBD' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-position: right 0.5rem center;
             background-repeat: no-repeat;
             background-size: 1.5em 1.5em;
@@ -148,14 +153,14 @@
             color: var(--text-secondary); margin-bottom: 0.5rem;
         }
 
-        /* (NUEVO) Grupo de botones de UI */
+        /* Grupo de botones de UI */
         .btn-group {
             display: flex;
             gap: 0.5rem;
             align-items: center;
         }
 
-        /* (NUEVO) Botón de UI (Icono) */
+        /* Botón de UI (Icono) */
         .btn-ui {
             background-color: var(--bg-dark-surface-2);
             border: 2px solid #424242;
@@ -172,6 +177,17 @@
         .btn-ui:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-ui .material-icons-outlined { font-size: 20px; }
         
+        /* Botón de UI (Principal) */
+        .btn-ui-primary {
+            background-color: var(--accent-secondary);
+            border-color: var(--accent-secondary);
+            color: white;
+            padding: 10px 16px;
+            font-weight: 600;
+            gap: 0.5rem;
+        }
+        .btn-ui-primary:hover { background-color: var(--accent-primary); }
+
         /* Botón de Generar Fijo (Floating Action Button - FAB) */
         #footer-fab-container {
             position: fixed;
@@ -201,7 +217,7 @@
             cursor: not-allowed; 
         }
         
-        /* (NUEVO) Botón de Interrumpir */
+        /* Botón de Interrumpir */
         .interrupt-btn {
             background-color: var(--accent-danger);
             color: white;
@@ -225,16 +241,13 @@
         #output-image {
             object-fit: contain; width: 100%; height: auto;
             max-height: 100%; border-radius: 12px;
-        }
-        /* (NUEVO) Hacer clic en la imagen de salida */
-        #output-image.clickable {
-            cursor: zoom-in;
+            cursor: pointer; /* (NUEVO) Cursor para indicar que es clickeable */
         }
         #image-container {
             min-height: 300px; aspect-ratio: 1 / 1;
         }
         
-        /* (NUEVO) Vista previa de imagen (para i2i, ControlNet, Extras) */
+        /* Vista previa de imagen (para i2i, ControlNet, Extras) */
         .image-preview-box {
             background-color: var(--bg-dark-primary);
             border: 2px dashed #424242;
@@ -260,12 +273,55 @@
         .image-preview-box img.active { display: block; }
         .image-preview-box span.hidden { display: none; }
         
-        /* (NUEVO) Estilos para Gradio App */
+        /* Estilos para Gradio App */
         gradio-app {
             background-color: var(--bg-dark-surface-1) !important;
             border: none !important;
             border-radius: 16px;
         }
+        
+        /* (NUEVO) Estilos del Visor Modal de Imagen */
+        #image-viewer-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none; /* Oculto por defecto */
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        #image-viewer-modal.active {
+            display: flex;
+        }
+        #modal-image {
+            max-width: 95vw;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        #modal-close-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background-color: rgba(30, 30, 30, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 99px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #modal-close-btn:hover {
+            background-color: rgba(50, 50, 50, 0.9);
+        }
+
     </style>
 </head>
 <body class="h-full">
@@ -275,7 +331,7 @@
     <!-- ======================= -->
     <div id="splash-screen" class="fixed inset-0 bg-gray-900 flex items-center justify-center p-4 z-50">
         <div class="w-full max-w-sm bg-gray-800 shadow-2xl rounded-xl p-6 text-white">
-            <h1 class="text-2xl font-bold text-center mb-6 text-blue-400">Genexenart v4</h1>
+            <h1 class="text-2xl font-bold text-center mb-6 text-blue-400">Genexenart v3</h1>
             
             <label for="gradio-url" class="block text-sm font-medium text-gray-400 mb-2">URL de Gradio (https://)</label>
             <input type="text" id="gradio-url" class="input-base" placeholder="Ej: https://xxxxxxxxx.gradio.app">
@@ -294,7 +350,7 @@
     <!-- ======================= -->
     <div id="app-container" class="min-h-full">
         
-        <!-- (NUEVO) HEADER / NAVEGACIÓN TIPO APP -->
+        <!-- HEADER / NAVEGACIÓN TIPO APP -->
         <header class="app-header">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <!-- Tabs Deslizables -->
@@ -357,7 +413,7 @@
                                     <label for="negative-prompt-t2i" class="label-base">Prompt Negativo</label>
                                     <textarea id="negative-prompt-t2i" rows="4" class="input-base" placeholder="worst quality, ...">worst quality, low quality, lowres, (deformed, distorted, disfigured:1.3), bad anatomy, bad hands, (missing fingers), (extra fingers), (fused fingers), (extra limbs), (fused limbs), (missing limbs), (extra digit), (fused digit), (mutated hands:1.3), (poorly drawn hands:1.3), (poorly drawn face:1.3), (long neck:1.3), (extra legs)</textarea>
                                 </div>
-                                <!-- (NUEVO) Estilos -->
+                                <!-- Estilos -->
                                 <div>
                                     <label for="styles-t2i" class="label-base">Estilos</label>
                                     <select id="styles-t2i" class="input-base"></select>
@@ -433,26 +489,10 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- (NUEVO) Subseed -->
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="subseed-t2i" class="label-base">Sub-Semilla</label>
-                                        <input type="number" id="subseed-t2i" value="-1" class="input-base">
-                                    </div>
-                                    <div>
-                                        <label for="subseed-strength-t2i" class="label-base">Fuerza Sub-Semilla</label>
-                                        <input type="number" id="subseed-strength-t2i" step="0.05" min="0" max="1" value="0.0" class="input-base">
-                                    </div>
-                                </div>
-                                <!-- (NUEVO) Restaurar Caras Dropdown -->
+                                <!-- Restaurar Caras Dropdown -->
                                 <div>
                                     <label for="face-restorer-t2i" class="label-base">Restaurar Caras</label>
                                     <select id="face-restorer-t2i" class="input-base"></select>
-                                </div>
-                                <!-- (NUEVO) Tiling Checkbox -->
-                                <div class="flex items-center">
-                                    <input type="checkbox" id="tiling-t2i" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2">
-                                    <label for="tiling-t2i" class="ml-2 text-sm font-medium text-gray-300">Tiling (Mosaico)</label>
                                 </div>
                             </div>
                         </div>
@@ -465,17 +505,6 @@
                                     <div>
                                         <label for="hr-upscaler-t2i" class="label-base">Upscaler</label>
                                         <select id="hr-upscaler-t2i" class="input-base"></select>
-                                    </div>
-                                    <!-- (NUEVO) Hires Sampler/Scheduler -->
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label for="hr-sampler-t2i" class="label-base">Sampler Hires</label>
-                                            <select id="hr-sampler-t2i" class="input-base"></select>
-                                        </div>
-                                        <div>
-                                            <label for="hr-scheduler-t2i" class="label-base">Scheduler Hires</label>
-                                            <select id="hr-scheduler-t2i" class="input-base"></select>
-                                        </div>
                                     </div>
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
@@ -495,24 +524,7 @@
                             </details>
                         </div>
                         
-                        <!-- (NUEVO) Refiner (SDXL) -->
-                        <div class="content-card collapsible-card">
-                            <details id="refiner-details-t2i">
-                                <summary>Refiner (SDXL)</summary>
-                                <div id="refiner-options-t2i" class="space-y-4 pt-4">
-                                    <div>
-                                        <label for="refiner-model-t2i" class="label-base">Modelo Refiner</label>
-                                        <select id="refiner-model-t2i" class="input-base"></select>
-                                    </div>
-                                    <div>
-                                        <label for="refiner-switch-at-t2i" class="label-base">Refiner Switch At</label>
-                                        <input type="number" id="refiner-switch-at-t2i" step="0.05" min="0" max="1" value="0.8" class="input-base">
-                                    </div>
-                                </div>
-                            </details>
-                        </div>
-
-                        <!-- (NUEVO) ControlNet -->
+                        <!-- ControlNet -->
                         <div class="content-card collapsible-card">
                             <details id="controlnet-details-t2i">
                                 <summary>ControlNet</summary>
@@ -553,7 +565,7 @@
                                     <img id="image-preview-i2i" src="" alt="Vista previa" class="active">
                                     <span id="image-preview-placeholder-i2i">Vista previa de la imagen</span>
                                 </div>
-                                <!-- (NUEVO) Botones de Interrogar y PNG Info -->
+                                <!-- Botones de Interrogar y PNG Info -->
                                 <div class="btn-group">
                                     <button id="interrogate-btn-i2i" class="btn-ui flex-1 gap-2" title="Interrogar Imagen (CLIP)">
                                         <span class="material-icons-outlined">help_outline</span>
@@ -567,16 +579,6 @@
                                 <div>
                                     <label for="denoising-i2i" class="label-base">Denoising Strength</label>
                                     <input type="number" id="denoising-i2i" step="0.05" min="0" max="1" value="0.75" class="input-base">
-                                </div>
-                                <!-- (NUEVO) Modo de Escalado -->
-                                <div>
-                                    <label for="resize-mode-i2i" class="label-base">Modo de Escalado (Entrada)</label>
-                                    <select id="resize-mode-i2i" class="input-base">
-                                        <option value="0">Solo redimensionar</option>
-                                        <option value="1">Recortar y redimensionar</option>
-                                        <option value="2">Redimensionar y rellenar</option>
-                                        <option value="3">Escalado Latente</option>
-                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -672,47 +674,14 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- (NUEVO) Subseed -->
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="subseed-i2i" class="label-base">Sub-Semilla</label>
-                                        <input type="number" id="subseed-i2i" value="-1" class="input-base">
-                                    </div>
-                                    <div>
-                                        <label for="subseed-strength-i2i" class="label-base">Fuerza Sub-Semilla</label>
-                                        <input type="number" id="subseed-strength-i2i" step="0.05" min="0" max="1" value="0.0" class="input-base">
-                                    </div>
-                                </div>
                                 <div>
                                     <label for="face-restorer-i2i" class="label-base">Restaurar Caras</label>
                                     <select id="face-restorer-i2i" class="input-base"></select>
                                 </div>
-                                <!-- (NUEVO) Tiling Checkbox -->
-                                <div class="flex items-center">
-                                    <input type="checkbox" id="tiling-i2i" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2">
-                                    <label for="tiling-i2i" class="ml-2 text-sm font-medium text-gray-300">Tiling (Mosaico)</label>
-                                </div>
                             </div>
                         </div>
                         
-                        <!-- (NUEVO) Refiner (SDXL) -->
-                        <div class="content-card collapsible-card">
-                            <details id="refiner-details-i2i">
-                                <summary>Refiner (SDXL)</summary>
-                                <div id="refiner-options-i2i" class="space-y-4 pt-4">
-                                    <div>
-                                        <label for="refiner-model-i2i" class="label-base">Modelo Refiner</label>
-                                        <select id="refiner-model-i2i" class="input-base"></select>
-                                    </div>
-                                    <div>
-                                        <label for="refiner-switch-at-i2i" class="label-base">Refiner Switch At</label>
-                                        <input type="number" id="refiner-switch-at-i2i" step="0.05" min="0" max="1" value="0.8" class="input-base">
-                                    </div>
-                                </div>
-                            </details>
-                        </div>
-                        
-                        <!-- (NUEVO) ControlNet -->
+                        <!-- ControlNet -->
                         <div class="content-card collapsible-card">
                             <details id="controlnet-details-i2i">
                                 <summary>ControlNet</summary>
@@ -741,7 +710,7 @@
                     </div>
 
                     <!-- ======================= -->
-                    <!-- (NUEVO) Panel Extras -->
+                    <!-- Panel Extras -->
                     <!-- ======================= -->
                     <div id="panel-extras" class="tab-panel">
                         <div class="content-card">
@@ -803,7 +772,7 @@
                     </div>
                     
                     <!-- ======================= -->
-                    <!-- (NUEVO) Panel Tagger -->
+                    <!-- Panel Tagger -->
                     <!-- ======================= -->
                     <div id="panel-tagger" class="tab-panel">
                         <div class="content-card">
@@ -814,7 +783,7 @@
                     </div>
                     
                     <!-- ======================= -->
-                    <!-- (NUEVO) Panel Config -->
+                    <!-- Panel Config -->
                     <!-- ======================= -->
                     <div id="panel-config" class="tab-panel">
                         <div class="content-card">
@@ -825,14 +794,43 @@
                             </button>
                             <pre id="memory-display" class="text-xs text-gray-300 mt-4 p-4 bg-gray-900 rounded-lg" style="display: none;"></pre>
                         </div>
+                        
+                        <!-- (¡¡NUEVO!!) Tarjeta de Configuración de Previews -->
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Configuración de Previews</h2>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <label for="live-previews-enable" class="label-base mb-0 text-white">Habilitar Previews en Vivo</label>
+                                    <input type="checkbox" id="live-previews-enable" checked class="h-6 w-6 rounded-lg text-blue-500 bg-gray-700 border-gray-600 focus:ring-blue-600">
+                                </div>
+                                <div>
+                                    <label for="show-progress-every-n-steps" class="label-base">Actualizar preview cada N pasos</label>
+                                    <input type="number" id="show-progress-every-n-steps" value="5" class="input-base">
+                                </div>
+                                <div>
+                                    <label for="show-progress-type" class="label-base">Tipo de Preview</label>
+                                    <select id="show-progress-type" class="input-base">
+                                        <option value="Approx NN">Approx NN (Rápido)</option>
+                                        <option value="Approx cheap">Approx cheap (Más Rápido)</option>
+                                        <option value="Full">Full (Lento, Preciso)</option>
+                                    </select>
+                                </div>
+                                <button id="save-preview-config-btn" class="btn-ui btn-ui-primary w-full gap-2 font-medium py-3">
+                                    <span class="material-icons-outlined">save</span>
+                                    Guardar Config. de Preview
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Fin de la nueva tarjeta -->
+                        
                     </div>
 
                 </div>
 
                 <!-- COLUMNA 2: RESULTADO -->
-                <div class="h-fit sticky top-[70px]">
-                    <!-- (NUEVO) ID añadido para el scroll -->
-                    <div id="resultado-card" class="content-card">
+                <!-- (NUEVO) ID añadido para el scroll -->
+                <div id="results-card" class="h-fit sticky top-[70px]">
+                    <div class="content-card">
                         <h2 class="text-xl font-bold mb-4 text-white">Resultado</h2>
                         
                         <!-- Mensaje de Estado -->
@@ -846,7 +844,7 @@
                             <span id="progress-label" class="text-xs text-gray-400 mt-1 block"></span>
                         </div>
 
-                        <!-- (NUEVO) Botones de Interrumpir/Saltar -->
+                        <!-- Botones de Interrumpir/Saltar -->
                         <div id="generation-controls" class="btn-group mb-4" style="display: none;">
                             <button id="interrupt-btn" class="btn-ui interrupt-btn flex-1">
                                 <span class="material-icons-outlined">stop_circle</span>
@@ -883,7 +881,7 @@
             </div>
         </main>
         
-        <!-- (NUEVO) BOTÓN DE GENERAR FIJO (FAB) -->
+        <!-- BOTÓN DE GENERAR FIJO (FAB) -->
         <div id="footer-fab-container">
             <button id="generate-btn-txt2img" class="generate-btn">
                 <span class="material-icons-outlined">auto_fix_high</span>
@@ -900,11 +898,16 @@
         </div>
     </div>
 
-    <!-- (NUEVO) Visor de Imagen Lightbox -->
-    <div id="image-lightbox" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[999]" style="display: none; cursor: zoom-out;">
-        <img id="lightbox-image" src="" class="max-w-full max-h-full object-contain" style="cursor: default;">
-        <button id="close-lightbox-btn" class="absolute top-4 right-4 text-white text-5xl font-bold" style="cursor: pointer;">&times;</button>
+    <!-- ======================= -->
+    <!-- (NUEVO) VISOR DE IMAGEN MODAL -->
+    <!-- ======================= -->
+    <div id="image-viewer-modal">
+        <button id="modal-close-btn" title="Cerrar">
+            <span class="material-icons-outlined">close</span>
+        </button>
+        <img id="modal-image" src="" alt="Visor de imagen a pantalla completa">
     </div>
+
 
     <script>
         // --- (NUEVO) Generador de Prompts de ownerid.html ---
@@ -979,11 +982,11 @@
         const G_STATE = {
             gradioUrl: '',
             samplers: [], models: [], vaes: [], schedulers: [], loras: [], upscalers: [],
-            styles: [], faceRestorers: [], // (NUEVO)
-            controlNetModels: [], controlNetModules: [], // (NUEVO)
+            styles: [], faceRestorers: [], 
+            controlNetModels: [], controlNetModules: [], 
             progressInterval: null,
             isGenerating: false,
-            uploadedImageBase64: { // (NUEVO) Objeto para múltiples imágenes
+            uploadedImageBase64: { 
                 i2i: null,
                 extras: null,
                 controlNetT2I: null,
@@ -1020,16 +1023,15 @@
         const generateExtrasBtn = document.getElementById('generate-btn-extras');
         const allGenerateBtns = [generateTxt2ImgBtn, generateImg2ImgBtn, generateExtrasBtn];
 
-        // --- (NUEVO) Lightbox ---
-        const imageLightbox = document.getElementById('image-lightbox');
-        const lightboxImage = document.getElementById('lightbox-image');
-        const closeLightboxBtn = document.getElementById('close-lightbox-btn');
-        const resultadoCard = document.getElementById('resultado-card');
-
         // --- Prompts y Tags ---
         const promptT2I = document.getElementById('prompt-t2i');
         const promptI2I = document.getElementById('prompt-i2i');
         
+        // --- (NUEVO) Visor Modal ---
+        const modal = document.getElementById('image-viewer-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
         // --- (NUEVO) Selectores (Dropdowns) ---
         const E_SELECTORS_NODES = {
             model: [document.getElementById('model-t2i'), document.getElementById('model-i2i')],
@@ -1044,10 +1046,6 @@
             extrasUpscaler2: [document.getElementById('extras-upscaler-2')],
             controlNetModel: [document.getElementById('controlnet-model-t2i'), document.getElementById('controlnet-model-i2i')],
             controlNetModule: [document.getElementById('controlnet-module-t2i'), document.getElementById('controlnet-module-i2i')],
-            // (NUEVO) Selectores de Hires y Refiner
-            hrSampler: [document.getElementById('hr-sampler-t2i')],
-            hrScheduler: [document.getElementById('hr-scheduler-t2i')],
-            refinerModel: [document.getElementById('refiner-model-t2i'), document.getElementById('refiner-model-i2i')],
         };
         
         // --- Helpers de UI ---
@@ -1093,9 +1091,6 @@
                 </svg>
                 Generando...
             `;
-            
-            // (NUEVO) Scroll a la vista de resultado
-            resultadoCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function hideGenerationProgress(button, originalText) {
@@ -1164,10 +1159,10 @@
                     apiGet('/sdapi/v1/sd-vae'),
                     apiGet('/sdapi/v1/loras'),
                     apiGet('/sdapi/v1/upscalers'),
-                    apiGet('/sdapi/v1/prompt-styles'), // (NUEVO)
-                    apiGet('/sdapi/v1/face-restorers'), // (NUEVO)
-                    apiGet('/controlnet/model_list').then(d => d.model_list), // (NUEVO)
-                    apiGet('/controlnet/module_list').then(d => d.module_list) // (NUEVO)
+                    apiGet('/sdapi/v1/prompt-styles'), 
+                    apiGet('/sdapi/v1/face-restorers'), 
+                    apiGet('/controlnet/model_list').then(d => d.model_list), 
+                    apiGet('/controlnet/module_list').then(d => d.module_list) 
                 ]);
 
                 G_STATE.models = models;
@@ -1176,19 +1171,23 @@
                 G_STATE.vaes = vaes;
                 G_STATE.loras = loras;
                 G_STATE.upscalers = upscalers;
-                G_STATE.styles = styles; // (NUEVO)
-                G_STATE.faceRestorers = faceRestorers; // (NUEVO)
-                G_STATE.controlNetModels = cnModels; // (NUEVO)
-                G_STATE.controlNetModules = cnModules; // (NUEVO)
+                G_STATE.styles = styles; 
+                G_STATE.faceRestorers = faceRestorers; 
+                G_STATE.controlNetModels = cnModels; 
+                G_STATE.controlNetModules = cnModules; 
 
                 // Rellenar Selectores
                 populateSelect(E_SELECTORS_NODES.model, models, 'name', 'title', null, G_STATE.currentConfig.sd_model_checkpoint);
-                populateSelect(E_SELECTORS_NODES.sampler, samplers, 'name', 'name', null, G_STATE.currentConfig.sampler_name);
+                
+                // (NUEVO) Obtener el sampler por defecto de la config
+                // Primero intentamos con 'sampler_name', luego con 'sampler_index'
+                const defaultSampler = G_STATE.currentConfig.sampler_name || G_STATE.currentConfig.sampler_index || null;
+                populateSelect(E_SELECTORS_NODES.sampler, samplers, 'name', 'name', null, defaultSampler);
+                
                 populateSelect(E_SELECTORS_NODES.scheduler, schedulers, 'name', 'label', null, G_STATE.currentConfig.scheduler);
                 populateSelect(E_SELECTORS_NODES.vae, vaes, 'model_name', 'model_name', 'Automatic', G_STATE.currentConfig.sd_vae);
                 populateSelect(E_SELECTORS_NODES.lora, loras, 'name', 'name', "None");
                 
-                // (NUEVO) Rellenar nuevos selectores
                 populateSelect(E_SELECTORS_NODES.styles, styles, 'name', 'name', "None");
                 populateSelect(E_SELECTORS_NODES.faceRestorer, faceRestorers, 'name', 'name', "None", G_STATE.currentConfig.face_restoration_model);
                 populateSelect(E_SELECTORS_NODES.hrUpscaler, upscalers, 'name', 'name', null, G_STATE.currentConfig.hr_upscaler);
@@ -1197,11 +1196,16 @@
                 populateSelect(E_SELECTORS_NODES.controlNetModel, cnModels, val => val, val => val, "None");
                 populateSelect(E_SELECTORS_NODES.controlNetModule, cnModules, val => val, val => val, "None");
                 
-                // (NUEVO) Rellenar selectores de Hires y Refiner
-                populateSelect(E_SELECTORS_NODES.hrSampler, samplers, 'name', 'name', "None", G_STATE.currentConfig.hr_sampler_name);
-                populateSelect(E_SELECTORS_NODES.hrScheduler, schedulers, 'name', 'label', "None", G_STATE.currentConfig.hr_scheduler);
-                populateSelect(E_SELECTORS_NODES.refinerModel, models, 'name', 'title', "None"); // Refiner usa la lista de modelos
-
+                // Rellenar config de previews
+                if (G_STATE.currentConfig.live_previews_enable !== undefined) {
+                    document.getElementById('live-previews-enable').checked = G_STATE.currentConfig.live_previews_enable;
+                }
+                if (G_STATE.currentConfig.show_progress_every_n_steps) {
+                    document.getElementById('show-progress-every-n-steps').value = G_STATE.currentConfig.show_progress_every_n_steps;
+                }
+                if (G_STATE.currentConfig.show_progress_type) {
+                    document.getElementById('show-progress-type').value = G_STATE.currentConfig.show_progress_type;
+                }
 
                 showStatus('Recursos cargados. ¡Listo!', false);
                 
@@ -1432,25 +1436,8 @@
             }
         });
 
-        // --- (NUEVO) Lógica del Visor (Lightbox) ---
-        outputImage.addEventListener('click', () => {
-            if (outputImage.src && !outputImage.classList.contains('hidden') && G_STATE.lastMetadata) { // Solo abrir si hay una imagen final
-                lightboxImage.src = outputImage.src;
-                imageLightbox.style.display = 'flex';
-            }
-        });
-        closeLightboxBtn.addEventListener('click', () => {
-            imageLightbox.style.display = 'none';
-        });
-        imageLightbox.addEventListener('click', (e) => {
-            // Ocultar si se hace clic en el fondo, no en la imagen
-            if (e.target.id === 'image-lightbox') { 
-                imageLightbox.style.display = 'none';
-            }
-        });
 
-
-        // --- Lógica de Progreso (MODIFICADA para Vistas Previas) ---
+        // --- Lógica de Progreso (¡¡ACTUALIZADA con PREVIEWS!!) ---
         function startProgressCheck() {
             if (G_STATE.progressInterval) return;
             progressContainer.style.display = 'block';
@@ -1459,14 +1446,18 @@
             progressBar.style.width = '0%';
             progressLabel.textContent = 'Iniciando...';
             
+            // Ocultar botones de descarga/copia durante la generación/preview
+            downloadBtn.style.display = 'none';
+            copyMetadataBtn.style.display = 'none';
+
             G_STATE.progressInterval = setInterval(async () => {
                 if (!G_STATE.isGenerating) {
                     stopProgressCheck();
                     return;
                 }
                 try {
-                    // (NUEVO) Pedir la imagen de vista previa
-                    const data = await apiGet('/sdapi/v1/progress', { skip_current_image: false });
+                    // Pedir progreso Y la imagen de preview
+                    const data = await apiGet('/sdapi/v1/progress?skip_current_image=false');
                     
                     if (data.progress > 0) {
                         const percent = Math.round(data.progress * 100);
@@ -1480,18 +1471,17 @@
                          progressLabel.textContent = 'Esperando en la cola...';
                     }
                     
-                    // (NUEVO) Lógica de vista previa en vivo
+                    // (¡¡NUEVO!!) Mostrar la imagen de preview
                     if (data.current_image) {
                         outputImage.src = 'data:image/png;base64,' + data.current_image;
                         outputImage.classList.remove('hidden');
-                        outputImage.classList.remove('clickable'); // No se puede hacer clic en la vista previa
                         placeholder.classList.add('hidden');
                     }
                     
                 } catch (e) {
                     console.error("Error al consultar progreso:", e.message);
                 }
-            }, 500); // 500ms para vistas previas más fluidas
+            }, 1000); // Aumentado a 1000ms para no saturar con peticiones de imagen
         }
         
         function stopProgressCheck() {
@@ -1617,13 +1607,66 @@
         }
         document.getElementById('get-memory-btn').addEventListener('click', handleGetMemory);
 
+        // (¡¡NUEVO!!) Guardar Configuración de Preview
+        async function handleSavePreviewConfig() {
+            const btn = document.getElementById('save-preview-config-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = 'Guardando...';
+            
+            try {
+                const payload = {
+                    "live_previews_enable": document.getElementById('live-previews-enable').checked,
+                    "show_progress_every_n_steps": parseInt(document.getElementById('show-progress-every-n-steps').value, 10),
+                    "show_progress_type": document.getElementById('show-progress-type').value
+                };
+                
+                await apiPost('/sdapi/v1/options', payload);
+                showStatus('Configuración de preview guardada.', false);
+                
+                // Actualizar config local
+                G_STATE.currentConfig.live_previews_enable = payload.live_previews_enable;
+                G_STATE.currentConfig.show_progress_every_n_steps = payload.show_progress_every_n_steps;
+                G_STATE.currentConfig.show_progress_type = payload.show_progress_type;
+                
+            } catch (e) {
+                showStatus(`Error al guardar config: ${e.message}`, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+        document.getElementById('save-preview-config-btn').addEventListener('click', handleSavePreviewConfig);
 
-        // --- Lógica de Generación (¡¡MUY MODIFICADA!!) ---
+        // --- (NUEVO) Lógica del Visor Modal ---
+        function openModal() {
+            if (!G_STATE.isGenerating && outputImage.src && !outputImage.classList.contains('hidden')) {
+                modalImage.src = outputImage.src;
+                modal.classList.add('active');
+            }
+        }
+        function closeModal() {
+            modal.classList.remove('active');
+            modalImage.src = '';
+        }
+        outputImage.addEventListener('click', openModal);
+        modalCloseBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) { // Cerrar solo si se hace clic en el fondo
+                closeModal();
+            }
+        });
+
+
+        // --- Lógica de Generación (¡¡CORREGIDA!!) ---
         async function handleGeneration(mode) {
             if (G_STATE.isGenerating) return;
-            
-            // Limpiar metadata anterior
-            G_STATE.lastMetadata = ''; 
+
+            // (NUEVO) Scroll al área de resultados
+            try {
+                document.getElementById('results-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch(e) { console.warn("No se pudo hacer scroll:", e); }
+
             
             startProgressCheck();
             
@@ -1639,44 +1682,32 @@
                     "negative_prompt": document.getElementById(`negative-prompt-${prefix}`).value,
                     "styles": [document.getElementById(`styles-${prefix}`).value].filter(s => s && s !== "None"),
                     
-                    "seed": parseInt(document.getElementById(`seed-${prefix}`).value, 10),
-                    "subseed": parseInt(document.getElementById(`subseed-${prefix}`).value, 10), // NUEVO
-                    "subseed_strength": parseFloat(document.getElementById(`subseed-strength-${prefix}`).value), // NUEVO
-                    
+                    // (¡¡CORREGIDO!!) sampler_name y scheduler van en el root del payload.
                     "sampler_name": document.getElementById(`sampler-${prefix}`).value,
                     "scheduler": document.getElementById(`scheduler-${prefix}`).value,
+                    
                     "steps": parseInt(document.getElementById(`steps-${prefix}`).value, 10),
                     "cfg_scale": parseFloat(document.getElementById(`cfg-${prefix}`).value),
                     "width": parseInt(document.getElementById(`width-${prefix}`).value, 10),
                     "height": parseInt(document.getElementById(`height-${prefix}`).value, 10),
                     "n_iter": parseInt(document.getElementById(`batch-count-${prefix}`).value, 10),
                     "batch_size": 1, 
-                    
+                    "seed": parseInt(document.getElementById(`seed-${prefix}`).value, 10),
                     "restore_faces": document.getElementById(`face-restorer-${prefix}`).value !== "None",
-                    "tiling": document.getElementById(`tiling-${prefix}`).checked, // NUEVO
-                    
                     "send_images": true,
                     "save_images": false,
                     "override_settings": {
+                        // El modelo y VAE sí van aquí para sobreescribir la config del backend
                         "sd_model_checkpoint": document.getElementById(`model-${prefix}`).value,
                         "sd_vae": document.getElementById(`vae-${prefix}`).value,
                         "face_restoration_model": document.getElementById(`face-restorer-${prefix}`).value
                     },
                     "alwayson_scripts": {}
                 };
-
-                // (NUEVO) Refiner
-                const refinerDetails = document.getElementById(`refiner-details-${prefix}`);
-                const refinerModel = document.getElementById(`refiner-model-${prefix}`).value;
-                if (refinerDetails && refinerDetails.open && refinerModel !== "None") {
-                    p.refiner_checkpoint = refinerModel;
-                    p.refiner_switch_at = parseFloat(document.getElementById(`refiner-switch-at-${prefix}`).value);
-                }
-
                 return p;
             };
             
-            // --- (NUEVO) Construir Payload de ControlNet ---
+            // --- Construir Payload de ControlNet ---
             const buildControlNetPayload = (prefix) => {
                 const cnDetails = document.getElementById(`controlnet-details-${prefix}`);
                 if (!cnDetails || !cnDetails.open) return null; // No añadir si está cerrado
@@ -1709,13 +1740,7 @@
                     payload.hr_scale = parseFloat(document.getElementById('hr-scale-t2i').value);
                     payload.hr_upscaler = document.getElementById('hr-upscaler-t2i').value;
                     payload.hr_second_pass_steps = parseInt(document.getElementById('hr-steps-t2i').value, 10);
-                    payload.denoising_strength = parseFloat(document.getElementById('hr-denoising-t2i').value);
-                    
-                    // (NUEVO) Hires sampler/scheduler
-                    const hrSampler = document.getElementById('hr-sampler-t2i').value;
-                    const hrScheduler = document.getElementById('hr-scheduler-t2i').value;
-                    if (hrSampler !== "None") payload.hr_sampler_name = hrSampler;
-                    if (hrScheduler !== "None") payload.hr_scheduler = hrScheduler;
+                    payload.denoising_strength = parseFloat(document.getElementById('hr-denoising-t2i').value); 
                 }
                 
                 // ControlNet
@@ -1727,6 +1752,7 @@
             } else if (mode === 'img2img') {
                 if (!G_STATE.uploadedImageBase64.i2i) {
                     showStatus('Por favor, sube una imagen de origen primero.', true);
+                    stopProgressCheck(); // (NUEVO) Detener progreso si no hay imagen
                     return;
                 }
                 button = generateImg2ImgBtn;
@@ -1734,7 +1760,6 @@
                 payload = buildBasePayload('i2i');
                 payload.init_images = [ G_STATE.uploadedImageBase64.i2i ];
                 payload.denoising_strength = parseFloat(document.getElementById('denoising-i2i').value);
-                payload.resize_mode = parseInt(document.getElementById('resize-mode-i2i').value, 10); // NUEVO
                 
                 // ControlNet
                 const cnPayload = buildControlNetPayload('i2i');
@@ -1745,6 +1770,7 @@
             } else if (mode === 'extras') {
                 if (!G_STATE.uploadedImageBase64.extras) {
                     showStatus('Sube una imagen en la pestaña Extras primero.', true);
+                    stopProgressCheck(); // (NUEVO) Detener progreso si no hay imagen
                     return;
                 }
                 button = generateExtrasBtn;
@@ -1771,9 +1797,7 @@
             downloadBtn.style.display = 'none';
             copyMetadataBtn.style.display = 'none';
             metadataDisplay.classList.add('hidden');
-            outputImage.classList.add('hidden');
-            outputImage.classList.remove('clickable'); // (NUEVO)
-            placeholder.classList.remove('hidden');
+            // No ocultar la imagen/placeholder, el progress check la actualizará
 
             try {
                 showStatus('Enviando solicitud de generación...');
@@ -1781,7 +1805,7 @@
                 
                 let base64Image, info;
                 
-                // (NUEVO) Manejar diferentes formatos de respuesta
+                // Manejar diferentes formatos de respuesta
                 if (mode === 'extras') {
                     base64Image = result.image; // Singular
                     info = result.html_info; // Es un string HTML
@@ -1792,9 +1816,8 @@
                 
                 if (base64Image) {
                     const dataUrl = 'data:image/png;base64,' + base64Image;
-                    outputImage.src = dataUrl;
+                    outputImage.src = dataUrl; // Imagen final
                     outputImage.classList.remove('hidden');
-                    outputImage.classList.add('clickable'); // (NUEVO) Hacer clicable la imagen final
                     placeholder.classList.add('hidden');
                     
                     if (info) {
@@ -1804,7 +1827,11 @@
                         } else {
                              try {
                                 const infoParsed = JSON.parse(info);
-                                metadataText = `**Prompt:** ${infoParsed.prompt}\n**Negative Prompt:** ${infoParsed.negative_prompt}\n---\n**Seed:** ${infoParsed.seed}\n**Subseed:** ${infoParsed.subseed} **Fuerza:** ${infoParsed.subseed_strength}\n**Steps:** ${infoParsed.steps}\n**CFG Scale:** ${infoParsed.cfg_scale}\n**Sampler:** ${infoParsed.sampler_name}\n**Scheduler:** ${infoParsed.scheduler_name || 'N/A'}\n**Model:** ${infoParsed.sd_model_name || 'N/A'}\n**VAE:** ${infoParsed.sd_vae_name || 'N/A'}\n**Size:** ${infoParsed.width}x${infoParsed.height}`;
+                                // (NUEVO) Mostrar el sampler y scheduler usados
+                                const sampler = infoParsed.sampler_name || (payload.sampler_name || "N/A");
+                                const scheduler = infoParsed.scheduler_name || (payload.scheduler || "N/A");
+
+                                metadataText = `**Prompt:** ${infoParsed.prompt}\n**Negative Prompt:** ${infoParsed.negative_prompt}\n---\n**Seed:** ${infoParsed.seed}\n**Steps:** ${infoParsed.steps}\n**CFG Scale:** ${infoParsed.cfg_scale}\n**Sampler:** ${sampler}\n**Scheduler:** ${scheduler}\n**Model:** ${infoParsed.sd_model_name || 'N/A'}\n**VAE:** ${infoParsed.sd_vae_name || 'N/A'}\n**Size:** ${infoParsed.width}x${infoParsed.height}`;
                             } catch (e) {
                                 metadataText = `Raw Info: ${info}`;
                             }
