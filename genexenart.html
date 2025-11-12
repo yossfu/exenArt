@@ -172,6 +172,7 @@
             align-items: center;
             justify-content: center;
             line-height: 1;
+            cursor: pointer;
         }
         .btn-ui:hover { background-color: #424242; border-color: #616161; }
         .btn-ui:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -187,7 +188,7 @@
             gap: 0.5rem;
         }
         .btn-ui-primary:hover { background-color: var(--accent-primary); }
-
+        
         /* Botón de Generar Fijo (Floating Action Button - FAB) */
         #footer-fab-container {
             position: fixed;
@@ -208,6 +209,7 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            cursor: pointer;
         }
         .generate-btn .material-icons-outlined { font-size: 24px; }
         .generate-btn:hover { background-color: #a9c7ff; }
@@ -413,11 +415,120 @@
                                     <label for="negative-prompt-t2i" class="label-base">Prompt Negativo</label>
                                     <textarea id="negative-prompt-t2i" rows="4" class="input-base" placeholder="worst quality, ...">worst quality, low quality, lowres, (deformed, distorted, disfigured:1.3), bad anatomy, bad hands, (missing fingers), (extra fingers), (fused fingers), (extra limbs), (fused limbs), (missing limbs), (extra digit), (fused digit), (mutated hands:1.3), (poorly drawn hands:1.3), (poorly drawn face:1.3), (long neck:1.3), (extra legs)</textarea>
                                 </div>
-                                <!-- Estilos -->
+                                <!-- Estilos (A1111) -->
                                 <div>
-                                    <label for="styles-t2i" class="label-base">Estilos</label>
+                                    <label for="styles-t2i" class="label-base">Estilos (A1111)</label>
                                     <select id="styles-t2i" class="input-base"></select>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- (MODIFICADO) Constructor de Estilo -->
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Constructor de Estilo</h2>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <!-- Columna Género -->
+                                <div>
+                                    <label for="style-gender-t2i" class="label-base">Género</label>
+                                    <select id="style-gender-t2i" class="input-base style-builder-component" data-panel-prefix="t2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="male">Hombre</option>
+                                        <option value="female">Mujer</option>
+                                    </select>
+                                </div>
+                                <!-- Columna Estilo Artístico -->
+                                <div>
+                                    <label for="style-artistic-t2i" class="label-base">Estilo Artístico</label>
+                                    <select id="style-artistic-t2i" class="input-base style-builder-component" data-panel-prefix="t2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="decoupage">Decoupage</option>
+                                        <option value="encaustic">Encaustic</option>
+                                        <option value="monotype print">Monotype Print</option>
+                                        <option value="monoprinting">Monoprinting</option>
+                                        <option value="lithography print">Lithography Print</option>
+                                        <option value="linocut">Linocut</option>
+                                        <option value="woodblock print">Woodblock Print</option>
+                                        <option value="sumi-e drawing">Sumi-e Drawing</option>
+                                        <option value="Ukiyo-e">Ukiyo-e</option>
+                                        <option value="Shin-hanga">Shin-hanga</option>
+                                        <option value="anime">Anime</option>
+                                        <option value="manga art">Manga Art</option>
+                                        <option value="Chinese watercolor">Chinese Watercolor</option>
+                                        <option value="Chinese brush painting">Chinese Brush Painting</option>
+                                        <option value="Aboriginal dot painting">Aboriginal Dot Painting</option>
+                                        <option value="Tribal art">Tribal Art</option>
+                                        <option value="Delftware">Delftware</option>
+                                        <option value="Byzantine mosaics">Byzantine Mosaics</option>
+                                        <option value="concept art">Concept Art</option>
+                                        <option value="one line art">One Line Art</option>
+                                        <option value="graphic illustration style">Graphic Illustration</option>
+                                        <option value="scientific illustration">Scientific Illustration</option>
+                                        <option value="storybook illustration">Storybook Illustration</option>
+                                        <option value="comic book style">Comic Book Style</option>
+                                        <option value="coloring book page">Coloring Book Page</option>
+                                        <option value="cel shading">Cel Shading</option>
+                                        <option value="vector">Vector</option>
+                                        <option value="cartoon">Cartoon</option>
+                                        <option value="caricature">Caricature</option>
+                                        <option value="sticker">Sticker</option>
+                                        <option value="graffiti">Graffiti</option>
+                                        <option value="psychedelic">Psychedelic</option>
+                                        <option value="retro">Retro</option>
+                                        <option value="vaporwave">Vaporwave</option>
+                                        <option value="vintage poster">Vintage Poster</option>
+                                        <option value="fashion magazine">Fashion Magazine</option>
+                                        <option value="propaganda poster">Propaganda Poster</option>
+                                        <option value="glitch art">Glitch Art</option>
+                                        <option value="zentangle">Zentangle</option>
+                                        <option value="curvilinear forms">Curvilinear Forms</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- === (NUEVO) === -->
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label for="style-light-t2i" class="label-base">Luz</label>
+                                    <select id="style-light-t2i" class="input-base style-builder-component" data-panel-prefix="t2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="obscuro">Obscuro</option>
+                                        <option value="dia">Dia</option>
+                                        <option value="luz">Luz</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="style-detail-t2i" class="label-base">Detalle</label>
+                                    <select id="style-detail-t2i" class="input-base style-builder-component" data-panel-prefix="t2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="alto">Alto</option>
+                                        <option value="medio">Medio</option>
+                                        <option value="extremo">Extremo</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="style-muscular-t2i" class="label-base">Muscular</label>
+                                    <select id="style-muscular-t2i" class="input-base style-builder-component" data-panel-prefix="t2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="alto">Alto</option>
+                                        <option value="medio">Medio</option>
+                                        <option value="extremo">Extremo</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="style-ndxl-t2i" class="label-base">NDXL</label>
+                                    <select id="style-ndxl-t2i" class="input-base style-builder-component" data-panel-prefix="t2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="alto">Alto</option>
+                                        <option value="medio">Medio</option>
+                                        <option value="extremo">Extremo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- === FIN NUEVO === -->
+
+                            <div>
+                                <label for="style-prompt-t2i" class="label-base">Tags de Estilo (Generados)</label>
+                                <textarea id="style-prompt-t2i" rows="3" class="input-base" placeholder="Los tags de tu estilo aparecerán aquí..."></textarea>
                             </div>
                         </div>
                         
@@ -600,9 +711,118 @@
                                     <textarea id="negative-prompt-i2i" rows="4" class="input-base" placeholder="worst quality, ...">worst quality, low quality, lowres, (deformed, distorted, disfigured:1.3), bad anatomy, bad hands, (missing fingers), (extra fingers), (fused fingers), (extra limbs), (fused limbs), (missing limbs), (extra digit), (fused digit), (mutated hands:1.3), (poorly drawn hands:1.3), (poorly drawn face:1.3), (long neck:1.3), (extra legs)</textarea>
                                 </div>
                                 <div>
-                                    <label for="styles-i2i" class="label-base">Estilos</label>
+                                    <label for="styles-i2i" class="label-base">Estilos (A1111)</label>
                                     <select id="styles-i2i" class="input-base"></select>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- (MODIFICADO) Constructor de Estilo -->
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Constructor de Estilo</h2>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <!-- Columna Género -->
+                                <div>
+                                    <label for="style-gender-i2i" class="label-base">Género</label>
+                                    <select id="style-gender-i2i" class="input-base style-builder-component" data-panel-prefix="i2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="male">Hombre</option>
+                                        <option value="female">Mujer</option>
+                                    </select>
+                                </div>
+                                <!-- Columna Estilo Artístico -->
+                                <div>
+                                    <label for="style-artistic-i2i" class="label-base">Estilo Artístico</label>
+                                    <select id="style-artistic-i2i" class="input-base style-builder-component" data-panel-prefix="i2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="decoupage">Decoupage</option>
+                                        <option value="encaustic">Encaustic</option>
+                                        <option value="monotype print">Monotype Print</option>
+                                        <option value="monoprinting">Monoprinting</option>
+                                        <option value="lithography print">Lithography Print</option>
+                                        <option value="linocut">Linocut</option>
+                                        <option value="woodblock print">Woodblock Print</option>
+                                        <option value="sumi-e drawing">Sumi-e Drawing</option>
+                                        <option value="Ukiyo-e">Ukiyo-e</option>
+                                        <option value="Shin-hanga">Shin-hanga</option>
+                                        <option value="anime">Anime</option>
+                                        <option value="manga art">Manga Art</option>
+                                        <option value="Chinese watercolor">Chinese Watercolor</option>
+                                        <option value="Chinese brush painting">Chinese Brush Painting</option>
+                                        <option value="Aboriginal dot painting">Aboriginal Dot Painting</option>
+                                        <option value="Tribal art">Tribal Art</option>
+                                        <option value="Delftware">Delftware</option>
+                                        <option value="Byzantine mosaics">Byzantine Mosaics</option>
+                                        <option value="concept art">Concept Art</option>
+                                        <option value="one line art">One Line Art</option>
+                                        <option value="graphic illustration style">Graphic Illustration</option>
+                                        <option value="scientific illustration">Scientific Illustration</option>
+                                        <option value="storybook illustration">Storybook Illustration</option>
+                                        <option value="comic book style">Comic Book Style</option>
+                                        <option value="coloring book page">Coloring Book Page</option>
+                                        <option value="cel shading">Cel Shading</option>
+                                        <option value="vector">Vector</option>
+                                        <option value="cartoon">Cartoon</option>
+                                        <option value="caricature">Caricature</option>
+                                        <option value="sticker">Sticker</option>
+                                        <option value="graffiti">Graffiti</option>
+                                        <option value="psychedelic">Psychedelic</option>
+                                        <option value="retro">Retro</option>
+                                        <option value="vaporwave">Vaporwave</option>
+                                        <option value="vintage poster">Vintage Poster</option>
+                                        <option value="fashion magazine">Fashion Magazine</option>
+                                        <option value="propaganda poster">Propaganda Poster</option>
+                                        <option value="glitch art">Glitch Art</option>
+                                        <option value="zentangle">Zentangle</option>
+                                        <option value="curvilinear forms">Curvilinear Forms</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- === (NUEVO) === -->
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label for="style-light-i2i" class="label-base">Luz</label>
+                                    <select id="style-light-i2i" class="input-base style-builder-component" data-panel-prefix="i2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="obscuro">Obscuro</option>
+                                        <option value="dia">Dia</option>
+                                        <option value="luz">Luz</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="style-detail-i2i" class="label-base">Detalle</label>
+                                    <select id="style-detail-i2i" class="input-base style-builder-component" data-panel-prefix="i2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="alto">Alto</option>
+                                        <option value="medio">Medio</option>
+                                        <option value="extremo">Extremo</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="style-muscular-i2i" class="label-base">Muscular</label>
+                                    <select id="style-muscular-i2i" class="input-base style-builder-component" data-panel-prefix="i2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="alto">Alto</option>
+                                        <option value="medio">Medio</option>
+                                        <option value="extremo">Extremo</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="style-ndxl-i2i" class="label-base">NDXL</label>
+                                    <select id="style-ndxl-i2i" class="input-base style-builder-component" data-panel-prefix="i2i">
+                                        <option value="none">Ninguno</option>
+                                        <option value="alto">Alto</option>
+                                        <option value="medio">Medio</option>
+                                        <option value="extremo">Extremo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- === FIN NUEVO === -->
+                            
+                            <div>
+                                <label for="style-prompt-i2i" class="label-base">Tags de Estilo (Generados)</label>
+                                <textarea id="style-prompt-i2i" rows="3" class="input-base" placeholder="Los tags de tu estilo aparecerán aquí..."></textarea>
                             </div>
                         </div>
 
@@ -926,7 +1146,8 @@
                 eras: ["", "1400s", "1500s", "1700s", "90s", "archaic", "chenla", "fantastic realism", "joseon dynasty", "yoruba", "renaissance", "baroque", "victorian era", "edwardian era", "art nouveau", "art deco", "cyberpunk era", "stone age", "bronze age", "roman empire"],
                 textures: ["", "3d fractals", "animal prints", "blistered", "blotchy", "brittle", "brushed", "bumpy", "chalky", "chipped", "chiseled", "coarse", "corded", "corky", "corroded", "cracked", "creased", "crinkled", "crumbly", "crusty", "elastic", "embossed", "embroidered", "feathery", "fibrous", "flaky", "fluffy", "frosted", "furrowed", "fuzzy", "glistening", "glittering", "glossy", "glowing", "granular", "gritty", "honeycombed", "iridescent", "jagged", "knitted", "leathery", "lustrous", "marbled", "matte", "metallic", "gelatinous", "powdery", "woven", "mossy", "pitted", "plush", "polished", "porous", "prickly", "ribbed", "rough", "rusted", "sandy", "scaly", "shining", "shiny", "silky", "slick", "slimy", "smooth", "sparkling", "spongy", "stained", "suede-like", "veined", "velvety", "viscous", "wavy", "weathered", "(gloss skin:2.5), (skin texture:1.4), (husband:1.1), (dynamic pose:2), high angle, real color tones, natural beauty, real life, photo, normal photo, camera, shadow, (pronounced bukeh effect:2), real, in love, detailed skin, ultra high quality hair, ultra detailed hair, ultra high quality nails,, (Street Art:1), graffiti tags, urban wall, spray texture, (Banksy aesthetic:1), (Vaporwave Aesthetic AI:2.5), (pastel gradients), (neon outlines:1.2), classical marble statues, (retro 80s arcade feel:2), tropical plants, hazy lighting, nostalgic digital art, (VHS filter), (geometric forms:1), SmoothNoob_Quality", "photorealistic, cinematic lighting, atmospheric, highly detailed, masterpiece,<LoRA:Cute_Emerald-V3:1.3>,<LoRA:MJ52:0.8>, (gloss skin:2.5), (skin texture:1.4), (husband:1.1),(character sketch:2.5), (multiple poses:4), (white background:2), (concept art:1.8), (dynamic poses:1.7), (line art:1.8), (character design:2), (full body views:1.5), (front side back:1.7), (clean lines:1.8), (minimalist:1.5), (highly detailed:2), (8k resolution:1.8), (same character:5)", "(cubist painting:2.5), (geometric shapes:2), (abstract forms:1.8), (Picasso style:2), (surrealist:2), (dream-like elements:1.7), (strange juxtapositions:1.5), (impressionist painting:2), (soft brush strokes:1.8), (vibrant colors:2), (glowing tones:1.5), (pop art:2.5), (bold colors:2), (iconic imagery:1.8), (geometric forms:1.7), (art nouveau:2), (flowing lines:1.8), (floral motifs:2), (elegant curves:1.5), (organic lines:1.7)", "(skin texture:1.4), (husband:3.6), (dynamic pose:2),(Enhanced stunning erotic beauty:3), (digitally enhanced:3), digital makeup, (beauty filters:4), Photoshop, masterpiece, best quality, ultra-detailed, 8k, cinematic, (hyperrealistic ethereal porcelain:2), (subsurface scattering:1), (ambient occlusion:3.1), (global illumination:3.1), (volumetric lighting:3.1), dynamic lighting, realistic materials, photorealism, soft (cinematic glow:2), (ultra detail glossy:2), enhance texture, (post-reallife realism:2.3), (perfect artificial creation:2.1), (virtualization reality:2), (motion graphics:1.1), Art Deco, geometric elegance, gold chrome, (1920s luxury style:3), (Drip Painting:1.1), paint splatter, (Jackson Pollock inspired chaos:4), (energetic brushwork:3.5), expressive texture, (Unreal Engine Render:1.3), (hyper-realistic 3D:3.4), (cinematic lighting:3.4), (game engine aesthetic:2), detailed textures, (physically based rendering (PBR):1), (atmospheric effects:3.3), (high polygon count:2), realistic subsurface scattering, (polished render:2.5), (dramatic shadows:3)", "(anime style render:2.4), Street Art, graffiti tags, urban wall, spray texture, (Banksy aesthetic:3), (Hyperrealistic Surrealism:4.1), impossibly sharp focus, dreamlike elements, distorted reality, uncanny valley, detailed textures, (bizarre juxtapositions:2.5), vibrant yet unsettling colors, (psychologically charged scene:3), (fine art realism with a twist:5), (steampunk:3.3)", "Photorealism, hyper-detailed painting, lifelike shadows, crisp realism, studio lighting, (Digital Impressionism:2), painterly brushstrokes, vibrant color fields, soft edges, ethereal light, digital paint texture, modern interpretation of light and atmosphere, atmospheric perspective, expressive brushwork, blurred forms", "moody atmosphere:1.4, standing in a rain-soaked alley with wet cobblestones, leaning against a brick wall, cigarette in hand, (genitalia bulge:1.5), (prominent genitalia bulge:1.4), ( etailed male crotch:1.3), low angle shot, dynamic composition, volumetric fog, <lora:lightingSlider:-1.4>, score_9, score_8_up, score_7_up"],
                 colors: ["ablaze colors", "apricot color", "aqua colors", "ash gray", "auburn color", "baby blue", "baby pink", "beaming colors", "beige colors", "black and white", "bleached colors", "blood red", "blue violet", "bold colors", "bright colors", "bronze colors", "brown", "burgundy colors", "burnt sienna", "canary yellow", "candy colors", "cerulean blue", "chartreuse color", "chestnut color", "cobalt blue", "cold colors", "colorful", "colorless", "cool colors", "coral color", "crimson red", "cyan", "danish pastel colors", "dark colors", "deep colors", "desaturated", "dim colors", "earth tones", "electric blue", "electric colors", "fiery colors", "fluorescent colors", "forest green", "golden yellow", "gradient colors", "hot pink", "hunter green", "indigo", "ivory", "monochromatic", "triadic colors", "analogous colors", "complementary colors", "viridian", "celadon", "vermilion", "lavender blush", "light colors", "lime colors", "magenta color", "mahogany", "maroon", "mauve", "midnight blue", "mint color", "mocha", "muted colors", "navy blue", "neon colors", "neutral colors", "olive color", "orange red", "pale colors", "pastel colors", "peach color", "pink color", "platinum color", "prismatic colors", "prussian blue", "radiant colors", "red", "retro colors", "rich colors", "rose color", "royal blue", "sepia colors", "silver colors", "sky blue", "slate gray", "smoky black", "spectrum colors", "spring green", "tan color", "taupe", "teal", "technicolor", "tropical colors", "turquoise color", "vantablack", "vibrant colors", "vintage colors", "violet", "vivid colors", "warm colors", "washed out colors"],
-                themes: ["", "academicism", "acid pixie", "acidwave", "adventurecore", "afrofuturism", "agropunk", "anachronism", "astropunk", "atompunk", "autumn", "biopunk", "bloomcore", "bohemian", "bronzepunk", "byzantine", "chaotic", "contemporary realism", "cosmic horror", "crusaderpunk", "crustpunk", "cybergoth", "dark fantasy", "dark nautical", "decopunk", "dieselpunk", "dreamy", "emo", "ethereal", "evil-theme", "extraterrestrial", "fairytale", "fantasy", "farmcore", "flowercore", "futuristic", "goblincore", "gothic", "hallyu", "happycore", "haunting", "hikecore", "lo-fi", "magic-realism", "mannerism", "mythology", "orientalism", "prehistoricore", "rainbowcore", "retro", "retrofuturism", "robotic", "romanticism", "solarpunk", "minimalism", "maximalism", "bioluminescent", "slimepunk", "socialist realism", "space opera", "sparklecore", "spring", "steampunk", "summer", "synthwave", "tiki", "tribal art", "tropical", "urbancore", "vaporwave", "winter", "witchcore", "wonderland"],
+                themes: ["", "academicism", "acid pixie", "acidwave", "adventurecore", "afrofuturism", "agropunk", "anachronism", "astropunk", "atompunk", "autumn", "biopunk", "bloomcore", "bohemian", "bronzepunk", "byzantine", "chaotic", "contemporary realism", "cosmic horror", "crusaderpunk", "crustpunk", "cybergoth", "dark fantasy", "dark nautical", "decopunk", "dieselpunk", "dreamy", "emo", "ethereal", "evil-theme", "extraterrestrial", "fairytale", "fantasy", "farmcore", "flowercore", "futuristic", "goblincore", "gothic", "hallyu", "happycore", "haunting", "hikecore", "lo-fi", "magic-realism", "mannerism", "mythology",
+                "orientalism", "prehistoricore", "rainbowcore", "retro", "retrofuturism", "robotic", "romanticism", "solarpunk", "minimalism", "maximalism", "bioluminescent", "slimepunk", "socialist realism", "space opera", "sparklecore", "spring", "steampunk", "summer", "synthwave", "tiki", "tribal art", "tropical", "urbancore", "vaporwave", "winter", "witchcore", "wonderland"],
                 compositions: ["", "full body character design", "wide shot", "game assets", "album cover", "book cover", "brand identity", "character sheet", "coloring book page", "comic strip", "commercial ad", "diagram", "enamel pin", "fashion mockup", "flowchart", "game UI", "house plan", "icon set", "infographic", "interior design", "jewelry design", "knolling", "logo design", "magazine cover", "menu design", "mood board", "poster", "propaganda poster", "seamless pattern", "golden ratio", "rule of thirds", "isometric view", "blueprint schematic", "architectural drawing", "technical illustration", "concept art", "storyboard"],
                 extra: ["ultra detail", "ultra realism", "cinematic", "photorealistic", "no reflection", "perfect details", "volumetric lighting", "depth of field", "caustics", "god rays", "soft lighting", "hard lighting", "dramatic lighting", "subsurface scattering", "realistic"],
             },
@@ -978,6 +1199,84 @@
             }
         };
 
+        // --- (MODIFICADO) Definición de Tags de Estilo ---
+        const STYLE_TAGS = {
+            'gender': {
+                'none': '',
+                'male': '1boy, male focus, masculine, man',
+                'female': '1girl, female focus, feminine, woman'
+            },
+            'artistic': {
+                'none': '',
+                'decoupage': 'decoupage, layered paper art, collage style',
+                'encaustic': 'encaustic painting, wax-based art, textured layers',
+                'monotype print': 'monotype print, singular print art, ink press style',
+                'monoprinting': 'monoprinting, unique print, ink transfer aesthetic',
+                'lithography print': 'lithography print, stone printing, fine art print',
+                'linocut': 'linocut, lino print, relief printing style, bold lines',
+                'woodblock print': 'woodblock print, woodcut, relief print aesthetic',
+                'sumi-e drawing': 'sumi-e drawing, Japanese ink wash painting, brush painting',
+                'Ukiyo-e': 'Ukiyo-e, Japanese woodblock print, pictures of the floating world',
+                'Shin-hanga': 'Shin-hanga, modern Japanese prints, new prints style',
+                'anime': 'anime style, anime aesthetic, manga style, detailed anime',
+                'manga art': 'manga art, manga style, black and white manga, screentones',
+                'Chinese watercolor': 'Chinese watercolor, guohua, traditional Chinese painting',
+                'Chinese brush painting': 'Chinese brush painting, ink wash painting',
+                'Aboriginal dot painting': 'Aboriginal dot painting, Australian dot art, indigenous art style',
+                'Tribal art': 'Tribal art, ethnic patterns, indigenous aesthetic',
+                'Delftware': 'Delftware, blue and white pottery, Dutch ceramic style',
+                'Byzantine mosaics': 'Byzantine mosaics, mosaic art, gold leaf, tesserae',
+                'concept art': 'concept art, digital painting, fantasy art, sci-fi art, environmental design',
+                'one line art': 'one line art, continuous line drawing, minimalist art',
+                'graphic illustration style': 'graphic illustration, flat design, vector art',
+                'scientific illustration': 'scientific illustration, botanical illustration, anatomical drawing, detailed, precise',
+                'storybook illustration': 'storybook illustration, whimsical, charming, children\'s book art',
+                'comic book style': 'comic book style, comic art, ink lines, halftone, pop art',
+                'coloring book page': 'coloring book page, line art, black and white, outlines',
+                'cel shading': 'cel shading, toon shading, animated style',
+                'vector': 'vector art, vector illustration, flat colors, clean lines, graphic design',
+                'cartoon': 'cartoon, cartoon style, exaggerated features, animated cartoon',
+                'caricature': 'caricature, exaggerated portrait, humorous art',
+                'sticker': 'sticker, sticker design, die-cut, vinyl sticker style',
+                'graffiti': 'graffiti, street art, spray paint art, urban art',
+                'psychedelic': 'psychedelic, psychedelic art, trippy, vibrant colors, swirling patterns',
+                'retro': 'retro, retro style, 1950s style, 1960s style, 1970s style',
+                'vaporwave': 'vaporwave, vaporwave aesthetic, 1980s retro, neon, glitch art',
+                'vintage poster': 'vintage poster, retro poster design, aged paper',
+                'fashion magazine': 'fashion magazine, fashion illustration, vogue style, editorial fashion',
+                'propaganda poster': 'propaganda poster, constructivist, bold typography, political art',
+                'glitch art': 'glitch art, datamosh, pixel sorting, digital distortion',
+                'zentangle': 'zentangle, intricate patterns, abstract drawing, meditative art',
+                'curvilinear forms': 'curvilinear forms, flowing lines, organic shapes, art nouveau'
+            },
+            // --- (NUEVO) ---
+            'light': {
+                'none': '',
+                'obscuro': '<lora:Lighting slider IL v1.0:-1.2>',
+                'dia': '<lora:Lighting slider IL v1.0:1>',
+                'luz': '<lora:Lighting slider IL v1.0:1.6>'
+            },
+            'detail': {
+                'none': '',
+                'alto': '<lora:DetailerILv2-000008:2.2>',
+                'medio': '<lora:DetailerILv2-000008:1.2>',
+                'extremo': '<lora:DetailerILv2-000008:4>'
+            },
+            'muscular': {
+                'none': '',
+                'alto': '<lora:Muscular-10:2>',
+                'medio': '<lora:Muscular-10:1.5>',
+                'extremo': '<lora:Muscular-10:4>'
+            },
+            'ndxl': {
+                'none': '',
+                'alto': '<lora:NDXL:1.6>',
+                'medio': '<lora:NDXL:1.3>',
+                'extremo': '<lora:NDXL:4>'
+            }
+            // --- FIN NUEVO ---
+        };
+
         // --- Estado Global ---
         const G_STATE = {
             gradioUrl: '',
@@ -997,64 +1296,17 @@
             currentConfig: {} 
         };
 
-        // --- Elementos de la UI ---
-        const splashScreen = document.getElementById('splash-screen');
-        const appContainer = document.getElementById('app-container');
-        const connectBtn = document.getElementById('connect-btn');
-        const urlInput = document.getElementById('gradio-url');
-        const initialStatusMessage = document.getElementById('initial-status-message');
-        const statusMessage = document.getElementById('status-message');
-        const outputImage = document.getElementById('output-image');
-        const placeholder = document.getElementById('placeholder');
-        const downloadBtn = document.getElementById('download-btn');
-        const copyMetadataBtn = document.getElementById('copy-metadata-btn');
-        const metadataDisplay = document.getElementById('metadata-display');
-        const refreshResourcesBtn = document.getElementById('refresh-resources-btn');
-        
-        // --- Progreso ---
-        const progressContainer = document.getElementById('progress-container');
-        const generationControls = document.getElementById('generation-controls');
-        const interruptBtn = document.getElementById('interrupt-btn');
-        const skipBtn = document.getElementById('skip-btn');
-        
-        // --- Botones de Generar (FAB) ---
-        const generateTxt2ImgBtn = document.getElementById('generate-btn-txt2img');
-        const generateImg2ImgBtn = document.getElementById('generate-btn-img2img');
-        const generateExtrasBtn = document.getElementById('generate-btn-extras');
-        const allGenerateBtns = [generateTxt2ImgBtn, generateImg2ImgBtn, generateExtrasBtn];
-
-        // --- Prompts y Tags ---
-        const promptT2I = document.getElementById('prompt-t2i');
-        const promptI2I = document.getElementById('prompt-i2i');
-        
-        // --- (NUEVO) Visor Modal ---
-        const modal = document.getElementById('image-viewer-modal');
-        const modalImage = document.getElementById('modal-image');
-        const modalCloseBtn = document.getElementById('modal-close-btn');
-
-        // --- (NUEVO) Selectores (Dropdowns) ---
-        const E_SELECTORS_NODES = {
-            model: [document.getElementById('model-t2i'), document.getElementById('model-i2i')],
-            vae: [document.getElementById('vae-t2i'), document.getElementById('vae-i2i')],
-            sampler: [document.getElementById('sampler-t2i'), document.getElementById('sampler-i2i')],
-            scheduler: [document.getElementById('scheduler-t2i'), document.getElementById('scheduler-i2i')],
-            lora: [document.getElementById('lora-t2i'), document.getElementById('lora-i2i')],
-            styles: [document.getElementById('styles-t2i'), document.getElementById('styles-i2i')],
-            faceRestorer: [document.getElementById('face-restorer-t2i'), document.getElementById('face-restorer-i2i'), document.getElementById('face-restorer-extras')],
-            hrUpscaler: [document.getElementById('hr-upscaler-t2i')],
-            extrasUpscaler1: [document.getElementById('extras-upscaler-1')],
-            extrasUpscaler2: [document.getElementById('extras-upscaler-2')],
-            controlNetModel: [document.getElementById('controlnet-model-t2i'), document.getElementById('controlnet-model-i2i')],
-            controlNetModule: [document.getElementById('controlnet-module-t2i'), document.getElementById('controlnet-module-i2i')],
-        };
-        
         // --- Helpers de UI ---
         function showInitialStatus(message, isError = false) {
+            const initialStatusMessage = document.getElementById('initial-status-message');
+            if (!initialStatusMessage) return;
             initialStatusMessage.textContent = message;
             initialStatusMessage.className = isError ? 'text-center text-red-400 mt-4 text-sm' : 'text-center text-gray-500 mt-4 text-sm';
         }
 
         function showStatus(message, isError = false) {
+            const statusMessage = document.getElementById('status-message');
+            if (!statusMessage) return;
             statusMessage.textContent = message;
             statusMessage.className = isError ? 'text-center text-red-400 mb-4' : 'text-center text-gray-400 mb-4';
         }
@@ -1062,7 +1314,7 @@
         function showLoading(button) {
             button.disabled = true;
             button.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="http://www.w3.org/2000/svg">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -1076,16 +1328,26 @@
         }
 
         function setGenerateButtons(disabled) {
-            allGenerateBtns.forEach(btn => btn.disabled = disabled);
+            // (CORREGIDO) Definir los botones aquí adentro o pasarlos como argumento
+            // Mejor pasarlos como argumento desde el listener DOMContentLoaded
+            const allGenerateBtns = [
+                document.getElementById('generate-btn-txt2img'),
+                document.getElementById('generate-btn-img2img'),
+                document.getElementById('generate-btn-extras')
+            ];
+            allGenerateBtns.forEach(btn => {
+                if(btn) btn.disabled = disabled;
+            });
         }
         
         function showGenerationProgress(button) {
             G_STATE.isGenerating = true;
             setGenerateButtons(true);
-            generationControls.style.display = 'flex';
+            const generationControls = document.getElementById('generation-controls');
+            if (generationControls) generationControls.style.display = 'flex';
             
             button.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="http://www.w3.org/2000/svg">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -1096,7 +1358,9 @@
         function hideGenerationProgress(button, originalText) {
             G_STATE.isGenerating = false;
             setGenerateButtons(false);
-            generationControls.style.display = 'none';
+            const generationControls = document.getElementById('generation-controls');
+            if(generationControls) generationControls.style.display = 'none';
+            
             button.innerHTML = `
                 <span class="material-icons-outlined">auto_fix_high</span>
                 ${originalText}
@@ -1104,8 +1368,10 @@
         }
         
         function toggleAppVisibility(show) {
-            splashScreen.style.display = show ? 'none' : 'flex';
-            appContainer.style.display = show ? 'block' : 'none';
+            const splashScreen = document.getElementById('splash-screen');
+            const appContainer = document.getElementById('app-container');
+            if(splashScreen) splashScreen.style.display = show ? 'none' : 'flex';
+            if(appContainer) appContainer.style.display = show ? 'block' : 'none';
         }
 
         // --- Helper de API ---
@@ -1148,6 +1414,24 @@
         
         // --- Lógica de Carga de Recursos (¡¡AMPLIADA!!) ---
         async function loadAndPopulateResources(isRefresh = false) {
+            // (CORREGIDO) Definir E_SELECTORS_NODES aquí o pasarlo como argumento
+            // Es más limpio definirlo aquí ya que esta función solo se llama
+            // después de que el DOM esté listo (asegurado por la lógica de conexión).
+            const E_SELECTORS_NODES = {
+                model: [document.getElementById('model-t2i'), document.getElementById('model-i2i')],
+                vae: [document.getElementById('vae-t2i'), document.getElementById('vae-i2i')],
+                sampler: [document.getElementById('sampler-t2i'), document.getElementById('sampler-i2i')],
+                scheduler: [document.getElementById('scheduler-t2i'), document.getElementById('scheduler-i2i')],
+                lora: [document.getElementById('lora-t2i'), document.getElementById('lora-i2i')],
+                styles: [document.getElementById('styles-t2i'), document.getElementById('styles-i2i')],
+                faceRestorer: [document.getElementById('face-restorer-t2i'), document.getElementById('face-restorer-i2i'), document.getElementById('face-restorer-extras')],
+                hrUpscaler: [document.getElementById('hr-upscaler-t2i')],
+                extrasUpscaler1: [document.getElementById('extras-upscaler-1')],
+                extrasUpscaler2: [document.getElementById('extras-upscaler-2')],
+                controlNetModel: [document.getElementById('controlnet-model-t2i'), document.getElementById('controlnet-model-i2i')],
+                controlNetModule: [document.getElementById('controlnet-module-t2i'), document.getElementById('controlnet-module-i2i')],
+            };
+            
             showStatus('Cargando recursos (modelos, loras...)...', false);
             try {
                 G_STATE.currentConfig = await apiGet('/sdapi/v1/options');
@@ -1211,7 +1495,9 @@
                 
             } catch (error) {
                 const errorMsg = `Error al cargar recursos: ${error.message}. Asegúrate de que ControlNet está instalado si hay errores con 'controlnet'.`;
-                if (appContainer.style.display === 'none') {
+                // (CORREGIDO) Usar showInitialStatus si la app no es visible
+                const appContainer = document.getElementById('app-container');
+                if (appContainer && appContainer.style.display === 'none') {
                     showInitialStatus(errorMsg, true);
                 } else {
                     showStatus(errorMsg, true);
@@ -1225,10 +1511,14 @@
                 showStatus('No se puede refrescar mientras se procesa.', true);
                 return;
             }
+            
+            // (CORREGIDO) Obtener el botón aquí
+            const refreshResourcesBtn = document.getElementById('refresh-resources-btn');
+            if (!refreshResourcesBtn) return;
 
             const originalText = refreshResourcesBtn.innerHTML;
             refreshResourcesBtn.disabled = true;
-            refreshResourcesBtn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            refreshResourcesBtn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
             showStatus('Refrescando listas en el servidor...', false);
 
             try {
@@ -1247,40 +1537,6 @@
                 refreshResourcesBtn.innerHTML = originalText;
             }
         }
-
-        // --- Lógica Principal de Conexión ---
-        connectBtn.addEventListener('click', async () => {
-            let url = urlInput.value.trim().replace(/\/$/, '');
-            if (!url || !url.startsWith('https://')) {
-                showInitialStatus('Por favor, ingresa una URL válida que comience con "https://"', true);
-                return;
-            }
-            G_STATE.gradioUrl = url;
-            localStorage.setItem('gradioUrl', url); 
-            const originalText = connectBtn.innerHTML;
-            showLoading(connectBtn); 
-            showInitialStatus('Conectando y cargando recursos...');
-
-            try {
-                await loadAndPopulateResources(false); 
-                toggleAppVisibility(true);
-                showStatus('¡Conectado! Listo para generar.', false);
-
-            } catch (error) {
-                showInitialStatus(`Error al conectar. Verifica la URL y la consola.`, true);
-            } finally {
-                hideLoading(connectBtn, originalText); 
-            }
-        });
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedUrl = localStorage.getItem('gradioUrl');
-            if (savedUrl) {
-                urlInput.value = savedUrl;
-            }
-        });
-
-        refreshResourcesBtn.addEventListener('click', refreshResources);
 
         // (MODIFICADO) populateSelect ahora acepta funciones para value/text
         function populateSelect(selectElements, items, valueKey, textKey, firstOption, selectedValue) {
@@ -1316,79 +1572,39 @@
         }
 
         // --- Lógica de Pestañas (¡¡AMPLIADA!!) ---
-        const tabButtons = {
-            txt2img: document.getElementById('tab-btn-txt2img'),
-            img2img: document.getElementById('tab-btn-img2img'),
-            extras: document.getElementById('tab-btn-extras'),
-            tagger: document.getElementById('tab-btn-tagger'),
-            config: document.getElementById('tab-btn-config'),
-        };
-        const tabPanels = {
-            txt2img: document.getElementById('panel-txt2img'),
-            img2img: document.getElementById('panel-img2img'),
-            extras: document.getElementById('panel-extras'),
-            tagger: document.getElementById('panel-tagger'),
-            config: document.getElementById('panel-config'),
-        };
-
         function switchTab(targetTab) {
+            // (CORREGIDO) Definir botones y paneles aquí
+            const tabButtons = {
+                txt2img: document.getElementById('tab-btn-txt2img'),
+                img2img: document.getElementById('tab-btn-img2img'),
+                extras: document.getElementById('tab-btn-extras'),
+                tagger: document.getElementById('tab-btn-tagger'),
+                config: document.getElementById('tab-btn-config'),
+            };
+            const tabPanels = {
+                txt2img: document.getElementById('panel-txt2img'),
+                img2img: document.getElementById('panel-img2img'),
+                extras: document.getElementById('panel-extras'),
+                tagger: document.getElementById('panel-tagger'),
+                config: document.getElementById('panel-config'),
+            };
+            const generateTxt2ImgBtn = document.getElementById('generate-btn-txt2img');
+            const generateImg2ImgBtn = document.getElementById('generate-btn-img2img');
+            const generateExtrasBtn = document.getElementById('generate-btn-extras');
+
             Object.keys(tabButtons).forEach(key => {
-                tabButtons[key].classList.toggle('active', key === targetTab);
+                if (tabButtons[key]) tabButtons[key].classList.toggle('active', key === targetTab);
             });
             Object.keys(tabPanels).forEach(key => {
-                tabPanels[key].classList.toggle('active', key === targetTab);
+                if (tabPanels[key]) tabPanels[key].classList.toggle('active', key === targetTab);
             });
             
             // Lógica del FAB
-            generateTxt2ImgBtn.style.display = (targetTab === 'txt2img') ? 'flex' : 'none';
-            generateImg2ImgBtn.style.display = (targetTab === 'img2img') ? 'flex' : 'none';
-            generateExtrasBtn.style.display = (targetTab === 'extras') ? 'flex' : 'none';
+            if (generateTxt2ImgBtn) generateTxt2ImgBtn.style.display = (targetTab === 'txt2img') ? 'flex' : 'none';
+            if (generateImg2ImgBtn) generateImg2ImgBtn.style.display = (targetTab === 'img2img') ? 'flex' : 'none';
+            if (generateExtrasBtn) generateExtrasBtn.style.display = (targetTab === 'extras') ? 'flex' : 'none';
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            Object.keys(tabButtons).forEach(key => {
-                tabButtons[key].addEventListener('click', () => switchTab(key));
-            });
-            switchTab('txt2img'); // Empezar en Txt2Img
-
-            // Listeners para auto-prompt
-            document.querySelectorAll('.auto-prompt-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const targetId = e.currentTarget.dataset.target;
-                    const targetTextarea = document.getElementById(targetId);
-                    if (targetTextarea) {
-                        targetTextarea.value = AUTO_PROMPT_GENERATOR.generatePrompt();
-                        targetTextarea.scrollTop = targetTextarea.scrollHeight;
-                        targetTextarea.focus();
-                    }
-                });
-            });
-        });
-
-        // --- Lógica de Seed Aleatoria ---
-        document.getElementById('random-seed-t2i').addEventListener('click', () => {
-            document.getElementById('seed-t2i').value = -1;
-        });
-        document.getElementById('random-seed-i2i').addEventListener('click', () => {
-            document.getElementById('seed-i2i').value = -1;
-        });
-        
-        // --- Añadir Lora al Prompt ---
-        document.querySelectorAll('.add-lora-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetId = btn.dataset.target;
-                const promptInput = document.getElementById(targetId);
-                const loraSelectId = targetId.replace('prompt', 'lora');
-                const selectedLora = document.getElementById(loraSelectId).value;
-                if (!selectedLora || selectedLora === "None") return;
-                promptInput.value += ` <lora:${selectedLora}:1> `;
-                promptInput.focus();
-                const newCursorPosition = promptInput.value.length;
-                promptInput.setSelectionRange(newCursorPosition, newCursorPosition);
-            });
-        });
-        
         // --- (NUEVO) Manejo de Subida de Imagen (Generalizado) ---
         function handleImageUpload(e, previewId, placeholderId, stateKey) {
             const file = e.target.files[0];
@@ -1397,58 +1613,40 @@
             
             if (!file) {
                 G_STATE.uploadedImageBase64[stateKey] = null;
-                previewEl.classList.remove('active');
-                placeholderEl.classList.remove('hidden');
+                if(previewEl) previewEl.classList.remove('active');
+                if(placeholderEl) placeholderEl.classList.remove('hidden');
                 return;
             }
             const reader = new FileReader();
             reader.onloadend = () => {
                 const dataUrl = reader.result;
-                previewEl.src = dataUrl;
-                previewEl.classList.add('active');
-                placeholderEl.classList.add('hidden');
+                if(previewEl) {
+                    previewEl.src = dataUrl;
+                    previewEl.classList.add('active');
+                }
+                if(placeholderEl) placeholderEl.classList.add('hidden');
                 G_STATE.uploadedImageBase64[stateKey] = dataUrl; // Guardar con prefijo data:
             };
             reader.readAsDataURL(file);
         }
 
-        // Asignar listeners de subida de imagen
-        document.getElementById('image-upload-i2i').addEventListener('change', (e) => handleImageUpload(e, 'image-preview-i2i', 'image-preview-placeholder-i2i', 'i2i'));
-        document.getElementById('image-upload-extras').addEventListener('change', (e) => handleImageUpload(e, 'image-preview-extras', 'image-preview-placeholder-extras', 'extras'));
-        document.getElementById('controlnet-image-upload-t2i').addEventListener('change', (e) => handleImageUpload(e, 'controlnet-image-preview-t2i', 'controlnet-image-placeholder-t2i', 'controlNetT2I'));
-        document.getElementById('controlnet-image-upload-i2i').addEventListener('change', (e) => handleImageUpload(e, 'controlnet-image-preview-i2i', 'controlnet-image-placeholder-i2i', 'controlNetI2I'));
-
-        
-        // --- Copiar Metadatos ---
-        copyMetadataBtn.addEventListener('click', () => {
-            if (G_STATE.lastMetadata) {
-                const tempTextArea = document.createElement('textarea');
-                tempTextArea.value = G_STATE.lastMetadata;
-                document.body.appendChild(tempTextArea);
-                tempTextArea.select();
-                try {
-                    document.execCommand('copy');
-                    showStatus('Metadatos copiados al portapapeles.', false);
-                } catch (err) {
-                    showStatus('Error al copiar metadatos.', true);
-                }
-                document.body.removeChild(tempTextArea);
-            }
-        });
-
-
         // --- Lógica de Progreso (¡¡ACTUALIZADA con PREVIEWS!!) ---
         function startProgressCheck() {
             if (G_STATE.progressInterval) return;
-            progressContainer.style.display = 'block';
+
+            const progressContainer = document.getElementById('progress-container');
             const progressBar = document.getElementById('progress-bar');
             const progressLabel = document.getElementById('progress-label');
-            progressBar.style.width = '0%';
-            progressLabel.textContent = 'Iniciando...';
+            const downloadBtn = document.getElementById('download-btn');
+            const copyMetadataBtn = document.getElementById('copy-metadata-btn');
+            
+            if(progressContainer) progressContainer.style.display = 'block';
+            if(progressBar) progressBar.style.width = '0%';
+            if(progressLabel) progressLabel.textContent = 'Iniciando...';
             
             // Ocultar botones de descarga/copia durante la generación/preview
-            downloadBtn.style.display = 'none';
-            copyMetadataBtn.style.display = 'none';
+            if(downloadBtn) downloadBtn.style.display = 'none';
+            if(copyMetadataBtn) copyMetadataBtn.style.display = 'none';
 
             G_STATE.progressInterval = setInterval(async () => {
                 if (!G_STATE.isGenerating) {
@@ -1461,21 +1659,25 @@
                     
                     if (data.progress > 0) {
                         const percent = Math.round(data.progress * 100);
-                        progressBar.style.width = `${percent}%`;
+                        if(progressBar) progressBar.style.width = `${percent}%`;
                         const step = data.state.sampling_step || 0;
                         const steps = data.state.sampling_steps || 0;
-                        progressLabel.textContent = `${percent}% (${step}/${steps}) - ETA: ${data.eta_relative.toFixed(1)}s`;
+                        if(progressLabel) progressLabel.textContent = `${percent}% (${step}/${steps}) - ETA: ${data.eta_relative.toFixed(1)}s`;
                     }
                     if (data.progress === 0 && data.state.job !== '') {
-                         progressBar.style.width = '5%';
-                         progressLabel.textContent = 'Esperando en la cola...';
+                         if(progressBar) progressBar.style.width = '5%';
+                         if(progressLabel) progressLabel.textContent = 'Esperando en la cola...';
                     }
                     
                     // (¡¡NUEVO!!) Mostrar la imagen de preview
                     if (data.current_image) {
-                        outputImage.src = 'data:image/png;base64,' + data.current_image;
-                        outputImage.classList.remove('hidden');
-                        placeholder.classList.add('hidden');
+                        const outputImage = document.getElementById('output-image');
+                        const placeholder = document.getElementById('placeholder');
+                        if(outputImage) {
+                            outputImage.src = 'data:image/png;base64,' + data.current_image;
+                            outputImage.classList.remove('hidden');
+                        }
+                        if(placeholder) placeholder.classList.add('hidden');
                     }
                     
                 } catch (e) {
@@ -1488,7 +1690,8 @@
             clearInterval(G_STATE.progressInterval);
             G_STATE.progressInterval = null;
             setTimeout(() => {
-                 progressContainer.style.display = 'none';
+                 const progressContainer = document.getElementById('progress-container');
+                 if(progressContainer) progressContainer.style.display = 'none';
             }, 1000);
         }
 
@@ -1502,7 +1705,6 @@
                 showStatus(`Error al interrumpir: ${e.message}`, true);
             }
         }
-        interruptBtn.addEventListener('click', handleInterrupt);
         
         async function handleSkip() {
             showStatus('Enviando solicitud de salto...', false);
@@ -1513,7 +1715,6 @@
                 showStatus(`Error al saltar: ${e.message}`, true);
             }
         }
-        skipBtn.addEventListener('click', handleSkip);
 
         // --- (NUEVO) Herramientas de Imagen ---
         async function handleInterrogate() {
@@ -1529,14 +1730,14 @@
                 };
                 const result = await apiPost('/sdapi/v1/interrogate', payload);
                 if (result.caption) {
-                    promptI2I.value = result.caption;
+                    const promptI2I = document.getElementById('prompt-i2i');
+                    if(promptI2I) promptI2I.value = result.caption;
                     showStatus('Prompt generado desde la imagen.', false);
                 }
             } catch (e) {
                 showStatus(`Error al interrogar: ${e.message}`, true);
             }
         }
-        document.getElementById('interrogate-btn-i2i').addEventListener('click', handleInterrogate);
         
         async function handlePngInfo() {
             if (!G_STATE.uploadedImageBase64.i2i) {
@@ -1549,7 +1750,10 @@
                     "image": G_STATE.uploadedImageBase64.i2i.split(',')[1] // PNG Info requiere base64 puro
                 };
                 const result = await apiPost('/sdapi/v1/png-info', payload);
-                if (result.info) {
+                
+                const metadataDisplay = document.getElementById('metadata-display');
+                
+                if (result.info && metadataDisplay) {
                     metadataDisplay.textContent = result.info;
                     metadataDisplay.classList.remove('hidden');
                     G_STATE.lastMetadata = result.info;
@@ -1557,11 +1761,14 @@
                     
                     // (Opcional) Intentar rellenar la UI
                     // Esto es complejo, por ahora solo mostramos la info.
-                    if (result.parameters && result.parameters.Prompt) {
+                    const promptI2I = document.getElementById('prompt-i2i');
+                    const negativePromptI2I = document.getElementById('negative-prompt-i2i');
+
+                    if (result.parameters && result.parameters.Prompt && promptI2I) {
                         promptI2I.value = result.parameters.Prompt;
                     }
-                    if (result.parameters && result.parameters["Negative prompt"]) {
-                        document.getElementById('negative-prompt-i2i').value = result.parameters["Negative prompt"];
+                    if (result.parameters && result.parameters["Negative prompt"] && negativePromptI2I) {
+                        negativePromptI2I.value = result.parameters["Negative prompt"];
                     }
                     // ... etc ...
                     
@@ -1570,12 +1777,13 @@
                 showStatus(`Error al leer PNG Info: ${e.message}`, true);
             }
         }
-        document.getElementById('pnginfo-btn-i2i').addEventListener('click', handlePngInfo);
         
         // --- (NUEVO) Pestaña de Configuración ---
         async function handleGetMemory() {
             const btn = document.getElementById('get-memory-btn');
             const display = document.getElementById('memory-display');
+            if(!btn || !display) return;
+            
             btn.disabled = true;
             display.style.display = 'block';
             display.textContent = 'Consultando...';
@@ -1605,11 +1813,12 @@
                 btn.disabled = false;
             }
         }
-        document.getElementById('get-memory-btn').addEventListener('click', handleGetMemory);
 
         // (¡¡NUEVO!!) Guardar Configuración de Preview
         async function handleSavePreviewConfig() {
             const btn = document.getElementById('save-preview-config-btn');
+            if(!btn) return;
+            
             const originalText = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = 'Guardando...';
@@ -1636,29 +1845,26 @@
                 btn.innerHTML = originalText;
             }
         }
-        document.getElementById('save-preview-config-btn').addEventListener('click', handleSavePreviewConfig);
 
         // --- (NUEVO) Lógica del Visor Modal ---
         function openModal() {
-            if (!G_STATE.isGenerating && outputImage.src && !outputImage.classList.contains('hidden')) {
-                modalImage.src = outputImage.src;
-                modal.classList.add('active');
+            const outputImage = document.getElementById('output-image');
+            const modalImage = document.getElementById('modal-image');
+            const modal = document.getElementById('image-viewer-modal');
+            
+            if (!G_STATE.isGenerating && outputImage && outputImage.src && !outputImage.classList.contains('hidden')) {
+                if(modalImage) modalImage.src = outputImage.src;
+                if(modal) modal.classList.add('active');
             }
         }
         function closeModal() {
-            modal.classList.remove('active');
-            modalImage.src = '';
+            const modal = document.getElementById('image-viewer-modal');
+            const modalImage = document.getElementById('modal-image');
+            if(modal) modal.classList.remove('active');
+            if(modalImage) modalImage.src = '';
         }
-        outputImage.addEventListener('click', openModal);
-        modalCloseBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) { // Cerrar solo si se hace clic en el fondo
-                closeModal();
-            }
-        });
 
-
-        // --- Lógica de Generación (¡¡CORREGIDA!!) ---
+        // --- Lógica de Generación (¡¡MODIFICADA!!) ---
         async function handleGeneration(mode) {
             if (G_STATE.isGenerating) return;
 
@@ -1675,32 +1881,44 @@
             let button;
             let buttonText;
             
-            // --- Construir Payload Base ---
+            // --- (MODIFICADO) Construir Payload Base ---
             const buildBasePayload = (prefix) => {
+                
+                // --- (NUEVO) Lógica para combinar prompts ---
+                const mainPromptEl = document.getElementById(`prompt-${prefix}`);
+                const stylePromptEl = document.getElementById(`style-prompt-${prefix}`);
+                
+                const mainPrompt = mainPromptEl ? mainPromptEl.value : "";
+                const stylePrompt = stylePromptEl ? stylePromptEl.value : "";
+                
+                // Combina los prompts. Usa .filter(Boolean) para eliminar strings vacíos
+                // y .join(', ') para unirlos con una coma si ambos existen.
+                const combinedPrompt = [mainPrompt, stylePrompt].filter(Boolean).join(', ');
+                // --- Fin de la nueva lógica ---
+
                 const p = {
-                    "prompt": document.getElementById(`prompt-${prefix}`).value,
-                    "negative_prompt": document.getElementById(`negative-prompt-${prefix}`).value,
-                    "styles": [document.getElementById(`styles-${prefix}`).value].filter(s => s && s !== "None"),
+                    // (MODIFICADO) Usar el prompt combinado
+                    "prompt": combinedPrompt,
+                    "negative_prompt": document.getElementById(`negative-prompt-${prefix}`)?.value || "",
+                    "styles": [document.getElementById(`styles-${prefix}`)?.value].filter(s => s && s !== "None"),
                     
-                    // (¡¡CORREGIDO!!) sampler_name y scheduler van en el root del payload.
-                    "sampler_name": document.getElementById(`sampler-${prefix}`).value,
-                    "scheduler": document.getElementById(`scheduler-${prefix}`).value,
+                    "sampler_name": document.getElementById(`sampler-${prefix}`)?.value,
+                    "scheduler": document.getElementById(`scheduler-${prefix}`)?.value,
                     
-                    "steps": parseInt(document.getElementById(`steps-${prefix}`).value, 10),
-                    "cfg_scale": parseFloat(document.getElementById(`cfg-${prefix}`).value),
-                    "width": parseInt(document.getElementById(`width-${prefix}`).value, 10),
-                    "height": parseInt(document.getElementById(`height-${prefix}`).value, 10),
-                    "n_iter": parseInt(document.getElementById(`batch-count-${prefix}`).value, 10),
+                    "steps": parseInt(document.getElementById(`steps-${prefix}`)?.value || 20, 10),
+                    "cfg_scale": parseFloat(document.getElementById(`cfg-${prefix}`)?.value || 7.0),
+                    "width": parseInt(document.getElementById(`width-${prefix}`)?.value || 1024, 10),
+                    "height": parseInt(document.getElementById(`height-${prefix}`)?.value || 1024, 10),
+                    "n_iter": parseInt(document.getElementById(`batch-count-${prefix}`)?.value || 1, 10),
                     "batch_size": 1, 
-                    "seed": parseInt(document.getElementById(`seed-${prefix}`).value, 10),
-                    "restore_faces": document.getElementById(`face-restorer-${prefix}`).value !== "None",
+                    "seed": parseInt(document.getElementById(`seed-${prefix}`)?.value || -1, 10),
+                    "restore_faces": (document.getElementById(`face-restorer-${prefix}`)?.value || "None") !== "None",
                     "send_images": true,
                     "save_images": false,
                     "override_settings": {
-                        // El modelo y VAE sí van aquí para sobreescribir la config del backend
-                        "sd_model_checkpoint": document.getElementById(`model-${prefix}`).value,
-                        "sd_vae": document.getElementById(`vae-${prefix}`).value,
-                        "face_restoration_model": document.getElementById(`face-restorer-${prefix}`).value
+                        "sd_model_checkpoint": document.getElementById(`model-${prefix}`)?.value,
+                        "sd_vae": document.getElementById(`vae-${prefix}`)?.value,
+                        "face_restoration_model": document.getElementById(`face-restorer-${prefix}`)?.value
                     },
                     "alwayson_scripts": {}
                 };
@@ -1719,9 +1937,9 @@
                     "args": [
                         {
                             "input_image": image.split(',')[1], // Base64 puro
-                            "module": document.getElementById(`controlnet-module-${prefix}`).value,
-                            "model": document.getElementById(`controlnet-model-${prefix}`).value,
-                            "weight": parseFloat(document.getElementById(`controlnet-weight-${prefix}`).value),
+                            "module": document.getElementById(`controlnet-module-${prefix}`)?.value,
+                            "model": document.getElementById(`controlnet-model-${prefix}`)?.value,
+                            "weight": parseFloat(document.getElementById(`controlnet-weight-${prefix}`)?.value || 1.0),
                         }
                     ]
                 };
@@ -1729,7 +1947,7 @@
 
             // --- Seleccionar Modo ---
             if (mode === 'txt2img') {
-                button = generateTxt2ImgBtn;
+                button = document.getElementById('generate-btn-txt2img');
                 buttonText = "Generar";
                 payload = buildBasePayload('t2i');
                 
@@ -1737,10 +1955,10 @@
                 const hrDetails = document.getElementById('hr-details-t2i');
                 if (hrDetails && hrDetails.open) {
                     payload.enable_hr = true;
-                    payload.hr_scale = parseFloat(document.getElementById('hr-scale-t2i').value);
-                    payload.hr_upscaler = document.getElementById('hr-upscaler-t2i').value;
-                    payload.hr_second_pass_steps = parseInt(document.getElementById('hr-steps-t2i').value, 10);
-                    payload.denoising_strength = parseFloat(document.getElementById('hr-denoising-t2i').value); 
+                    payload.hr_scale = parseFloat(document.getElementById('hr-scale-t2i')?.value || 2.0);
+                    payload.hr_upscaler = document.getElementById('hr-upscaler-t2i')?.value;
+                    payload.hr_second_pass_steps = parseInt(document.getElementById('hr-steps-t2i')?.value || 10, 10);
+                    payload.denoising_strength = parseFloat(document.getElementById('hr-denoising-t2i')?.value || 0.7); 
                 }
                 
                 // ControlNet
@@ -1752,14 +1970,14 @@
             } else if (mode === 'img2img') {
                 if (!G_STATE.uploadedImageBase64.i2i) {
                     showStatus('Por favor, sube una imagen de origen primero.', true);
-                    stopProgressCheck(); // (NUEVO) Detener progreso si no hay imagen
+                    stopProgressCheck(); 
                     return;
                 }
-                button = generateImg2ImgBtn;
+                button = document.getElementById('generate-btn-img2img');
                 buttonText = "Generar";
                 payload = buildBasePayload('i2i');
                 payload.init_images = [ G_STATE.uploadedImageBase64.i2i ];
-                payload.denoising_strength = parseFloat(document.getElementById('denoising-i2i').value);
+                payload.denoising_strength = parseFloat(document.getElementById('denoising-i2i')?.value || 0.75);
                 
                 // ControlNet
                 const cnPayload = buildControlNetPayload('i2i');
@@ -1770,33 +1988,43 @@
             } else if (mode === 'extras') {
                 if (!G_STATE.uploadedImageBase64.extras) {
                     showStatus('Sube una imagen en la pestaña Extras primero.', true);
-                    stopProgressCheck(); // (NUEVO) Detener progreso si no hay imagen
+                    stopProgressCheck(); 
                     return;
                 }
-                button = generateExtrasBtn;
+                button = document.getElementById('generate-btn-extras');
                 buttonText = "Escalar";
                 payload = {
                     "image": G_STATE.uploadedImageBase64.extras.split(',')[1], // Base64 puro
-                    "resize_mode": parseInt(document.getElementById('extras-resize-mode').value, 10),
-                    "upscaling_resize": parseFloat(document.getElementById('extras-scale-factor').value),
-                    "upscaling_resize_w": parseInt(document.getElementById('extras-width').value, 10),
-                    "upscaling_resize_h": parseInt(document.getElementById('extras-height').value, 10),
-                    "upscaler_1": document.getElementById('extras-upscaler-1').value,
-                    "upscaler_2": document.getElementById('extras-upscaler-2').value,
-                    "extras_upscaler_2_visibility": parseFloat(document.getElementById('extras-upscaler-2-visibility').value),
-                    "gfpgan_visibility": document.getElementById('face-restorer-extras').value === "GFPGAN" ? 1 : 0,
-                    "codeformer_visibility": document.getElementById('face-restorer-extras').value === "CodeFormer" ? 1 : 0,
+                    "resize_mode": parseInt(document.getElementById('extras-resize-mode')?.value || 0, 10),
+                    "upscaling_resize": parseFloat(document.getElementById('extras-scale-factor')?.value || 2.0),
+                    "upscaling_resize_w": parseInt(document.getElementById('extras-width')?.value || 1024, 10),
+                    "upscaling_resize_h": parseInt(document.getElementById('extras-height')?.value || 1024, 10),
+                    "upscaler_1": document.getElementById('extras-upscaler-1')?.value,
+                    "upscaler_2": document.getElementById('extras-upscaler-2')?.value,
+                    "extras_upscaler_2_visibility": parseFloat(document.getElementById('extras-upscaler-2-visibility')?.value || 0.5),
+                    "gfpgan_visibility": (document.getElementById('face-restorer-extras')?.value || "None") === "GFPGAN" ? 1 : 0,
+                    "codeformer_visibility": (document.getElementById('face-restorer-extras')?.value || "None") === "CodeFormer" ? 1 : 0,
                     "codeformer_weight": 0.5, // Podrías añadir un slider para esto
                 };
                 endpoint = '/sdapi/v1/extra-single-image';
             }
 
+            if (!button) {
+                console.error("Botón de generación no encontrado");
+                stopProgressCheck();
+                return;
+            }
+
             showGenerationProgress(button);
             
             // Ocultar resultados anteriores
-            downloadBtn.style.display = 'none';
-            copyMetadataBtn.style.display = 'none';
-            metadataDisplay.classList.add('hidden');
+            const downloadBtn = document.getElementById('download-btn');
+            const copyMetadataBtn = document.getElementById('copy-metadata-btn');
+            const metadataDisplay = document.getElementById('metadata-display');
+            
+            if(downloadBtn) downloadBtn.style.display = 'none';
+            if(copyMetadataBtn) copyMetadataBtn.style.display = 'none';
+            if(metadataDisplay) metadataDisplay.classList.add('hidden');
             // No ocultar la imagen/placeholder, el progress check la actualizará
 
             try {
@@ -1814,13 +2042,16 @@
                     info = result.info; // Es un JSON string
                 }
                 
-                if (base64Image) {
+                const outputImage = document.getElementById('output-image');
+                const placeholder = document.getElementById('placeholder');
+
+                if (base64Image && outputImage && placeholder) {
                     const dataUrl = 'data:image/png;base64,' + base64Image;
                     outputImage.src = dataUrl; // Imagen final
                     outputImage.classList.remove('hidden');
                     placeholder.classList.add('hidden');
                     
-                    if (info) {
+                    if (info && metadataDisplay) {
                         let metadataText;
                         if (mode === 'extras') {
                             metadataText = info.replace(/<[^>]*>?/gm, ''); // Limpiar HTML
@@ -1831,6 +2062,7 @@
                                 const sampler = infoParsed.sampler_name || (payload.sampler_name || "N/A");
                                 const scheduler = infoParsed.scheduler_name || (payload.scheduler || "N/A");
 
+                                // (MODIFICADO) Mostrar el prompt combinado en los metadatos
                                 metadataText = `**Prompt:** ${infoParsed.prompt}\n**Negative Prompt:** ${infoParsed.negative_prompt}\n---\n**Seed:** ${infoParsed.seed}\n**Steps:** ${infoParsed.steps}\n**CFG Scale:** ${infoParsed.cfg_scale}\n**Sampler:** ${sampler}\n**Scheduler:** ${scheduler}\n**Model:** ${infoParsed.sd_model_name || 'N/A'}\n**VAE:** ${infoParsed.sd_vae_name || 'N/A'}\n**Size:** ${infoParsed.width}x${infoParsed.height}`;
                             } catch (e) {
                                 metadataText = `Raw Info: ${info}`;
@@ -1841,8 +2073,9 @@
                         G_STATE.lastMetadata = metadataText;
                     }
 
-                    downloadBtn.style.display = 'block';
-                    copyMetadataBtn.style.display = 'block';
+                    if(downloadBtn) downloadBtn.style.display = 'block';
+                    if(copyMetadataBtn) copyMetadataBtn.style.display = 'block';
+                    
                     downloadBtn.onclick = () => {
                         const link = document.createElement('a');
                         link.href = dataUrl;
@@ -1851,7 +2084,7 @@
                     };
                     showStatus('¡Imagen generada con éxito!', false);
                 } else {
-                    throw new Error('La respuesta de la API no contiene imágenes.');
+                    throw new Error('La respuesta de la API no contiene imágenes o elementos de UI no encontrados.');
                 }
                 
             } catch (error) {
@@ -1863,10 +2096,231 @@
             }
         }
         
+        // --- (CORRECCIÓN) Mover todos los listeners y definiciones de elementos al DOMContentLoaded ---
+        // (CORRECCIÓN) Se elimina el wrapper DOMContentLoaded, ya que el script está al final del body
+        // y los elementos ya existen.
+            
+        // --- Elementos de la UI ---
+        const splashScreen = document.getElementById('splash-screen');
+        const appContainer = document.getElementById('app-container');
+        const connectBtn = document.getElementById('connect-btn');
+        const urlInput = document.getElementById('gradio-url');
+        const initialStatusMessage = document.getElementById('initial-status-message');
+        const statusMessage = document.getElementById('status-message');
+        const outputImage = document.getElementById('output-image');
+        const placeholder = document.getElementById('placeholder');
+        const downloadBtn = document.getElementById('download-btn');
+        const copyMetadataBtn = document.getElementById('copy-metadata-btn');
+        const metadataDisplay = document.getElementById('metadata-display');
+        const refreshResourcesBtn = document.getElementById('refresh-resources-btn');
+        
+        // --- Progreso ---
+        const progressContainer = document.getElementById('progress-container');
+        const generationControls = document.getElementById('generation-controls');
+        const interruptBtn = document.getElementById('interrupt-btn');
+        const skipBtn = document.getElementById('skip-btn');
+        
+        // --- Botones de Generar (FAB) ---
+        const generateTxt2ImgBtn = document.getElementById('generate-btn-txt2img');
+        const generateImg2ImgBtn = document.getElementById('generate-btn-img2img');
+        const generateExtrasBtn = document.getElementById('generate-btn-extras');
+
+        // --- Prompts y Tags ---
+        const promptT2I = document.getElementById('prompt-t2i');
+        const promptI2I = document.getElementById('prompt-i2i');
+        
+        // --- Visor Modal ---
+        const modal = document.getElementById('image-viewer-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        // --- Lógica de Pestañas (Elementos) ---
+        const tabButtons = {
+            txt2img: document.getElementById('tab-btn-txt2img'),
+            img2img: document.getElementById('tab-btn-img2img'),
+            extras: document.getElementById('tab-btn-extras'),
+            tagger: document.getElementById('tab-btn-tagger'),
+            config: document.getElementById('tab-btn-config'),
+        };
+
+        // --- Lógica Principal de Conexión ---
+        if (connectBtn) {
+            connectBtn.addEventListener('click', async () => {
+                if (!urlInput) return;
+                let url = urlInput.value.trim().replace(/\/$/, '');
+                if (!url || !url.startsWith('https://')) {
+                    showInitialStatus('Por favor, ingresa una URL válida que comience con "https://"', true);
+                    return;
+                }
+                G_STATE.gradioUrl = url;
+                localStorage.setItem('gradioUrl', url); 
+                const originalText = connectBtn.innerHTML;
+                showLoading(connectBtn); 
+                showInitialStatus('Conectando y cargando recursos...');
+
+                try {
+                    await loadAndPopulateResources(false); 
+                    toggleAppVisibility(true);
+                    showStatus('¡Conectado! Listo para generar.', false);
+                } catch (error) {
+                    showInitialStatus(`Error al conectar. Verifica la URL y la consola.`, true);
+                } finally {
+                    hideLoading(connectBtn, originalText); 
+                }
+            });
+        } else {
+            console.error("El botón de conexión no se encontró.");
+        }
+
+        // --- Cargar URL guardada ---
+        if (urlInput) {
+            const savedUrl = localStorage.getItem('gradioUrl');
+            if (savedUrl) {
+                urlInput.value = savedUrl;
+            }
+        }
+
+        // --- Botón de Refrescar ---
+        if (refreshResourcesBtn) {
+            refreshResourcesBtn.addEventListener('click', refreshResources);
+        }
+
+        // --- Lógica de Pestañas (Listeners) ---
+        Object.keys(tabButtons).forEach(key => {
+            if(tabButtons[key]) {
+                tabButtons[key].addEventListener('click', () => switchTab(key));
+            }
+        });
+        switchTab('txt2img'); // Empezar en Txt2Img
+
+        // --- Listeners de Auto-Prompt ---
+        document.querySelectorAll('.auto-prompt-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = e.currentTarget.dataset.target;
+                const targetTextarea = document.getElementById(targetId);
+                if (targetTextarea) {
+                    targetTextarea.value = AUTO_PROMPT_GENERATOR.generatePrompt();
+                    targetTextarea.scrollTop = targetTextarea.scrollHeight;
+                    targetTextarea.focus();
+                }
+            });
+        });
+
+        // --- Listeners del Constructor de Estilo ---
+        function updateStylePrompt(prefix) {
+            const genderKey = document.getElementById(`style-gender-${prefix}`)?.value || 'none';
+            const artisticKey = document.getElementById(`style-artistic-${prefix}`)?.value || 'none';
+            const lightKey = document.getElementById(`style-light-${prefix}`)?.value || 'none';
+            const detailKey = document.getElementById(`style-detail-${prefix}`)?.value || 'none';
+            const muscularKey = document.getElementById(`style-muscular-${prefix}`)?.value || 'none';
+            const ndxlKey = document.getElementById(`style-ndxl-${prefix}`)?.value || 'none';
+            
+            const targetTextarea = document.getElementById(`style-prompt-${prefix}`);
+            if (!targetTextarea) return;
+
+            const genderTags = STYLE_TAGS.gender[genderKey] || '';
+            const artisticTags = STYLE_TAGS.artistic[artisticKey] || '';
+            const lightTags = STYLE_TAGS.light[lightKey] || '';
+            const detailTags = STYLE_TAGS.detail[detailKey] || '';
+            const muscularTags = STYLE_TAGS.muscular[muscularKey] || '';
+            const ndxlTags = STYLE_TAGS.ndxl[ndxlKey] || '';
+            
+            const textTags = [genderTags, artisticTags].filter(Boolean).join(', ');
+            const loraTags = [lightTags, detailTags, muscularTags, ndxlTags].filter(Boolean).join(' '); 
+            const combinedTags = [textTags, loraTags].filter(Boolean).join(' ');
+            
+            targetTextarea.value = combinedTags;
+        }
+
+        document.querySelectorAll('.style-builder-component').forEach(select => {
+            select.addEventListener('change', (e) => {
+                const prefix = e.currentTarget.dataset.panelPrefix;
+                updateStylePrompt(prefix);
+            });
+        });
+
+        // --- Lógica de Seed Aleatoria ---
+        document.getElementById('random-seed-t2i')?.addEventListener('click', () => {
+            const seedInput = document.getElementById('seed-t2i');
+            if(seedInput) seedInput.value = -1;
+        });
+        document.getElementById('random-seed-i2i')?.addEventListener('click', () => {
+            const seedInput = document.getElementById('seed-i2i');
+            if(seedInput) seedInput.value = -1;
+        });
+        
+        // --- Añadir Lora al Prompt ---
+        document.querySelectorAll('.add-lora-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.dataset.target;
+                const promptInput = document.getElementById(targetId);
+                const loraSelectId = targetId.replace('prompt', 'lora');
+                const loraSelect = document.getElementById(loraSelectId);
+                
+                if (!promptInput || !loraSelect) return;
+                
+                const selectedLora = loraSelect.value;
+                if (!selectedLora || selectedLora === "None") return;
+                
+                promptInput.value += ` <lora:${selectedLora}:1> `;
+                promptInput.focus();
+                const newCursorPosition = promptInput.value.length;
+                promptInput.setSelectionRange(newCursorPosition, newCursorPosition);
+            });
+        });
+        
+        // --- Asignar listeners de subida de imagen ---
+        document.getElementById('image-upload-i2i')?.addEventListener('change', (e) => handleImageUpload(e, 'image-preview-i2i', 'image-preview-placeholder-i2i', 'i2i'));
+        document.getElementById('image-upload-extras')?.addEventListener('change', (e) => handleImageUpload(e, 'image-preview-extras', 'image-preview-placeholder-extras', 'extras'));
+        document.getElementById('controlnet-image-upload-t2i')?.addEventListener('change', (e) => handleImageUpload(e, 'controlnet-image-preview-t2i', 'controlnet-image-placeholder-t2i', 'controlNetT2I'));
+        document.getElementById('controlnet-image-upload-i2i')?.addEventListener('change', (e) => handleImageUpload(e, 'controlnet-image-preview-i2i', 'controlnet-image-placeholder-i2i', 'controlNetI2I'));
+
+        
+        // --- Copiar Metadatos ---
+        if (copyMetadataBtn) {
+            copyMetadataBtn.addEventListener('click', () => {
+                if (G_STATE.lastMetadata) {
+                    const tempTextArea = document.createElement('textarea');
+                    tempTextArea.value = G_STATE.lastMetadata;
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    try {
+                        document.execCommand('copy');
+                        showStatus('Metadatos copiados al portapapeles.', false);
+                    } catch (err) {
+                        showStatus('Error al copiar metadatos.', true);
+                    }
+                    document.body.removeChild(tempTextArea);
+                }
+            });
+        }
+
+        // --- Listeners de Interrumpir/Saltar ---
+        if(interruptBtn) interruptBtn.addEventListener('click', handleInterrupt);
+        if(skipBtn) skipBtn.addEventListener('click', handleSkip);
+
+        // --- Listeners de Herramientas de Imagen ---
+        document.getElementById('interrogate-btn-i2i')?.addEventListener('click', handleInterrogate);
+        document.getElementById('pnginfo-btn-i2i')?.addEventListener('click', handlePngInfo);
+        
+        // --- Listeners de Configuración ---
+        document.getElementById('get-memory-btn')?.addEventListener('click', handleGetMemory);
+        document.getElementById('save-preview-config-btn')?.addEventListener('click', handleSavePreviewConfig);
+
+        // --- Listeners del Visor Modal ---
+        if(outputImage) outputImage.addEventListener('click', openModal);
+        if(modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
+        if(modal) modal.addEventListener('click', (e) => {
+            if (e.target === modal) { // Cerrar solo si se hace clic en el fondo
+                closeModal();
+            }
+        });
+
         // --- Triggers de Generación ---
-        generateTxt2ImgBtn.addEventListener('click', () => handleGeneration('txt2img'));
-        generateImg2ImgBtn.addEventListener('click', () => handleGeneration('img2img'));
-        generateExtrasBtn.addEventListener('click', () => handleGeneration('extras'));
+        if(generateTxt2ImgBtn) generateTxt2ImgBtn.addEventListener('click', () => handleGeneration('txt2img'));
+        if(generateImg2ImgBtn) generateImg2ImgBtn.addEventListener('click', () => handleGeneration('img2img'));
+        if(generateExtrasBtn) generateExtrasBtn.addEventListener('click', () => handleGeneration('extras'));
 
     </script>
 </body>
