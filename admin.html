@@ -1,288 +1,389 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>exen-E - Panel de Administración</title>
-    <!-- Librerías -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
-        /* Estilos generales y reutilizados */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: #121212; color: #ffffff; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh; padding: 10px; }
-        #admin-container { width: 100%; max-width: 1400px; margin: auto; padding: 20px; background: #1e1e1e; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: animate__fadeIn 0.5s ease; }
-        input[type="text"], input[type="password"], input[type="url"], input[type="number"], textarea { width: 100%; padding: 12px; background: #333; border: 1px solid #555; color: #fff; font-size: 16px; border-radius: 6px; margin-bottom: 15px; font-family: 'Inter', sans-serif; transition: border-color 0.3s; }
-        input:focus, textarea:focus { border-color: #4caf50; outline: none; }
-        form { display: flex; flex-direction: column; gap: 15px; }
-        textarea { resize: vertical; min-height: 100px; }
-        button { padding: 12px; background: linear-gradient(135deg, #333, #444); border: none; color: #fff; font-size: 16px; cursor: pointer; border-radius: 6px; transition: all 0.3s ease; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        button:hover:not(:disabled) { background: linear-gradient(135deg, #444, #555); transform: scale(1.02); }
-        button:disabled { background: #2a2a2a; color: #777; cursor: not-allowed; transform: none; }
-        .action-btn { padding: 8px; font-size: 14px; margin: 0 5px; }
-        .delete-btn { background: linear-gradient(135deg, #c0392b, #e74c3c); }
-        .delete-btn:hover { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-        .edit-btn, .approve-btn { background: linear-gradient(135deg, #27ae60, #2ecc71); }
-        .edit-btn:hover, .approve-btn:hover { background: linear-gradient(135deg, #2ecc71, #27ae60); }
-        .message-box { text-align: center; padding: 10px; font-size: 14px; border-radius: 6px; margin-top: 10px; }
-        .error { color: #e74c3c; background: rgba(231, 76, 60, 0.1); }
-        .success { color: #2ecc71; background: rgba(46, 204, 113, 0.1); }
-        header { background: linear-gradient(135deg, #1e1e1e, #0a0a0a); padding: 15px 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); margin-bottom: 20px; border-radius: 8px; }
-        header h1 { font-size: 1.8em; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5); font-weight: 600; }
-        h2 { font-size: 1.5em; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        .mb-8 { margin-bottom: 2rem; }
-        table { width: 100%; border-collapse: collapse; background: #2a2a2a; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #555; }
-        th { background: #333; font-weight: 600; position: sticky; top: 0; z-index: 10; }
-        td img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; vertical-align: middle; }
-        footer { background: linear-gradient(135deg, #1e1e1e, #0a0a0a); padding: 20px; text-align: center; color: #aaa; font-size: 0.9em; margin-top: auto; }
-        .tabs { display: flex; border-bottom: 2px solid #333; margin-bottom: 20px; }
-        .tab-button { padding: 15px 25px; cursor: pointer; background: transparent; border: none; color: #aaa; font-size: 16px; font-weight: 600; transition: all 0.3s ease; border-bottom: 3px solid transparent; }
-        .tab-button.active { color: #2ecc71; border-bottom-color: #2ecc71; }
-        .tab-button:hover { color: #fff; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: animate__fadeIn 0.5s; }
-        .modal-overlay { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; animation: animate__fadeIn 0.3s; }
-        .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 90%; max-width: 600px; position: relative; max-height: 90vh; overflow-y: auto; border: 1px solid #333; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
-        .close-modal-btn { position: absolute; top: 15px; right: 20px; color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; transition: color 0.3s; }
-        .close-modal-btn:hover { color: #fff; }
-        .table-container { max-height: 60vh; overflow-y: auto; border: 1px solid #333; border-radius: 8px; margin-top: 1rem; }
-        .table-container::-webkit-scrollbar, .modal-content::-webkit-scrollbar { width: 8px; }
-        .table-container::-webkit-scrollbar-track, .modal-content::-webkit-scrollbar-track { background: #2a2a2a; }
-        .table-container::-webkit-scrollbar-thumb, .modal-content::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
-        .table-container::-webkit-scrollbar-thumb:hover, .modal-content::-webkit-scrollbar-thumb:hover { background: #777; }
-        .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; background: #2a2a2a; padding: 15px; border-radius: 6px; border: 1px solid #444; }
-        .category-grid label { display: flex; align-items: center; gap: 8px; background: #333; padding: 8px 12px; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; user-select: none; }
-        .category-grid label:hover { background: #444; }
-        .category-grid input[type="checkbox"] { width: 18px; height: 18px; accent-color: #2ecc71; }
-        h3.category-title { font-size: 1em; margin-bottom: 10px; font-weight: 600; color: #ccc; }
+        :root { 
+            --title-font: 'Poppins', sans-serif;
+            --body-font: 'Inter', sans-serif;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        body { 
+            font-family: var(--body-font); 
+            background-color: #111827; /* Dark blue-gray */
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--title-font);
+        }
         
-        /* Dashboard Styles */
+        /* Estilos para la barra de navegación de la app */
+        .nav-button {
+            @apply flex flex-col items-center justify-center text-gray-400 transition-all duration-200 h-full w-full;
+        }
+        .nav-button.active {
+            @apply text-orange-500;
+        }
+        .nav-button:active {
+            @apply scale-90;
+        }
+
+        /* Ocultar scrollbars */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Estilos de input mejorados */
+        .form-input {
+             @apply w-full p-3 bg-gray-700 border-2 border-gray-600 text-white rounded-lg focus:border-orange-500 focus:ring-orange-500 focus:outline-none transition-all duration-200;
+        }
+        
+        /* ******** MEJORA: Estilo de búsqueda centrado ******** */
+        .search-wrapper {
+            @apply flex w-full max-w-lg mx-auto mb-4;
+        }
+        .search-input {
+             @apply w-full p-3 bg-gray-700 border-2 border-gray-600 text-white rounded-l-full focus:border-orange-500 focus:ring-orange-500 focus:outline-none transition-all duration-200;
+        }
+        .search-button {
+            @apply flex-shrink-0 p-3 bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold rounded-r-full shadow-lg hover:from-orange-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2;
+        }
+        
+        /* ******** MEJORA: Estilo botones dashboard ******** */
         .stat-card {
-            background-color: #2a2a2a;
-            padding: 20px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            border: 1px solid #333;
+            @apply bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 p-4 rounded-xl shadow-lg flex flex-col items-center justify-center gap-2 text-center py-6;
         }
         .stat-card i {
-            font-size: 2.5em;
-            color: #2ecc71;
+            @apply text-3xl text-orange-400;
         }
         .stat-title {
-            font-size: 0.9em;
-            color: #aaa;
-            font-weight: 600;
+            @apply text-sm font-semibold text-gray-400 uppercase tracking-wider;
         }
         .stat-value {
-            font-size: 1.8em;
-            font-weight: 700;
+             @apply text-3xl font-extrabold text-white;
         }
-        .chart-container {
-            background: #2a2a2a;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #333;
-        }
-
-        @media (max-width: 768px) {
-            body { padding: 5px; }
-            #admin-container { padding: 15px; width: 100%; }
-            header h1 { font-size: 1.5em; }
-            td, th { white-space: normal; }
-        }
+        
     </style>
 </head>
-<body>
-    <header><h1><i class="fas fa-user-shield"></i> exen-E - Administración</h1></header>
-    <div id="admin-container">
-        <div id="login-form">
-            <input type="password" id="admin-pass" placeholder="Contraseña de Administrador">
-            <button onclick="checkAdmin()"><i class="fas fa-sign-in-alt"></i> Entrar</button>
-            <div id="login-error" class="message-box error" style="display: none;"></div>
-        </div>
-        <div id="admin-content" style="display: none;">
-            <div id="global-message" class="message-box" style="display: none;"></div>
-            <div class="tabs">
-                <button class="tab-button active" onclick="openTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</button>
-                <button class="tab-button" onclick="openTab('images')"><i class="fas fa-images"></i> Imágenes</button>
-                <button class="tab-button" onclick="openTab('videos')"><i class="fas fa-film"></i> Videos</button>
-                <button class="tab-button" onclick="openTab('general')"><i class="fas fa-cogs"></i> General</button>
-            </div>
+<body class="antialiased text-gray-200">
 
-            <div id="dashboard-tab" class="tab-content active">
-                <h2><i class="fas fa-tachometer-alt"></i> Resumen del Sitio</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="stat-card">
+    <!-- Contenedor Principal -->
+    <div id="admin-container" class="w-full max-w-6xl mx-auto pb-24 px-2 sm:px-4">
+
+        <!-- Formulario de Login -->
+        <div id="login-form" class="flex flex-col items-center justify-center min-h-screen p-4">
+            <div class="w-full max-w-sm p-6 bg-gray-800/80 backdrop-blur-lg border border-gray-700/50 rounded-2xl shadow-2xl">
+                <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto mx-auto mb-6 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+                <h1 class="text-2xl font-bold text-center text-white mb-6">Acceso de Admin</h1>
+                <input type="password" id="admin-pass" placeholder="Contraseña de Administrador" class="form-input mb-4">
+                <button onclick="checkAdmin()" class="w-full p-3 bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold rounded-lg shadow-lg hover:from-orange-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </button>
+                <div id="login-error" class="text-center p-3 text-sm rounded-lg mt-4 bg-red-900/50 text-red-300" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Contenido de Administración (Oculto por defecto) -->
+        <div id="admin-content" style="display: none;">
+            
+            <!-- Header -->
+            <header class="my-6">
+                <h1 class="text-3xl font-extrabold text-white text-center flex items-center justify-center gap-3">
+                    <i class="fas fa-user-shield text-orange-500"></i>
+                    <span>Panel de Admin</span>
+                </h1>
+            </header>
+
+            <!-- Mensaje Global -->
+            <div id="global-message" class="p-4 rounded-lg mb-4 text-center font-semibold" style="display: none;"></div>
+
+            <!-- Vistas de Contenido -->
+            <div id="dashboard-view" class="view-content">
+                <h2 class="text-2xl font-bold mb-4 text-orange-400">Dashboard</h2>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <!-- ******** UI MEJORADA: Stat cards como botones centrados ******** -->
+                    <div class="stat-card cursor-pointer transition-all duration-300 hover:scale-105 hover:border-orange-500/50" onclick="showView(event, 'images')">
                         <i class="fas fa-images"></i>
                         <div>
-                            <h3 class="stat-title">Imágenes Totales</h3>
+                            <h3 class="stat-title">Imágenes</h3>
                             <p id="stats-total-images" class="stat-value">0</p>
                         </div>
                     </div>
-                     <div class="stat-card">
+                     <div class="stat-card cursor-pointer transition-all duration-300 hover:scale-105 hover:border-orange-500/50" onclick="showView(event, 'videos')">
                         <i class="fas fa-video"></i>
                         <div>
-                            <h3 class="stat-title">Videos Totales</h3>
+                            <h3 class="stat-title">Videos</h3>
                             <p id="stats-total-videos" class="stat-value">0</p>
                         </div>
                     </div>
-                     <div class="stat-card">
+                     <div class="stat-card cursor-pointer transition-all duration-300 hover:scale-105 hover:border-orange-500/50" onclick="showView(event, 'general')">
                         <i class="fas fa-heart"></i>
                         <div>
-                            <h3 class="stat-title">Reacciones Totales</h3>
+                            <h3 class="stat-title">Reacciones</h3>
                             <p id="stats-total-reactions" class="stat-value">0</p>
                         </div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card cursor-pointer transition-all duration-300 hover:scale-105 hover:border-orange-500/50" onclick="showView(event, 'general')">
                         <i class="fas fa-comments"></i>
                         <div>
-                            <h3 class="stat-title">Comentarios Totales</h3>
+                            <h3 class="stat-title">Comentarios</h3>
                             <p id="stats-total-comments" class="stat-value">0</p>
                         </div>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <h2 class="text-xl mb-4">Reacciones por Categoría</h2>
-                    <canvas id="category-reactions-chart"></canvas>
+                
+                <!-- Chart -->
+                <div class="bg-gray-800/80 backdrop-blur-lg border border-gray-700/50 p-4 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-bold mb-4">Reacciones por Categoría</h2>
+                    <div class="h-64 sm:h-80">
+                        <canvas id="category-reactions-chart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <div id="images-tab" class="tab-content">
-                <form id="image-form">
-                    <h2><i class="fas fa-upload"></i> Agregar Nueva Imagen</h2>
-                    <input type="url" id="img-url" placeholder="URL de la Imagen (Completa)" required>
-                    <img id="image-preview" src="" alt="Vista previa" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
-                    
-                    <input type="url" id="img-thumbnail-url" placeholder="URL de la Miniatura (Opcional)">
-                    <img id="thumbnail-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 150px; margin: 10px auto; border-radius: 8px;" />
-                    
-                    <input type="text" id="img-title" placeholder="Título" required>
-                    <textarea id="img-desc" placeholder="Descripción" required></textarea>
-                    <input type="text" id="img-tags" placeholder="Tags (separados por comas)" required>
-                    
+            <div id="images-view" class="view-content" style="display: none;">
+                <h2 class="text-2xl font-bold mb-4 text-orange-400">Imágenes</h2>
+                <!-- ******** UI MEJORADA: Campo de búsqueda centrado y redondeado ******** -->
+                <div class="search-wrapper">
+                    <input type="text" id="search-images" placeholder="Buscar por título o tags..." class="search-input">
+                    <button class="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="image-list-container" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <!-- Las imágenes se cargarán aquí -->
+                </div>
+                <div id="image-pagination-container" class="mt-6 flex justify-center items-center gap-4">
+                    <!-- Los botones de paginación se generarán aquí -->
+                </div>
+            </div>
+
+            <div id="videos-view" class="view-content" style="display: none;">
+                <h2 class="text-2xl font-bold mb-4 text-orange-400">Videos</h2>
+                <!-- ******** UI MEJORADA: Campo de búsqueda centrado y redondeado ******** -->
+                <div class="search-wrapper">
+                    <input type="text" id="search-videos" placeholder="Buscar por título..." class="search-input">
+                     <button class="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="video-list-container" class="flex flex-col gap-4">
+                    <!-- Los videos se cargarán aquí -->
+                </div>
+            </div>
+
+            <div id="general-view" class="view-content" style="display: none;">
+                <h2 class="text-2xl font-bold mb-4 text-orange-400">General</h2>
+                
+                <!-- ******** NUEVO: Gestión de Banners de Categoría ******** -->
+                <div class="bg-gray-800/80 backdrop-blur-lg border border-gray-700/50 p-4 rounded-xl shadow-lg mb-6">
+                    <h3 class="text-xl font-bold mb-3"><i class="fas fa-images"></i> Gestionar Banners de Categoría</h3>
+                    <form id="category-banner-form" class="flex flex-col gap-4">
+                        <p class="text-sm text-gray-400 mb-2">Define la URL del banner para cada categoría.</p>
+                        <div id="category-banner-inputs" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Los inputs se generarán aquí -->
+                        </div>
+                        <button type="submit" class="btn-primary w-full max-w-sm mx-auto">
+                            <i class="fas fa-save"></i> Guardar Banners
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Gestión de Batalla -->
+                <div class="bg-gray-800/80 backdrop-blur-lg border border-gray-700/50 p-4 rounded-xl shadow-lg mb-6">
+                    <h3 class="text-xl font-bold mb-3"><i class="fas fa-gavel"></i> Gestionar Batalla</h3>
+                    <div id="current-battle-status" class="mb-4 p-4 rounded-lg bg-gray-900/50 text-sm"></div>
                     <div>
-                        <h3 class="category-title">Categorías</h3>
-                        <div id="img-categories" class="category-grid"></div>
-                    </div>
-
-                    <button type="submit"><i class="fas fa-plus"></i> Añadir Imagen</button>
-                </form>
-                <div id="image-list">
-                    <h2><i class="fas fa-list"></i> Lista de Imágenes</h2>
-                    <input type="text" id="search-images" placeholder="Buscar por título o tags...">
-                    <div class="table-container">
-                        <table id="image-table">
-                            <thead><tr><th>Batalla</th><th>Imagen</th><th>Título</th><th>Tags</th><th>Categorías</th><th>Acciones</th></tr></thead>
-                            <tbody id="image-table-body"></tbody>
-                        </table>
+                        <p class="text-sm text-gray-400 mb-2">Selecciona dos imágenes de la pestaña "Imágenes" para iniciar.</p>
+                        <label for="battle-duration" class="block mb-1 font-semibold text-sm">Duración (días):</label>
+                        <input type="number" id="battle-duration" value="7" class="form-input mb-4">
+                        <button id="start-battle-btn" disabled class="btn-primary w-full disabled:bg-gray-600 disabled:opacity-50">
+                            <i class="fas fa-play"></i> Iniciar Batalla
+                        </button>
+                        <button id="end-battle-btn" class="btn-delete w-full mt-2" style="display: none;">
+                            <i class="fas fa-stop"></i> Terminar Batalla
+                        </button>
                     </div>
                 </div>
-            </div>
-
-            <div id="videos-tab" class="tab-content">
-                 <form id="video-form">
-                    <h2><i class="fas fa-video"></i> Agregar Nuevo Video</h2>
-                    <input type="url" id="video-url" placeholder="URL de YouTube o MP4" required>
-                    <input type="text" id="video-title" placeholder="Título (se autocompleta con YouTube)" required>
-                    <input type="text" id="video-genre" placeholder="Género o Ritmo (ej. Rock, Pop, 80s)">
-                    <textarea id="video-desc" placeholder="Descripción" required></textarea>
-                    <input type="url" id="video-thumbnail" placeholder="URL de Miniatura (se autocompleta con YouTube)" required>
-                    <img id="video-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
-                    <button type="submit"><i class="fas fa-plus"></i> Añadir Video</button>
-                </form>
-                 <div id="video-list">
-                    <h2><i class="fas fa-list-ul"></i> Lista de Videos</h2>
-                    <input type="text" id="search-videos" placeholder="Buscar por título...">
-                    <div class="table-container">
-                         <table>
-                            <thead><tr><th>Miniatura</th><th>Título</th><th>Tipo</th><th>Acciones</th></tr></thead>
-                            <tbody id="video-table-body"></tbody>
-                        </table>
+                
+                <!-- Gestión de Comentarios -->
+                <div class="bg-gray-800/80 backdrop-blur-lg border border-gray-700/50 p-4 rounded-xl shadow-lg mb-6">
+                    <h3 class="text-xl font-bold mb-3"><i class="fas fa-comments"></i> Gestionar Comentarios</h3>
+                    <!-- ******** UI MEJORADA: Campo de búsqueda centrado y redondeado ******** -->
+                    <div class="search-wrapper">
+                        <input type="text" id="search-comments" placeholder="Buscar por texto o nombre..." class="search-input">
+                         <button class="search-button">
+                            <i class="fas fa-search"></i>
+                        </button>
                     </div>
-                </div>
-            </div>
-
-            <div id="general-tab" class="tab-content">
-                  <div id="battle-management" class="mb-8">
-                    <h2><i class="fas fa-gavel"></i> Gestionar Batalla (Imágenes)</h2>
-                    <div id="current-battle-status" class="mb-4 p-4 rounded-lg" style="background-color: #2a2a2a;"></div>
-                    <div>
-                        <p>Selecciona dos imágenes de la lista en la pestaña "Imágenes" para iniciar una batalla.</p>
-                        <label for="battle-duration" style="display: block; margin-bottom: 4px; font-weight: 600;">Duración (días):</label>
-                        <input type="number" id="battle-duration" value="7" class="mb-4">
-                        <button id="start-battle-btn" disabled><i class="fas fa-play"></i> Iniciar Batalla</button>
-                        <button id="end-battle-btn" class="delete-btn" style="display: none;"><i class="fas fa-stop"></i> Terminar Batalla</button>
+                    <div id="comment-list-container" class="flex flex-col gap-4">
+                        <!-- Los comentarios se cargarán aquí -->
                     </div>
-                </div>
-                 <div id="comment-list">
-                    <h2><i class="fas fa-comments"></i> Gestionar Comentarios (Imágenes)</h2>
-                     <input type="text" id="search-comments" placeholder="Buscar por texto o nombre...">
-                     <div class="table-container">
-                         <table>
-                            <thead><tr><th>Imagen</th><th>Texto</th><th>Nombre</th><th>Acciones</th></tr></thead>
-                            <tbody id="comment-table-body"></tbody>
-                        </table>
-                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="edit-modal" class="modal-overlay">
-        <div class="modal-content">
-            <span class="close-modal-btn" onclick="closeEditModal()">&times;</span>
+    <!-- Modal para Añadir/Editar -->
+    <div id="form-modal" class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 backdrop-blur-md p-4" style="display: none;" onclick="closeFormModal()">
+        
+        <div class="modal-content w-full max-w-lg bg-gray-800/80 backdrop-blur-lg border border-gray-700/50 rounded-2xl shadow-2xl p-6 relative m-4 max-h-[90vh] overflow-y-auto scrollbar-hide" onclick="event.stopPropagation()">
+            <button class="close-modal-btn absolute top-4 right-4 text-gray-400 hover:text-white text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-700 transition-all duration-200" onclick="closeFormModal()"><i class="fas fa-times"></i></button>
+            
+            <!-- Formulario de Imagen -->
+            <div id="image-form-container">
+                <form id="image-form" class="flex flex-col gap-4">
+                    <h2 class="text-2xl font-bold"><i class="fas fa-upload"></i> Agregar Nueva Imagen</h2>
+                    <input type="url" id="img-url" placeholder="URL de la Imagen (Completa)" required class="form-input">
+                    <img id="image-preview" src="" alt="Vista previa" style="display:none; max-width: 200px; margin: 0 auto; border-radius: 8px;" />
+                    <input type="url" id="img-thumbnail-url" placeholder="URL de la Miniatura (Opcional)" class="form-input">
+                    <img id="thumbnail-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 150px; margin: 0 auto; border-radius: 8px;" />
+                    <input type="text" id="img-title" placeholder="Título" required class="form-input">
+                    <textarea id="img-desc" placeholder="Descripción" required class="form-input"></textarea>
+                    <input type="text" id="img-tags" placeholder="Tags (separados por comas)" required class="form-input">
+                    <h3 class="font-semibold text-gray-300">Categorías</h3>
+                    <div id="img-categories" class="category-grid"></div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Añadir Imagen</button>
+                </form>
+            </div>
+            
+            <!-- Formulario de Video -->
+            <div id="video-form-container">
+                <form id="video-form" class="flex flex-col gap-4">
+                    <h2 class="text-2xl font-bold"><i class="fas fa-video"></i> Agregar Nuevo Video</h2>
+                    <input type="url" id="video-url" placeholder="URL de YouTube o MP4" required class="form-input">
+                    <input type="text" id="video-title" placeholder="Título (se autocompleta con YouTube)" required class="form-input">
+                    <input type="text" id="video-genre" placeholder="Género o Ritmo (ej. Rock, Pop, 80s)" class="form-input">
+                    <textarea id="video-desc" placeholder="Descripción" required class="form-input"></textarea>
+                    <input type="url" id="video-thumbnail" placeholder="URL de Miniatura (se autocompleta con YouTube)" required class="form-input">
+                    <img id="video-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 200px; margin: 0 auto; border-radius: 8px;" />
+                    <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Añadir Video</button>
+                </form>
+            </div>
+            
+            <!-- Formulario de Edición de Imagen -->
             <div id="edit-image-form-container">
-                <form id="edit-image-form">
-                    <h2><i class="fas fa-edit"></i> Editar Imagen</h2>
+                <form id="edit-image-form" class="flex flex-col gap-4">
+                    <h2 class="text-2xl font-bold"><i class="fas fa-edit"></i> Editar Imagen</h2>
                     <input type="hidden" id="edit-img-id">
                     <input type="hidden" id="edit-img-timestamp">
-                    <input type="url" id="edit-img-url" placeholder="URL de la Imagen (Completa)" required>
-                    <img id="edit-image-preview" src="" alt="Vista previa" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
-
-                    <input type="url" id="edit-img-thumbnail-url" placeholder="URL de la Miniatura (Opcional)">
-                    <img id="edit-thumbnail-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 150px; margin: 10px auto; border-radius: 8px;" />
-
-                    <input type="text" id="edit-img-title" placeholder="Título" required>
-                    <textarea id="edit-img-desc" placeholder="Descripción" required></textarea>
-                    <input type="text" id="edit-img-tags" placeholder="Tags (separados por comas)" required>
-                    
-                    <div>
-                        <h3 class="category-title">Categorías</h3>
-                        <div id="edit-img-categories" class="category-grid"></div>
-                    </div>
-
-                    <button type="submit"><i class="fas fa-save"></i> Guardar Cambios</button>
-                    <button type="button" class="delete-btn" onclick="closeEditModal()"><i class="fas fa-times"></i> Cancelar</button>
+                    <input type="url" id="edit-img-url" placeholder="URL de la Imagen (Completa)" required class="form-input">
+                    <img id="edit-image-preview" src="" alt="Vista previa" style="display:none; max-width: 200px; margin: 0 auto; border-radius: 8px;" />
+                    <input type="url" id="edit-img-thumbnail-url" placeholder="URL de la Miniatura (Opcional)" class="form-input">
+                    <img id="edit-thumbnail-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 150px; margin: 0 auto; border-radius: 8px;" />
+                    <input type="text" id="edit-img-title" placeholder="Título" required class="form-input">
+                    <textarea id="edit-img-desc" placeholder="Descripción" required class="form-input"></textarea>
+                    <input type="text" id="edit-img-tags" placeholder="Tags (separados por comas)" required class="form-input">
+                    <h3 class="font-semibold text-gray-300">Categorías</h3>
+                    <div id="edit-img-categories" class="category-grid"></div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar Cambios</button>
                 </form>
             </div>
+            
+            <!-- Formulario de Edición de Video -->
             <div id="edit-video-form-container">
-                 <form id="edit-video-form">
-                    <h2><i class="fas fa-edit"></i> Editar Video</h2>
+                 <form id="edit-video-form" class="flex flex-col gap-4">
+                    <h2 class="text-2xl font-bold"><i class="fas fa-edit"></i> Editar Video</h2>
                     <input type="hidden" id="edit-video-id">
                     <input type="hidden" id="edit-video-timestamp">
-                    <input type="url" id="edit-video-url" placeholder="URL de YouTube o MP4" required>
-                    <input type="text" id="edit-video-title" placeholder="Título" required>
-                    <input type="text" id="edit-video-genre" placeholder="Género o Ritmo">
-                    <textarea id="edit-video-desc" placeholder="Descripción" required></textarea>
-                    <input type="url" id="edit-video-thumbnail" placeholder="URL de Miniatura" required>
-                    <img id="edit-video-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 200px; margin: 10px auto; border-radius: 8px;" />
-                    <button type="submit"><i class="fas fa-save"></i> Guardar Cambios</button>
-                    <button type="button" class="delete-btn" onclick="closeEditModal()"><i class="fas fa-times"></i> Cancelar</button>
+                    <input type="url" id="edit-video-url" placeholder="URL de YouTube o MP4" required class="form-input">
+                    <input type="text" id="edit-video-title" placeholder="Título" required class="form-input">
+                    <input type="text" id="edit-video-genre" placeholder="Género o Ritmo" class="form-input">
+                    <textarea id="edit-video-desc" placeholder="Descripción" required class="form-input"></textarea>
+                    <input type="url" id="edit-video-thumbnail" placeholder="URL de Miniatura" required class="form-input">
+                    <img id="edit-video-preview" src="" alt="Vista previa miniatura" style="display:none; max-width: 200px; margin: 0 auto; border-radius: 8px;" />
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar Cambios</button>
                 </form>
             </div>
         </div>
     </div>
-    <footer><p>&copy; 2025 exen-E. Diseñado en la oscuridad.</p></footer>
+
+    <!-- Botón de Acción Flotante (FAB) -->
+    <button id="fab" class="fixed bottom-20 right-4 sm:right-6 bg-gradient-to-br from-orange-500 to-orange-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl z-50 transition-all duration-300 transform hover:scale-110" style="display: none;">
+        <!-- El ícono cambiará con JS -->
+    </button>
+
+    <!-- Barra de Navegación Inferior (Estilo App) -->
+    <nav class="fixed bottom-0 left-0 right-0 h-16 bg-gray-900 border-t border-gray-700 flex justify-around items-center z-50" style="display: none;" id="bottom-nav">
+        <button class="nav-button active" onclick="showView(event, 'dashboard')">
+            <i class="fas fa-chart-line text-xl"></i>
+            <span class="text-xs font-medium">Dashboard</span>
+        </button>
+        <button class="nav-button" onclick="showView(event, 'images')">
+            <i class="fas fa-images text-xl"></i>
+            <span class="text-xs font-medium">Imágenes</span>
+        </button>
+        <button class="nav-button" onclick="showView(event, 'videos')">
+            <i class="fas fa-film text-xl"></i>
+            <span class="text-xs font-medium">Videos</span>
+        </button>
+        <button class="nav-button" onclick="showView(event, 'general')">
+            <i class="fas fa-cogs text-xl"></i>
+            <span class="text-xs font-medium">General</span>
+        </button>
+    </nav>
+
+    <!-- Plantillas de Estilos de Tailwind (para que JS pueda usarlas) -->
+    <div class="hidden">
+        <!-- Stat Card (actualizado en <style>) -->
+        
+        <!-- Form Inputs -->
+        <input class="form-input w-full p-3 bg-gray-700 border-2 border-gray-600 text-white rounded-lg focus:border-orange-500 focus:ring-orange-500 focus:outline-none transition-all duration-200">
+        <textarea class="form-input w-full p-3 bg-gray-700 border-2 border-gray-600 text-white rounded-lg focus:border-orange-500 focus:ring-orange-500 focus:outline-none min-h-[100px] transition-all duration-200"></textarea>
+        
+        <!-- ******** UI MEJORADA: Plantilla de búsqueda moderna ******** -->
+        <div class="search-wrapper flex w-full max-w-lg mx-auto mb-4">
+            <input class="search-input w-full p-3 bg-gray-700 border-2 border-gray-600 text-white rounded-l-full focus:border-orange-500 focus:ring-orange-500 focus:outline-none transition-all duration-200" placeholder="Buscar...">
+            <button class="search-button flex-shrink-0 p-3 bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold rounded-r-full shadow-lg hover:from-orange-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+        
+        <!-- Botones -->
+        <button class="btn-primary flex items-center justify-center gap-2 w-full p-3 bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold rounded-lg shadow-lg hover:from-orange-600 transition-all duration-300 transform hover:scale-105"></button>
+        <button class="btn-delete flex items-center justify-center gap-2 w-full p-3 bg-gradient-to-br from-red-600 to-red-700 text-white font-bold rounded-lg shadow-lg hover:from-red-700 transition-all duration-300 transform hover:scale-105"></button>
+        <button class="btn-edit flex items-center justify-center gap-2 p-2 w-10 h-10 bg-gray-600 text-white rounded-full hover:bg-orange-500 transition-all duration-200"></button>
+
+        <!-- Category Grid -->
+        <div class="category-grid grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <label class="category-label flex items-center gap-2 bg-gray-700 p-2 rounded-lg cursor-pointer hover:bg-gray-600 transition-all duration-200">
+                <input type="checkbox" class="w-5 h-5 accent-orange-500 rounded text-orange-500 focus:ring-orange-500 bg-gray-800 border-gray-600">
+                <span class="text-sm font-medium"></span>
+            </label>
+        </div>
+
+        <!-- ******** NUEVO: Plantilla para input de banner ******** -->
+        <div class="category-banner-input-group">
+            <label class="block mb-1 font-semibold text-sm text-orange-400"></label>
+            <input type="url" class="form-input" placeholder="https://url-del-banner.com/imagen.jpg">
+        </div>
+    </div>
+
 
     <script>
+        // --- CONFIGURACIÓN DE FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
             authDomain: "exene-53e6b.firebaseapp.com",
@@ -295,42 +396,74 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
+        
+        // --- ESTADO GLOBAL ---
         let selectedForBattle = [];
         let categoryChart = null;
+        let allImagesCache = new Map(); // Cache para guardar imágenes para los comentarios
+        let allVideosCache = new Map();
+        
+        let currentFilteredImages = [];
+        let currentImagePage = 1;
+        const imagesPerPage = 50; // 50 imágenes por página
 
         const imageCategories = {
             'anime': 'Anime', 'furry': 'Furry', 'realismo': 'Realismo', 'mecas': 'Mecas',
             'devils': 'Devils & Angels', 'colors': 'ColorFull', 'amateur': 'Amateur', 'tvgames': 'TV & Games'
         };
 
-        function openTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-            event.currentTarget.classList.add('active');
+        // --- MANEJO DE VISTAS (TABS) ---
+        function showView(event, viewName) {
+            // Ocultar todas las vistas
+            document.querySelectorAll('.view-content').forEach(tab => tab.style.display = 'none');
+            
+            // Mostrar la vista seleccionada
+            document.getElementById(`${viewName}-view`).style.display = 'block';
+            
+            // Actualizar estado activo en la barra de navegación
+            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            const activeButton = document.querySelector(`.nav-button[onclick*="'${viewName}'"]`);
+            if (activeButton) activeButton.classList.add('active');
+
+            // Actualizar el Botón de Acción Flotante (FAB)
+            const fab = document.getElementById('fab');
+            switch (viewName) {
+                case 'images':
+                    fab.innerHTML = '<i class="fas fa-image"></i>';
+                    fab.onclick = () => openFormModal('image');
+                    fab.style.display = 'flex';
+                    break;
+                case 'videos':
+                    fab.innerHTML = '<i class="fas fa-video"></i>';
+                    fab.onclick = () => openFormModal('video');
+                    fab.style.display = 'flex';
+                    break;
+                default:
+                    fab.style.display = 'none';
+            }
         }
 
+        // --- AUTENTICACIÓN ---
         auth.onAuthStateChanged(user => {
+            const loginForm = document.getElementById('login-form');
+            const adminContent = document.getElementById('admin-content');
+            const bottomNav = document.getElementById('bottom-nav');
+            const fab = document.getElementById('fab');
+
             if (user && user.email === 'ezequiel@exen.com') {
-                document.getElementById('login-form').style.display = 'none';
-                document.getElementById('admin-content').style.display = 'block';
+                loginForm.style.display = 'none';
+                adminContent.style.display = 'block';
+                bottomNav.style.display = 'flex';
+                fab.style.display = 'flex';
                 loadInitialData();
             } else {
-                document.getElementById('login-form').style.display = 'block';
-                document.getElementById('admin-content').style.display = 'none';
+                loginForm.style.display = 'flex';
+                adminContent.style.display = 'none';
+                bottomNav.style.display = 'none';
+                fab.style.display = 'none';
                 if (user) { auth.signOut(); }
             }
         });
-
-        function loadInitialData() {
-            populateCategoryCheckboxes('img-categories');
-            populateCategoryCheckboxes('edit-img-categories');
-            loadImages();
-            loadVideos();
-            loadComments();
-            loadCurrentBattleStatus();
-            loadDashboardStats();
-        }
 
         function checkAdmin() {
             const password = document.getElementById('admin-pass').value;
@@ -338,23 +471,60 @@
                 .catch(error => showLoginError('Error de autenticación: ' + error.message));
         }
 
+        function showLoginError(text) {
+            const el = document.getElementById('login-error');
+            el.textContent = text;
+            el.style.display = 'block';
+        }
+
+        // --- CARGA INICIAL DE DATOS ---
+        async function loadInitialData() {
+            populateCategoryCheckboxes('img-categories');
+            populateCategoryCheckboxes('edit-img-categories');
+            populateCategoryBannerInputs(); // NUEVO
+            await loadImages(); 
+            loadVideos();
+            loadComments();
+            loadCurrentBattleStatus(); 
+            loadDashboardStats();
+            loadCategoryBanners(); // NUEVO
+            showView(null, 'dashboard');
+        }
+
+        // --- FUNCIONES AUXILIARES ---
         function populateCategoryCheckboxes(containerId, checkedCategories = []) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
             for (const key in imageCategories) {
                 const label = document.createElement('label');
+                label.className = "flex items-center gap-2 bg-gray-700 p-2 rounded-lg cursor-pointer hover:bg-gray-600 transition-all duration-200";
+                
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.value = key;
                 checkbox.name = `${containerId}-chk`;
+                checkbox.className = "w-5 h-5 accent-orange-500 rounded text-orange-500 focus:ring-orange-500 bg-gray-800 border-gray-600";
                 if (checkedCategories.includes(key)) checkbox.checked = true;
+                
+                const span = document.createElement('span');
+                span.className = "text-sm font-medium";
+                span.textContent = imageCategories[key];
+                
                 label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(imageCategories[key]));
+                label.appendChild(span);
                 container.appendChild(label);
             }
         }
 
-        function setupPreview(inputId, previewId) { const urlInput = document.getElementById(inputId); const previewImage = document.getElementById(previewId); urlInput.addEventListener('input', () => { const url = urlInput.value.trim(); previewImage.src = isValidUrl(url) ? url : ''; previewImage.style.display = isValidUrl(url) ? 'block' : 'none'; }); }
+        function setupPreview(inputId, previewId) { 
+            const urlInput = document.getElementById(inputId); 
+            const previewImage = document.getElementById(previewId); 
+            urlInput.addEventListener('input', () => { 
+                const url = urlInput.value.trim(); 
+                previewImage.src = isValidUrl(url) ? url : ''; 
+                previewImage.style.display = isValidUrl(url) ? 'block' : 'none'; 
+            }); 
+        }
         setupPreview('img-url', 'image-preview');
         setupPreview('edit-img-url', 'edit-image-preview');
         setupPreview('video-thumbnail', 'video-preview');
@@ -362,12 +532,24 @@
         setupPreview('img-thumbnail-url', 'thumbnail-preview');
         setupPreview('edit-img-thumbnail-url', 'edit-thumbnail-preview');
 
-        function showMessage(text, isSuccess = false) { const el = document.getElementById('global-message'); el.textContent = text; el.className = `message-box ${isSuccess ? 'success' : 'error'}`; el.style.display = 'block'; window.scrollTo(0, 0); setTimeout(() => { el.style.display = 'none'; }, 4000); }
-        function showLoginError(text) { const el = document.getElementById('login-error'); el.textContent = text; el.style.display = 'block'; }
-        function isValidUrl(string) { try { new URL(string); return true; } catch (_) { return false; } }
-        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : ''; }
-        function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
+        function showMessage(text, isSuccess = false) { 
+            const el = document.getElementById('global-message'); 
+            el.textContent = text; 
+            el.className = `p-4 rounded-lg mb-4 text-center font-semibold ${isSuccess ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`; 
+            el.style.display = 'block'; 
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll para ver el mensaje
+            setTimeout(() => { el.style.display = 'none'; }, 4000); 
+        }
         
+        function isValidUrl(string) { try { new URL(string); return true; } catch (_) { return false; } }
+        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
+        
+        function getYoutubeId(url) { 
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/; 
+            const match = url.match(regExp); 
+            return (match && match[2].length === 11) ? match[2] : null; 
+        }
+
         // --- DASHBOARD ---
         async function loadDashboardStats() {
             try {
@@ -384,22 +566,15 @@
                 document.getElementById('stats-total-videos').textContent = videosSnap.numChildren();
 
                 let totalReactions = 0;
-                reactionsSnap.forEach(imgReactions => {
-                    totalReactions += imgReactions.numChildren();
-                });
+                reactionsSnap.forEach(imgReactions => totalReactions += imgReactions.numChildren());
                 document.getElementById('stats-total-reactions').textContent = totalReactions;
                 
                 let totalComments = 0;
-                commentsSnap.forEach(imgComments => {
-                    totalComments += imgComments.numChildren();
-                });
+                commentsSnap.forEach(imgComments => totalComments += imgComments.numChildren());
                 document.getElementById('stats-total-comments').textContent = totalComments;
 
-                // Chart Logic
                 const categoryCounts = {};
-                for (const catKey in imageCategories) {
-                    categoryCounts[catKey] = 0;
-                }
+                for (const catKey in imageCategories) { categoryCounts[catKey] = 0; }
 
                 reactionsSnap.forEach(imgReactions => {
                     const imgId = imgReactions.key;
@@ -413,9 +588,7 @@
                         });
                     }
                 });
-
                 renderCategoryChart(categoryCounts);
-
             } catch(error) {
                 showMessage("Error al cargar las estadísticas: " + error.message);
             }
@@ -425,11 +598,7 @@
             const ctx = document.getElementById('category-reactions-chart').getContext('2d');
             const labels = Object.keys(categoryData).map(key => imageCategories[key]);
             const data = Object.values(categoryData);
-
-            if (categoryChart) {
-                categoryChart.destroy();
-            }
-
+            if (categoryChart) { categoryChart.destroy(); }
             categoryChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -437,38 +606,25 @@
                     datasets: [{
                         label: 'Total de Reacciones',
                         data: data,
-                        backgroundColor: 'rgba(46, 204, 113, 0.6)',
-                        borderColor: 'rgba(46, 204, 113, 1)',
-                        borderWidth: 1
+                        backgroundColor: 'rgba(249, 115, 22, 0.6)',
+                        borderColor: 'rgba(249, 115, 22, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: '#fff' },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        },
-                        x: {
-                            ticks: { color: '#fff' },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        }
+                        y: { beginAtZero: true, ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                        x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
                     },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#fff'
-                            }
-                        }
-                    }
+                    plugins: { legend: { labels: { color: '#d1d5db' } } }
                 }
             });
         }
 
-
-        // --- GESTIÓN DE IMÁGENES ---
+        // --- GESTIÓN DE IMÁGENES (CON PAGINACIÓN) ---
         document.getElementById('image-form').addEventListener('submit', e => {
             e.preventDefault();
             const url = document.getElementById('img-url').value.trim();
@@ -482,15 +638,13 @@
             if (!isValidUrl(url) || !title || !desc || tags.length === 0) {
                 showMessage('Los campos de URL, título, descripción y tags son obligatorios.'); return;
             }
-
             const imageData = { url, title, desc, tags, categories, ownerId, timestamp: Date.now() };
-            if (isValidUrl(thumbnailUrl)) {
-                imageData.thumbnailUrl = thumbnailUrl;
-            }
+            if (isValidUrl(thumbnailUrl)) imageData.thumbnailUrl = thumbnailUrl;
 
             db.ref('images').push().set(imageData)
                 .then(() => {
                     showMessage('Imagen añadida con éxito', true);
+                    closeFormModal();
                     e.target.reset();
                     document.getElementById('image-preview').style.display = 'none';
                     document.getElementById('thumbnail-preview').style.display = 'none';
@@ -498,36 +652,126 @@
                 }).catch(error => showMessage('Error: ' + error.message));
         });
 
-        function loadImages(query = '') {
-            db.ref('images').orderByChild('timestamp').on('value', snapshot => {
-                const images = [];
-                snapshot.forEach(child => { images.push({ id: child.key, ...child.val() }); });
-                images.reverse();
-                const normalizedQuery = normalize(query);
-                const filtered = query ? images.filter(img => normalize(img.title).includes(normalizedQuery) || (img.tags && img.tags.some(tag => normalize(tag).includes(normalizedQuery)))) : images;
-                displayImages(filtered);
-            }, error => showMessage('Error al cargar imágenes: ' + error.message));
+        async function loadImages(query = '') {
+            return new Promise((resolve, reject) => {
+                db.ref('images').orderByChild('timestamp').on('value', snapshot => {
+                    const images = [];
+                    allImagesCache.clear();
+                    snapshot.forEach(child => {
+                        const imgData = { id: child.key, ...child.val() };
+                        images.push(imgData);
+                        allImagesCache.set(imgData.id, imgData);
+                    });
+                    images.reverse();
+                    
+                    const normalizedQuery = normalize(query);
+                    const filtered = query ? images.filter(img => normalize(img.title).includes(normalizedQuery) || (img.tags && img.tags.some(tag => normalize(tag).includes(normalizedQuery)))) : images;
+                    
+                    currentFilteredImages = filtered; // Guardar la lista filtrada completa
+                    displayImagePage(1); // Mostrar la primera página
+                    
+                    resolve();
+                }, error => {
+                    showMessage('Error al cargar imágenes: ' + error.message);
+                    reject(error);
+                });
+            });
+        }
+
+        function displayImagePage(pageNumber) {
+            currentImagePage = pageNumber;
+            const container = document.getElementById('image-list-container');
+            
+            if (currentFilteredImages.length === 0) {
+                 container.innerHTML = '<p class="text-center text-gray-500 py-6 col-span-full">No se encontraron imágenes.</p>';
+            } else {
+                const startIndex = (pageNumber - 1) * imagesPerPage;
+                const endIndex = startIndex + imagesPerPage;
+                const pageImages = currentFilteredImages.slice(startIndex, endIndex);
+                
+                displayImages(pageImages); 
+            }
+            
+            renderPaginationControls(); 
         }
 
         function displayImages(images) {
-            const tableBody = document.getElementById('image-table-body');
-            tableBody.innerHTML = '';
+            const container = document.getElementById('image-list-container');
+            container.innerHTML = ''; 
+            
             images.forEach(img => {
-                const row = document.createElement('tr');
+                const div = document.createElement('div');
+                div.className = "bg-gray-800 rounded-xl shadow-lg overflow-hidden flex flex-col border border-gray-700 transition-all duration-300 hover:border-orange-500/50 hover:shadow-orange-500/10";
                 const displayUrl = img.thumbnailUrl || img.url;
-                row.innerHTML = `
-                    <td><input type="checkbox" class="battle-selection" value="${img.id}" onchange="handleBattleSelection(this)"></td>
-                    <td><img src="${displayUrl}" alt="${img.title}"></td>
-                    <td>${img.title}</td>
-                    <td>${img.tags ? img.tags.join(', ') : ''}</td>
-                    <td>${img.categories ? img.categories.map(c => imageCategories[c] || c).join(', ') : 'N/A'}</td>
-                    <td>
-                        <button class="action-btn edit-btn" onclick="openEditModal('image', '${img.id}')"><i class="fas fa-edit"></i></button>
-                        <button class="action-btn delete-btn" onclick="deleteContent('image', '${img.id}')"><i class="fas fa-trash"></i></button>
-                    </td>
+                
+                div.innerHTML = `
+                    <div class="relative">
+                        <img src="${displayUrl}" alt="${img.title}" class="w-full h-40 object-cover">
+                        <input type="checkbox" class="battle-selection absolute top-2 left-2 w-5 h-5 accent-orange-500 rounded text-orange-500 focus:ring-orange-500 bg-gray-900/50 border-gray-600" value="${img.id}" onchange="handleBattleSelection(this)">
+                    </div>
+                    <div class="p-3 flex-grow min-w-0">
+                        <h4 class="font-bold text-white truncate" title="${img.title}">${img.title}</h4>
+                        <p class="text-xs text-gray-400 truncate" title="${img.tags ? img.tags.join(', ') : ''}">${img.tags ? img.tags.join(', ') : 'Sin tags'}</p>
+                        <p class="text-xs text-gray-500 truncate" title="${img.categories ? img.categories.map(c => imageCategories[c] || c).join(', ') : ''}">${img.categories ? img.categories.map(c => imageCategories[c] || c).join(', ') : 'Sin categorías'}</p>
+                    </div>
+                    <div class="flex justify-around gap-2 p-2 bg-gray-900/50">
+                        <button class="p-2 w-10 h-10 bg-gray-600 text-white rounded-full hover:bg-orange-500 transition-all duration-200 flex items-center justify-center" onclick="openFormModal('edit-image', '${img.id}')" title="Editar">
+                            <i class="fas fa-edit text-sm"></i>
+                        </button>
+                        <button class="p-2 w-10 h-10 bg-gray-600 text-white rounded-full hover:bg-red-600 transition-all duration-200 flex items-center justify-center" onclick="deleteContent('image', '${img.id}')" title="Eliminar">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
                 `;
-                tableBody.appendChild(row);
+                container.appendChild(div);
             });
+        }
+        
+        function renderPaginationControls() {
+            const container = document.getElementById('image-pagination-container');
+            const totalImages = currentFilteredImages.length;
+            const totalPages = Math.ceil(totalImages / imagesPerPage);
+            
+            container.innerHTML = ''; 
+
+            if (totalPages <= 1) {
+                return; 
+            }
+            
+            const btnClasses = "p-2 w-10 h-10 bg-gray-600 text-white rounded-full hover:bg-orange-500 transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:bg-gray-700 cursor-pointer";
+            
+            // Botón Anterior
+            const prevButton = document.createElement('button');
+            prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevButton.className = btnClasses;
+            prevButton.onclick = () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                displayImagePage(currentImagePage - 1);
+            };
+            if (currentImagePage === 1) {
+                prevButton.disabled = true;
+            }
+            
+            // Info de Página
+            const pageInfo = document.createElement('span');
+            pageInfo.className = "font-semibold text-gray-300";
+            pageInfo.textContent = `Página ${currentImagePage} de ${totalPages}`;
+            
+            // Botón Siguiente
+            const nextButton = document.createElement('button');
+            nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextButton.className = btnClasses;
+            nextButton.onclick = () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                displayImagePage(currentImagePage + 1);
+            };
+            if (currentImagePage === totalPages) {
+                nextButton.disabled = true;
+            }
+            
+            container.appendChild(prevButton);
+            container.appendChild(pageInfo);
+            container.appendChild(nextButton);
         }
 
         document.getElementById('edit-image-form').addEventListener('submit', e => {
@@ -537,9 +781,7 @@
             const thumbnailUrl = document.getElementById('edit-img-thumbnail-url').value.trim();
             const ownerId = "loY4qn9UH8fqp3loKcEYRIDslsg2";
             
-            if (!isValidUrl(url)) {
-                showMessage('La URL de la imagen principal no es válida.'); return;
-            }
+            if (!isValidUrl(url)) { showMessage('La URL de la imagen principal no es válida.'); return; }
             
             const data = {
                 url: url,
@@ -550,20 +792,35 @@
                 ownerId: ownerId,
                 timestamp: parseInt(document.getElementById('edit-img-timestamp').value, 10)
             };
-            
-            if (isValidUrl(thumbnailUrl)) {
-                data.thumbnailUrl = thumbnailUrl;
-            } else {
-                data.thumbnailUrl = null; 
-            }
+            if (isValidUrl(thumbnailUrl)) data.thumbnailUrl = thumbnailUrl; else data.thumbnailUrl = null; 
 
             db.ref(`images/${id}`).set(data)
-                .then(() => { showMessage('Imagen actualizada', true); closeEditModal(); })
+                .then(() => { showMessage('Imagen actualizada', true); closeFormModal(); })
                 .catch(error => showMessage('Error: ' + error.message));
         });
+        
+        // ******** MEJORA: Búsqueda activada por botón o enter ********
+        document.getElementById('search-images').addEventListener('input', e => { 
+            const query = e.target.value;
+            // Opcional: filtrar en tiempo real
+             loadImages(query);
+            // Si prefieres buscar solo al presionar el botón, comenta la línea de arriba
+        });
+        // (Se puede añadir listener al botón de búsqueda si se saca el filtrado en tiempo real)
+
 
         // --- GESTIÓN DE VIDEOS ---
-        document.getElementById('video-url').addEventListener('input', (e) => { const url = e.target.value; const youtubeId = getYoutubeId(url); if(youtubeId) { const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`; document.getElementById('video-thumbnail').value = thumbnailUrl; document.getElementById('video-preview').src = thumbnailUrl; document.getElementById('video-preview').style.display = 'block'; document.getElementById('video-title').placeholder = "Pega el título del video de YouTube aquí"; } });
+        document.getElementById('video-url').addEventListener('input', (e) => { 
+            const url = e.target.value; 
+            const youtubeId = getYoutubeId(url); 
+            if(youtubeId) { 
+                const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`; 
+                document.getElementById('video-thumbnail').value = thumbnailUrl; 
+                document.getElementById('video-preview').src = thumbnailUrl; 
+                document.getElementById('video-preview').style.display = 'block'; 
+                document.getElementById('video-title').placeholder = "Pega el título del video de YouTube aquí"; 
+            } 
+        });
         
         document.getElementById('video-form').addEventListener('submit', e => { 
             e.preventDefault(); 
@@ -572,20 +829,57 @@
             if(!type) { showMessage('URL no válida. Debe ser de YouTube o terminar en .mp4'); return; } 
             
             const data = { url, type, title: document.getElementById('video-title').value.trim(), genre: document.getElementById('video-genre').value.trim(), desc: document.getElementById('video-desc').value.trim(), thumbnailUrl: document.getElementById('video-thumbnail').value.trim(), timestamp: Date.now() }; 
-            
-            if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { 
-                showMessage('Todos los campos de video son obligatorios.'); return; 
-            } 
+            if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { showMessage('Todos los campos de video son obligatorios.'); return; } 
             
             db.ref('videos').push().set(data).then(() => { 
                 showMessage('Video añadido con éxito', true); 
+                closeFormModal();
                 e.target.reset(); 
                 document.getElementById('video-preview').style.display = 'none'; 
             }).catch(error => showMessage('Error: ' + error.message)); 
         });
 
-        function loadVideos(query = '') { db.ref('videos').orderByChild('timestamp').on('value', snapshot => { const videos = []; snapshot.forEach(child => { videos.push({ id: child.key, ...child.val() }); }); videos.reverse(); const normalizedQuery = normalize(query); const filtered = query ? videos.filter(v => normalize(v.title).includes(normalizedQuery)) : videos; displayVideos(filtered); }, error => showMessage('Error al cargar videos: ' + error.message)); }
-        function displayVideos(videos) { const tableBody = document.getElementById('video-table-body'); tableBody.innerHTML = ''; videos.forEach(video => { const row = document.createElement('tr'); row.innerHTML = `<td><img src="${video.thumbnailUrl}" alt="${video.title}"></td><td>${video.title}</td><td><span style="background:#444; padding: 4px 8px; border-radius:4px; font-weight:bold;">${video.type.toUpperCase()}</span></td><td><button class="action-btn edit-btn" onclick="openEditModal('video', '${video.id}')"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="deleteContent('video', '${video.id}')"><i class="fas fa-trash"></i></button></td>`; tableBody.appendChild(row); }); }
+        function loadVideos(query = '') { 
+            db.ref('videos').orderByChild('timestamp').on('value', snapshot => { 
+                const videos = [];
+                allVideosCache.clear();
+                snapshot.forEach(child => { 
+                    const videoData = { id: child.key, ...child.val() };
+                    videos.push(videoData); 
+                    allVideosCache.set(videoData.id, videoData);
+                }); 
+                videos.reverse(); 
+                const normalizedQuery = normalize(query); 
+                const filtered = query ? videos.filter(v => normalize(v.title).includes(normalizedQuery)) : videos; 
+                displayVideos(filtered); 
+            }, error => showMessage('Error al cargar videos: ' + error.message)); 
+        }
+        
+        function displayVideos(videos) { 
+            const container = document.getElementById('video-list-container'); 
+            container.innerHTML = ''; 
+            if (videos.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 py-6">No se encontraron videos.</p>';
+                return;
+            }
+            videos.forEach(video => { 
+                const div = document.createElement('div');
+                div.className = "bg-gray-800 p-3 rounded-xl shadow-lg flex items-center gap-3 border border-gray-700 transition-all duration-300 hover:border-orange-500/50 hover:shadow-orange-500/10";
+                div.innerHTML = `
+                    <img src="${video.thumbnailUrl}" alt="${video.title}" class="w-20 h-16 object-cover rounded-md flex-shrink-0">
+                    <div class="flex-grow min-w-0">
+                        <h4 class="font-bold text-white truncate">${video.title}</h4>
+                        <p class="text-xs text-gray-400 truncate">${video.genre || 'Sin género'}</p>
+                        <span class="text-xs font-bold ${video.type === 'youtube' ? 'text-red-400' : 'text-blue-400'}">${video.type.toUpperCase()}</span>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+                        <button class="p-2 w-10 h-10 bg-gray-600 text-white rounded-full hover:bg-orange-500 transition-all duration-200 flex items-center justify-center" onclick="openFormModal('edit-video', '${video.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="p-2 w-10 h-10 bg-gray-600 text-white rounded-full hover:bg-red-600 transition-all duration-200 flex items-center justify-center" onclick="deleteContent('video', '${video.id}')"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(div); 
+            }); 
+        }
 
         document.getElementById('edit-video-form').addEventListener('submit', e => { 
             e.preventDefault(); 
@@ -595,28 +889,267 @@
             if(!type) { showMessage('URL no válida para video.'); return; } 
             
             const data = { url, type, title: document.getElementById('edit-video-title').value.trim(), genre: document.getElementById('edit-video-genre').value.trim(), desc: document.getElementById('edit-video-desc').value.trim(), thumbnailUrl: document.getElementById('edit-video-thumbnail').value.trim(), timestamp: parseInt(document.getElementById('edit-video-timestamp').value, 10) }; 
-            
-            if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { 
-                showMessage('Todos los campos son obligatorios.'); return; 
-            } 
+            if (!isValidUrl(data.url) || !data.title || !data.desc || !isValidUrl(data.thumbnailUrl)) { showMessage('Todos los campos son obligatorios.'); return; } 
             
             db.ref(`videos/${id}`).set(data).then(() => { 
                 showMessage('Video actualizado', true); 
-                closeEditModal(); 
+                closeFormModal(); 
             }).catch(error => showMessage('Error: ' + error.message)); 
         });
-        
-        // --- MODAL Y OTROS ---
-        function openEditModal(type, id) {
-            const refPath = type === 'image' ? 'images' : 'videos';
-            const modal = document.getElementById('edit-modal');
-            const imageForm = document.getElementById('edit-image-form-container');
-            const videoForm = document.getElementById('edit-video-form-container');
+        document.getElementById('search-videos').addEventListener('input', e => loadVideos(e.target.value));
 
-            db.ref(`${refPath}/${id}`).once('value', snapshot => {
-                const item = {id: snapshot.key, ...snapshot.val()};
-                if (type === 'image') {
-                    imageForm.style.display = 'block'; videoForm.style.display = 'none';
+        // --- GESTIÓN GENERAL (COMENTARIOS, BATALLA Y BANNERS) ---
+        document.getElementById('search-comments').addEventListener('input', e => loadComments(e.target.value));
+        
+        function loadComments(query = '') { 
+            db.ref('comments').once('value', snapshot => { 
+                const comments = []; 
+                snapshot.forEach(imgSnap => {
+                    const imageId = imgSnap.key;
+                    imgSnap.forEach(commSnap => { 
+                        comments.push({ imageId: imageId, commentId: commSnap.key, ...commSnap.val() }); 
+                    });
+                }); 
+                comments.sort((a,b) => b.timestamp - a.timestamp); 
+                
+                const normalizedQuery = normalize(query); 
+                const filtered = query ? comments.filter(c => normalize(c.text).includes(normalizedQuery) || (c.name && normalize(c.name).includes(normalizedQuery))) : comments; 
+                displayComments(filtered); 
+            }); 
+        }
+        
+        function displayComments(comments) { 
+            const container = document.getElementById('comment-list-container'); 
+            container.innerHTML = ''; 
+            if (comments.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 py-6">No se encontraron comentarios.</p>';
+                return;
+            }
+            comments.forEach(comment => {
+                const img = allImagesCache.get(comment.imageId);
+                const imgUrl = img?.thumbnailUrl || img?.url || 'https://placehold.co/100x100/1f2937/4b5563?text=?';
+                
+                const div = document.createElement('div');
+                div.className = "bg-gray-800/60 border border-gray-700 p-3 rounded-xl shadow-lg flex items-start gap-3";
+                
+                div.innerHTML = `
+                    <img src="${imgUrl}" alt="Imagen comentada" class="w-16 h-16 object-cover rounded-md flex-shrink-0" title="En imagen: ${img?.title || 'Desconocida'}">
+                    <div class="flex-grow min-w-0">
+                        <p class="text-white font-medium break-words">${comment.text}</p>
+                        <p class="text-xs text-gray-400 mt-1">Por: <span class="font-semibold">${comment.name || 'Anónimo'}</span></p>
+                        <p class="text-xs text-gray-500">${new Date(comment.timestamp).toLocaleString()}</p>
+                    </div>
+                    <button class="p-2 w-10 h-10 bg-gray-600 text-white rounded-full hover:bg-red-600 transition-all duration-200 flex items-center justify-center flex-shrink-0" onclick="deleteComment('${comment.imageId}', '${comment.commentId}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(div); 
+            }); 
+        }
+        
+        function deleteComment(imageId, commentId) { 
+            if (confirm('¿Eliminar este comentario?')) { 
+                db.ref(`comments/${imageId}/${commentId}`).remove()
+                    .then(() => showMessage('Comentario eliminado.', true))
+                    .catch(error => showMessage('Error: ' + error.message)); 
+            } 
+        }
+        
+        function deleteContent(type, id) { 
+            const refPath = type === 'image' ? 'images' : 'videos'; 
+            const commentsPath = type === 'image' ? 'comments' : 'video_comments'; 
+            const reactionsPath = type === 'image' ? 'reactions' : 'video_reactions'; 
+            if (confirm(`¿Seguro que quieres eliminar este ${type}? También se eliminarán sus datos asociados.`)) { 
+                const updates = {}; 
+                updates[`/${refPath}/${id}`] = null; 
+                updates[`/${commentsPath}/${id}`] = null; 
+                updates[`/${reactionsPath}/${id}`] = null; 
+                db.ref().update(updates)
+                    .then(() => showMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} eliminado.`, true))
+                    .catch(error => showMessage('Error: ' + error.message)); 
+            } 
+        }
+
+        // --- Lógica de Batalla ---
+        function handleBattleSelection(checkbox) { 
+            if (checkbox.checked) { 
+                if (selectedForBattle.length < 2) {
+                    selectedForBattle.push(checkbox.value); 
+                } else { 
+                    checkbox.checked = false; 
+                    showMessage('Solo puedes seleccionar dos imágenes.'); 
+                } 
+            } else { 
+                selectedForBattle = selectedForBattle.filter(id => id !== checkbox.value); 
+            } 
+            document.getElementById('start-battle-btn').disabled = selectedForBattle.length !== 2; 
+        }
+        
+        document.getElementById('start-battle-btn').addEventListener('click', () => { 
+            const durationDays = parseInt(document.getElementById('battle-duration').value, 10); 
+            if (isNaN(durationDays) || durationDays <= 0) { showMessage('La duración debe ser un número positivo.'); return; } 
+            const expiry = Date.now() + durationDays * 24 * 60 * 60 * 1000; 
+            const [id1, id2] = selectedForBattle; 
+            db.ref('battle').set({ images: [id1, id2], expiry, votes: { [id1]: 0, [id2]: 0 } }).then(() => { 
+                showMessage('¡Batalla iniciada!', true); 
+                selectedForBattle = []; 
+                document.querySelectorAll('.battle-selection').forEach(cb => cb.checked = false); 
+                document.getElementById('start-battle-btn').disabled = true; 
+                loadCurrentBattleStatus(); 
+            }); 
+        });
+        
+        document.getElementById('end-battle-btn').addEventListener('click', async () => { 
+            if (!confirm('¿Terminar la batalla? El ganador se guardará.')) return; 
+            const battleSnap = await db.ref('battle').once('value'); 
+            if (!battleSnap.exists()) { showMessage('No hay batalla activa.'); return; } 
+            const battle = battleSnap.val(); 
+            const [id1, id2] = battle.images; 
+            const votes1 = battle.votes[id1] || 0; 
+            const votes2 = battle.votes[id2] || 0; 
+            const winnerData = (votes1 >= votes2) ? { winnerId: id1, loserId: id2, winnerVotes: votes1, loserVotes: votes2 } : { winnerId: id2, loserId: id1, winnerVotes: votes2, loserVotes: votes1 }; 
+            const updates = {}; updates['/previousBattleWinner'] = winnerData; updates['/battle'] = null; 
+            db.ref().update(updates).then(() => { showMessage('Batalla terminada.', true); loadCurrentBattleStatus(); }); 
+        });
+        
+        async function loadCurrentBattleStatus() {
+            db.ref('battle').on('value', async (battleSnap) => {
+                const statusContainer = document.getElementById('current-battle-status');
+                const endBattleBtn = document.getElementById('end-battle-btn');
+                
+                if (!battleSnap.exists()) {
+                    statusContainer.innerHTML = '<p class="text-gray-400">No hay ninguna batalla activa.</p>';
+                    endBattleBtn.style.display = 'none';
+                    return;
+                }
+                
+                const battle = battleSnap.val();
+                if (!battle.images || battle.images.length < 2) {
+                    statusContainer.innerHTML = '<p class="text-red-400">Error: Datos de batalla corruptos (sin imágenes).</p>'; 
+                    endBattleBtn.style.display = 'block'; // Show btn to end it
+                    return;
+                }
+
+                const [id1, id2] = battle.images;
+                
+                let img1 = allImagesCache.get(id1);
+                let img2 = allImagesCache.get(id2);
+                
+                if (!img1 || !img2) {
+                    try {
+                        const [img1Snap, img2Snap] = await Promise.all([
+                            db.ref(`images/${id1}`).once('value'),
+                            db.ref(`images/${id2}`).once('value')
+                        ]);
+                        if (img1Snap.exists()) img1 = { id: id1, ...img1Snap.val() };
+                        if (img2Snap.exists()) img2 = { id: id2, ...img2Snap.val() };
+                    } catch (error) {
+                        console.error("Error fetching battle images: ", error);
+                        statusContainer.innerHTML = `<p class="text-red-400">Error al cargar imágenes: ${error.message}</p>`;
+                        endBattleBtn.style.display = 'block';
+                        return;
+                    }
+                }
+
+                if (!img1 || !img2) {
+                    statusContainer.innerHTML = '<p class="text-red-400">Error: Una o más imágenes de la batalla no se encontraron en la base de datos.</p>';
+                    endBattleBtn.style.display = 'block'; // Show btn to end it
+                    return;
+                }
+
+                const timeLeft = battle.expiry - Date.now();
+                const timeString = timeLeft > 0 ? `${Math.floor(timeLeft / 864e5)}d ${Math.floor(timeLeft / 36e5 % 24)}h` : 'Terminada';
+                
+                statusContainer.innerHTML = `
+                    <p class="font-semibold text-white mb-3">Batalla activa:</p>
+                    <div class="flex items-center gap-3 p-2 bg-gray-700/50 rounded-lg">
+                        <img src="${img1.thumbnailUrl || img1.url}" class="w-16 h-16 rounded-md object-cover flex-shrink-0" alt="${img1.title}">
+                        <div class="flex-grow min-w-0">
+                            <p class="text-sm font-medium text-white truncate">${img1.title}</p>
+                            <span class="font-bold text-orange-400 text-lg">Votos: ${battle.votes[id1] || 0}</span>
+                        </div>
+                    </div>
+                    <p class="text-sm font-bold text-gray-400 text-center my-2">vs</p>
+                    <div class="flex items-center gap-3 p-2 bg-gray-700/50 rounded-lg">
+                        <img src="${img2.thumbnailUrl || img2.url}" class="w-16 h-16 rounded-md object-cover flex-shrink-0" alt="${img2.title}">
+                        <div class="flex-grow min-w-0">
+                            <p class="text-sm font-medium text-white truncate">${img2.title}</p>
+                            <span class="font-bold text-orange-400 text-lg">Votos: ${battle.votes[id2] || 0}</span>
+                        </div>
+                    </div>
+                    <p class="text-sm mt-3 text-center">Tiempo restante: <b class="text-white">${timeString}</b></p>`;
+                
+                endBattleBtn.style.display = 'block';
+            });
+        }
+
+        // --- ******** NUEVO: Gestión de Banners ******** ---
+        function populateCategoryBannerInputs() {
+            const container = document.getElementById('category-banner-inputs');
+            container.innerHTML = '';
+            for (const key in imageCategories) {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label for="banner-${key}" class="block mb-1 font-semibold text-sm text-orange-400">${imageCategories[key]}</label>
+                    <input type="url" id="banner-${key}" data-key="${key}" class="form-input" placeholder="https://url-del-banner.com/imagen.jpg">
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        function loadCategoryBanners() {
+            db.ref('categoryBanners').once('value', snapshot => {
+                if (!snapshot.exists()) return;
+                const banners = snapshot.val();
+                for (const key in banners) {
+                    const input = document.getElementById(`banner-${key}`);
+                    if (input) {
+                        input.value = banners[key];
+                    }
+                }
+            });
+        }
+
+        document.getElementById('category-banner-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const bannerData = {};
+            const inputs = document.querySelectorAll('#category-banner-inputs input[type="url"]');
+            
+            inputs.forEach(input => {
+                const key = input.dataset.key;
+                const url = input.value.trim();
+                if (key && url && isValidUrl(url)) {
+                    bannerData[key] = url;
+                } else if (key && !url) {
+                    bannerData[key] = null; // Borrar si está vacío
+                }
+            });
+
+            db.ref('categoryBanners').set(bannerData)
+                .then(() => {
+                    showMessage('Banners de categoría actualizados con éxito.', true);
+                })
+                .catch(error => {
+                    showMessage('Error al guardar los banners: ' + error.message);
+                });
+        });
+
+        // --- MANEJO DE MODALES ---
+        function openFormModal(type, id = null) {
+            const modal = document.getElementById('form-modal');
+            
+            document.getElementById('image-form-container').style.display = 'none';
+            document.getElementById('video-form-container').style.display = 'none';
+            document.getElementById('edit-image-form-container').style.display = 'none';
+            document.getElementById('edit-video-form-container').style.display = 'none';
+
+            if (type === 'image') {
+                document.getElementById('image-form-container').style.display = 'block';
+            } else if (type === 'video') {
+                document.getElementById('video-form-container').style.display = 'block';
+            } else if (type === 'edit-image' && id) {
+                const item = allImagesCache.get(id);
+                if (item) {
                     document.getElementById('edit-img-id').value = item.id;
                     document.getElementById('edit-img-url').value = item.url;
                     document.getElementById('edit-img-title').value = item.title;
@@ -626,12 +1159,14 @@
                     document.getElementById('edit-image-preview').src = item.url;
                     document.getElementById('edit-image-preview').style.display = 'block';
                     document.getElementById('edit-img-thumbnail-url').value = item.thumbnailUrl || '';
-                    const thumbPreview = document.getElementById('edit-thumbnail-preview');
-                    thumbPreview.src = item.thumbnailUrl || '';
-                    thumbPreview.style.display = item.thumbnailUrl ? 'block' : 'none';
+                    document.getElementById('edit-thumbnail-preview').src = item.thumbnailUrl || '';
+                    document.getElementById('edit-thumbnail-preview').style.display = item.thumbnailUrl ? 'block' : 'none';
                     populateCategoryCheckboxes('edit-img-categories', item.categories || []);
-                } else {
-                    imageForm.style.display = 'none'; videoForm.style.display = 'block';
+                    document.getElementById('edit-image-form-container').style.display = 'block';
+                }
+            } else if (type === 'edit-video' && id) {
+                const item = allVideosCache.get(id);
+                if (item) {
                     document.getElementById('edit-video-id').value = item.id;
                     document.getElementById('edit-video-url').value = item.url;
                     document.getElementById('edit-video-title').value = item.title;
@@ -641,24 +1176,26 @@
                     document.getElementById('edit-video-timestamp').value = item.timestamp;
                     document.getElementById('edit-video-preview').src = item.thumbnailUrl;
                     document.getElementById('edit-video-preview').style.display = 'block';
+                    document.getElementById('edit-video-form-container').style.display = 'block';
                 }
-                modal.style.display = 'flex';
-            });
+            }
+            
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         }
-        
-        function deleteContent(type, id) { const refPath = type === 'image' ? 'images' : 'videos'; const commentsPath = type === 'image' ? 'comments' : 'video_comments'; const reactionsPath = type === 'image' ? 'reactions' : 'video_reactions'; if (confirm(`¿Seguro que quieres eliminar este ${type}? También se eliminarán sus datos asociados.`)) { const updates = {}; updates[`/${refPath}/${id}`] = null; updates[`/${commentsPath}/${id}`] = null; updates[`/${reactionsPath}/${id}`] = null; db.ref().update(updates).then(() => showMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} eliminado.`, true)).catch(error => showMessage('Error: ' + error.message)); } }
-        document.getElementById('search-images').addEventListener('input', e => loadImages(normalize(e.target.value)));
-        document.getElementById('search-videos').addEventListener('input', e => loadVideos(normalize(e.target.value)));
-        document.getElementById('search-comments').addEventListener('input', e => loadComments(normalize(e.target.value)));
-        function loadComments(query = '') { db.ref('comments').once('value', snapshot => { const comments = []; snapshot.forEach(imgSnap => imgSnap.forEach(commSnap => { comments.push({ imageId: imgSnap.key, commentId: commSnap.key, ...commSnap.val() }); })); comments.sort((a,b) => b.timestamp - a.timestamp); const normalizedQuery = normalize(query); const filtered = query ? comments.filter(c => normalize(c.text).includes(normalizedQuery) || (c.name && normalize(c.name).includes(normalizedQuery))) : comments; displayComments(filtered); }); }
-        function displayComments(comments) { const tableBody = document.getElementById('comment-table-body'); tableBody.innerHTML = ''; comments.forEach(comment => { const row = document.createElement('tr'); row.innerHTML = `<td>${comment.imageId.substring(0, 6)}...</td><td>${comment.text}</td><td>${comment.name || 'Anónimo'}</td><td><button class="action-btn delete-btn" onclick="deleteComment('${comment.imageId}', '${comment.commentId}')"><i class="fas fa-trash"></i></button></td>`; tableBody.appendChild(row); }); }
-        function deleteComment(imageId, commentId) { if (confirm('¿Eliminar este comentario?')) { db.ref(`comments/${imageId}/${commentId}`).remove().then(() => showMessage('Comentario eliminado.', true)).catch(error => showMessage('Error: ' + error.message)); } }
-        function getYoutubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
-        function handleBattleSelection(checkbox) { if (checkbox.checked) { if (selectedForBattle.length < 2) selectedForBattle.push(checkbox.value); else { checkbox.checked = false; showMessage('Solo puedes seleccionar dos imágenes.'); } } else { selectedForBattle = selectedForBattle.filter(id => id !== checkbox.value); } document.getElementById('start-battle-btn').disabled = selectedForBattle.length !== 2; }
-        document.getElementById('start-battle-btn').addEventListener('click', () => { const durationDays = parseInt(document.getElementById('battle-duration').value, 10); if (isNaN(durationDays) || durationDays <= 0) { showMessage('La duración debe ser un número positivo.'); return; } const expiry = Date.now() + durationDays * 24 * 60 * 60 * 1000; const [id1, id2] = selectedForBattle; db.ref('battle').set({ images: [id1, id2], expiry, votes: { [id1]: 0, [id2]: 0 } }).then(() => { showMessage('¡Batalla iniciada!', true); selectedForBattle = []; document.querySelectorAll('.battle-selection').forEach(cb => cb.checked = false); document.getElementById('start-battle-btn').disabled = true; loadCurrentBattleStatus(); }); });
-        document.getElementById('end-battle-btn').addEventListener('click', async () => { if (!confirm('¿Terminar la batalla? El ganador se guardará.')) return; const battleSnap = await db.ref('battle').once('value'); if (!battleSnap.exists()) { showMessage('No hay batalla activa.'); return; } const battle = battleSnap.val(); const [id1, id2] = battle.images; const votes1 = battle.votes[id1] || 0; const votes2 = battle.votes[id2] || 0; const winnerData = (votes1 >= votes2) ? { winnerId: id1, loserId: id2, winnerVotes: votes1, loserVotes: votes2 } : { winnerId: id2, loserId: id1, winnerVotes: votes2, loserVotes: votes1 }; const updates = {}; updates['/previousBattleWinner'] = winnerData; updates['/battle'] = null; db.ref().update(updates).then(() => { showMessage('Batalla terminada.', true); loadCurrentBattleStatus(); }); });
-        async function loadCurrentBattleStatus() { db.ref('battle').on('value', async (battleSnap) => { const statusContainer = document.getElementById('current-battle-status'); const endBattleBtn = document.getElementById('end-battle-btn'); if (!battleSnap.exists()) { statusContainer.innerHTML = '<p>No hay ninguna batalla activa.</p>'; endBattleBtn.style.display = 'none'; return; } const battle = battleSnap.val(); const [id1, id2] = battle.images; const [img1Snap, img2Snap] = await Promise.all([db.ref(`images/${id1}`).once('value'), db.ref(`images/${id2}`).once('value')]); if (!img1Snap.exists() || !img2Snap.exists()) { statusContainer.innerHTML = '<p class="error">Error: una imagen de la batalla no existe.</p>'; return; } const img1 = img1Snap.val(), img2 = img2Snap.val(); const timeLeft = battle.expiry - Date.now(); const timeString = timeLeft > 0 ? `${Math.floor(timeLeft / 864e5)}d ${Math.floor(timeLeft / 36e5 % 24)}h` : 'Terminada'; statusContainer.innerHTML = `<p><b>Batalla activa:</b> ${img1.title} (V: ${battle.votes[id1] || 0}) vs ${img2.title} (V: ${battle.votes[id2] || 0})</p><p>Tiempo restante: <b>${timeString}</b></p>`; endBattleBtn.style.display = 'block'; }); }
+
+        function closeFormModal() {
+            const modal = document.getElementById('form-modal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            
+            document.getElementById('image-form').reset();
+            document.getElementById('video-form').reset();
+            document.getElementById('edit-image-form').reset();
+            document.getElementById('edit-video-form').reset();
+            
+            document.querySelectorAll('img[id*="-preview"]').forEach(img => img.style.display = 'none');
+        }
     </script>
 </body>
 </html>
-

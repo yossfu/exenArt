@@ -128,13 +128,19 @@
              <a href="index.html"><img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]"></a>
         </div>
         
-        <h3 id="category-title" class="section-title mb-6 text-center text-3xl tracking-tight text-orange-400"></h3>
+        <!-- ******** NUEVO: Banner de Categoría ******** -->
+        <div id="category-banner" class="relative w-full h-48 sm:h-64 rounded-2xl bg-cover bg-center mb-6 shadow-lg flex items-center justify-center p-4 text-center" style="background-image: url('https://placehold.co/1200x400/1f2937/4b5563?text=exen-E')">
+            <div class="absolute inset-0 bg-black/50 rounded-2xl"></div> <!-- Overlay para legibilidad -->
+            <h3 id="category-title" class="section-title relative z-10 text-3xl sm:text-4xl tracking-tight text-white" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);"></h3>
+        </div>
         
+        <!-- Controles de orden -->
         <div id="sort-controls" class="flex justify-center gap-2 mb-6">
             <button class="sort-button active px-4 py-2 rounded-full text-sm font-semibold touch-feedback" data-sort="timestamp">Más Recientes</button>
             <button class="sort-button px-4 py-2 rounded-full text-sm font-semibold touch-feedback" data-sort="likes">Más Gustadas</button>
         </div>
 
+        <!-- Galería -->
         <section id="gallery">
             <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
             <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
@@ -143,7 +149,7 @@
         </section>
     </main>
 
-    <!-- Modal copied from index.html -->
+    <!-- Modal (copiado de index.html) -->
     <div id="modal" class="fixed inset-0 z-[1000]">
         <button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-left text-2xl"></i></button>
         <button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-right text-2xl"></i></button>
@@ -189,13 +195,7 @@
                         <div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
                     </section>
                     <section id="comments-section" class="mt-4 w-full">
-                        <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-2xl bg-gray-800/50 p-4 sm:flex-row">
-                            <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4">
-                            <input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white">
-                            <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white touch-feedback">
-                                <i class="fas fa-paper-plane"></i> Enviar
-                            </button>
-                        </form>
+                        <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-2xl bg-gray-800/50 p-4 sm:flex-row"><input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4"><input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white"><button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white touch-feedback"><i class="fas fa-paper-plane"></i> Enviar</button></form>
                         <div id="comments" class="flex flex-col gap-4"></div>
                     </section>
                 </div>
@@ -280,9 +280,34 @@
             document.title = `exen-E | ${title}`;
             document.getElementById('category-title').textContent = title;
 
+            // ******** NUEVO: Cargar el banner específico ********
+            loadCategoryBanner(category);
+
             await Promise.all([cacheFullGallery(), cacheAllReactionCounts()]);
             filterAndSortImages(category);
             setupIntersectionObserver();
+        }
+
+        // ******** NUEVO: Función para cargar el banner de esta categoría ********
+        async function loadCategoryBanner(categoryKey) {
+            const bannerElement = document.getElementById('category-banner');
+            try {
+                const snapshot = await db.ref(`categoryBanners/${categoryKey}`).once('value');
+                if (snapshot.exists()) {
+                    const bannerUrl = snapshot.val();
+                    if (bannerUrl) {
+                        // Precargar la imagen antes de mostrarla para evitar parpadeo
+                        const img = new Image();
+                        img.src = bannerUrl;
+                        img.onload = () => {
+                             bannerElement.style.backgroundImage = `url('${bannerUrl}')`;
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading category banner:", error);
+                // Se quedará la imagen de placeholder definida en el HTML
+            }
         }
 
         async function cacheFullGallery() {
@@ -579,4 +604,3 @@
     </script>
 </body>
 </html>
-

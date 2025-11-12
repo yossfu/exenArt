@@ -2,511 +2,337 @@
 <html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>exen-E | Comunidad</title>
-
+    <!-- Metatags -->
+    <meta property="og:title" content="exen-E | Comunidad" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://yossfu.github.io/exenArt/comunidad.html" />
+    <meta property="og:image" content="https://files.catbox.moe/4ubhtv.jpg" />
+    <meta property="og:image:alt" content="Logo de exen-E Comunidad" />
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
     <!-- Google Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
-    <!-- Estilos Personalizados y Mejoras -->
+    <!-- Estilos Personalizados -->
     <style>
-        :root { --accent: #e65100; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            color: #f3f4f6;
+        :root { 
+            --accent: #f97316; 
+            --accent-glow: rgba(251, 146, 60, 0.6);
+            --title-font: 'Poppins', sans-serif;
+            --body-font: 'Inter', sans-serif;
         }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+        html { scroll-behavior: smooth; }
+        body { 
+            font-family: var(--body-font); 
+            background-color: #0c0c0c;
+            background-image: radial-gradient(circle at 25% 25%, rgba(249, 115, 22, 0.05) 0%, transparent 40%), 
+                              radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
+            color: #f3f4f6;
+            padding-bottom: 80px;
+        }
         
-        .form-input { @apply w-full rounded-lg border-2 border-slate-700 bg-slate-800 px-4 py-2 text-white transition placeholder:text-slate-500 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50; }
-        .btn { @apply rounded-lg px-5 py-2.5 font-semibold text-white transition duration-300 ease-in-out flex items-center justify-center gap-2; }
-        .btn-primary { @apply bg-orange-600 hover:bg-orange-500 disabled:bg-orange-900/50 disabled:text-slate-400 disabled:cursor-not-allowed; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .spinner { display: none; animation: spin 1s linear infinite; }
-        .btn.loading .spinner { display: inline-block; }
-        .btn.loading .btn-text { display: none; }
+    .section-title {
+        font-family: var(--title-font);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+    .post-card {
+        border-radius: 1rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        will-change: transform; /* GPU acceleration */
+    }
+    .post-card:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 25px -5px var(--accent-glow);
+    }
+    .touch-feedback {
+        transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .touch-feedback:active {
+        transform: scale(0.95);
+    }
 
-        #image-modal { display: none; }
-        #image-modal.show { display: flex; }
+    .bottom-nav {
+        background-color: rgba(10, 10, 10, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(55, 65, 81, 0.3);
+    }
+    .bottom-nav-link {
+        color: #9ca3af;
+        transition: color 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .bottom-nav-link.active {
+        color: var(--accent);
+        transform: translateY(-4px);
+    }
+    .bottom-nav-link.active span { font-weight: 700; }
+    .bottom-nav-link svg { transition: transform 0.2s ease; }
+    .bottom-nav-link.active svg { transform: scale(1.1); }
 
-        .tab-active { @apply border-orange-500 text-white; }
-        .tab-inactive { @apply border-transparent text-slate-400 hover:text-white; }
-    </style>
-</head>
+    #modal {
+        display: none;
+        --tw-bg-opacity: 0.8;
+        background-color: rgba(0,0,0,var(--tw-bg-opacity));
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+    @keyframes modal-enter {
+        from { opacity: 0; transform: translateY(20px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    #modal.visible {
+        display: block;
+    }
+    #modal.visible #modal-content {
+         animation: modal-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .decorative-divider { display: flex; align-items: center; text-align: center; margin: 3rem 0; }
+    .decorative-divider::before, .decorative-divider::after { content: ''; flex: 1; border-bottom: 1px solid; border-image-source: linear-gradient(to right, transparent, var(--accent), transparent); border-image-slice: 1; opacity: 0.5; }
+    .decorative-divider-icon { font-size: 1.5rem; color: var(--accent); text-shadow: 0 0 15px var(--accent-glow); padding: 0 1em; }
+    @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+    .skeleton { background-color: #374151; background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%); background-repeat: no-repeat; background-size: 2000px 100%; animation: shimmer 1.5s linear infinite; border-radius: 1rem; aspect-ratio: 2 / 3; }
+    @keyframes loadPost { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .post-item-animation { animation: loadPost 0.6s ease-out forwards; }
+    @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
+    .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; text-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; will-change: transform, opacity; }
+    #reaction-circle-container.open .reaction-circle-item { opacity: 1; transform: scale(1) var(--transform-pos); }
+    #reaction-circle-container.open #reaction-bg { transform: scale(1); }
+    .reaction-circle-item { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform: scale(0); opacity: 0; }
+    #scrollToTopBtn { opacity: 0; visibility: hidden; transform: translateY(20px); transition: opacity 0.3s, visibility 0.3s, transform 0.3s; }
+    #scrollToTopBtn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1f2937; }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .post-like-btn.liked i { color: #ef4444; }
+</style></head>
 <body class="antialiased">
-
-    <header class="sticky top-0 z-[100] flex items-center justify-between bg-slate-900/80 p-4 backdrop-blur-lg shadow-lg">
-        <a href="index.html" class="flex items-center text-2xl font-bold">
-            <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-12 w-auto">
-        </a>
-        <div id="user-info-header" class="hidden items-center gap-3">
-            <div id="header-profile-link" class="flex items-center gap-3 cursor-pointer">
-                <span id="user-name-header" class="font-semibold text-slate-300"></span>
-                <img id="user-avatar-header" class="h-10 w-10 rounded-full object-cover bg-slate-700">
-            </div>
-            <button id="logout-btn" class="btn bg-slate-700 hover:bg-red-600 text-xs"><i class="fas fa-sign-out-alt"></i></button>
-        </div>
-    </header>
-    
-    <div id="message-container" class="fixed top-20 right-5 z-[2000]"></div>
-
-    <main class="container mx-auto px-4 py-8">
-        <div id="auth-view" class="max-w-md mx-auto fade-in"></div>
-        <div id="profile-setup-view" class="hidden max-w-2xl mx-auto fade-in"></div>
-        <div id="community-view" class="hidden max-w-4xl mx-auto fade-in"></div>
-    </main>
-
-    <div id="image-modal" class="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-md p-4 items-center justify-center fade-in">
-        <div class="relative max-w-4xl max-h-[90vh]">
-            <img id="modal-image-element" src="" class="h-full w-full object-contain rounded-lg">
-            <button id="close-modal-btn" class="absolute -top-3 -right-3 h-10 w-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-red-600 transition-transform hover:rotate-90 shadow-lg">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+    <!-- OVERLAYS -->
+    <div id="warning-overlay" class="fixed inset-0 z-[2000] flex-col items-center justify-center bg-gray-950/90 p-4 text-center backdrop-blur-sm" style="display: none;">
+        <h1 class="mb-6 text-3xl font-bold text-orange-500 flex items-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
+        <p class="mb-8 max-w-md text-lg text-gray-300">Esta comunidad contiene material sensible. Debes tener al menos 18 años para continuar.</p>
+        <div class="flex flex-col sm:flex-row gap-4">
+            <button class="w-full rounded-full bg-orange-600 px-8 py-3 font-semibold text-white transition hover:bg-orange-500 hover:scale-105 touch-feedback" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Sí, Soy Mayor de Edad</button>
+            <button class="w-full rounded-full bg-gray-700 px-8 py-3 font-semibold text-white transition hover:bg-gray-600 hover:scale-105 touch-feedback" onclick="rejectWarning()"><i class="fas fa-times mr-2"></i> No, salir</button>
         </div>
     </div>
-
-    <script>
-        "use strict";
-        const firebaseConfig = {
-            apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
-            authDomain: "exene-53e6b.firebaseapp.com",
-            databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
-            projectId: "exene-53e6b",
-            storageBucket: "exene-53e6b.appspot.com",
-            messagingSenderId: "481369419867",
-            appId: "1:481369419867:web:ac5db24c436344262c8f7e"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const auth = firebase.auth();
-
-        // --- GLOBAL STATE & VIEW CONTAINERS ---
-        let currentUserData = null;
-        let activeCommunityTab = 'wall';
-        let currentProfileUserId = null; 
-
-        const views = {
-            auth: document.getElementById('auth-view'),
-            profileSetup: document.getElementById('profile-setup-view'),
-            community: document.getElementById('community-view')
-        };
-        
-        // --- CORE APP LOGIC ---
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                const userRef = db.ref('users/' + user.uid);
-                userRef.on('value', snapshot => {
-                    if (snapshot.exists()) {
-                        currentUserData = { uid: user.uid, ...snapshot.val() };
-                        renderAppView('community');
-                    } else {
-                        renderAppView('profileSetup');
-                    }
-                });
-            } else {
-                currentUserData = null;
-                renderAppView('auth');
-            }
-        });
-
-        function renderAppView(viewName, context = {}) {
-            Object.values(views).forEach(v => v.style.display = 'none');
-            document.getElementById('user-info-header').style.display = 'none';
-
-            views[viewName].style.display = 'block';
-
-            switch (viewName) {
-                case 'auth':
-                    renderAuthView();
-                    break;
-                case 'profileSetup':
-                    renderProfileSetupView();
-                    break;
-                case 'community':
-                    document.getElementById('user-info-header').style.display = 'flex';
-                    updateHeaderUI();
-                    renderCommunityView(context);
-                    break;
-            }
-        }
-        
-        // --- AUTHENTICATION VIEW ---
-        function renderAuthView(state = 'login') {
-            const isLogin = state === 'login';
-            views.auth.innerHTML = `
-                <div class="text-center">
-                    <div id="login-register-view" class="${state === 'forgot' ? 'hidden' : ''}">
-                        <h1 class="text-4xl font-bold mb-4">${isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}</h1>
-                        <p class="text-slate-400 mb-8">Únete a la comunidad para compartir y descubrir.</p>
-                        <form id="email-auth-form" class="space-y-4">
-                            <input type="email" name="email" class="form-input text-center" placeholder="correo@ejemplo.com" required>
-                            <input type="password" name="password" class="form-input text-center" placeholder="Contraseña" required>
-                            <div class="${isLogin ? 'hidden' : ''}"><input type="password" name="confirmPassword" class="form-input text-center" placeholder="Confirmar Contraseña"></div>
-                            <button type="submit" class="btn btn-primary w-full !mt-6"><span class="btn-text">${isLogin ? 'Iniciar Sesión' : 'Registrarse'}</span><i class="fas fa-spinner spinner"></i></button>
-                        </form>
-                        <div class="mt-6 text-sm ${isLogin ? '' : 'hidden'}"><button id="forgot-password-btn" class="text-slate-400 hover:text-orange-400 hover:underline">¿Olvidaste tu contraseña?</button></div>
-                        <p class="mt-6 text-slate-400">${isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'} <button id="auth-toggle-btn" class="text-orange-400 hover:underline font-semibold">${isLogin ? 'Regístrate' : 'Inicia Sesión'}</button></p>
+    
+<!-- CONTENIDO PRINCIPAL -->
+<main class="container mx-auto px-2 sm:px-4">
+    <div class="my-8 flex justify-center">
+         <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+    </div>
+    <form id="search-form" class="mb-6 flex justify-center">
+        <div class="relative w-full max-w-xl">
+            <input type="text" id="search-input" placeholder="Buscar en la comunidad..." class="w-full rounded-full border-2 border-gray-700 bg-gray-800/50 py-3 pl-5 pr-24 text-white transition placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
+            <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-12 hidden items-center justify-center w-12 text-gray-400 hover:text-orange-500" aria-label="Limpiar búsqueda"><i class="fas fa-times text-xl"></i></button>
+            <button type="submit" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-400 hover:text-orange-500 touch-feedback" aria-label="Buscar"><i class="fas fa-search text-xl"></i></button>
+        </div>
+    </form>
+    <div class="mb-4 flex justify-center">
+        <button id="post-toggle-btn" class="flex items-center justify-center rounded-full h-14 w-14 border-2 border-gray-800 text-2xl text-gray-400 bg-gray-900/50 hover:border-orange-500 hover:text-orange-400 transition-all duration-300 touch-feedback">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+    <div id="main-content-sections">
+        <section id="community-feed-section" class="mb-12">
+            <h3 class="section-title mb-4 flex items-center gap-3 text-2xl"><i class="fas fa-users text-purple-400"></i><span class="text-purple-400">Comunidad</span></h3>
+            <div id="community-feed" class="flex flex-col gap-6">
+                <!-- Ejemplo de Post 1 -->
+                <div class="post-card bg-gray-800/50 p-4 rounded-2xl shadow-lg">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center font-bold">U</div>
+                        <div>
+                            <h4 class="font-bold text-white">User1</h4>
+                            <small class="text-gray-500">Hace 2 horas</small>
+                        </div>
                     </div>
-                    <div id="forgot-password-view" class="${state === 'forgot' ? '' : 'hidden'}">
-                        <h1 class="text-4xl font-bold mb-4">Recuperar Contraseña</h1>
-                        <p class="text-slate-400 mb-8">Ingresa tu correo para enviarte un enlace de recuperación.</p>
-                        <form id="password-reset-form" class="space-y-4">
-                            <input type="email" name="email" class="form-input text-center" placeholder="correo@ejemplo.com" required>
-                            <button type="submit" class="btn btn-primary w-full !mt-6"><span class="btn-text">Enviar Correo</span><i class="fas fa-spinner spinner"></i></button>
-                        </form>
-                        <p class="mt-6"><button id="back-to-login-btn" class="text-orange-400 hover:underline font-semibold">Volver a Inicio de Sesión</button></p>
+                    <p class="text-gray-300 mb-4">¡Me encanta la nueva galería de anime! ¿Alguien tiene recomendaciones de imágenes similares?</p>
+                    <img src="https://files.catbox.moe/y90sr3.jpg" alt="Ejemplo de post" class="w-full rounded-lg mb-4">
+                    <div class="flex items-center gap-4 mb-4">
+                        <button class="post-like-btn flex items-center gap-1 text-gray-300"><i class="fas fa-heart"></i> 12</button>
+                        <button class="flex items-center gap-1 text-gray-300"><i class="fas fa-comment"></i> 5</button>
                     </div>
-                </div>`;
-            attachAuthListeners();
-        }
-
-        function attachAuthListeners() {
-            document.getElementById('auth-toggle-btn').addEventListener('click', () => renderAuthView(document.getElementById('confirm-password-container') ? 'login' : 'register'));
-            const forgotBtn = document.getElementById('forgot-password-btn');
-            if (forgotBtn) forgotBtn.addEventListener('click', () => renderAuthView('forgot'));
-            document.getElementById('back-to-login-btn').addEventListener('click', () => renderAuthView('login'));
-            
-            document.getElementById('email-auth-form').addEventListener('submit', handleAuthFormSubmit);
-            document.getElementById('password-reset-form').addEventListener('submit', handlePasswordReset);
-        }
-
-        function handleAuthFormSubmit(e) {
-            e.preventDefault();
-            const form = e.target;
-            const button = form.querySelector('button[type="submit"]');
-            setButtonLoading(button, true);
-            const email = form.email.value;
-            const password = form.password.value;
-            
-            if (form.confirmPassword) { // Register
-                if (password !== form.confirmPassword.value) {
-                    showMessage('Las contraseñas no coinciden.', 'error');
-                    setButtonLoading(button, false);
-                    return;
-                }
-                auth.createUserWithEmailAndPassword(email, password)
-                    .catch(err => showMessage(getAuthErrorMessage(err.code), 'error'))
-                    .finally(() => setButtonLoading(button, false));
-            } else { // Login
-                auth.signInWithEmailAndPassword(email, password)
-                    .catch(err => showMessage(getAuthErrorMessage(err.code), 'error'))
-                    .finally(() => setButtonLoading(button, false));
-            }
-        }
-        
-        function handlePasswordReset(e) {
-            e.preventDefault();
-            const button = e.target.querySelector('button[type="submit"]');
-            setButtonLoading(button, true);
-            auth.sendPasswordResetEmail(e.target.email.value)
-                .then(() => {
-                    showMessage('Correo de recuperación enviado. Revisa tu bandeja de entrada.', 'success');
-                    renderAuthView('login');
-                })
-                .catch(err => showMessage(getAuthErrorMessage(err.code), 'error'))
-                .finally(() => setButtonLoading(button, false));
-        }
-
-        // --- PROFILE SETUP VIEW ---
-        function renderProfileSetupView() {
-            views.profileSetup.innerHTML = `
-                <h2 class="text-3xl font-bold mb-6 text-center">Completa tu Perfil</h2>
-                <form id="profile-form" class="space-y-4">
-                    <div><label class="block mb-2 text-sm font-medium text-slate-300">Foto de Perfil (URL)</label><input type="url" name="photoURL" class="form-input" placeholder="https://..." required><p class="text-xs text-slate-500 mt-1">Sube tu imagen a <a href="http://catbox.moe" target="_blank" class="underline hover:text-orange-400">catbox.moe</a> y pega el enlace aquí.</p></div>
-                    <div><label class="block mb-2 text-sm font-medium text-slate-300">Banner (URL)</label><input type="url" name="bannerURL" class="form-input" placeholder="https://..."></div>
-                    <div><label class="block mb-2 text-sm font-medium text-slate-300">Nombre de Usuario</label><input type="text" name="name" class="form-input" maxlength="15" placeholder="Tu nombre..." required></div>
-                    <div><label class="block mb-2 text-sm font-medium text-slate-300">Descripción Breve</label><textarea name="description" class="form-input" maxlength="30" rows="2" placeholder="Algo sobre ti..."></textarea></div>
-                    <button type="submit" class="btn btn-primary w-full !mt-6"><span class="btn-text">Guardar Perfil</span><i class="fas fa-spinner spinner"></i></button>
-                </form>`;
-            document.getElementById('profile-form').addEventListener('submit', handleProfileSave);
-        }
-
-        function handleProfileSave(e) {
-            e.preventDefault();
-            const button = e.target.querySelector('button[type="submit"]');
-            setButtonLoading(button, true);
-            const user = auth.currentUser;
-            if (!user) {
-                setButtonLoading(button, false);
-                return;
-            }
-            const form = e.target;
-            const profileData = {
-                name: form.name.value.trim(),
-                photoURL: form.photoURL.value.trim(),
-                bannerURL: form.bannerURL.value.trim() || null,
-                description: form.description.value.trim() || null
-            };
-            db.ref('users/' + user.uid).set(profileData)
-                .then(() => showMessage('¡Perfil guardado con éxito!', 'success'))
-                .catch(err => showMessage('Error al guardar el perfil.', 'error'))
-                .finally(() => setButtonLoading(button, false));
-        }
-
-        // --- COMMUNITY VIEW ---
-        function renderCommunityView({ targetUserId = null, tab = 'wall' } = {}) {
-            activeCommunityTab = targetUserId ? 'profile' : tab;
-            currentProfileUserId = targetUserId || auth.currentUser.uid;
-            
-            views.community.innerHTML = `
-                <div class="flex border-b border-slate-700 mb-6">
-                    <button id="wall-tab" class="px-4 py-2 text-lg font-semibold border-b-2 ${activeCommunityTab === 'wall' ? 'tab-active' : 'tab-inactive'}">Comunidad</button>
-                    <button id="my-profile-tab" class="px-4 py-2 text-lg font-semibold border-b-2 ${activeCommunityTab === 'my-profile' ? 'tab-active' : 'tab-inactive'}">Mi Perfil</button>
-                </div>
-                <div id="wall-view" class="${activeCommunityTab === 'wall' ? '' : 'hidden'}">
-                    <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 mb-8 flex gap-4">
-                        <img src="${currentUserData.photoURL}" class="h-12 w-12 rounded-full object-cover bg-slate-700 flex-shrink-0">
-                        <form id="post-form" class="w-full">
-                            <textarea name="text" class="form-input mb-2 bg-slate-800" rows="3" maxlength="300" placeholder="¿Qué estás pensando, ${currentUserData.name}?"></textarea>
-                            <div class="flex items-center justify-between">
-                                <input type="url" name="image" class="form-input text-sm py-1 w-2/3" placeholder="URL de la imagen (opcional)">
-                                <button type="submit" class="btn btn-primary"><span class="btn-text">Publicar</span><i class="fas fa-spinner spinner"></i></button>
+                    <div class="comments-section flex flex-col gap-3">
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center font-bold">A</div>
+                            <div class="bg-gray-700 p-3 rounded-lg flex-grow">
+                                <h5 class="font-bold text-purple-400">Anon2</h5>
+                                <p class="text-gray-300">Prueba la categoría de furry, tiene cosas increíbles!</p>
                             </div>
-                        </form>
-                    </div>
-                    <div id="posts-wall" class="space-y-6"></div>
-                </div>
-                <div id="profile-details-view" class="${activeCommunityTab !== 'wall' ? '' : 'hidden'}"></div>
-            `;
-            
-            if (activeCommunityTab === 'wall') {
-                loadPosts();
-            } else {
-                renderProfileDetails(currentProfileUserId);
-            }
-            attachCommunityListeners();
-        }
-
-        function attachCommunityListeners() {
-            document.getElementById('wall-tab').addEventListener('click', () => renderCommunityView({ tab: 'wall' }));
-            document.getElementById('my-profile-tab').addEventListener('click', () => renderCommunityView({ tab: 'my-profile' }));
-            document.getElementById('post-form').addEventListener('submit', handlePostSubmit);
-        }
-
-        async function renderProfileDetails(userId) {
-            const container = document.getElementById('profile-details-view');
-            container.innerHTML = `<div class="text-center py-8"><i class="fas fa-spinner fa-spin fa-2x"></i></div>`;
-            
-            const userSnap = await db.ref(`users/${userId}`).once('value');
-            if (!userSnap.exists()) {
-                container.innerHTML = `<p class="text-center text-red-400">Error: Usuario no encontrado.</p>`;
-                return;
-            }
-            const userData = userSnap.val();
-
-            container.innerHTML = `
-                <div class="fade-in">
-                    <div class="relative h-48 md:h-64 rounded-xl overflow-hidden bg-slate-800">
-                        <img src="${userData.bannerURL || `https://placehold.co/1200x400/0f172a/1e2937?text=+`}" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
-                    </div>
-                    <div class="relative px-4">
-                        <div class="flex items-end gap-4 -mt-16">
-                            <img src="${userData.photoURL}" class="w-32 h-32 rounded-full border-4 border-slate-800 object-cover bg-slate-700 cursor-pointer" onclick="openImageModal(this.src)">
-                            <div>
-                                <h2 class="text-2xl md:text-4xl font-bold">${userData.name}</h2>
-                                <p class="text-slate-400 mt-1">${userData.description || ''}</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-teal-400 flex items-center justify-center font-bold">B</div>
+                            <div class="bg-gray-700 p-3 rounded-lg flex-grow">
+                                <h5 class="font-bold text-teal-400">User3</h5>
+                                <p class="text-gray-300">Sí, +1 a eso. También mira realism.</p>
                             </div>
                         </div>
                     </div>
-                    <div class="mt-8">
-                        <h3 class="text-xl font-bold mb-4 border-b border-slate-700 pb-2">Publicaciones</h3>
-                        <div id="user-posts-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
-                    </div>
-                </div>`;
-            loadUserPosts(userId);
-        }
-        
-        // --- DATA HANDLING (Posts, Reactions, etc.) ---
-        function handlePostSubmit(e) {
-            e.preventDefault();
-            const form = e.target;
-            const button = form.querySelector('button[type="submit"]');
-            setButtonLoading(button, true);
-            const postData = {
-                authorUid: auth.currentUser.uid,
-                text: form.text.value.trim(),
-                imageUrl: form.image.value.trim() || null,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            };
-            if (!postData.text && !postData.imageUrl) {
-                showMessage('La publicación debe tener texto o una imagen.', 'error');
-                setButtonLoading(button, false);
-                return;
-            }
-            db.ref('posts').push(postData)
-                .then(() => form.reset())
-                .catch(() => showMessage('No se pudo crear la publicación.', 'error'))
-                .finally(() => setButtonLoading(button, false));
-        }
-
-        function loadPosts() {
-            db.ref('posts').orderByChild('timestamp').on('value', async snapshot => {
-                const wall = document.getElementById('posts-wall');
-                if (!wall) return;
-                wall.innerHTML = '';
-                if (!snapshot.exists()) {
-                    wall.innerHTML = `<p class="text-center text-slate-500">Aún no hay publicaciones. ¡Sé el primero!</p>`;
-                    return;
-                }
-                const posts = [];
-                snapshot.forEach(child => posts.push({ id: child.key, ...child.val() }));
-                posts.reverse();
-                
-                const userPromises = posts.map(p => db.ref(`users/${p.authorUid}`).once('value'));
-                const userSnaps = await Promise.all(userPromises);
-                const usersData = userSnaps.map(snap => snap.val());
-                
-                posts.forEach((post, i) => wall.appendChild(createPostElement(post, usersData[i])));
-            });
-        }
-        
-        function loadUserPosts(userId) {
-            db.ref('posts').orderByChild('authorUid').equalTo(userId).on('value', snapshot => {
-                const grid = document.getElementById('user-posts-grid');
-                if (!grid) return;
-                grid.innerHTML = '';
-                if (!snapshot.exists()) {
-                    grid.innerHTML = `<p class="col-span-full text-center text-slate-500">Este usuario aún no ha publicado ninguna imagen.</p>`;
-                    return;
-                }
-                const posts = [];
-                snapshot.forEach(child => {
-                    const post = child.val();
-                    if(post.imageUrl) posts.push(post);
-                });
-                posts.reverse().forEach(post => {
-                    const postDiv = document.createElement('div');
-                    postDiv.className = 'aspect-square bg-slate-800 rounded-lg overflow-hidden cursor-pointer group';
-                    postDiv.innerHTML = `<img src="${post.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">`;
-                    postDiv.addEventListener('click', () => openImageModal(post.imageUrl));
-                    grid.appendChild(postDiv);
-                });
-            });
-        }
-        
-        function createPostElement(post, author) {
-            const div = document.createElement('div');
-            div.className = 'post-card bg-slate-800/50 p-5 rounded-xl border border-slate-700 fade-in';
-            
-            let postTextHTML = post.text;
-            if (post.text && post.text.length > 300) {
-                postTextHTML = `<span>${post.text.substring(0, 300)}... </span><button class="text-orange-400 hover:underline text-sm">Ver más</button>`;
-            }
-
-            div.innerHTML = `
-                <div class="flex items-center mb-4">
-                    <img src="${author.photoURL}" class="h-12 w-12 rounded-full object-cover mr-4 cursor-pointer" onclick="renderAppView('community', { targetUserId: '${post.authorUid}', tab: 'profile' })">
-                    <div>
-                        <p class="font-bold text-orange-400 cursor-pointer" onclick="renderAppView('community', { targetUserId: '${post.authorUid}', tab: 'profile' })">${author.name}</p>
-                        <p class="text-xs text-slate-500">${formatTimeAgo(post.timestamp)}</p>
-                    </div>
+                    <form class="mt-4 flex gap-2">
+                        <input type="text" placeholder="Añade un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white">
+                        <button type="submit" class="rounded-lg bg-orange-600 px-4 py-2 text-white"><i class="fas fa-paper-plane"></i></button>
+                    </form>
                 </div>
-                <div class="post-content mb-4 space-y-4">
-                    ${post.text ? `<p class="text-slate-300 whitespace-pre-wrap">${postTextHTML}</p>` : ''}
-                    ${post.imageUrl ? `<img src="${post.imageUrl}" class="w-full rounded-lg max-h-96 object-contain bg-slate-900 cursor-pointer" onclick="openImageModal('${post.imageUrl}')">` : ''}
+                <!-- Ejemplo de Post 2 -->
+                <div class="post-card bg-gray-800/50 p-4 rounded-2xl shadow-lg">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-400 flex items-center justify-center font-bold">C</div>
+                        <div>
+                            <h4 class="font-bold text-white">Creator4</h4>
+                            <small class="text-gray-500">Hace 5 horas</small>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 mb-4">Compartiendo mi arte favorito de mecas. ¿Qué opinan?</p>
+                    <img src="https://files.catbox.moe/jjljml.jpg" alt="Ejemplo de post" class="w-full rounded-lg mb-4">
+                    <div class="flex items-center gap-4 mb-4">
+                        <button class="post-like-btn flex items-center gap-1 text-gray-300"><i class="fas fa-heart"></i> 8</button>
+                        <button class="flex items-center gap-1 text-gray-300"><i class="fas fa-comment"></i> 3</button>
+                    </div>
+                    <div class="comments-section flex flex-col gap-3">
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-400 flex items-center justify-center font-bold">D</div>
+                            <div class="bg-gray-700 p-3 rounded-lg flex-grow">
+                                <h5 class="font-bold text-red-400">DevilFan</h5>
+                                <p class="text-gray-300">¡Increíble! Me recuerda a los devils & angels.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <form class="mt-4 flex gap-2">
+                        <input type="text" placeholder="Añade un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white">
+                        <button type="submit" class="rounded-lg bg-orange-600 px-4 py-2 text-white"><i class="fas fa-paper-plane"></i></button>
+                    </form>
                 </div>
-                <div class="flex items-center gap-4 text-slate-400">
-                    <button class="reaction-btn flex items-center gap-2 hover:text-red-500 transition"><i class="far fa-heart"></i><span class="reaction-count">0</span></button>
-                </div>`;
-            
-            const seeMoreBtn = div.querySelector('button.text-sm');
-            if (seeMoreBtn) {
-                seeMoreBtn.addEventListener('click', (e) => {
-                    e.target.parentElement.innerHTML = post.text.replace(/\n/g, '<br>');
-                });
-            }
+                <!-- Añade más ejemplos si es necesario -->
+            </div>
+        </section>
+        <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
+        <section id="top-posts-section" class="mb-12">
+            <h3 class="section-title mb-4 flex items-center gap-3 text-2xl"><i class="fas fa-trophy text-yellow-400"></i><span class="text-yellow-400">Posts Populares</span></h3>
+            <div id="top-posts-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
+        </section>
+    </div>
+    <section id="community">
+        <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
+        <div id="load-more-trigger" class="h-10"></div>
+    </section>
+</main>
+<div id="modal" class="fixed inset-0 z-[1000]"><button id="prev-post" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-left text-2xl"></i></button><button id="next-post" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-right text-2xl"></i></button><div id="modal-content" class="h-full w-full overflow-y-auto"><div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4"><header id="modal-header" class="flex items-center justify-between"><h2 id="title" class="section-title bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl text-transparent"></h2><button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition-all duration-300 hover:bg-gray-700 hover:text-white hover:rotate-90 touch-feedback"><i class="fas fa-times text-2xl"></i></button></header><div class="flex flex-col items-center gap-4">
+    <div id="post-container" class="relative -mx-2 sm:mx-0 rounded-2xl overflow-hidden w-full"></div>
+    <div id="reaction-circle-container" class="relative z-20"><div class="relative flex items-center justify-center"><div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="like"></span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="hot"></span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="wow"></span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="laugh"></span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sad"></span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sexy"></span></div><button id="like-btn" class="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-400 text-white shadow-lg shadow-orange-500/30 touch-feedback"><i class="fas fa-heart text-3xl"></i></button></div></div><div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div><p id="desc" class="rounded-2xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p><section id="comments-section" class="mt-4 w-full"><form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-2xl bg-gray-800/50 p-4 sm:flex-row"><input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4"><input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white"><button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white touch-feedback"><i class="fas fa-paper-plane"></i> Enviar</button></form><div id="comments" class="flex flex-col gap-4"></div></section></div></div></div></div>
+<button id="scrollToTopBtn" class="fixed bottom-[90px] right-5 h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm touch-feedback z-[100]" title="Ir arriba"><i class="fas fa-arrow-up"></i></button>
+<footer class="mt-12 py-8 text-center text-gray-500"><p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
 
-            const reactionBtn = div.querySelector('.reaction-btn');
-            reactionBtn.addEventListener('click', () => toggleReaction(post.id, auth.currentUser.uid));
-            
-            db.ref(`reactions/${post.id}`).on('value', snapshot => {
-                const reactions = snapshot.val() || {};
-                reactionBtn.querySelector('.reaction-count').textContent = snapshot.numChildren();
-                reactionBtn.querySelector('i').className = reactions[currentUserData?.uid] ? 'fas fa-heart text-red-500' : 'far fa-heart';
-            });
-            return div;
-        }
+<!-- BARRA DE NAVEGACIÓN INFERIOR -->
+<nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around">
+    <a href="index.html" id="nav-index" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        <span class="text-xs">Galería</span>
+    </a>
+    <a href="batalla.html" id="nav-batalla" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12.01 2.011H12v1.99M12.01 20.011H12v1.99M6.35 4.931l1.41 1.41m9.9 9.9l1.41 1.41M4.93 17.651l1.41-1.41m9.9-9.9l1.41-1.41M2.01 12.011H4v-1.99m18 .011h-1.99v-1.99M9.5 8.5l5 7m-5 0l5-7" /></svg>
+        <span class="text-xs">Batalla</span>
+    </a>
+    <a href="videos.html" id="nav-videos" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
+        <span class="text-xs">Música</span>
+    </a>
+    <a href="comunidad.html" id="nav-comunidad" class="bottom-nav-link active flex flex-col items-center justify-center text-center px-2 touch-feedback">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+        <span class="text-xs">Comunidad</span>
+    </a>
+</nav>
+<script>
+    "use strict";
+    // --- CONFIGURACIÓN Y VARIABLES GLOBALES ---
+    const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    firebase.auth().signInAnonymously().catch(console.error);
+    let deviceID = localStorage.getItem('deviceID'); if (!deviceID) { deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); localStorage.setItem('deviceID', deviceID); }
+    let userReactions = {}; let allReactionCounts = {}; let currentPostId = ''; let currentPostIndex = -1; let touchStartX = 0; let touchEndX = 0; const swipeThreshold = 50;
+    
+    // --- INICIALIZACIÓN ---
+    document.addEventListener('DOMContentLoaded', () => { 
+        const warningOverlay = document.getElementById('warning-overlay'); 
+        if (!localStorage.getItem('adultConsent')) { 
+            warningOverlay.style.display = 'flex'; 
+            document.body.style.overflow = 'hidden'; 
+        } else { 
+            initializeApp(); 
+        } 
+    });
+    function acceptWarning() { localStorage.setItem('adultConsent', 'true'); document.getElementById('warning-overlay').style.display = 'none'; document.body.style.overflow = 'auto'; initializeApp(); }
+    function rejectWarning() { window.location.href = 'https://www.google.com'; }
+    
+    async function initializeApp() {
+        await Promise.all([ fetchUserReactions(), cacheAllReactionCounts() ]);
+        loadCommunityFeed();
+        loadTopPosts();
+        setupEventListeners();
+        setActiveNavLink();
+    }
 
-        function toggleReaction(postId, uid) {
-            if (!uid) { showMessage('Debes iniciar sesión para reaccionar.', 'error'); return; }
-            const reactionRef = db.ref(`reactions/${postId}/${uid}`);
-            reactionRef.transaction(currentData => (currentData ? null : true));
-        }
+    function setActiveNavLink() {
+        const path = window.location.pathname.split("/").pop() || 'comunidad.html';
+        document.querySelectorAll('.bottom-nav-link').forEach(l => l.classList.remove('active'));
+        if (path === 'comunidad.html') document.getElementById('nav-comunidad')?.classList.add('active');
+    }
 
-        // --- UI UTILITY FUNCTIONS ---
-        function updateHeaderUI() {
-            document.getElementById('user-name-header').textContent = currentUserData.name;
-            document.getElementById('user-avatar-header').src = currentUserData.photoURL;
-            document.getElementById('header-profile-link').onclick = () => renderCommunityView({ tab: 'my-profile' });
-            document.getElementById('logout-btn').onclick = () => auth.signOut();
-        }
+    async function fetchUserReactions() { const snapshot = await db.ref('post_reactions').once('value'); const allReactions = snapshot.val() || {}; userReactions = {}; Object.keys(allReactions).forEach(postId => { if(allReactions[postId][deviceID]) { userReactions[postId] = allReactions[postId][deviceID]; } }); }
+    async function cacheAllReactionCounts() { const reactionsSnap = await db.ref('post_reactions').once('value'); const reactions = reactionsSnap.val() || {}; const counts = {}; Object.entries(reactions).forEach(([postId, users]) => { counts[postId] = Object.keys(users).length; }); allReactionCounts = counts; }
+    
+    function loadCommunityFeed() { 
+        // Aquí iría la lógica para cargar posts de Firebase, pero para la muestra, usamos los ejemplos estáticos.
+        // Puedes extender con db.ref('posts').once('value') similar a la galería.
+    }
+    async function loadTopPosts() { 
+        const grid = document.getElementById('top-posts-grid'); 
+        // Lógica similar a loadTopLikedImages, pero para posts.
+        // Para muestra, generamos skeletons o ejemplos.
+        generateSkeletons(grid, 6); 
+    }
 
-        function openImageModal(imageUrl) {
-            document.getElementById('modal-image-element').src = imageUrl;
-            document.getElementById('image-modal').classList.add('show');
-            document.getElementById('close-modal-btn').onclick = closeImageModal;
-        }
+    function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton'; } }
 
-        function closeImageModal() { document.getElementById('image-modal').classList.remove('show'); }
-        
-        function setButtonLoading(button, isLoading) {
-            button.disabled = isLoading;
-            button.classList.toggle('loading', isLoading);
-        }
-
-        function showMessage(text, type = 'info', duration = 3000) {
-            const id = `msg-${Date.now()}`;
-            const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
-            const msgDiv = document.createElement('div');
-            msgDiv.id = id;
-            msgDiv.className = `w-full max-w-sm p-4 rounded-lg text-white shadow-lg mb-2 fade-in ${colors[type]}`;
-            msgDiv.textContent = text;
-            document.getElementById('message-container').appendChild(msgDiv);
-            setTimeout(() => document.getElementById(id)?.remove(), duration);
-        }
-
-        function formatTimeAgo(timestamp) {
-            const seconds = Math.floor((Date.now() - timestamp) / 1000);
-            if (seconds < 60) return `hace un momento`;
-            const minutes = Math.floor(seconds / 60);
-            if (minutes < 60) return `hace ${minutes} min`;
-            const hours = Math.floor(minutes / 60);
-            if (hours < 24) return `hace ${hours} h`;
-            const days = Math.floor(hours / 24);
-            return `hace ${days} días`;
-        }
-        
-        function getAuthErrorMessage(code) {
-            switch (code) {
-                case 'auth/user-not-found': return 'No se encontró cuenta con este correo.';
-                case 'auth/wrong-password': return 'Contraseña incorrecta.';
-                case 'auth/email-already-in-use': return 'Este correo ya está en uso.';
-                case 'auth/weak-password': return 'La contraseña debe tener al menos 6 caracteres.';
-                case 'auth/invalid-email': return 'El formato del correo no es válido.';
-                default: return 'Ocurrió un error. Por favor, inténtalo de nuevo.';
-            }
-        }
-    </script>
-</body>
+    function setupEventListeners() { 
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn'); 
+        window.addEventListener('scroll', () => { (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible'); }); 
+        scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'})); 
+        document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); const query = normalize(document.getElementById('search-input').value); executeSearch(query); }); 
+        document.getElementById('clear-search-btn').addEventListener('click', resetSearchView); 
+        document.getElementById('close-modal').addEventListener('click', closeModal); 
+        document.getElementById('prev-post').addEventListener('click', navigateToPrevious); 
+        document.getElementById('next-post').addEventListener('click', navigateToNext); 
+        document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); }); 
+        const modal = document.getElementById('modal'); 
+        modal.addEventListener('touchstart', e => { if (e.target.closest('#comments-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true }); 
+        modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; }); 
+        document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); }); 
+        document.querySelectorAll('.reaction').forEach(reaction => { reaction.addEventListener('click', e => { e.stopPropagation(); if (!currentPostId) return; const type = e.currentTarget.dataset.type; handleReaction(type); }); }); 
+        document.addEventListener('click', () => { if (document.getElementById('reaction-circle-container')) document.getElementById('reaction-circle-container').classList.remove('open'); }); 
+    }
+    function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
+    function navigateToNext() { /* Lógica para siguiente post */ }
+    function navigateToPrevious() { /* Lógica para post anterior */ }
+    function handleSwipe() { const deltaX = touchEndX - touchStartX; if (Math.abs(deltaX) > swipeThreshold) { if (deltaX < 0) navigateToNext(); else navigateToPrevious(); } }
+    function handleReaction(type) { animateReactionOnPost(type); const reactionsRef = db.ref(`post_reactions/${currentPostId}/${deviceID}`); reactionsRef.once('value', snap => { (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); }); document.getElementById('reaction-circle-container').classList.remove('open'); }
+    function animateReactionOnPost(type) { /* Similar a animateReactionOnImage */ }
+    function postComment() { /* Similar a postComment de la galería, pero para posts */ }
+    function executeSearch(query) { /* Lógica de búsqueda para posts */ }
+    function resetSearchView(){ /* Resetear vista de búsqueda */ }
+    function closeModal() { const modal = document.getElementById('modal'); modal.classList.remove('visible'); document.body.style.overflow = 'auto'; }
+</script></body>
 </html>
-
+

@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Remoto Forge (v6 - Tags Fix)</title>
+    <!-- Cargar Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos base inspirados en Material Design (Dark) */
+        body, html {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            height: 100%;
+            background-color: #121212; /* Color de fondo oscuro (Dark theme) */
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        /* Ocultar elementos por defecto */
+        #app-container { display: none; }
+        
+        /* HEADER/NAV ESTILO MOBILE */
+        .tab-btn {
+            flex-grow: 1; /* Ocupa el espacio disponible */
+            padding: 0.75rem 0.5rem;
+            font-weight: 500;
+            color: #BDBDBD; /* Gris claro */
+            border-bottom: 3px solid transparent;
+            text-align: center;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            color: #4CAF50; /* Verde vibrante (como acento de Android) */
+            border-color: #4CAF50;
+            background-color: #1E1E1E; /* Fondo ligeramente más claro para la pestaña activa */
+        }
+        /* Ocultar paneles inactivos */
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Campos de formulario - Estilo App */
+        .input-base {
+            display: block; width: 100%; padding: 10px 12px;
+            background-color: #2C2C2C; /* Fondo del input */
+            border: 1px solid #424242; /* Borde sutil */
+            border-radius: 8px;
+            color: white; placeholder-color: #757575;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-base:focus {
+            outline: none; border-color: #4CAF50;
+            box-shadow: 0 0 0 1px #4CAF50;
+        }
+
+        /* Textarea (Prompt) */
+        textarea.input-base { resize: vertical; }
+
+        /* Botón de Generar - Estilo Floating Action Button (FAB) */
+        .generate-btn {
+            width: 100%; margin-top: 1.5rem; background-color: #4CAF50;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            font-weight: 700; padding: 12px 24px; border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .generate-btn:hover { background-color: #66BB6A; }
+        .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Acordeón (Details) */
+        details > summary {
+            padding: 1rem; background-color: #2C2C2C; border-radius: 8px;
+            margin-top: 1rem; font-weight: 600; color: #E0E0E0;
+        }
+        .details-content {
+            padding: 1rem; background-color: #1E1E1E; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+        }
+
+        /* Contenedor de Sugerencias de Tags */
+        .tag-suggestions-container {
+            position: absolute; width: 100%; background-color: #1e1e1e;
+            border: 1px solid #4CAF50; border-radius: 0 0 8px 8px;
+            z-index: 20; /* Aumentado para evitar interferencia */
+            max-height: 200px; overflow-y: auto;
+            transform: translateY(-8px); /* Superponer ligeramente al textarea */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+        .tag-suggestion-item {
+            padding: 8px 12px; cursor: pointer; color: #E0E0E0;
+        }
+        .tag-suggestion-item:hover {
+            background-color: #2C2C2C;
+        }
+
+        /* Layout móvil: una sola columna con espaciado */
+        .main-grid {
+            display: grid; grid-template-columns: 1fr; gap: 1rem;
+        }
+        /* Desktop: 2 columnas, contenido y resultado */
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="h-full">
+
+    <!-- ======================= -->
+    <!-- PANTALLA INICIAL DE CONEXIÓN -->
+    <!-- ======================= -->
+    <div id="splash-screen" class="fixed inset-0 bg-gray-900 flex items-center justify-center p-4 z-50">
+        <div class="w-full max-w-sm bg-gray-800 shadow-2xl rounded-xl p-6 text-white">
+            <h1 class="text-2xl font-bold text-center mb-6 text-green-400">Forge Mobile Remote</h1>
+            
+            <label for="gradio-url" class="block text-sm font-medium text-gray-400 mb-2">URL de Gradio (https://)</label>
+            <input type="text" id="gradio-url" class="block w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Ej: https://xxxxxxxxx.gradio.app">
+            
+            <button id="connect-btn" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-200 ease-in-out flex items-center justify-center">
+                Conectar
+            </button>
+
+            <div id="initial-status-message" class="text-center text-gray-500 mt-4 text-sm">Ingresa la URL y presiona conectar.</div>
+        </div>
+    </div>
+
+
+    <!-- ======================= -->
+    <!-- APLICACIÓN PRINCIPAL (OCULTA HASTA CONEXIÓN) -->
+    <!-- ======================= -->
+    <div id="app-container" class="min-h-full">
+        
+        <!-- HEADER / NAVEGACIÓN -->
+        <header class="bg-[#1e1e1e] shadow-lg sticky top-0 z-20">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex items-center h-14 border-b border-[#2c2c2c]">
+                    <nav id="main-ui" class="flex flex-1 justify-around">
+                        <button id="tab-btn-txt2img" class="tab-btn active">Texto a Imagen</button>
+                        <button id="tab-btn-img2img" class="tab-btn">Imagen a Imagen</button>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="max-w-7xl mx-auto p-4 md:p-6">
+            <div class="main-grid">
+
+                <!-- COLUMNA 1: CONFIGURACIÓN -->
+                <div class="bg-[#1e1e1e] shadow-xl rounded-xl p-4 md:p-6 h-fit">
+                    
+                    <!-- Panel Txt2Img -->
+                    <div id="panel-txt2img" class="tab-panel active">
+                        <h2 class="text-xl font-bold mb-4 text-white">Generar (Txt2Img)</h2>
+                        
+                        <!-- Prompts con Autocomplete -->
+                        <div class="space-y-4">
+                            <!-- Prompt Positivo con Sugerencias -->
+                            <div class="relative">
+                                <label for="prompt-t2i" class="block text-sm font-medium text-gray-400 mb-2">Prompt Positivo</label>
+                                <textarea id="prompt-t2i" rows="4" class="input-base" placeholder="best quality, 1girl, ..."></textarea>
+                                <!-- Contenedor de Sugerencias de Tags para T2I -->
+                                <div id="tag-suggestions-t2i" class="tag-suggestions-container"></div>
+                            </div>
+                            
+                            <!-- Prompt Negativo -->
+                            <div>
+                                <label for="negative-prompt-t2i" class="block text-sm font-medium text-gray-400 mb-2">Prompt Negativo</label>
+                                <textarea id="negative-prompt-t2i" rows="4" class="input-base" placeholder="worst quality, ...">worst quality, low quality, lowres, (deformed, distorted, disfigured:1.3), bad anatomy, bad hands, (missing fingers), (extra fingers), (fused fingers), (extra limbs), (fused limbs), (missing limbs), (extra digit), (fused digit), (mutated hands:1.3), (poorly drawn hands:1.3), (poorly drawn face:1.3), (long neck:1.3), (extra legs)</textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Botón de Generar (Flotante estilo app) -->
+                        <button id="generate-btn-txt2img" class="generate-btn text-white">Generar</button>
+                        
+                        <!-- Parámetros T2I -->
+                        <details open class="mt-4">
+                            <summary>Parámetros Principales</summary>
+                            <div class="details-content space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="model-t2i" class="label-base">Modelo</label>
+                                        <select id="model-t2i" class="input-base"></select>
+                                    </div>
+                                    <div>
+                                        <label for="vae-t2i" class="label-base">VAE</label>
+                                        <select id="vae-t2i" class="input-base"></select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="sampler-t2i" class="label-base">Sampler</label>
+                                        <select id="sampler-t2i" class="input-base"></select>
+                                    </div>
+                                    <div>
+                                        <label for="scheduler-t2i" class="label-base">Scheduler</label>
+                                        <select id="scheduler-t2i" class="input-base"></select>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4 items-end">
+                                    <div class="flex-grow">
+                                        <label for="lora-t2i" class="label-base">Loras</label>
+                                        <select id="lora-t2i" class="input-base"></select>
+                                    </div>
+                                    <button class="btn-secondary add-lora-btn text-sm px-3 py-2" data-target="prompt-t2i">Añadir Lora</button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="width-t2i" class="label-base">Ancho</label>
+                                        <input type="number" id="width-t2i" step="64" value="1080" class="input-base">
+                                    </div>
+                                    <div>
+                                        <label for="height-t2i" class="label-base">Alto</label>
+                                        <input type="number" id="height-t2i" step="64" value="1568" class="input-base">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="steps-t2i" class="label-base">Pasos</label>
+                                        <input type="number" id="steps-t2i" value="15" class="input-base">
+                                    </div>
+                                    <div>
+                                        <label for="cfg-t2i" class="label-base">CFG Scale</label>
+                                        <input type="number" id="cfg-t2i" step="0.5" value="7.0" class="input-base">
+                                    </div>
+                                </div>
+                                <!-- Campos Batch y Seed en una sola fila para ahorrar espacio -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="batch-count-t2i" class="label-base">Cant. Lotes</label>
+                                        <input type="number" id="batch-count-t2i" value="1" class="input-base">
+                                    </div>
+                                    <div>
+                                        <label for="seed-t2i" class="label-base">Semilla (Seed)</label>
+                                        <input type="number" id="seed-t2i" value="-1" class="input-base">
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- Hires. Fix -->
+                        <details class="mt-4">
+                            <summary>Hires. Fix</summary>
+                            <div class="details-content space-y-4">
+                                <label class="flex items-center space-x-2 text-white">
+                                    <input type="checkbox" id="hr-enable" class="w-5 h-5 rounded text-green-600 bg-gray-600 border-gray-500 focus:ring-green-500">
+                                    <span>Habilitar Hires. Fix</span>
+                                </label>
+                                <div id="hr-options" class="space-y-4 pt-2 border-t border-gray-700" style="display: none;">
+                                    <div>
+                                        <label for="hr-upscaler" class="label-base">Upscaler</label>
+                                        <select id="hr-upscaler" class="input-base"></select>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="hr-scale" class="label-base">Escala</label>
+                                            <input type="number" id="hr-scale" step="0.1" value="2.0" class="input-base">
+                                        </div>
+                                        <div>
+                                            <label for="hr-steps" class="label-base">Pasos Hires</label>
+                                            <input type="number" id="hr-steps" value="10" class="input-base">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="hr-denoising" class="label-base">Denoising Strength</label>
+                                        <input type="number" id="hr-denoising" step="0.05" min="0" max="1" value="0.7" class="input-base">
+                                    </div>
+                                </div>
+                            </details>
+                    </div>
+                    
+                    <!-- Panel Img2Img -->
+                    <div id="panel-img2img" class="tab-panel">
+                        <h2 class="text-xl font-bold mb-4 text-white">Generar (Img2Img)</h2>
+                        
+                        <!-- Prompts con Autocomplete -->
+                        <div class="space-y-4">
+                            <!-- Prompt Positivo con Sugerencias -->
+                            <div class="relative">
+                                <label for="prompt-i2i" class="block text-sm font-medium text-gray-400 mb-2">Prompt Positivo</label>
+                                <textarea id="prompt-i2i" rows="4" class="input-base" placeholder="best quality, 1girl, ..."></textarea>
+                                <!-- Contenedor de Sugerencias de Tags para I2I -->
+                                <div id="tag-suggestions-i2i" class="tag-suggestions-container"></div>
+                            </div>
+                            
+                            <!-- Prompt Negativo -->
+                            <div>
+                                <label for="negative-prompt-i2i" class="block text-sm font-medium text-gray-400 mb-2">Prompt Negativo</label>
+                                <textarea id="negative-prompt-i2i" rows="4" class="input-base" placeholder="worst quality, ...">worst quality, low quality, lowres, (deformed, distorted, disfigured:1.3), bad anatomy, bad hands, (missing fingers), (extra fingers), (fused fingers), (extra limbs), (fused limbs), (missing limbs), (extra digit), (fused digit), (mutated hands:1.3), (poorly drawn hands:1.3), (poorly drawn face:1.3), (long neck:1.3), (extra legs)</textarea>
+                            </div>
+                        </div>
+
+                        <button id="generate-btn-img2img" class="generate-btn">Generar</button>
+
+                        <details open class="mt-4">
+                            <summary>Imagen de Origen</summary>
+                            <div class="details-content space-y-4">
+                                <label for="image-upload" class="label-base">Subir Imagen</label>
+                                <!-- Mejorar el estilo del input file para móvil -->
+                                <input type="file" id="image-upload" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-400 file:mr-4 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-600 file:text-gray-100 hover:file:bg-gray-500 cursor-pointer">
+                                <div class="bg-gray-900 rounded-lg border border-gray-700 min-h-[128px] flex items-center justify-center p-2">
+                                    <img id="image-preview" src="" alt="Vista previa" class="max-h-48 max-w-full h-auto hidden rounded">
+                                    <span id="image-preview-placeholder" class="text-gray-500 text-sm">Vista previa de la imagen</span>
+                                </div>
+                                <div>
+                                    <label for="denoising-i2i" class="label-base">Denoising Strength</label>
+                                    <input type="number" id="denoising-i2i" step="0.05" min="0" max="1" value="0.75" class="input-base">
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- Parámetros I2I -->
+                        <details class="mt-4">
+                            <summary>Parámetros Principales</summary>
+                            <div class="details-content space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="model-i2i" class="label-base">Modelo</label>
+                                        <select id="model-i2i" class="input-base"></select>
+                                    </div>
+                                    <div>
+                                        <label for="vae-i2i" class="label-base">VAE</label>
+                                        <select id="vae-i2i" class="input-base"></select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="sampler-i2i" class="label-base">Sampler</label>
+                                        <select id="sampler-i2i" class="input-base"></select>
+                                    </div>
+                                    <div>
+                                        <label for="scheduler-i2i" class="label-base">Scheduler</label>
+                                        <select id="scheduler-i2i" class="input-base"></select>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4 items-end">
+                                    <div class="flex-grow">
+                                        <label for="lora-i2i" class="label-base">Loras</label>
+                                        <select id="lora-i2i" class="input-base"></select>
+                                    </div>
+                                    <button class="btn-secondary add-lora-btn text-sm px-3 py-2" data-target="prompt-i2i">Añadir Lora</button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="width-i2i" class="label-base">Ancho Salida</label>
+                                        <input type="number" id="width-i2i" step="64" value="1080" class="input-base">
+                                    </div>
+                                    <div>
+                                        <label for="height-i2i" class="label-base">Alto Salida</label>
+                                        <input type="number" id="height-i2i" step="64" value="1568" class="input-base">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="steps-i2i" class="label-base">Pasos</label>
+                                        <input type="number" id="steps-i2i" value="15" class="input-base">
+                                    </div>
+                                    <div>
+                                        <label for="cfg-i2i" class="label-base">CFG Scale</label>
+                                        <input type="number" id="cfg-i2i" step="0.5" value="7.0" class="input-base">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="batch-count-i2i" class="label-base">Cant. Lotes</label>
+                                        <input type="number" id="batch-count-i2i" value="1" class="input-base">
+                                    </div>
+                                    <div>
+                                        <label for="seed-i2i" class="label-base">Semilla (Seed)</label>
+                                        <input type="number" id="seed-i2i" value="-1" class="input-base">
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+
+                </div>
+
+                <!-- COLUMNA 2: RESULTADO -->
+                <div class="bg-[#1e1e1e] shadow-xl rounded-xl p-4 md:p-6 h-fit max-h-[calc(100vh-140px)] overflow-y-auto">
+                    <h2 class="text-xl font-bold mb-4 text-white">Resultado</h2>
+                    
+                    <!-- Mensaje de Estado -->
+                    <div id="status-message" class="text-center text-gray-400 mb-4">Listo para generar.</div>
+
+                    <!-- Barra de Progreso -->
+                    <div id="progress-container" class="mb-4" style="display: none;">
+                        <div class="w-full bg-[#2C2C2C] rounded-full h-2.5">
+                            <div id="progress-bar" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <span id="progress-label" class="text-xs text-gray-400 mt-1 block"></span>
+                    </div>
+
+                    <!-- Área de Resultado (Mobile-friendly) -->
+                    <div class="mt-4 bg-[#121212] rounded-lg overflow-hidden border border-[#2c2c2c] min-h-[300px] flex items-center justify-center p-4 aspect-square md:aspect-auto">
+                        <img id="output-image" src="" alt="Imagen generada" class="max-w-full h-auto hidden rounded-lg shadow-md">
+                        <div id="placeholder" class="text-gray-500">La imagen generada aparecerá aquí</div>
+                    </div>
+                    
+                    <!-- Botón de Descarga -->
+                    <button id="download-btn" class="w-full mt-4 bg-[#424242] hover:bg-[#616161] text-white font-medium py-3 px-4 rounded-lg transition duration-200 ease-in-out" style="display: none;">
+                        Descargar Imagen
+                    </button>
+                    <!-- Metadatos (Opcional) -->
+                    <div id="metadata-info" class="mt-4 text-xs text-gray-500 break-words hidden"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- Clases CSS Comunes (para JS) ---
+        const C_INPUT = "input-base";
+        const C_LABEL = "block text-sm font-medium text-gray-400 mb-2";
+        const C_BTN_PRIMARY = "generate-btn text-white";
+        const C_BTN_SECONDARY = "px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white font-medium rounded-lg transition duration-200 ease-in-out";
+
+        // Aplicar clases a elementos comunes para no repetirlas en HTML
+        document.addEventListener('DOMContentLoaded', () => {
+             document.querySelectorAll('.input-base').forEach(el => el.className = C_INPUT);
+             document.querySelectorAll('.label-base').forEach(el => el.className = C_LABEL);
+             document.querySelectorAll('.generate-btn').forEach(el => el.className = C_BTN_PRIMARY);
+             document.querySelectorAll('.btn-secondary').forEach(el => el.className = C_BTN_SECONDARY);
+        });
+
+        // --- Estado Global ---
+        const G_STATE = {
+            gradioUrl: '',
+            samplers: [], models: [], vaes: [], schedulers: [], loras: [], upscalers: [],
+            progressInterval: null,
+            isGenerating: false,
+            uploadedImageBase64: null,
+            tagSearchTimeout: null,
+        };
+
+        // --- Elementos de la UI ---
+        const splashScreen = document.getElementById('splash-screen');
+        const appContainer = document.getElementById('app-container');
+        const connectBtn = document.getElementById('connect-btn');
+        const urlInput = document.getElementById('gradio-url');
+        const initialStatusMessage = document.getElementById('initial-status-message');
+        const statusMessage = document.getElementById('status-message');
+        const outputImage = document.getElementById('output-image');
+        const placeholder = document.getElementById('placeholder');
+        const downloadBtn = document.getElementById('download-btn');
+        const metadataInfo = document.getElementById('metadata-info');
+        
+        // --- Progreso ---
+        const progressContainer = document.getElementById('progress-container');
+        
+        // --- Botones ---
+        const generateTxt2ImgBtn = document.getElementById('generate-btn-txt2img');
+        const generateImg2ImgBtn = document.getElementById('generate-btn-img2img');
+
+        // --- Img2Img Upload ---
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const imagePreviewPlaceholder = document.getElementById('image-preview-placeholder');
+
+        // --- Prompts y Tags ---
+        const promptT2I = document.getElementById('prompt-t2i');
+        const promptI2I = document.getElementById('prompt-i2i');
+        const tagSuggestionsT2I = document.getElementById('tag-suggestions-t2i');
+        const tagSuggestionsI2I = document.getElementById('tag-suggestions-i2i');
+
+        // --- Selectores (Dropdowns) ---
+        const E_SELECTORS = {
+            model: [document.getElementById('model-t2i'), document.getElementById('model-i2i')],
+            vae: [document.getElementById('vae-t2i'), document.getElementById('vae-i2i')],
+            sampler: [document.getElementById('sampler-t2i'), document.getElementById('sampler-i2i')],
+            scheduler: [document.getElementById('scheduler-t2i'), document.getElementById('scheduler-i2i')],
+            lora: [document.getElementById('lora-t2i'), document.getElementById('lora-i2i')],
+            hrUpscaler: [document.getElementById('hr-upscaler')]
+        };
+        
+        // --- Helpers de UI ---
+        function showInitialStatus(message, isError = false) {
+            initialStatusMessage.textContent = message;
+            initialStatusMessage.className = isError ? 'text-center text-red-400 mt-4 text-sm' : 'text-center text-gray-500 mt-4 text-sm';
+        }
+
+        function showStatus(message, isError = false) {
+            statusMessage.textContent = message;
+            statusMessage.className = isError ? 'text-center text-red-400 mb-4' : 'text-center text-gray-400 mb-4';
+        }
+
+        function showLoading(button) {
+            button.disabled = true;
+            button.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Cargando...
+            `;
+        }
+
+        function hideLoading(button, originalText) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+        
+        function setGenerateButtons(disabled) {
+            G_STATE.isGenerating = disabled;
+            generateTxt2ImgBtn.disabled = disabled;
+            generateImg2ImgBtn.disabled = disabled;
+        }
+
+        function toggleAppVisibility(show) {
+            splashScreen.style.display = show ? 'none' : 'flex';
+            appContainer.style.display = show ? 'block' : 'none';
+        }
+
+        // --- Helper de API ---
+        async function apiGet(endpoint, params = {}) {
+            try {
+                const url = new URL(endpoint, G_STATE.gradioUrl);
+                Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+                
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Error al cargar ${endpoint}: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                if (G_STATE.gradioUrl) {
+                    showStatus(`Error de red: ${error.message}`, true);
+                }
+                throw error;
+            }
+        }
+        
+        async function apiPost(endpoint, body) {
+            try {
+                const url = new URL(endpoint, G_STATE.gradioUrl).href;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error del servidor: ${response.status} ${errorText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                showStatus(`Error de red: ${error.message}`, true);
+                throw error;
+            }
+        }
+
+        // --- Lógica Principal de Conexión ---
+        connectBtn.addEventListener('click', async () => {
+            G_STATE.gradioUrl = urlInput.value.trim().replace(/\/$/, '');
+            if (!G_STATE.gradioUrl || !G_STATE.gradioUrl.startsWith('https://')) {
+                showInitialStatus('Por favor, ingresa una URL válida que comience con "https://"', true);
+                return;
+            }
+
+            const originalText = connectBtn.innerHTML;
+            showLoading(connectBtn);
+            showInitialStatus('Conectando y cargando recursos...');
+
+            try {
+                // Se hace el fetch inicial de todos los recursos
+                const [models, samplers, schedulers, vaes, loras, upscalers] = await Promise.all([
+                    apiGet('/sdapi/v1/sd-models'),
+                    apiGet('/sdapi/v1/samplers'),
+                    apiGet('/sdapi/v1/schedulers'),
+                    apiGet('/sdapi/v1/sd-vae'),
+                    apiGet('/sdapi/v1/loras'),
+                    apiGet('/sdapi/v1/upscalers')
+                ]);
+
+                G_STATE.models = models;
+                G_STATE.samplers = samplers;
+                G_STATE.schedulers = schedulers;
+                G_STATE.vaes = vaes;
+                G_STATE.loras = loras;
+                G_STATE.upscalers = upscalers;
+
+                // Rellenar Selectores
+                populateSelect(E_SELECTORS.model, models, 'name', 'title');
+                populateSelect(E_SELECTORS.sampler, samplers, 'name', 'name');
+                populateSelect(E_SELECTORS.scheduler, schedulers, 'name', 'label');
+                populateSelect(E_SELECTORS.vae, vaes, 'model_name', 'model_name', 'Automatic');
+                populateSelect(E_SELECTORS.lora, loras, 'name', 'name', "None");
+                populateSelect(E_SELECTORS.hrUpscaler, upscalers, 'name', 'name');
+
+                // Aplicar valores por defecto (1080x1568, 15 pasos)
+                document.getElementById('width-t2i').value = '1080';
+                document.getElementById('height-t2i').value = '1568';
+                document.getElementById('steps-t2i').value = '15';
+                document.getElementById('width-i2i').value = '1080';
+                document.getElementById('height-i2i').value = '1568';
+                document.getElementById('steps-i2i').value = '15';
+
+                // Transición a la aplicación principal
+                toggleAppVisibility(true);
+                showStatus('¡Conectado! Listo para generar. (Versión Móvil)', false);
+
+            } catch (error) {
+                showInitialStatus(`Error al cargar recursos. Detalle: ${error.message}`, true);
+            } finally {
+                hideLoading(connectBtn, originalText);
+            }
+        });
+
+        // Función para poblar un <select>
+        function populateSelect(selectElements, items, valueKey, textKey, firstOption) {
+            selectElements.forEach(selectElement => {
+                selectElement.innerHTML = '';
+                
+                if (firstOption) {
+                    const option = document.createElement('option');
+                    option.value = firstOption;
+                    option.textContent = firstOption;
+                    selectElement.appendChild(option);
+                }
+                
+                if (items.length === 0 && !firstOption) {
+                    selectElement.innerHTML = `<option value="">No se encontraron items</option>`;
+                    return;
+                }
+                
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item[valueKey];
+                    option.textContent = item[textKey] || item[valueKey];
+                    selectElement.appendChild(option);
+                });
+
+                if (selectElement.id.includes('sampler')) {
+                    const defaultSampler = Array.from(selectElement.options).find(o => o.value === 'DPM++ 2M Karras');
+                    if (defaultSampler) selectElement.value = 'DPM++ 2M Karras';
+                }
+            });
+        }
+
+        // --- Lógica de Pestañas ---
+        const tabButtons = {
+            txt2img: document.getElementById('tab-btn-txt2img'),
+            img2img: document.getElementById('tab-btn-img2img'),
+        };
+        const tabPanels = {
+            txt2img: document.getElementById('panel-txt2img'),
+            img2img: document.getElementById('panel-img2img'),
+        };
+
+        function switchTab(targetTab) {
+            Object.keys(tabButtons).forEach(key => {
+                const isActive = key === targetTab;
+                tabButtons[key].classList.toggle('active', isActive);
+            });
+            Object.keys(tabPanels).forEach(key => {
+                 const isActive = key === targetTab;
+                tabPanels[key].classList.toggle('active', isActive);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Object.keys(tabButtons).forEach(key => {
+                tabButtons[key].addEventListener('click', () => switchTab(key));
+            });
+            // Hires. fix starts hidden
+            document.getElementById('hr-options').style.display = document.getElementById('hr-enable').checked ? 'block' : 'none';
+            
+            // Asegurar que solo Txt2Img esté activo al cargar
+            switchTab('txt2img');
+        });
+
+        document.getElementById('hr-enable').addEventListener('change', (e) => {
+            document.getElementById('hr-options').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        // --- Lógica de Autocompletado de Tags ---
+        
+        function getLastWord(text, cursorPosition) {
+            const trimmed = text.substring(0, cursorPosition);
+            // Busca la última coma, paréntesis o espacio
+            const match = trimmed.match(/[^,()\s]*$/);
+            return match ? match[0] : '';
+        }
+
+        async function fetchTagSuggestions(currentWord, promptElement, suggestionsContainer) {
+            if (currentWord.length < 2) {
+                suggestionsContainer.style.display = 'none';
+                return;
+            }
+
+            try {
+                // Endpoint para buscar tags reales (requiere Tagger/other extension)
+                const data = await apiPost('/sdapi/v1/tag-search', {
+                    tag: currentWord,
+                    limit: 10
+                });
+
+                suggestionsContainer.innerHTML = '';
+                if (data && data.tags && data.tags.length > 0) {
+                    data.tags.forEach(tag => {
+                        const div = document.createElement('div');
+                        div.className = 'tag-suggestion-item';
+                        div.textContent = tag.name;
+                        div.addEventListener('click', (e) => {
+                            e.preventDefault(); // Evitar cualquier acción de blur/focus no deseada
+                            e.stopPropagation(); // Evitar que el click se propague al documento
+                            selectTag(tag.name, promptElement, suggestionsContainer);
+                        });
+                        suggestionsContainer.appendChild(div);
+                    });
+                    suggestionsContainer.style.display = 'block';
+                } else {
+                    suggestionsContainer.style.display = 'none';
+                }
+
+            } catch (error) {
+                // Ignorar error si la API no está disponible (ej. Tagger no instalado)
+                suggestionsContainer.style.display = 'none';
+            }
+        }
+
+        function selectTag(tag, promptElement, suggestionsContainer) {
+            const fullText = promptElement.value;
+            const cursorPosition = promptElement.selectionStart;
+            
+            // Reemplazar la palabra parcial por el tag completo
+            const startOfWordIndex = fullText.substring(0, cursorPosition).search(/[^,()\s]*$/);
+            const newText = fullText.substring(0, startOfWordIndex) + tag + ', ' + fullText.substring(cursorPosition);
+
+            promptElement.value = newText;
+            
+            // Mover el cursor al final del tag + ', '
+            const newCursorPosition = startOfWordIndex + tag.length + 2; 
+            
+            // Usar setTimeout para asegurar que el foco se mantenga
+            setTimeout(() => {
+                promptElement.focus();
+                promptElement.setSelectionRange(newCursorPosition, newCursorPosition);
+            }, 0);
+
+            suggestionsContainer.style.display = 'none';
+        }
+
+        function handlePromptInput(event) {
+            clearTimeout(G_STATE.tagSearchTimeout);
+            
+            const promptElement = event.target;
+            const suggestionsContainer = promptElement.id === 'prompt-t2i' ? tagSuggestionsT2I : tagSuggestionsI2I;
+            const cursorPosition = promptElement.selectionStart;
+            const currentWord = getLastWord(promptElement.value, cursorPosition);
+            
+            if (currentWord.length >= 2) {
+                G_STATE.tagSearchTimeout = setTimeout(() => {
+                    fetchTagSuggestions(currentWord, promptElement, suggestionsContainer);
+                }, 300); // Pequeño delay para no saturar la API
+            } else {
+                suggestionsContainer.style.display = 'none';
+            }
+        }
+        
+        // Asignar listeners de input
+        promptT2I.addEventListener('input', handlePromptInput);
+        promptI2I.addEventListener('input', handlePromptInput);
+        
+        // CORRECCIÓN CRÍTICA: Ocultar sugerencias al hacer clic en cualquier lugar fuera de ellas.
+        document.addEventListener('click', (event) => {
+            // Verificar T2I
+            const isT2IPrompt = promptT2I.contains(event.target);
+            const isT2ISuggestion = tagSuggestionsT2I.contains(event.target);
+            if (!isT2IPrompt && !isT2ISuggestion) {
+                tagSuggestionsT2I.style.display = 'none';
+            }
+            
+            // Verificar I2I
+            const isI2IPrompt = promptI2I.contains(event.target);
+            const isI2ISuggestion = tagSuggestionsI2I.contains(event.target);
+            if (!isI2IPrompt && !isI2ISuggestion) {
+                tagSuggestionsI2I.style.display = 'none';
+            }
+        });
+        
+        // 8. Añadir Lora al Prompt
+        document.querySelectorAll('.add-lora-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.dataset.target;
+                const promptInput = document.getElementById(targetId);
+                const loraSelectId = targetId.replace('prompt', 'lora');
+                const selectedLora = document.getElementById(loraSelectId).value;
+                
+                if (!selectedLora || selectedLora === "None") return;
+                
+                // Añadir el Lora al final y dar foco
+                promptInput.value += ` <lora:${selectedLora}:1> `;
+                promptInput.focus();
+                
+                // Desplazar el cursor al final del texto.
+                const newCursorPosition = promptInput.value.length;
+                promptInput.setSelectionRange(newCursorPosition, newCursorPosition);
+            });
+        });
+        
+        // 9. Manejo de Subida de Imagen (Img2Img)
+        imageUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) {
+                G_STATE.uploadedImageBase64 = null;
+                imagePreview.classList.add('hidden');
+                imagePreviewPlaceholder.classList.remove('hidden');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const dataUrl = reader.result;
+                imagePreview.src = dataUrl;
+                imagePreview.classList.remove('hidden');
+                imagePreviewPlaceholder.classList.add('hidden');
+                G_STATE.uploadedImageBase64 = dataUrl.split(',')[1];
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 10. Lógica de Progreso
+        function startProgressCheck() {
+            if (G_STATE.progressInterval) return;
+            progressContainer.style.display = 'block';
+            const progressBar = document.getElementById('progress-bar');
+            const progressLabel = document.getElementById('progress-label');
+            progressBar.style.width = '0%';
+            progressLabel.textContent = 'Iniciando...';
+            
+            G_STATE.progressInterval = setInterval(async () => {
+                if (!G_STATE.isGenerating) {
+                    // Ya se terminó, salir del intervalo
+                    stopProgressCheck();
+                    return;
+                }
+                try {
+                    const data = await apiGet('/sdapi/v1/progress');
+                    if (data.progress > 0) {
+                        const percent = Math.round(data.progress * 100);
+                        document.getElementById('progress-bar').style.width = `${percent}%`;
+                        const step = data.state.sampling_step || 0;
+                        const steps = data.state.sampling_steps || 0;
+                        document.getElementById('progress-label').textContent = `${percent}% (${step}/${steps}) - ETA: ${data.eta_relative.toFixed(1)}s`;
+                    }
+                    if (data.progress === 0 && data.state.job !== '') {
+                         document.getElementById('progress-bar').style.width = '5%';
+                         document.getElementById('progress-label').textContent = 'Esperando en la cola...';
+                    }
+                } catch (e) {
+                    console.error("Error al consultar progreso:", e.message);
+                }
+            }, 500);
+        }
+        
+        function stopProgressCheck() {
+            clearInterval(G_STATE.progressInterval);
+            G_STATE.progressInterval = null;
+            // Ocultar barra de progreso después de un pequeño retraso visual
+            setTimeout(() => {
+                 progressContainer.style.display = 'none';
+            }, 1000);
+        }
+
+        // 11. Lógica de Generación
+        async function handleGeneration(mode) {
+            if (G_STATE.isGenerating) return;
+            setGenerateButtons(true);
+            startProgressCheck();
+            
+            let payload;
+            let endpoint;
+            
+            const button = mode === 'txt2img' ? generateTxt2ImgBtn : generateImg2ImgBtn;
+            const originalText = button.innerHTML;
+            showLoading(button);
+            
+            // Ocultar cualquier sugerencia de tags que pudiera haber quedado abierta
+            tagSuggestionsT2I.style.display = 'none';
+            tagSuggestionsI2I.style.display = 'none';
+
+            try {
+                if (mode === 'txt2img') {
+                    payload = {
+                        "prompt": promptT2I.value,
+                        "negative_prompt": document.getElementById('negative-prompt-t2i').value,
+                        "sampler_name": document.getElementById('sampler-t2i').value,
+                        "scheduler": document.getElementById('scheduler-t2i').value,
+                        "steps": parseInt(document.getElementById('steps-t2i').value, 10),
+                        "cfg_scale": parseFloat(document.getElementById('cfg-t2i').value),
+                        "width": parseInt(document.getElementById('width-t2i').value, 10),
+                        "height": parseInt(document.getElementById('height-t2i').value, 10),
+                        "n_iter": parseInt(document.getElementById('batch-count-t2i').value, 10),
+                        "batch_size": 1, 
+                        "seed": parseInt(document.getElementById('seed-t2i').value, 10),
+                        "override_settings": {
+                            "sd_model_checkpoint": document.getElementById('model-t2i').value,
+                            "sd_vae": document.getElementById('vae-t2i').value
+                        },
+                        "send_images": true,
+                        "save_images": false
+                    };
+                    
+                    if (document.getElementById('hr-enable').checked) {
+                        payload.enable_hr = true;
+                        payload.hr_scale = parseFloat(document.getElementById('hr-scale').value);
+                        payload.hr_upscaler = document.getElementById('hr-upscaler').value;
+                        payload.hr_second_pass_steps = parseInt(document.getElementById('hr-steps').value, 10);
+                        payload.denoising_strength = parseFloat(document.getElementById('hr-denoising').value); 
+                    }
+                    endpoint = '/sdapi/v1/txt2img';
+                    
+                } else if (mode === 'img2img') {
+                    if (!G_STATE.uploadedImageBase64) {
+                        throw new Error('Por favor, sube una imagen de origen primero.');
+                    }
+                    payload = {
+                        "init_images": [G_STATE.uploadedImageBase64],
+                        "prompt": promptI2I.value,
+                        "negative_prompt": document.getElementById('negative-prompt-i2i').value,
+                        "sampler_name": document.getElementById('sampler-i2i').value,
+                        "scheduler": document.getElementById('scheduler-i2i').value,
+                        "steps": parseInt(document.getElementById('steps-i2i').value, 10),
+                        "cfg_scale": parseFloat(document.getElementById('cfg-i2i').value),
+                        "width": parseInt(document.getElementById('width-i2i').value, 10),
+                        "height": parseInt(document.getElementById('height-i2i').value, 10),
+                        "n_iter": parseInt(document.getElementById('batch-count-i2i').value, 10),
+                        "batch_size": 1, 
+                        "seed": parseInt(document.getElementById('seed-i2i').value, 10),
+                        "denoising_strength": parseFloat(document.getElementById('denoising-i2i').value),
+                        "override_settings": {
+                            "sd_model_checkpoint": document.getElementById('model-i2i').value,
+                            "sd_vae": document.getElementById('vae-i2i').value
+                        },
+                        "send_images": true,
+                        "save_images": false
+                    };
+                    endpoint = '/sdapi/v1/img2img';
+                }
+
+                showStatus('Enviando solicitud de generación...');
+                const result = await apiPost(endpoint, payload);
+                
+                // Mostrar imagen y metadatos
+                if (result.images && result.images[0]) {
+                    const base64Image = result.images[0];
+                    const dataUrl = 'data:image/png;base64,' + base64Image;
+                    outputImage.src = dataUrl;
+                    outputImage.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    
+                    // Mostrar Metadatos
+                    if (result.info) {
+                        try {
+                            const info = JSON.parse(result.info);
+                            metadataInfo.textContent = `Prompt: ${info.prompt}\n\nNegative Prompt: ${info.negative_prompt}\n\nSettings: ${JSON.stringify(info.all_parameters, null, 2)}`;
+                            metadataInfo.classList.remove('hidden');
+                        } catch (e) {
+                            metadataInfo.textContent = `Raw Info: ${result.info}`;
+                            metadataInfo.classList.remove('hidden');
+                        }
+                    } else {
+                        metadataInfo.classList.add('hidden');
+                    }
+
+                    // Configurar y mostrar botón de descarga
+                    downloadBtn.style.display = 'block';
+                    downloadBtn.onclick = () => {
+                        const link = document.createElement('a');
+                        link.href = dataUrl;
+                        link.download = `generated_${Date.now()}.png`;
+                        link.click();
+                    };
+                    showStatus('¡Imagen generada con éxito!', false);
+                } else {
+                    throw new Error('La respuesta de la API no contiene imágenes.');
+                }
+                
+            } catch (error) {
+                console.error(error);
+                showStatus(`Error: ${error.message}. Verifica tu prompt y conexión.`, true);
+            } finally {
+                setGenerateButtons(false);
+                hideLoading(button, originalText);
+                stopProgressCheck();
+            }
+        }
+        
+        // --- Triggers de Generación ---
+        generateTxt2ImgBtn.addEventListener('click', () => handleGeneration('txt2img'));
+        generateImg2ImgBtn.addEventListener('click', () => handleGeneration('img2img'));
+
+    </script>
+</body>
+</html>

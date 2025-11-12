@@ -1,0 +1,2677 @@
+"<!DOCTYPE html>
+<html lang=\"es\">
+<head>
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">
+    <meta name=\"theme-color\" content=\"#f97316\">
+    <meta name=\"apple-mobile-web-app-capable\" content=\"yes\">
+    <meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black-translucent\">
+    <title>VentaPRO - Sistema de Ventas</title>
+    
+    <!-- PWA Manifest -->
+    <link rel=\"manifest\" href=\"/manifest.json\">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src=\"https://cdn.tailwindcss.com\"></script>
+    
+    <!-- Chart.js -->
+    <script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>
+    
+    <!-- jsPDF for ticket generation -->
+    <script src=\"https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js\"></script>
+    
+    <!-- Google Fonts -->
+    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">
+    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>
+    <link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap\" rel=\"stylesheet\">
+    
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html {
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #fb923c;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        
+        /* App Container */
+        #app-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Sidebar */
+        #sidebar {
+            width: 280px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            border-right: 1px solid #374151;
+            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            #sidebar {
+                position: fixed;
+                transform: translateX(-100%);
+                z-index: 100;
+                height: 100%;
+            }
+            
+            #sidebar.open {
+                transform: translateX(0);
+            }
+            
+            #sidebar-overlay {
+                position: fixed;
+                inset: 0;
+                background-color: rgba(0, 0, 0, 0.7);
+                z-index: 99;
+                backdrop-filter: blur(4px);
+            }
+        }
+        
+        /* Main Content */
+        #main-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        /* Product Card with improved animations */
+        .product-card {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            border: 1px solid #374151;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .product-card:hover::before {
+            opacity: 1;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px -10px rgba(249, 115, 22, 0.3);
+            border-color: #f97316;
+        }
+        
+        /* Navigation Items */
+        .nav-item {
+            position: relative;
+            transition: all 0.2s ease;
+            color: #d1d5db;
+            overflow: hidden;
+        }
+        
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: #f97316;
+            transform: scaleY(0);
+            transition: transform 0.2s ease;
+        }
+        
+        .nav-item:hover::before {
+            transform: scaleY(1);
+        }
+        
+        .nav-item:hover {
+            background-color: #374151;
+            color: #f9fafb;
+            padding-left: 1.25rem;
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(90deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+        }
+        
+        .nav-item.active svg {
+            color: white;
+        }
+        
+        /* Role-based visibility */
+        .admin-only,
+        .employee-only,
+        .collaborator-only {
+            display: none !important;
+        }
+        
+        body.role-admin .admin-only {
+            display: flex !important;
+        }
+        
+        body.role-employee .employee-only {
+            display: flex !important;
+        }
+        
+        body.role-collaborator .collaborator-only {
+            display: flex !important;
+        }
+        
+        /* View Sections */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+            flex-grow: 1;
+        }
+        
+        .view-section.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Spinner */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #loader {
+            border: 4px solid #4b5563;
+            border-top: 4px solid #f97316;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        
+        /* Modal */
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        
+        .modal-container {
+            transition: transform 0.25s ease;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Mobile Bottom Nav */
+        #mobile-bottom-nav {
+            box-shadow: 0 -4px 12px rgba(249, 115, 22, 0.1);
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            border-top: 1px solid #374151;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+        }
+        
+        .mobile-nav-item {
+            transition: all 0.2s ease;
+        }
+        
+        .mobile-nav-item.active {
+            color: #f97316;
+            transform: scale(1.1);
+        }
+        
+        /* Filters Container */
+        #filters-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        padding-top 0.5s ease,
+                        padding-bottom 0.5s ease;
+        }
+        
+        #filters-container.open {
+            max-height: 500px;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        
+        /* Switch Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4b5563;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: \"\";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #f97316;
+        }
+        
+        input:focus + .slider {
+            box-shadow: 0 0 1px #f97316;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Details/Summary */
+        details > summary {
+            list-style: none;
+            cursor: pointer;
+        }
+        
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        /* Skeleton Loader */
+        .skeleton {
+            background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+        
+        /* Floating Button */
+        .floating-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 40;
+            box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+            animation: pulse 2s infinite;
+        }
+        
+        @media (min-width: 768px) {
+            .floating-btn {
+                bottom: 20px;
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
+        
+        .badge-admin {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+        
+        .badge-employee {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        
+        .badge-collaborator {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .badge-promo {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            color: white;
+        }
+        
+        /* Toast Notification */
+        #notification-toast {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Input Focus */
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #f97316;
+            ring: 2px;
+            ring-color: rgba(249, 115, 22, 0.3);
+        }
+        
+        /* Glass Effect */
+        .glass {
+            background: rgba(31, 41, 55, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(55, 65, 81, 0.3);
+        }
+        
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Button Ripple Effect */
+        .btn-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-ripple::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-ripple:active::after {
+            width: 300px;
+            height: 300px;
+        }
+        
+        /* Card Shine Effect */
+        .card-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-shine::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.1) 50%,
+                transparent 70%
+            );
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+    </style>
+</head>
+<body class=\"text-orange-400\">
+
+<!-- Auth View -->
+<div id=\"auth-view\" class=\"flex items-center justify-center h-screen\">
+    <div class=\"w-full max-w-sm p-8 space-y-6 glass rounded-2xl shadow-2xl m-4\">
+        <div class=\"text-center\">
+            <h2 class=\"text-4xl font-bold gradient-text mb-2\">Bienvenido</h2>
+            <p class=\"text-gray-400\">Inicia sesión para continuar</p>
+        </div>
+        <form id=\"login-form\" class=\"space-y-6\">
+            <div class=\"relative\">
+                <input 
+                    type=\"email\" 
+                    id=\"email\" 
+                    placeholder=\"Correo electrónico\" 
+                    required 
+                    class=\"w-full px-4 py-3 rounded-lg bg-gray-800 text-white border-2 border-transparent focus:border-orange-500 transition\"
+                />
+            </div>
+            <div class=\"relative\">
+                <input 
+                    type=\"password\" 
+                    id=\"password\" 
+                    placeholder=\"Contraseña\" 
+                    required 
+                    class=\"w-full px-4 py-3 rounded-lg bg-gray-800 text-white border-2 border-transparent focus:border-orange-500 transition\"
+                    value=\"password\"
+                />
+            </div>
+            <div id=\"login-error\" class=\"text-sm text-red-500 h-4 text-center\"></div>
+            <button 
+                type=\"submit\" 
+                class=\"w-full px-4 py-3 font-semibold text-white bg-gradient-to-r from-orange-600 to-orange-700 rounded-lg hover:from-orange-700 hover:to-orange-800 active:scale-[.98] transition-all duration-150 btn-ripple\"
+            >
+                Ingresar
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- App Container -->
+<div id=\"app-container\" class=\"hidden\">
+    <div id=\"sidebar-overlay\" class=\"hidden md:hidden\"></div>
+    
+    <!-- Sidebar -->
+    <aside id=\"sidebar\" class=\"flex flex-col p-4\">
+        <div class=\"text-center py-6 mb-4\">
+            <h1 class=\"text-3xl font-bold gradient-text\">Venta<span class=\"text-gray-400\">PRO</span></h1>
+            <p class=\"text-xs text-gray-500 mt-1\">Sistema de Ventas</p>
+        </div>
+        
+        <nav id=\"sidebar-nav\" class=\"flex-grow space-y-2 overflow-y-auto\">
+            <a href=\"#\" data-view=\"dashboard\" class=\"nav-item flex items-center gap-3 px-4 py-3 rounded-lg\">
+                <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                    <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6\"></path>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            
+            <a href=\"#\" data-view=\"venta\" class=\"nav-item flex items-center gap-3 px-4 py-3 rounded-lg\">
+                <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                    <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z\"></path>
+                </svg>
+                <span>Punto de Venta</span>
+            </a>
+            
+            <a href=\"#\" data-view=\"productos\" class=\"nav-item flex items-center gap-3 px-4 py-3 rounded-lg\">
+                <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                    <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 6h16M4 12h16M4 18h16\"></path>
+                </svg>
+                <span>Productos</span>
+            </a>
+            
+            <a href=\"#\" data-view=\"inventario\" class=\"nav-item flex items-center gap-3 px-4 py-3 rounded-lg\">
+                <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                    <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4\"></path>
+                </svg>
+                <span>Inventario</span>
+            </a>
+            
+            <a href=\"#\" data-view=\"iva\" class=\"nav-item admin-only flex items-center gap-3 px-4 py-3 rounded-lg\">
+                <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                    <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 14l6-6m-5.5 1.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm9 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM21 12a9 9 0 11-18 0 9 9 0 0118 0z\"></path>
+                </svg>
+                <span>IVA</span>
+            </a>
+            
+            <a href=\"#\" data-view=\"perfil\" class=\"nav-item admin-only flex items-center gap-3 px-4 py-3 rounded-lg\">
+                <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                    <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z\"></path>
+                    <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 12a3 3 0 11-6 0 3 3 0 016 0z\"></path>
+                </svg>
+                <span>Admin</span>
+            </a>
+            
+            <!-- Colaborador Section -->
+            <a href=\"#\" data-view=\"mis-productos\" class=\"nav-item collaborator-only flex items-center gap-3 px-4 py-3 rounded-lg\">
+                <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                    <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4\"></path>
+                </svg>
+                <span>Mis Productos</span>
+            </a>
+        </nav>
+        
+        <div class=\"mt-auto pt-4 border-t border-gray-700\">
+            <button id=\"logout-button\" class=\"w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-colors\">
+                <svg class=\"h-6 w-6\" viewBox=\"0 0 20 20\" fill=\"currentColor\">
+                    <path fill-rule=\"evenodd\" d=\"M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z\" clip-rule=\"evenodd\"></path>
+                </svg>
+                <span>Cerrar Sesión</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id=\"main-content\">
+        <header id=\"main-header\" class=\"sticky top-0 z-40 glass\">
+            <div class=\"px-4 sm:px-6 py-3\">
+                <div class=\"flex items-center justify-between\">
+                    <div class=\"flex items-center gap-3\">
+                        <button id=\"menu-toggle-btn\" class=\"md:hidden h-10 w-10 flex items-center justify-center text-gray-400 rounded-full hover:bg-gray-700\">
+                            <svg class=\"h-6 w-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 6h16M4 12h16M4 18h16\"></path>
+                            </svg>
+                        </button>
+                        <h1 id=\"header-title\" class=\"text-xl font-bold text-white\">Dashboard</h1>
+                    </div>
+                    
+                    <div class=\"flex items-center gap-2 relative\">
+                        <button id=\"search-toggle-btn\" title=\"Buscar\" class=\"h-10 w-10 flex items-center justify-center text-gray-400 rounded-full hover:bg-gray-700\">
+                            <svg class=\"h-6 w-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\"></path>
+                            </svg>
+                        </button>
+                        
+                        <button id=\"add-product-button\" title=\"Agregar Producto\" class=\"admin-only collaborator-only items-center justify-center h-10 w-10 text-gray-400 rounded-full hover:bg-gray-700\">
+                            <svg class=\"h-6 w-6\" viewBox=\"0 0 20 20\" fill=\"currentColor\">
+                                <path d=\"M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z\"></path>
+                            </svg>
+                        </button>
+                        
+                        <button id=\"notifications-btn\" title=\"Notificaciones\" class=\"relative h-10 w-10 flex items-center justify-center text-gray-400 rounded-full hover:bg-gray-700\">
+                            <svg class=\"h-6 w-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V5a2 2 0 00-4 0v.083A6 6 0 004 11v3.159c0 .538-.214 1.055-.595 1.436L2 17h5m8 0v1a3 3 0 11-6 0v-1m6 0H9\"></path>
+                            </svg>
+                            <span id=\"unread-count\" class=\"absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden\">0</span>
+                        </button>
+                        
+                        <div id=\"notifications-panel\" class=\"hidden absolute top-14 right-0 w-80 glass rounded-lg shadow-xl p-4 max-h-96 overflow-y-auto z-50\"></div>
+                    </div>
+                </div>
+                
+                <div id=\"filters-container\" class=\"container mx-auto px-4 sm:px-6\"></div>
+            </div>
+        </header>
+
+        <!-- Content Wrapper -->
+        <div id=\"main-content-wrapper\" class=\"flex-grow p-4 sm:p-6 pb-20 md:pb-6 relative\">
+            <!-- Dashboard View -->
+            <div id=\"dashboard-view\" class=\"view-section\"></div>
+            
+            <!-- Productos View -->
+            <div id=\"productos-view\" class=\"view-section\">
+                <main class=\"w-full\">
+                    <div id=\"gallery-container\" class=\"grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6\"></div>
+                    <div id=\"no-results\" class=\"hidden text-center py-16\">
+                        <h3 class=\"text-2xl font-bold text-gray-300\">No se encontraron resultados</h3>
+                        <p class=\"text-gray-400 mt-2\">Intenta con otra búsqueda o cambia de categoría.</p>
+                    </div>
+                    <div id=\"loader-container\" class=\"w-full text-center py-8\">
+                        <div id=\"loader\"></div>
+                    </div>
+                </main>
+            </div>
+            
+            <!-- Detail View -->
+            <div id=\"detail-view\" class=\"view-section\">
+                <main class=\"w-full\">
+                    <div class=\"mb-6\">
+                        <button id=\"back-to-gallery-btn\" class=\"flex items-center gap-2 text-gray-300 hover:text-orange-500 font-semibold transition\">
+                            <svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M10 19l-7-7m0 0l7-7m-7 7h18\"></path>
+                            </svg>
+                            Volver
+                        </button>
+                    </div>
+                    <div id=\"product-detail-content\" class=\"glass rounded-lg shadow-xl w-full flex flex-col md:flex-row\"></div>
+                    <div id=\"related-products-container\" class=\"mt-8\"></div>
+                </main>
+            </div>
+            
+            <!-- Inventario View -->
+            <div id=\"inventario-view\" class=\"view-section\">
+                <div class=\"glass rounded-lg shadow-md overflow-hidden\">
+                    <div class=\"overflow-x-auto\">
+                        <table class=\"min-w-full\">
+                            <thead class=\"bg-gray-700/50\">
+                                <tr>
+                                    <th class=\"px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider\">Producto</th>
+                                    <th class=\"px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider\">Stock</th>
+                                    <th class=\"px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider\">Propietario</th>
+                                </tr>
+                            </thead>
+                            <tbody id=\"inventory-table-body\" class=\"divide-y divide-gray-700\"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Venta View -->
+            <div id=\"venta-view\" class=\"view-section\">
+                <div class=\"h-full flex flex-col md:flex-row gap-6\">
+                    <div class=\"w-full md:w-1/2 lg:w-2/5 flex flex-col gap-6\">
+                        <div class=\"flex-grow glass rounded-xl shadow-lg p-4 flex flex-col min-h-0\">
+                            <h3 id=\"cart-title\" class=\"text-lg font-bold text-white mb-4 border-b pb-3 border-gray-700 flex-shrink-0\">Carrito de Pedido</h3>
+                            <div id=\"cart-items-container\" class=\"flex-grow space-y-3 overflow-y-auto p-1\">
+                                <p class=\"text-gray-500 text-center py-4\">El carrito está vacío</p>
+                            </div>
+                        </div>
+                        
+                        <div class=\"flex-shrink-0 glass rounded-xl shadow-lg p-6 space-y-3 text-lg\">
+                            <div class=\"flex justify-between\">
+                                <span>Subtotal:</span>
+                                <span id=\"cart-subtotal\">$0.00</span>
+                            </div>
+                            <div class=\"flex justify-between\">
+                                <span id=\"cart-tax-label\">IVA (16%):</span>
+                                <span id=\"cart-tax\">$0.00</span>
+                            </div>
+                            <div class=\"flex justify-between font-bold text-xl border-t pt-3 mt-3 border-gray-700 text-white\">
+                                <span>Total:</span>
+                                <span id=\"cart-total\">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class=\"w-full md:w-1/2 lg:w-3/5 glass rounded-xl shadow-lg p-6 flex flex-col gap-6\">
+                        <div id=\"payment-section\" class=\"flex-grow space-y-6 flex flex-col justify-around hidden\">
+                            <div class=\"bg-gray-900/70 rounded-lg p-4 text-right\">
+                                <label for=\"payment-input\" class=\"block text-sm text-gray-500 text-left mb-1\">Paga con:</label>
+                                <input type=\"number\" id=\"payment-input\" placeholder=\"0.00\" class=\"w-full bg-transparent text-right text-5xl font-mono font-bold border-none focus:ring-0 p-0 text-white\">
+                            </div>
+                            <div class=\"bg-gray-900/70 rounded-lg p-4 text-right\">
+                                <p class=\"text-sm text-gray-500 text-left\">Cambio:</p>
+                                <p id=\"change-display\" class=\"text-5xl font-mono font-bold text-green-500\">$0.00</p>
+                            </div>
+                        </div>
+                        
+                        <div id=\"order-summary-section\" class=\"flex-grow flex items-center justify-center text-center\">
+                            <p class=\"text-gray-500\">Aquí se mostrará la información de cobro cuando se complete un pedido.</p>
+                        </div>
+                        
+                        <div class=\"grid grid-cols-2 gap-4 flex-shrink-0\">
+                            <button id=\"cancel-sale-btn\" class=\"w-full h-16 bg-red-900/50 text-red-400 font-bold rounded-lg hover:bg-red-900 text-lg btn-ripple\">Cancelar</button>
+                            <button id=\"charge-btn\" class=\"w-full h-16 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 text-lg btn-ripple\">Crear Pedido</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Product Form View -->
+            <div id=\"producto-form-view\" class=\"view-section\">
+                <div class=\"mb-6\">
+                    <button id=\"back-from-form-btn\" class=\"flex items-center gap-2 text-gray-300 hover:text-orange-500 font-semibold transition\">
+                        <svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                            <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M10 19l-7-7m0 0l7-7m-7 7h18\"></path>
+                        </svg>
+                        Volver a Productos
+                    </button>
+                </div>
+                <div class=\"glass rounded-lg shadow-md p-6 max-w-3xl mx-auto\">
+                    <h2 id=\"product-form-title\" class=\"text-2xl font-bold mb-6 text-white\"></h2>
+                    <form id=\"product-form\" class=\"space-y-4\">
+                        <input type=\"text\" id=\"producto\" placeholder=\"Nombre del Producto\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                        <input type=\"text\" id=\"codigo\" placeholder=\"Código\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                        <input type=\"text\" id=\"categoria\" placeholder=\"Categoría\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                        
+                        <div class=\"grid grid-cols-2 gap-4\">
+                            <input type=\"number\" id=\"precio_compra\" placeholder=\"Precio Compra\" step=\"0.01\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                            <input type=\"number\" id=\"precio_venta\" placeholder=\"Precio Venta\" step=\"0.01\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                        </div>
+                        
+                        <input type=\"number\" id=\"comision_por_unidad\" placeholder=\"Comisión por Unidad ($)\" step=\"0.01\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                        <input type=\"number\" id=\"stock\" placeholder=\"Stock\" step=\"1\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                        <input type=\"text\" id=\"tags\" placeholder=\"Etiquetas (separadas por coma)\" class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                        
+                        <textarea id=\"descripcion\" placeholder=\"Descripción del producto\" rows=\"3\" class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\"></textarea>
+                        
+                        <div class=\"space-y-3 pt-2\">
+                            <label class=\"text-white font-semibold\">Imágenes del Producto</label>
+                            <input type=\"url\" id=\"imagen_url\" placeholder=\"URL de la Imagen Principal\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                            <input type=\"url\" id=\"imagen_url_2\" placeholder=\"URL de la Imagen 2 (Opcional)\" class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                            <input type=\"url\" id=\"imagen_url_3\" placeholder=\"URL de la Imagen 3 (Opcional)\" class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                        </div>
+                        
+                        <div class=\"border-t border-gray-700 pt-4 admin-only\">
+                            <label class=\"flex items-center gap-3 cursor-pointer\">
+                                <input type=\"checkbox\" id=\"promo-toggle\" name=\"isPromo\" class=\"w-5 h-5 rounded text-orange-600 focus:ring-orange-500\">
+                                <span class=\"font-semibold text-white\">Crear Paquete Promocional</span>
+                            </label>
+                            <div id=\"promo-details\" class=\"hidden space-y-3 mt-3\">
+                                <div id=\"selected-promo-product\" class=\"hidden items-center gap-3 p-2 bg-orange-900/50 rounded-md\"></div>
+                            </div>
+                        </div>
+                        
+                        <div class=\"flex justify-end space-x-3 pt-4\">
+                            <button type=\"button\" id=\"cancel-product-form\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cancelar</button>
+                            <button type=\"submit\" class=\"px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 btn-ripple\">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- IVA View -->
+            <div id=\"iva-view\" class=\"view-section\">
+                <div class=\"max-w-2xl mx-auto w-full\">
+                    <div class=\"glass rounded-lg shadow-md p-6\">
+                        <h2 class=\"text-2xl font-bold mb-6 text-white\">Configuración de IVA</h2>
+                        <div class=\"space-y-6\">
+                            <div class=\"flex items-center justify-between p-4 bg-gray-700/50 rounded-lg\">
+                                <span class=\"font-semibold text-white\">Habilitar IVA en ventas</span>
+                                <label class=\"switch\">
+                                    <input type=\"checkbox\" id=\"iva-enabled-switch\">
+                                    <span class=\"slider\"></span>
+                                </label>
+                            </div>
+                            <div id=\"iva-rate-container\" class=\"space-y-2\">
+                                <label for=\"iva-rate-input\" class=\"font-semibold text-white\">Porcentaje de IVA (%)</label>
+                                <input type=\"number\" id=\"iva-rate-input\" step=\"0.1\" min=\"0\" placeholder=\"16\" class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                            </div>
+                            
+                            <div class=\"border-t border-gray-700 pt-4 mt-6\">
+                                <h3 class=\"text-lg font-bold text-white mb-4\">Configuración de Comisiones</h3>
+                                <div class=\"space-y-4\">
+                                    <div>
+                                        <label for=\"admin-commission-input\" class=\"font-semibold text-white block mb-2\">Comisión del Admin sobre productos de Colaboradores (%)</label>
+                                        <input type=\"number\" id=\"admin-commission-input\" step=\"0.1\" min=\"0\" max=\"100\" placeholder=\"10\" class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white placeholder-gray-400\">
+                                        <p class=\"text-xs text-gray-500 mt-1\">Esta comisión se descontará de las ganancias del colaborador cuando se venda su producto</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Perfil/Admin View -->
+            <div id=\"perfil-view\" class=\"view-section\"></div>
+            
+            <!-- Mis Productos (Colaborador) View -->
+            <div id=\"mis-productos-view\" class=\"view-section\"></div>
+            
+            <!-- Floating Cart Button -->
+            <button id=\"floating-cart-btn\" class=\"hidden floating-btn w-16 h-16 bg-gradient-to-br from-orange-600 to-orange-700 text-white rounded-full shadow-lg flex items-center justify-center hover:from-orange-700 hover:to-orange-800 transition-all\">
+                <svg class=\"w-8 h-8\" viewBox=\"0 0 20 20\" fill=\"currentColor\">
+                    <path d=\"M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z\"></path>
+                </svg>
+                <span id=\"floating-cart-count\" class=\"absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-orange-600\">0</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Bottom Navigation -->
+<footer id=\"mobile-bottom-nav\" class=\"md:hidden fixed bottom-0 left-0 right-0\">
+    <nav class=\"container mx-auto px-4 h-16 flex justify-around items-center\">
+        <button data-view=\"dashboard\" class=\"mobile-nav-item flex flex-col items-center justify-center text-gray-400 w-full h-full\">
+            <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6\"></path>
+            </svg>
+            <span class=\"text-xs mt-1\">Inicio</span>
+        </button>
+        
+        <button data-view=\"venta\" class=\"mobile-nav-item flex flex-col items-center justify-center text-gray-400 w-full h-full\">
+            <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z\"></path>
+            </svg>
+            <span class=\"text-xs mt-1\">Venta</span>
+        </button>
+        
+        <button data-view=\"productos\" class=\"mobile-nav-item flex flex-col items-center justify-center text-gray-400 w-full h-full\">
+            <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 6h16M4 12h16M4 18h16\"></path>
+            </svg>
+            <span class=\"text-xs mt-1\">Productos</span>
+        </button>
+        
+        <button data-view=\"perfil\" class=\"mobile-nav-item admin-only flex flex-col items-center justify-center text-gray-400 w-full h-full\">
+            <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z\"></path>
+                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 12a3 3 0 11-6 0 3 3 0 016 0z\"></path>
+            </svg>
+            <span class=\"text-xs mt-1\">Admin</span>
+        </button>
+        
+        <button data-view=\"mis-productos\" class=\"mobile-nav-item collaborator-only flex flex-col items-center justify-center text-gray-400 w-full h-full\">
+            <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4\"></path>
+            </svg>
+            <span class=\"text-xs mt-1\">Mis Productos</span>
+        </button>
+    </nav>
+</footer>
+
+<!-- Modals -->
+<div id=\"notification-toast\" class=\"fixed top-20 right-5 z-[150] py-2 px-4 rounded-lg shadow-md opacity-0 translate-y-2 pointer-events-none\"></div>
+
+<div id=\"confirm-modal\" class=\"modal fixed inset-0 z-[110] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-sm p-6 scale-95\">
+        <h3 id=\"confirm-title\" class=\"text-lg font-bold text-white\">Confirmar Acción</h3>
+        <p id=\"confirm-message\" class=\"text-sm text-gray-400 mt-2 mb-6\">¿Estás seguro? Esta acción no se puede deshacer.</p>
+        <div class=\"flex justify-end gap-3\">
+            <button id=\"confirm-cancel-btn\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cancelar</button>
+            <button id=\"confirm-action-btn\" class=\"px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 btn-ripple\">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<div id=\"ticket-modal\" class=\"modal fixed inset-0 z-[110] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-sm p-6 scale-95 flex flex-col gap-4\">
+        <h3 class=\"text-xl font-bold text-center text-white\">Ticket de Venta</h3>
+        <div id=\"ticket-image-container\" class=\"bg-white p-2 rounded-md overflow-y-auto\">
+            <canvas id=\"ticket-canvas\"></canvas>
+        </div>
+        <div class=\"flex justify-center gap-4\">
+            <button id=\"download-ticket-btn\" class=\"px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 btn-ripple\">Descargar</button>
+            <button id=\"close-ticket-btn\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div id=\"promo-search-modal\" class=\"modal fixed inset-0 z-[110] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-md p-6 scale-95 flex flex-col gap-4\">
+        <h3 class=\"text-xl font-bold text-white\">Seleccionar Producto del Paquete</h3>
+        <input type=\"search\" id=\"modal-promo-search-input\" placeholder=\"Buscar por nombre, código o etiqueta...\" class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+        <div id=\"modal-promo-search-results\" class=\"max-h-64 overflow-y-auto space-y-2\">
+            <p class=\"text-gray-500 text-center\">Escribe para buscar un producto.</p>
+        </div>
+        <div class=\"flex justify-end\">
+            <button type=\"button\" id=\"close-promo-search-modal-btn\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div id=\"expense-modal\" class=\"modal fixed inset-0 z-[110] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-sm p-6 scale-95\">
+        <h3 class=\"text-lg font-bold text-white mb-4\">Registrar Gasto General</h3>
+        <form id=\"expense-form\" class=\"space-y-4\">
+            <input type=\"text\" id=\"expense-description\" placeholder=\"Descripción del Gasto\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <input type=\"number\" id=\"expense-amount\" placeholder=\"Monto\" step=\"0.01\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <select id=\"expense-category\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+                <option value=\"\" disabled selected>Selecciona una categoría</option>
+                <option value=\"Suministros\">Suministros</option>
+                <option value=\"Servicios\">Servicios</option>
+                <option value=\"Mantenimiento\">Mantenimiento</option>
+                <option value=\"Otros\">Otros</option>
+            </select>
+            <div class=\"flex justify-end gap-3 pt-2\">
+                <button type=\"button\" id=\"cancel-expense-btn\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cancelar</button>
+                <button type=\"submit\" class=\"px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 btn-ripple\">Guardar Gasto</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id=\"income-modal\" class=\"modal fixed inset-0 z-[110] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-sm p-6 scale-95\">
+        <h3 class=\"text-lg font-bold text-white mb-4\">Registrar Ingreso General</h3>
+        <form id=\"income-form\" class=\"space-y-4\">
+            <input type=\"text\" id=\"income-description\" placeholder=\"Descripción del Ingreso\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <input type=\"number\" id=\"income-amount\" placeholder=\"Monto\" step=\"0.01\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <select id=\"income-category\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+                <option value=\"\" disabled selected>Selecciona una categoría</option>
+                <option value=\"Ventas Extras\">Ventas Extras</option>
+                <option value=\"Inversiones\">Inversiones</option>
+                <option value=\"Otros\">Otros</option>
+            </select>
+            <div class=\"flex justify-end gap-3 pt-2\">
+                <button type=\"button\" id=\"cancel-income-btn\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cancelar</button>
+                <button type=\"submit\" class=\"px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 btn-ripple\">Guardar Ingreso</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id=\"transaction-modal\" class=\"modal fixed inset-0 z-[110] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-sm p-6 scale-95\">
+        <h3 id=\"transaction-modal-title\" class=\"text-lg font-bold text-white mb-4\"></h3>
+        <form id=\"transaction-form\" class=\"space-y-4\">
+            <input type=\"hidden\" id=\"transaction-employee-id\">
+            <input type=\"hidden\" id=\"transaction-type\">
+            <input type=\"text\" id=\"transaction-description\" placeholder=\"Descripción\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <input type=\"number\" id=\"transaction-amount\" placeholder=\"Monto\" step=\"0.01\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <select id=\"transaction-category\" class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+                <option value=\"Impuestos\">Impuestos</option>
+                <option value=\"Seguro\">Seguro</option>
+                <option value=\"Préstamos\">Préstamos</option>
+                <option value=\"Otros\">Otros</option>
+            </select>
+            <div class=\"flex justify-end gap-3 pt-2\">
+                <button type=\"button\" id=\"cancel-transaction-btn\" class=\"cancel-btn px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cancelar</button>
+                <button type=\"submit\" class=\"submit-btn px-4 py-2 text-white rounded-md btn-ripple\">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id=\"employee-modal\" class=\"modal fixed inset-0 z-[110] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-sm p-6 scale-95\">
+        <h3 id=\"employee-modal-title\" class=\"text-lg font-bold text-white mb-4\">Agregar Usuario</h3>
+        <form id=\"employee-form\" class=\"space-y-4\">
+            <input type=\"hidden\" id=\"employee-id\">
+            <input type=\"text\" id=\"employee-first-name\" placeholder=\"Nombre\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <input type=\"text\" id=\"employee-last-name\" placeholder=\"Apellido\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <input type=\"email\" id=\"employee-email\" placeholder=\"Correo del Usuario\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <input type=\"password\" id=\"employee-password\" placeholder=\"Contraseña\" class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <select id=\"employee-role\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+                <option value=\"employee\">Vendedor</option>
+                <option value=\"collaborator\">Colaborador</option>
+                <option value=\"admin\">Administrador</option>
+            </select>
+            <div class=\"flex justify-end gap-3 pt-2\">
+                <button type=\"button\" id=\"cancel-employee-btn\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cancelar</button>
+                <button type=\"submit\" class=\"px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 btn-ripple\">Guardar Usuario</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id=\"payment-modal\" class=\"modal fixed inset-0 z-[110] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-sm p-6 scale-95\">
+        <h3 class=\"text-lg font-bold text-white mb-4\">Registrar Pago</h3>
+        <form id=\"payment-form\" class=\"space-y-4\">
+            <input type=\"hidden\" id=\"payment-employee-id\">
+            <input type=\"text\" id=\"payment-description\" placeholder=\"Descripción (ej. Nómina Enero)\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <input type=\"number\" id=\"payment-amount\" placeholder=\"Monto\" step=\"0.01\" required class=\"w-full p-3 bg-gray-700 border-gray-600 rounded-md text-white\">
+            <div class=\"flex justify-end gap-3 pt-2\">
+                <button type=\"button\" id=\"cancel-payment-btn\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cancelar</button>
+                <button type=\"submit\" class=\"px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 btn-ripple\">Registrar Pago</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id=\"payment-history-modal\" class=\"modal fixed inset-0 z-[110] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-2xl p-6 scale-95 flex flex-col\">
+        <h3 id=\"payment-history-title\" class=\"text-xl font-bold text-white mb-4\">Historial de Pagos</h3>
+        <div id=\"payment-history-content\" class=\"max-h-96 overflow-y-auto\"></div>
+        <div class=\"flex justify-end mt-6\">
+            <button type=\"button\" id=\"close-payment-history-btn\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div id=\"image-fullscreen-modal\" class=\"modal fixed inset-0 z-[120] hidden items-center justify-center bg-black/80 p-4 opacity-0\">
+    <button id=\"close-fullscreen-btn\" class=\"absolute top-4 right-4 text-white text-4xl font-bold hover:text-orange-500\">×</button>
+    <img id=\"fullscreen-image\" src=\"\" alt=\"Vista a tamaño completo\" class=\"max-w-full max-h-full rounded-lg\">
+</div>
+
+<div id=\"floating-cart-modal\" class=\"modal fixed inset-0 z-[110] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-md p-6 scale-95 flex flex-col gap-4\">
+        <h3 class=\"text-xl font-bold text-white\">Resumen del Carrito</h3>
+        <div id=\"floating-cart-items\" class=\"max-h-64 overflow-y-auto space-y-2\"></div>
+        <div class=\"flex justify-end gap-2\">
+            <button type=\"button\" id=\"close-floating-cart-btn\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cerrar</button>
+            <button type=\"button\" id=\"go-to-checkout-btn\" class=\"px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 btn-ripple\">Ir a Pagar</button>
+        </div>
+    </div>
+</div>
+
+<div id=\"report-modal\" class=\"modal fixed inset-0 z-[120] hidden items-center justify-center bg-black/60 p-4 opacity-0\">
+    <div class=\"modal-container glass rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] p-6 scale-95 flex flex-col\">
+        <h3 id=\"report-modal-title\" class=\"text-2xl font-bold mb-4 text-white flex-shrink-0\">Reporte Generado</h3>
+        <div id=\"report-modal-content\" class=\"text-gray-300 overflow-y-auto flex-grow bg-gray-900/50 p-4 rounded-md\"></div>
+        <div class=\"flex justify-end mt-6 gap-2 flex-shrink-0\">
+            <button id=\"copy-report-btn\" class=\"px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 btn-ripple\">Copiar</button>
+            <button id=\"download-report-btn\" class=\"px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 btn-ripple\">Descargar</button>
+            <button id=\"close-report-modal\" class=\"px-4 py-2 bg-gray-600 text-gray-200 rounded-md hover:bg-gray-500\">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Firebase & Main App Script -->
+<script type=\"module\">
+    import { initializeApp } from \"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js\";
+    import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from \"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js\";
+    import { getDatabase, ref, set, push, update, remove, onValue, get, increment } from \"https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js\";
+    
+    Continuaré añadiendo el código JavaScript completo al archivo. Debido al tamaño, necesito usar el comando de búsqueda y reemplazo para insertar todo el script:
+Action: file_editor str_replace /app/index.html --old-str "<!-- Firebase & Main App Script -->
+<script type=\"module\">
+    import { initializeApp } from \"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js\";
+    import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from \"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js\";
+    import { getDatabase, ref, set, push, update, remove, onValue, get, increment } from \"https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js\";
+    
+    // Continue in next file part...
+</script>" --new-str "<!-- Firebase & Main App Script -->
+<script type=\"module\">
+    import { initializeApp } from \"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js\";
+    import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from \"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js\";
+    import { getDatabase, ref, set, push, update, remove, onValue, get, increment } from \"https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js\";
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: \"AIzaSyCU9meIionjsLxtKH-q_k64dHsmRgHPKrk\",
+            authDomain: \"posventa-9168b.firebaseapp.com\",
+            databaseURL: \"https://posventa-9168b-default-rtdb.firebaseio.com\",
+            projectId: \"posventa-9168b\",
+            storageBucket: \"posventa-9168b.appspot.com\",
+            messagingSenderId: \"602077008054\",
+            appId: \"1:602077008054:web:ca857c7566a9ce0945d617\",
+            measurementId: \"G-W5L6995VDE\"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // --- Chart.js Default Config ---
+        Chart.defaults.color = '#d1d5db';
+        Chart.defaults.borderColor = '#4b5563';
+        
+        // --- Global State ---
+        let allProducts = [], allSales = [], allUsers = {}, allTransactions = { bonuses: [], deductions: [] };
+        let allPayrollPayments = [], allGeneralIncome = [], allGeneralExpenses = [], localNotifications = [];
+        let currentCategory = 'All', cartItems = [], selectedPromoProduct = null, currentEditingKey = null;
+        let currentUserRole = null, currentSaleKey = null;
+        let ivaSettings = { enabled: true, rate: 16.0, adminCommission: 10.0 };
+        let confirmActionCallback = null;
+        let salesChart = null, payrollChart = null, incomeExpenseChart = null, categorySalesChart = null;
+
+        // --- DOM Elements ---
+        const authView = document.getElementById('auth-view');
+        const appContainer = document.getElementById('app-container');
+        const galleryContainer = document.getElementById('gallery-container');
+        const inventoryTableBody = document.getElementById('inventory-table-body');
+        const loader = document.getElementById('loader-container');
+        const noResultsDiv = document.getElementById('no-results');
+        const sidebarNav = document.getElementById('sidebar-nav');
+        const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+        const headerTitle = document.getElementById('header-title');
+        const logoutButton = document.getElementById('logout-button');
+        const addProductButton = document.getElementById('add-product-button');
+        const cartItemsContainer = document.getElementById('cart-items-container');
+        const paymentInput = document.getElementById('payment-input');
+        const searchToggleButton = document.getElementById('search-toggle-btn');
+        const filtersContainer = document.getElementById('filters-container');
+        const productForm = document.getElementById('product-form');
+        const productFormTitle = document.getElementById('product-form-title');
+        const perfilView = document.getElementById('perfil-view');
+        const dashboardView = document.getElementById('dashboard-view');
+        const notificationsBtn = document.getElementById('notifications-btn');
+        const notificationsPanel = document.getElementById('notifications-panel');
+        const unreadCount = document.getElementById('unread-count');
+        const menuToggleButton = document.getElementById('menu-toggle-btn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const floatingCartBtn = document.getElementById('floating-cart-btn');
+
+        // --- Utility Functions ---
+        
+        /**
+         * Show specific view section
+         */
+        window.showView = (viewId) => {
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            const newView = document.getElementById(viewId);
+            if (newView) newView.classList.add('active');
+            
+            const viewName = viewId.replace('-view', '');
+            
+            if (viewName !== 'venta') {
+                currentSaleKey = null;
+            }
+
+            const titles = {
+                'dashboard': 'Dashboard',
+                'productos': 'Productos',
+                'detail': 'Detalle del Producto',
+                'venta': 'Punto de Venta',
+                'inventario': 'Inventario',
+                'iva': 'Configuración de IVA',
+                'perfil': 'Panel de Administrador',
+                'producto-form': productFormTitle.textContent || 'Formulario de Producto',
+                'mis-productos': 'Mis Productos'
+            };
+            headerTitle.textContent = titles[viewName] || 'App';
+
+            floatingCartBtn.classList.toggle('hidden', viewName !== 'productos');
+
+            document.querySelectorAll('#sidebar-nav .nav-item, #mobile-bottom-nav .mobile-nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.view === viewName);
+            });
+            
+            if (viewId === 'perfil-view' && currentUserRole === 'admin') {
+                renderAdminDashboard(auth.currentUser);
+            } else if (viewId === 'dashboard-view') {
+                renderProfileView(auth.currentUser);
+            } else if (viewId === 'mis-productos-view' && currentUserRole === 'collaborator') {
+                renderCollaboratorProducts(auth.currentUser);
+            }
+            
+            renderFiltersForView(viewName);
+            document.getElementById('main-content').scrollTop = 0;
+            
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.add('hidden');
+            }
+        };
+
+        /**
+         * Show toast notification
+         */
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('notification-toast');
+            if (!toast) return;
+            toast.textContent = message;
+            toast.className = `fixed top-20 right-5 z-[150] text-white py-3 px-6 rounded-lg shadow-xl transition-all duration-300 ${isError ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-gradient-to-r from-green-600 to-green-700'}`;
+            toast.classList.remove('opacity-0', 'translate-y-2');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+            }, 3000);
+        }
+
+        /**
+         * Open modal with animation
+         */
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                const container = modal.querySelector('.modal-container, #fullscreen-image');
+                if(container) container.classList.remove('scale-95');
+            }, 10);
+        }
+
+        /**
+         * Close modal with animation
+         */
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('opacity-0');
+            const container = modal.querySelector('.modal-container, #fullscreen-image');
+            if(container) container.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 250);
+        }
+
+        /**
+         * Show confirmation dialog
+         */
+        function showConfirmation(title, message, callback) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            confirmActionCallback = callback;
+            openModal('confirm-modal');
+        }
+
+        /**
+         * Calculate earnings based on role and product owner
+         */
+        function calculateEarnings(product, quantity, sellerId) {
+            const totalSale = product.precio_venta * quantity;
+            const costPrice = product.precio_compra * quantity;
+            const profit = totalSale - costPrice;
+            
+            let earnings = {
+                seller: 0,
+                collaborator: 0,
+                admin: 0
+            };
+            
+            // Si el producto pertenece a un colaborador
+            if (product.ownerId && product.ownerRole === 'collaborator') {
+                const adminCommission = (profit * (ivaSettings.adminCommission / 100));
+                earnings.collaborator = profit - adminCommission;
+                earnings.admin = adminCommission;
+                
+                // El vendedor recibe su comisión normal si es diferente al colaborador
+                if (sellerId !== product.ownerId) {
+                    earnings.seller = product.comision_por_unidad * quantity;
+                }
+            } else {
+                // Producto del admin - comisión normal al vendedor
+                earnings.seller = product.comision_por_unidad * quantity;
+                earnings.admin = profit - earnings.seller;
+            }
+            
+            return earnings;
+        }
+
+        /**
+         * Get role badge HTML
+         */
+        function getRoleBadge(role) {
+            const badges = {
+                'admin': '<span class=\"badge badge-admin\">Admin</span>',
+                'employee': '<span class=\"badge badge-employee\">Vendedor</span>',
+                'collaborator': '<span class=\"badge badge-collaborator\">Colaborador</span>'
+            };
+            return badges[role] || '';
+        }
+
+        /**
+         * Format currency
+         */
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+        }
+
+        /**
+         * Fetch all data from Firebase
+         */
+        const fetchAllData = () => {
+            loader.style.display = 'block';
+            const refs = {
+                productos: ref(db, 'productos'),
+                sales: ref(db, 'sales'),
+                users: ref(db, 'users'),
+                bonuses: ref(db, 'transactions/bonuses'),
+                deductions: ref(db, 'transactions/deductions'),
+                payrollPayments: ref(db, 'payrollPayments'),
+                generalIncome: ref(db, 'ingresos'),
+                generalExpenses: ref(db, 'gastos'),
+                ivaSettings: ref(db, 'settings/iva'),
+            };
+
+            const createArrayFromSnapshot = (snap) => {
+                const data = [];
+                if (snap.exists()) {
+                    snap.forEach(child => {
+                        data.push({ key: child.key, ...child.val() });
+                    });
+                }
+                return data;
+            };
+
+            onValue(refs.productos, (snap) => {
+                allProducts = createArrayFromSnapshot(snap);
+                applyGalleryFilters();
+                renderInventoryList(allProducts);
+                renderCategoryDropdown();
+            });
+            
+            onValue(refs.sales, (snap) => {
+                const newSales = createArrayFromSnapshot(snap);
+                if (auth.currentUser && (currentUserRole === 'employee' || currentUserRole === 'collaborator')) {
+                    const oldSales = allSales;
+                    const myNewSales = newSales.filter(s => s.sellerId === auth.currentUser.uid);
+                    myNewSales.forEach(newSale => {
+                        const oldSale = oldSales.find(os => os.key === newSale.key);
+                        if (newSale.status === 'shipped' && (!oldSale || oldSale.status !== 'shipped')) {
+                            showToast(`¡Pedido enviado! Folio: ${newSale.folio}`);
+                        }
+                    });
+                }
+                allSales = newSales;
+                if(document.querySelector('#dashboard-view.active')) {
+                    renderProfileView(auth.currentUser);
+                }
+                if(document.querySelector('#perfil-view.active')) {
+                    renderAdminDashboard(auth.currentUser);
+                }
+            });
+            
+            onValue(refs.users, (snap) => { allUsers = snap.exists() ? snap.val() : {}; });
+            onValue(refs.bonuses, (snap) => { allTransactions.bonuses = createArrayFromSnapshot(snap); });
+            onValue(refs.deductions, (snap) => { allTransactions.deductions = createArrayFromSnapshot(snap); });
+            onValue(refs.payrollPayments, (snap) => { allPayrollPayments = createArrayFromSnapshot(snap); });
+            onValue(refs.generalIncome, (snap) => { allGeneralIncome = createArrayFromSnapshot(snap); });
+            onValue(refs.generalExpenses, (snap) => { allGeneralExpenses = createArrayFromSnapshot(snap); });
+            onValue(refs.ivaSettings, (snap) => {
+                if (snap.exists()) {
+                    ivaSettings = { ...ivaSettings, ...snap.val() };
+                }
+                setupIvaControls();
+                updateCart();
+            });
+            loader.style.display = 'none';
+        };
+
+        /**
+         * Create product card
+         */
+        const createProductCard = (key, data) => {
+            const card = document.createElement('div');
+            card.className = 'product-card card-shine rounded-lg overflow-hidden flex flex-col cursor-pointer';
+            card.dataset.key = key;
+            
+            const formattedPrice = formatCurrency(data.precio_venta);
+            const formattedCommission = formatCurrency(data.comision_por_unidad || 0);
+            const stock = data.stock || 0;
+            
+            let stockLabel;
+            if (data.isPromo) {
+                stockLabel = '<span class=\"badge badge-promo\">OFERTA</span>';
+            } else if (stock === 0) {
+                stockLabel = '<span class=\"text-xs font-bold text-red-500\">Agotado</span>';
+            } else {
+                const stockColor = stock < 10 ? 'text-yellow-500' : 'text-green-500';
+                stockLabel = `<span class=\"text-xs font-bold ${stockColor}\">${stock} en Stock</span>`;
+            }
+            
+            // Owner badge for collaborator products
+            let ownerBadge = '';
+            if (data.ownerId && data.ownerRole === 'collaborator') {
+                const owner = allUsers[data.ownerId];
+                const ownerName = owner ? owner.firstName : 'Colaborador';
+                ownerBadge = `<span class=\"absolute top-2 left-2 badge badge-collaborator text-xs\">Por ${ownerName}</span>`;
+            }
+            
+            // Edit/Delete buttons only for own products or admin
+            let actionButtons = '';
+            if (currentUserRole === 'admin' || (data.ownerId === auth.currentUser?.uid)) {
+                actionButtons = `
+                    <div class=\"absolute top-2 right-2 space-x-2 flex\">
+                        <button data-action=\"edit\" class=\"p-2 bg-orange-600/80 text-white rounded-full hover:bg-orange-600 backdrop-blur-sm transition\">
+                            <svg class=\"h-4 w-4 pointer-events-none\" viewBox=\"0 0 20 20\" fill=\"currentColor\">
+                                <path d=\"M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z\"></path>
+                                <path fill-rule=\"evenodd\" d=\"M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z\" clip-rule=\"evenodd\"></path>
+                            </svg>
+                        </button>
+                        <button data-action=\"delete\" class=\"p-2 bg-red-600/80 text-white rounded-full hover:bg-red-600 backdrop-blur-sm transition\">
+                            <svg class=\"h-4 w-4 pointer-events-none\" viewBox=\"0 0 20 20\" fill=\"currentColor\">
+                                <path fill-rule=\"evenodd\" d=\"M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z\" clip-rule=\"evenodd\"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }
+            
+            card.innerHTML = `
+                <div class=\"relative pt-[125%]\">
+                    <img src=\"${data.imagen_url}\" alt=\"${data.producto}\" class=\"absolute top-0 left-0 h-full w-full object-cover\" onerror=\"this.src='https://placehold.co/600x800/1f2937/fb923c?text=N/A'\">
+                    ${ownerBadge}
+                    ${actionButtons}
+                </div>
+                <div class=\"p-4 flex-grow flex flex-col\">
+                    <div class=\"flex justify-between items-center mb-2\">
+                        <p class=\"text-xs text-gray-400\">${data.categoria || 'Sin Categoría'}</p>
+                        ${stockLabel}
+                    </div>
+                    <h3 class=\"font-semibold text-white truncate flex-grow\">${data.producto}</h3>
+                    <div class=\"mt-2\">
+                        <p class=\"text-lg font-bold text-orange-500\">${formattedPrice}</p>
+                        <p class=\"text-sm text-green-400 employee-only\">Tu comisión: ${formattedCommission}</p>
+                    </div>
+                    <div class=\"flex justify-end items-center mt-2\">
+                        <button data-action=\"add-to-cart\" class=\"p-2 bg-green-500/80 text-white rounded-full hover:bg-green-500 backdrop-blur-sm transition\">
+                            <svg class=\"h-5 w-5 pointer-events-none\" viewBox=\"0 0 20 20\" fill=\"currentColor\">
+                                <path d=\"M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z\"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        };
+
+        /**
+         * Display products in gallery
+         */
+        const displayProducts = (productsToDisplay) => {
+            galleryContainer.innerHTML = '';
+            noResultsDiv.classList.toggle('hidden', productsToDisplay.length > 0);
+            
+            if (productsToDisplay.length === 0) {
+                loader.style.display = 'none';
+                return;
+            }
+            
+            productsToDisplay.forEach(p => {
+                galleryContainer.appendChild(createProductCard(p.key, p));
+            });
+            loader.style.display = 'none';
+        };
+
+        /**
+         * Apply gallery filters
+         */
+        const applyGalleryFilters = () => {
+            const gallerySearchBox = document.getElementById('search-box-gallery');
+            const searchTerm = gallerySearchBox ? gallerySearchBox.value.toLowerCase().trim() : '';
+            const categoryDropdown = document.getElementById('category-dropdown');
+            currentCategory = categoryDropdown ? categoryDropdown.value : 'All';
+            
+            let filtered = allProducts;
+            
+            if (currentCategory !== 'All') {
+                filtered = filtered.filter(p => (p.categoria || 'Sin Categoría') === currentCategory);
+            }
+            
+            if (searchTerm) {
+                filtered = filtered.filter(p => {
+                    const tags = (p.tags || '').toLowerCase();
+                    return p.producto.toLowerCase().includes(searchTerm) ||
+                           p.codigo.toLowerCase().includes(searchTerm) ||
+                           (p.categoria || '').toLowerCase().includes(searchTerm) ||
+                           tags.includes(searchTerm);
+                });
+            }
+            
+            displayProducts(filtered);
+        };
+
+        /**
+         * Render filters for current view
+         */
+        const renderFiltersForView = (viewName) => {
+            if (!filtersContainer) return;
+            searchToggleButton.classList.toggle('hidden', viewName !== 'productos' && viewName !== 'mis-productos');
+            
+            if (viewName !== 'productos' && viewName !== 'mis-productos') {
+                filtersContainer.classList.remove('open');
+            } else {
+                let filtersHTML = `
+                    <div class=\"flex flex-col md:flex-row gap-4 items-center\">
+                        <div class=\"flex-grow w-full\">
+                            <input type=\"search\" id=\"search-box-gallery\" placeholder=\"Buscar por nombre, código, categoría o etiqueta...\" class=\"w-full px-5 py-3 rounded-full border-2 border-gray-700 bg-gray-800 text-gray-200 placeholder-gray-500 focus:ring-2 focus:ring-orange-500 focus:outline-none focus:border-orange-500 shadow-sm\">
+                        </div>
+                        <div class=\"relative w-full md:w-auto md:min-w-[200px]\">
+                            <select id=\"category-dropdown\" class=\"w-full px-4 py-3 text-sm rounded-full border-2 border-gray-700 bg-gray-800 text-gray-200 focus:ring-2 focus:ring-orange-500 focus:outline-none focus:border-orange-500 shadow-sm appearance-none\">
+                            </select>
+                            <div class=\"pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500\">
+                                <svg class=\"fill-current h-4 w-4\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\">
+                                    <path d=\"M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z\"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                filtersContainer.innerHTML = filtersHTML;
+                
+                document.getElementById('search-box-gallery').addEventListener('input', applyGalleryFilters);
+                renderCategoryDropdown();
+                document.getElementById('category-dropdown').addEventListener('change', (e) => {
+                    currentCategory = e.target.value;
+                    applyGalleryFilters();
+                });
+            }
+        };
+
+        /**
+         * Render category dropdown
+         */
+        const renderCategoryDropdown = () => {
+            const categoryDropdown = document.getElementById('category-dropdown');
+            if (!categoryDropdown) return;
+            
+            const categories = ['All', ...new Set(allProducts.map(p => p.categoria || 'Sin Categoría').filter(Boolean).sort())];
+            categoryDropdown.innerHTML = categories.map(cat => 
+                `<option value=\"${cat}\">${cat === 'All' ? 'Todas las Categorías' : cat}</option>`
+            ).join('');
+            categoryDropdown.value = currentCategory;
+        };
+
+        /**
+         * Render inventory list
+         */
+        const renderInventoryList = (products) => {
+            inventoryTableBody.innerHTML = '';
+            if (products.length === 0) {
+                inventoryTableBody.innerHTML = '<tr><td colspan=\"3\" class=\"text-center p-8 text-gray-500\">No se encontraron productos.</td></tr>';
+                return;
+            }
+            
+            products.sort((a, b) => (a.stock || 0) - (b.stock || 0)).forEach(p => {
+                const stock = p.stock || 0;
+                let stockColor = stock < 10 ? 'text-yellow-500' : 'text-green-500';
+                if (stock === 0) stockColor = 'text-red-500';
+                
+                let ownerInfo = 'Admin';
+                if (p.ownerId && p.ownerRole === 'collaborator') {
+                    const owner = allUsers[p.ownerId];
+                    ownerInfo = owner ? `${owner.firstName} ${owner.lastName}` : 'Colaborador';
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class=\"px-6 py-4 whitespace-nowrap\">
+                        <div class=\"flex items-center\">
+                            <div class=\"flex-shrink-0 h-10 w-10\">
+                                <img class=\"h-10 w-10 rounded-full object-cover\" src=\"${p.imagen_url}\" alt=\"\">
+                            </div>
+                            <div class=\"ml-4\">
+                                <div class=\"text-sm font-medium text-white\">${p.producto}</div>
+                                <div class=\"text-sm text-gray-400\">${p.codigo}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class=\"px-6 py-4 whitespace-nowrap text-right text-sm font-medium ${stockColor}\">
+                        ${stock} unidades
+                    </td>
+                    <td class=\"px-6 py-4 whitespace-nowrap text-right text-sm text-gray-400\">
+                        ${ownerInfo}
+                    </td>
+                `;
+                inventoryTableBody.appendChild(row);
+            });
+        };
+
+        /**
+         * Add to cart
+         */
+        const addToCart = (product) => {
+            if (product.stock <= 0) {
+                showToast('Este producto está agotado.', true);
+                return;
+            }
+            
+            const existingItem = cartItems.find(item => item.key === product.key);
+            if (existingItem) {
+                if (existingItem.quantity < product.stock) {
+                    existingItem.quantity++;
+                } else {
+                    showToast('No hay más stock disponible.', true);
+                }
+            } else {
+                cartItems.push({ ...product, quantity: 1 });
+            }
+            
+            updateCart();
+            
+            // Add bounce animation to cart icon
+            const ventaNavIcon = document.querySelector('.nav-item[data-view=\"venta\"]');
+            if (ventaNavIcon) {
+                ventaNavIcon.style.transform = 'scale(1.2)';
+                setTimeout(() => { ventaNavIcon.style.transform = 'scale(1)'; }, 200);
+            }
+        };
+
+        /**
+         * Update cart display
+         */
+        const updateCart = () => {
+            const cartSubtotalEl = document.getElementById('cart-subtotal');
+            const cartTaxEl = document.getElementById('cart-tax');
+            const cartTaxLabelEl = document.getElementById('cart-tax-label');
+            const cartTotalEl = document.getElementById('cart-total');
+            const floatingCartCount = document.getElementById('floating-cart-count');
+            
+            if (cartItems.length === 0) {
+                cartItemsContainer.innerHTML = '<p class=\"text-gray-500 text-center py-4\">El carrito está vacío</p>';
+            } else {
+                cartItemsContainer.innerHTML = cartItems.map((item, index) => `
+                    <div class=\"flex items-center gap-3 p-2 rounded-md hover:bg-gray-700/50 transition\">
+                        <img src=\"${item.imagen_url}\" class=\"w-12 h-12 object-cover rounded-md flex-shrink-0\" />
+                        <div class=\"flex-grow min-w-0\">
+                            <p class=\"font-semibold text-sm truncate text-white\">${item.producto}</p>
+                            <p class=\"text-xs text-gray-500\">${formatCurrency(item.precio_venta)}</p>
+                        </div>
+                        <input type=\"number\" value=\"${item.quantity}\" min=\"1\" max=\"${item.stock}\" class=\"w-16 text-center bg-gray-700 rounded-md p-1 quantity-input text-white\" data-index=\"${index}\">
+                        <button class=\"text-red-500 hover:text-red-700 remove-item-btn p-1 rounded-full hover:bg-red-900/50 transition\" data-index=\"${index}\">
+                            <svg class=\"w-5 h-5 pointer-events-none\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `).join('');
+            }
+            
+            const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            floatingCartCount.textContent = totalItems;
+            floatingCartCount.classList.toggle('hidden', totalItems === 0);
+            
+            const subtotal = cartItems.reduce((acc, item) => acc + (item.precio_venta * item.quantity), 0);
+            const taxRate = ivaSettings.enabled ? ivaSettings.rate / 100 : 0;
+            const tax = subtotal * taxRate;
+            const total = subtotal + tax;
+            
+            cartSubtotalEl.textContent = formatCurrency(subtotal);
+            cartTaxEl.textContent = formatCurrency(tax);
+            cartTaxLabelEl.textContent = `IVA (${ivaSettings.enabled ? ivaSettings.rate : 0}%):`;
+            cartTotalEl.textContent = formatCurrency(total);
+            
+            updateChange();
+        };
+
+        /**
+         * Update change calculation
+         */
+        const updateChange = () => {
+            const subtotal = cartItems.reduce((acc, item) => acc + (item.precio_venta * item.quantity), 0);
+            const taxRate = ivaSettings.enabled ? ivaSettings.rate / 100 : 0;
+            const total = subtotal * (1 + taxRate);
+            const paid = parseFloat(paymentInput.value) || 0;
+            const change = paid - total;
+            
+            document.getElementById('change-display').textContent = formatCurrency(change > 0 ? change : 0);
+        };
+
+        Continúo con la siguiente parte del código JavaScript:
+Action: file_editor str_replace /app/index.html --old-str "        /**
+         * Continue in next message...
+         */" --new-str "        /**
+         * Prepare venta view
+         */
+        function prepareVentaView(mode, saleData = null) {
+            const chargeBtn = document.getElementById('charge-btn');
+            const paymentSection = document.getElementById('payment-section');
+            const orderSummarySection = document.getElementById('order-summary-section');
+            const cartTitle = document.getElementById('cart-title');
+            
+            if (mode === 'order') {
+                currentSaleKey = null;
+                chargeBtn.textContent = 'Crear Pedido';
+                chargeBtn.dataset.mode = 'order';
+                cartTitle.textContent = 'Nuevo Pedido';
+                paymentSection.classList.add('hidden');
+                orderSummarySection.classList.remove('hidden');
+                orderSummarySection.innerHTML = '<p class=\"text-gray-500\">Revisa los productos y crea el pedido para que administración lo procese.</p>';
+            } else if (mode === 'charge' && saleData) {
+                currentSaleKey = saleData.key;
+                cartItems = saleData.items.map(item => {
+                    const product = allProducts.find(p => p.key === item.key);
+                    return { ...product, ...item };
+                });
+                updateCart();
+                chargeBtn.textContent = 'Confirmar Cobro y Entrega';
+                chargeBtn.dataset.mode = 'charge';
+                cartTitle.textContent = `Cobrando Pedido: ${saleData.folio}`;
+                paymentSection.classList.remove('hidden');
+                orderSummarySection.classList.add('hidden');
+                paymentInput.value = '';
+                updateChange();
+            }
+            
+            window.showView('venta-view');
+        }
+
+        /**
+         * Create order
+         */
+        const createOrder = () => {
+            if (cartItems.length === 0) {
+                showToast('El carrito está vacío.', true);
+                return;
+            }
+            
+            const saleRef = push(ref(db, 'sales'));
+            const saleId = saleRef.key;
+            const folio = `PED-${Date.now()}`;
+            
+            const saleItems = cartItems.map(item => ({
+                key: item.key,
+                producto: item.producto,
+                codigo: item.codigo,
+                imagen_url: item.imagen_url,
+                quantity: item.quantity,
+                precio_compra: item.precio_compra,
+                precio_venta: item.precio_venta,
+                comision_por_unidad: item.comision_por_unidad || 0,
+                isPromo: item.isPromo || false,
+                promoProductKey: item.promoProductKey || null,
+                ownerId: item.ownerId || null,
+                ownerRole: item.ownerRole || null
+            }));
+            
+            const subtotal = cartItems.reduce((acc, item) => acc + (item.precio_venta * item.quantity), 0);
+            const taxRate = ivaSettings.enabled ? ivaSettings.rate / 100 : 0;
+            const totalSale = subtotal * (1 + taxRate);
+            
+            const newOrder = {
+                sellerId: auth.currentUser.uid,
+                timestamp: Date.now(),
+                total: totalSale,
+                items: saleItems,
+                folio: folio,
+                status: 'pending_approval',
+                moneyDelivered: false
+            };
+            
+            set(saleRef, newOrder).then(() => {
+                const sellerName = allUsers[auth.currentUser.uid]?.firstName || auth.currentUser.email;
+                sendNotificationToAdmin(`Nuevo pedido de ${sellerName} (Folio: ${folio})`, 'order_placed');
+                logAction('order_create', { saleId, folio });
+                showToast('¡Pedido enviado a administración!');
+                cartItems = [];
+                updateCart();
+                window.showView('dashboard-view');
+            }).catch(error => showToast(`Error al crear pedido: ${error.message}`, true));
+        };
+
+        /**
+         * Complete sale and charge
+         */
+        const completeSaleAndCharge = () => {
+            const saleKey = currentSaleKey;
+            if (!saleKey) {
+                showToast('Error: No se ha especificado un pedido.', true);
+                return;
+            }
+            
+            const paid = parseFloat(paymentInput.value) || 0;
+            const subtotal = cartItems.reduce((acc, item) => acc + (item.precio_venta * item.quantity), 0);
+            const taxRate = ivaSettings.enabled ? ivaSettings.rate / 100 : 0;
+            const total = subtotal * (1 + taxRate);
+            
+            if (paid < total) {
+                showToast('El monto pagado es insuficiente.', true);
+                return;
+            }
+            
+            const saleData = allSales.find(s => s.key === saleKey);
+            generateTicketCanvas({
+                items: cartItems,
+                paid: paid,
+                sellerId: auth.currentUser.uid,
+                folio: saleData.folio,
+                timestamp: saleData.timestamp
+            });
+            
+            openModal('ticket-modal');
+            
+            document.getElementById('close-ticket-btn').onclick = () => {
+                closeModal('ticket-modal');
+                update(ref(db, `sales/${saleKey}`), {
+                    status: 'completed',
+                    paymentReceivedTimestamp: Date.now()
+                }).then(() => {
+                    const sellerName = allUsers[auth.currentUser.uid]?.firstName || auth.currentUser.email;
+                    sendNotificationToAdmin(`Venta ${saleData.folio} completada por ${sellerName}. Dinero pendiente.`, 'money_to_deliver');
+                    logAction('sale_completed', { saleKey });
+                    showToast('¡Venta completada! Entrega el dinero a administración.');
+                    cartItems = [];
+                    currentSaleKey = null;
+                    updateCart();
+                    window.showView('dashboard-view');
+                });
+            };
+        };
+
+        /**
+         * Generate ticket canvas
+         */
+        function generateTicketCanvas(saleData) {
+            const canvas = document.getElementById('ticket-canvas');
+            const ctx = canvas.getContext('2d');
+            const lineHeight = 22;
+            const startY = 25;
+            let currentY = startY;
+            const canvasWidth = 320;
+            const padding = 15;
+            const baseHeight = 280;
+            const dynamicHeight = (saleData.items.length * lineHeight) + baseHeight;
+            
+            canvas.height = dynamicHeight;
+            canvas.width = canvasWidth;
+            
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000000';
+            
+            ctx.font = 'bold 16px \"Inter\", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('TICKET DE VENTA', canvasWidth / 2, currentY);
+            currentY += lineHeight * 1.5;
+            
+            ctx.font = '11px \"Inter\", sans-serif';
+            ctx.fillText(new Date(saleData.timestamp || Date.now()).toLocaleString('es-MX'), canvasWidth / 2, currentY);
+            currentY += lineHeight;
+            
+            const seller = allUsers[saleData.sellerId];
+            const sellerName = seller ? (seller.firstName || seller.email) : 'Desconocido';
+            ctx.fillText(`Atendido por: ${sellerName}`, canvasWidth / 2, currentY);
+            currentY += lineHeight * 1.5;
+            
+            ctx.fillText('-'.repeat(40), canvasWidth / 2, currentY);
+            currentY += lineHeight;
+            
+            ctx.textAlign = 'left';
+            ctx.font = 'bold 11px \"Inter\", sans-serif';
+            ctx.fillText('Cant. Producto', padding, currentY);
+            ctx.textAlign = 'right';
+            ctx.fillText('Total', canvasWidth - padding, currentY);
+            currentY += lineHeight * 0.5;
+            
+            ctx.textAlign = 'center';
+            ctx.fillText('-'.repeat(40), canvasWidth / 2, currentY);
+            currentY += lineHeight;
+            
+            ctx.font = '11px \"Inter\", sans-serif';
+            saleData.items.forEach(item => {
+                ctx.textAlign = 'left';
+                const name = item.producto.length > 28 ? item.producto.substring(0, 25) + '...' : item.producto;
+                ctx.fillText(`${item.quantity} x ${name}`, padding, currentY);
+                ctx.textAlign = 'right';
+                ctx.fillText(formatCurrency(item.precio_venta * item.quantity), canvasWidth - padding, currentY);
+                currentY += lineHeight;
+            });
+            
+            ctx.textAlign = 'center';
+            ctx.fillText('-'.repeat(40), canvasWidth / 2, currentY);
+            currentY += lineHeight;
+            
+            const subtotal = saleData.items.reduce((acc, item) => acc + (item.precio_venta * item.quantity), 0);
+            const taxRate = ivaSettings.enabled ? ivaSettings.rate / 100 : 0;
+            const tax = subtotal * taxRate;
+            const total = subtotal + tax;
+            const paid = saleData.paid || total;
+            const change = paid - total;
+            
+            ctx.textAlign = 'right';
+            ctx.font = '12px \"Inter\", sans-serif';
+            ctx.fillText(`Subtotal: ${formatCurrency(subtotal)}`, canvasWidth - padding, currentY);
+            currentY += lineHeight;
+            ctx.fillText(`IVA (${ivaSettings.enabled ? ivaSettings.rate : 0}%): ${formatCurrency(tax)}`, canvasWidth - padding, currentY);
+            currentY += lineHeight;
+            
+            ctx.font = 'bold 14px \"Inter\", sans-serif';
+            ctx.fillText(`TOTAL: ${formatCurrency(total)}`, canvasWidth - padding, currentY);
+            currentY += lineHeight * 1.5;
+            
+            ctx.font = '12px \"Inter\", sans-serif';
+            ctx.fillText(`Paga con: ${formatCurrency(paid)}`, canvasWidth - padding, currentY);
+            currentY += lineHeight;
+            ctx.fillText(`Cambio: ${formatCurrency(change > 0 ? change : 0)}`, canvasWidth - padding, currentY);
+            currentY += lineHeight * 2;
+            
+            const folio = saleData.folio || `VTA-${Date.now()}`;
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 12px \"Inter\", sans-serif';
+            ctx.fillText(folio, canvasWidth / 2, currentY);
+            currentY += lineHeight * 1.5;
+            
+            ctx.fillText('¡Gracias por su compra!', canvasWidth / 2, currentY);
+        }
+
+        /**
+         * Send notification to admin
+         */
+        function sendNotificationToAdmin(message, type) {
+            const admins = Object.entries(allUsers).filter(([_, u]) => u.role === 'admin');
+            admins.forEach(([uid, _]) => {
+                push(ref(db, 'notifications'), {
+                    recipientId: uid,
+                    message,
+                    timestamp: Date.now(),
+                    type,
+                    read: false
+                });
+            });
+        }
+
+        /**
+         * Log action
+         */
+        function logAction(action, details = {}) {
+            const logEntry = {
+                action,
+                userId: auth.currentUser ? auth.currentUser.uid : 'system',
+                userEmail: auth.currentUser ? auth.currentUser.email : 'system',
+                timestamp: Date.now(),
+                details
+            };
+            const logRef = push(ref(db, 'logs'));
+            set(logRef, logEntry).catch(error => console.error(\"Failed to write log:\", error));
+        }
+
+        /**
+         * Render notifications
+         */
+        function renderNotifications(userId) {
+            const notificationsRef = ref(db, 'notifications');
+            onValue(notificationsRef, (snap) => {
+                localNotifications = [];
+                if (snap.exists()) {
+                    snap.forEach(child => {
+                        const notif = { key: child.key, ...child.val() };
+                        if (notif.recipientId === userId) {
+                            localNotifications.push(notif);
+                        }
+                    });
+                }
+                
+                const unread = localNotifications.filter(n => !n.read).length;
+                unreadCount.textContent = unread;
+                unreadCount.classList.toggle('hidden', unread === 0);
+                
+                notificationsPanel.innerHTML = localNotifications.length === 0
+                    ? '<p class=\"text-gray-500 text-center\">No hay notificaciones.</p>'
+                    : localNotifications.sort((a, b) => b.timestamp - a.timestamp).map(n => {
+                        let section = '';
+                        if (n.type === 'order_placed') section = 'pending-orders';
+                        else if (n.type === 'delivery_pending') section = 'dashboard';
+                        else if (n.type === 'money_to_deliver') section = 'pending-money';
+                        
+                        return `
+                            <div class=\"p-3 ${n.read ? 'opacity-75' : 'bg-orange-900/30'} rounded-md mb-2 cursor-pointer notification-item hover:bg-orange-900/40 transition\" data-section=\"${section}\" data-key=\"${n.key}\">
+                                <p class=\"text-sm pointer-events-none text-orange-300\">${n.message}</p>
+                                <p class=\"text-xs text-gray-400 pointer-events-none\">${new Date(n.timestamp).toLocaleString('es-MX')}</p>
+                                ${!n.read ? `<button class=\"mark-read-btn text-xs text-orange-500 hover:underline mt-1\" data-key=\"${n.key}\">Marcar como leída</button>` : ''}
+                            </div>
+                        `;
+                    }).join('');
+            });
+        }
+
+        /**
+         * Render profile view based on role
+         */
+        function renderProfileView(user) {
+            if (currentUserRole === 'admin') {
+                renderAdminMainDashboard(dashboardView);
+            } else if (currentUserRole === 'employee') {
+                renderEmployeeDashboard(user);
+            } else if (currentUserRole === 'collaborator') {
+                renderCollaboratorDashboard(user);
+            }
+        }
+
+        /**
+         * Render collaborator dashboard
+         */
+        function renderCollaboratorDashboard(user) {
+            const userData = allUsers[user.uid];
+            const name = (userData && userData.firstName) ? `${userData.firstName} ${userData.lastName}` : user.email;
+            
+            const shippedSales = allSales.filter(s => s.sellerId === user.uid && s.status === 'shipped');
+            const pendingMoneySales = allSales.filter(s => s.sellerId === user.uid && s.status === 'completed' && !s.moneyDelivered);
+            const totalPendingMoney = pendingMoneySales.reduce((sum, sale) => sum + sale.total, 0);
+            
+            // Calculate earnings from own products
+            const myProducts = allProducts.filter(p => p.ownerId === user.uid);
+            const myProductsSold = allSales.filter(s => s.status === 'completed' && s.moneyDelivered).flatMap(sale => 
+                sale.items.filter(item => item.ownerId === user.uid).map(item => ({
+                    ...item,
+                    saleTimestamp: sale.timestamp
+                }))
+            );
+            
+            const totalEarningsFromProducts = myProductsSold.reduce((sum, item) => {
+                const profit = (item.precio_venta - item.precio_compra) * item.quantity;
+                const adminCommission = profit * (ivaSettings.adminCommission / 100);
+                return sum + (profit - adminCommission);
+            }, 0);
+            
+            dashboardView.innerHTML = `
+                <div class=\"container mx-auto space-y-6\">
+                    <div class=\"glass p-6 rounded-lg shadow-md text-center\">
+                        <h2 class=\"text-3xl font-bold text-white\">¡Bienvenido, ${name}!</h2>
+                        <p class=\"text-gray-400\">${user.email}</p>
+                        <span class=\"badge badge-collaborator mt-2\">Colaborador</span>
+                    </div>
+                    
+                    <div class=\"grid grid-cols-1 md:grid-cols-3 gap-6\">
+                        <div class=\"glass p-6 rounded-lg shadow-md\">
+                            <p class=\"text-sm text-gray-500\">Mis Productos</p>
+                            <p class=\"text-3xl font-bold text-green-500\">${myProducts.length}</p>
+                            <a href=\"#\" data-action=\"go-to-my-products\" class=\"text-sm text-orange-500 hover:underline mt-2 inline-block\">Ver productos →</a>
+                        </div>
+                        
+                        <div class=\"glass p-6 rounded-lg shadow-md\">
+                            <p class=\"text-sm text-gray-500\">Ganancias de Productos</p>
+                            <p class=\"text-3xl font-bold text-orange-500\">${formatCurrency(totalEarningsFromProducts)}</p>
+                            <p class=\"text-xs text-gray-500 mt-1\">Después de comisión del admin</p>
+                        </div>
+                        
+                        <div class=\"glass p-6 rounded-lg shadow-md\">
+                            <p class=\"text-sm text-gray-500\">Productos Vendidos</p>
+                            <p class=\"text-3xl font-bold text-purple-500\">${myProductsSold.length}</p>
+                        </div>
+                    </div>
+                    
+                    <div class=\"grid grid-cols-1 md:grid-cols-2 gap-6\">
+                        <div class=\"glass p-4 rounded-lg shadow-md\">
+                            <h3 class=\"text-xl font-bold mb-4 text-white\">Tienes ${shippedSales.length} Pedidos por Entregar</h3>
+                            <div id=\"shipped-sales\" class=\"space-y-4 max-h-64 overflow-y-auto\">
+                                ${shippedSales.length === 0 ? '<p class=\"text-gray-500 text-center\">No hay pedidos pendientes.</p>' : shippedSales.map(sale => `
+                                    <div class=\"flex justify-between items-center p-2 rounded-md bg-gray-700/50\">
+                                        <div>
+                                            <p class=\"font-semibold text-white\">Folio: ${sale.folio}</p>
+                                            <p class=\"text-gray-500\">Total: ${formatCurrency(sale.total)}</p>
+                                        </div>
+                                        <button class=\"charge-sale-btn bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 btn-ripple\" data-sale-key=\"${sale.key}\">Cobrar</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class=\"glass p-4 rounded-lg shadow-md\">
+                            <h3 class=\"text-xl font-bold mb-4 text-white\">Dinero por Entregar</h3>
+                            <p class=\"text-2xl font-bold text-yellow-500\">${formatCurrency(totalPendingMoney)}</p>
+                            <div id=\"pending-money-sales\" class=\"space-y-2 max-h-64 overflow-y-auto mt-4\">
+                                ${pendingMoneySales.length === 0 ? '<p class=\"text-gray-500 text-center\">No hay dinero pendiente.</p>' : pendingMoneySales.map(sale => `
+                                    <div class=\"p-2 rounded-md bg-gray-700/50\">
+                                        <p class=\"font-semibold text-white\">Folio: ${sale.folio}</p>
+                                        <p class=\"text-gray-500\">Monto: ${formatCurrency(sale.total)}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            dashboardView.addEventListener('click', (e) => {
+                const chargeBtn = e.target.closest('.charge-sale-btn');
+                const goToProductsLink = e.target.closest('[data-action=\"go-to-my-products\"]');
+                
+                if (chargeBtn) {
+                    const saleKey = chargeBtn.dataset.saleKey;
+                    const sale = allSales.find(s => s.key === saleKey);
+                    prepareVentaView('charge', sale);
+                } else if (goToProductsLink) {
+                    e.preventDefault();
+                    window.showView('mis-productos-view');
+                }
+            });
+        }
+
+        /**
+         * Render employee dashboard
+         */
+        function renderEmployeeDashboard(user) {
+            const userData = allUsers[user.uid];
+            const name = (userData && userData.firstName) ? `${userData.firstName} ${userData.lastName}` : user.email;
+            
+            const shippedSales = allSales.filter(s => s.sellerId === user.uid && s.status === 'shipped');
+            const pendingMoneySales = allSales.filter(s => s.sellerId === user.uid && s.status === 'completed' && !s.moneyDelivered);
+            const totalPendingMoney = pendingMoneySales.reduce((sum, sale) => sum + sale.total, 0);
+            
+            dashboardView.innerHTML = `
+                <div class=\"container mx-auto space-y-6\">
+                    <div class=\"glass p-6 rounded-lg shadow-md text-center\">
+                        <h2 class=\"text-3xl font-bold text-white\">¡Bienvenido, ${name}!</h2>
+                        <p class=\"text-gray-400\">${user.email}</p>
+                        <span class=\"badge badge-employee mt-2\">Vendedor</span>
+                    </div>
+                    
+                    <div class=\"grid grid-cols-1 md:grid-cols-2 gap-6\">
+                        <div class=\"glass p-4 rounded-lg shadow-md\">
+                            <h3 class=\"text-xl font-bold mb-4 text-white\">Tienes ${shippedSales.length} Pedidos por Entregar</h3>
+                            <div id=\"shipped-sales\" class=\"space-y-4 max-h-64 overflow-y-auto\">
+                                ${shippedSales.length === 0 ? '<p class=\"text-gray-500 text-center\">No hay pedidos pendientes.</p>' : shippedSales.map(sale => `
+                                    <div class=\"flex justify-between items-center p-2 rounded-md bg-gray-700/50\">
+                                        <div>
+                                            <p class=\"font-semibold text-white\">Folio: ${sale.folio}</p>
+                                            <p class=\"text-gray-500\">Total: ${formatCurrency(sale.total)}</p>
+                                        </div>
+                                        <button class=\"charge-sale-btn bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 btn-ripple\" data-sale-key=\"${sale.key}\">Cobrar</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class=\"glass p-4 rounded-lg shadow-md\">
+                            <h3 class=\"text-xl font-bold mb-4 text-white\">Dinero por Entregar</h3>
+                            <p class=\"text-2xl font-bold text-yellow-500\">${formatCurrency(totalPendingMoney)}</p>
+                            <div id=\"pending-money-sales\" class=\"space-y-2 max-h-64 overflow-y-auto mt-4\">
+                                ${pendingMoneySales.length === 0 ? '<p class=\"text-gray-500 text-center\">No hay dinero pendiente.</p>' : pendingMoneySales.map(sale => `
+                                    <div class=\"p-2 rounded-md bg-gray-700/50\">
+                                        <p class=\"font-semibold text-white\">Folio: ${sale.folio}</p>
+                                        <p class=\"text-gray-500\">Monto: ${formatCurrency(sale.total)}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            dashboardView.addEventListener('click', (e) => {
+                const chargeBtn = e.target.closest('.charge-sale-btn');
+                if (chargeBtn) {
+                    const saleKey = chargeBtn.dataset.saleKey;
+                    const sale = allSales.find(s => s.key === saleKey);
+                    prepareVentaView('charge', sale);
+                }
+            });
+        }
+
+        Continúo con la última parte importante del código:
+Action: file_editor str_replace /app/index.html --old-str "        /**
+         * Continue with admin dashboard and other functions...
+         */" --new-str "        /**
+         * Render collaborator products view
+         */
+        function renderCollaboratorProducts(user) {
+            const myProducts = allProducts.filter(p => p.ownerId === user.uid);
+            const misProductosView = document.getElementById('mis-productos-view');
+            
+            misProductosView.innerHTML = `
+                <div class=\"mb-6 flex justify-between items-center\">
+                    <h2 class=\"text-2xl font-bold text-white\">Mis Productos (${myProducts.length})</h2>
+                    <button id=\"add-my-product-btn\" class=\"px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 btn-ripple flex items-center gap-2\">
+                        <svg class=\"w-5 h-5\" viewBox=\"0 0 20 20\" fill=\"currentColor\">
+                            <path d=\"M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z\"></path>
+                        </svg>
+                        Agregar Producto
+                    </button>
+                </div>
+                <div id=\"my-products-container\" class=\"grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6\"></div>
+            `;
+            
+            const container = document.getElementById('my-products-container');
+            if (myProducts.length === 0) {
+                container.innerHTML = '<div class=\"col-span-full text-center py-16\"><p class=\"text-gray-500\">No tienes productos registrados aún.</p></div>';
+            } else {
+                myProducts.forEach(p => {
+                    container.appendChild(createProductCard(p.key, p));
+                });
+            }
+            
+            document.getElementById('add-my-product-btn').addEventListener('click', () => {
+                setupProductForm('add');
+            });
+        }
+
+        /**
+         * Setup product form
+         */
+        const setupProductForm = (mode, productData = {}, productKey = null) => {
+            productForm.reset();
+            currentEditingKey = productKey;
+            selectedPromoProduct = null;
+            
+            const promoDetails = document.getElementById('promo-details');
+            const selectedPromoContainer = document.getElementById('selected-promo-product');
+            const promoToggleCheckbox = document.getElementById('promo-toggle');
+            promoDetails.style.display = 'none';
+            selectedPromoContainer.classList.add('hidden');
+            promoToggleCheckbox.checked = false;
+
+            if (mode === 'edit') {
+                productFormTitle.textContent = 'Editar Producto';
+                Object.keys(productData).forEach(key => {
+                    const el = productForm.elements[key];
+                    if (el) {
+                        if (el.type === 'checkbox' && el.name === 'isPromo') {
+                            el.checked = productData.isPromo || false;
+                        } else if(el.id === key) {
+                            el.value = productData[key];
+                        }
+                    }
+                });
+                
+                document.getElementById('imagen_url_2').value = productData.imagen_url_2 || '';
+                document.getElementById('imagen_url_3').value = productData.imagen_url_3 || '';
+                document.getElementById('comision_por_unidad').value = productData.comision_por_unidad || 0;
+
+                if (productData.isPromo) {
+                    promoToggleCheckbox.checked = true;
+                    promoDetails.style.display = 'block';
+                    if (productData.promoProductKey) {
+                        const promoProd = allProducts.find(p => p.key === productData.promoProductKey);
+                        if (promoProd) selectPromoProduct(promoProd);
+                    }
+                }
+            } else {
+                productFormTitle.textContent = 'Agregar Nuevo Producto';
+                document.getElementById('comision_por_unidad').value = 0;
+            }
+            
+            window.showView('producto-form-view');
+        };
+
+        /**
+         * Product form submit handler
+         */
+        productForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const key = currentEditingKey;
+            const isPromo = document.getElementById('promo-toggle').checked;
+            
+            const data = {
+                producto: document.getElementById('producto').value,
+                codigo: document.getElementById('codigo').value,
+                categoria: document.getElementById('categoria').value,
+                precio_compra: parseFloat(document.getElementById('precio_compra').value),
+                precio_venta: parseFloat(document.getElementById('precio_venta').value),
+                comision_por_unidad: parseFloat(document.getElementById('comision_por_unidad').value),
+                stock: parseInt(document.getElementById('stock').value),
+                imagen_url: document.getElementById('imagen_url').value,
+                imagen_url_2: document.getElementById('imagen_url_2').value,
+                imagen_url_3: document.getElementById('imagen_url_3').value,
+                tags: document.getElementById('tags').value,
+                descripcion: document.getElementById('descripcion').value,
+                isPromo: isPromo,
+                promoProductKey: isPromo && selectedPromoProduct ? selectedPromoProduct.key : null,
+                ownerId: currentUserRole === 'collaborator' ? auth.currentUser.uid : null,
+                ownerRole: currentUserRole === 'collaborator' ? 'collaborator' : null
+            };
+            
+            if (isNaN(data.comision_por_unidad) || data.comision_por_unidad < 0 || data.comision_por_unidad > data.precio_venta) {
+                showToast('La comisión por unidad debe ser un número positivo y no mayor al precio de venta.', true);
+                return;
+            }
+            
+            if (isPromo && !selectedPromoProduct && currentUserRole === 'admin') {
+                showToast('Debes seleccionar un producto para el paquete promocional.', true);
+                return;
+            }
+            
+            const action = key ? update(ref(db, `productos/${key}`), data) : set(push(ref(db, 'productos')), data);
+            action.then(() => {
+                logAction(key ? 'product_update' : 'product_create', { productKey: key || 'new', productName: data.producto });
+                if (currentUserRole === 'collaborator') {
+                    window.showView('mis-productos-view');
+                } else {
+                    window.showView('productos-view');
+                }
+                showToast('Producto guardado con éxito.');
+            }).catch(err => showToast(`Error al guardar producto: ${err.message}`, true));
+        });
+
+        /**
+         * Setup IVA controls
+         */
+        function setupIvaControls() {
+            const enabledSwitch = document.getElementById('iva-enabled-switch');
+            const rateInput = document.getElementById('iva-rate-input');
+            const rateContainer = document.getElementById('iva-rate-container');
+            const adminCommissionInput = document.getElementById('admin-commission-input');
+
+            if (!enabledSwitch || !rateInput) return;
+
+            enabledSwitch.checked = ivaSettings.enabled;
+            rateInput.value = ivaSettings.rate;
+            if (adminCommissionInput) adminCommissionInput.value = ivaSettings.adminCommission || 10;
+            rateContainer.style.display = ivaSettings.enabled ? 'block' : 'none';
+
+            enabledSwitch.addEventListener('change', () => {
+                const newEnabledState = enabledSwitch.checked;
+                rateContainer.style.display = newEnabledState ? 'block' : 'none';
+                update(ref(db, 'settings/iva'), { enabled: newEnabledState, rate: ivaSettings.rate, adminCommission: ivaSettings.adminCommission })
+                    .then(() => showToast('Configuración de IVA actualizada.'))
+                    .catch(err => showToast(`Error: ${err.message}`, true));
+            });
+
+            rateInput.addEventListener('change', () => {
+                const newRate = parseFloat(rateInput.value);
+                if (!isNaN(newRate) && newRate >= 0) {
+                    update(ref(db, 'settings/iva'), { enabled: ivaSettings.enabled, rate: newRate, adminCommission: ivaSettings.adminCommission })
+                        .then(() => showToast('Tasa de IVA actualizada.'))
+                        .catch(err => showToast(`Error: ${err.message}`, true));
+                } else {
+                    showToast('Por favor, introduce un número válido para el IVA.', true);
+                    rateInput.value = ivaSettings.rate;
+                }
+            });
+
+            if (adminCommissionInput) {
+                adminCommissionInput.addEventListener('change', () => {
+                    const newCommission = parseFloat(adminCommissionInput.value);
+                    if (!isNaN(newCommission) && newCommission >= 0 && newCommission <= 100) {
+                        update(ref(db, 'settings/iva'), { enabled: ivaSettings.enabled, rate: ivaSettings.rate, adminCommission: newCommission })
+                            .then(() => showToast('Comisión del admin actualizada.'))
+                            .catch(err => showToast(`Error: ${err.message}`, true));
+                    } else {
+                        showToast('Por favor, introduce un porcentaje válido (0-100).', true);
+                        adminCommissionInput.value = ivaSettings.adminCommission;
+                    }
+                });
+            }
+        }
+
+        /**
+         * Initialize user session
+         */
+        const initializeUserSession = async (user) => {
+            const userRoleRef = ref(db, 'users/' + user.uid);
+            try {
+                const snapshot = await get(userRoleRef);
+                const userData = snapshot.val();
+                currentUserRole = userData ? userData.role : null;
+                
+                if (currentUserRole) {
+                    document.body.classList.remove('role-admin', 'role-employee', 'role-collaborator');
+                    document.body.classList.add(`role-${currentUserRole}`);
+                    authView.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                    fetchAllData();
+                    window.showView('dashboard-view');
+                    renderNotifications(user.uid);
+                } else {
+                    console.warn(\"Usuario sin rol definido:\", user.uid);
+                    showToast('Usuario no autorizado. Contacta al administrador.', true);
+                    signOut(auth);
+                }
+            } catch (error) {
+                console.error(\"Error getting user data:\", error);
+                showToast('Error al verificar el rol del usuario.', true);
+                signOut(auth);
+            }
+        };
+
+        // --- Event Listeners ---
+        
+        // Menu toggle
+        menuToggleButton.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('hidden');
+        });
+        
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.add('hidden');
+        });
+
+        // Login
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const loginError = document.getElementById('login-error');
+            loginError.textContent = '';
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
+            } catch (error) {
+                loginError.textContent = 'Credenciales incorrectas.';
+            }
+        });
+
+        // Logout
+        logoutButton.addEventListener('click', () => signOut(auth));
+
+        // Add product button
+        addProductButton.addEventListener('click', () => setupProductForm('add'));
+
+        // Navigation
+        const handleNavClick = (e) => {
+            const navButton = e.target.closest('[data-view]');
+            if (navButton && navButton.dataset.view) {
+                e.preventDefault();
+                if (navButton.dataset.view === 'venta') {
+                    prepareVentaView('order');
+                } else {
+                    window.showView(`${navButton.dataset.view}-view`);
+                }
+            }
+        };
+        
+        sidebarNav.addEventListener('click', handleNavClick);
+        mobileBottomNav.addEventListener('click', handleNavClick);
+
+        // Search toggle
+        searchToggleButton.addEventListener('click', () => {
+            filtersContainer.classList.toggle('open');
+        });
+
+        // Cart interactions
+        cartItemsContainer.addEventListener('change', (e) => {
+            if (e.target.classList.contains('quantity-input')) {
+                const index = parseInt(e.target.dataset.index);
+                const newQuantity = parseInt(e.target.value);
+                const item = cartItems[index];
+                const product = allProducts.find(p => p.key === item.key);
+                
+                if (newQuantity > product.stock) {
+                    showToast(`Solo quedan ${product.stock} unidades de ${product.producto}.`, true);
+                    e.target.value = item.quantity;
+                    return;
+                }
+                
+                if (newQuantity > 0) {
+                    item.quantity = newQuantity;
+                } else {
+                    cartItems.splice(index, 1);
+                }
+                updateCart();
+            }
+        });
+
+        cartItemsContainer.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.remove-item-btn');
+            if (removeBtn) {
+                const index = parseInt(removeBtn.dataset.index);
+                cartItems.splice(index, 1);
+                updateCart();
+            }
+        });
+
+        // Payment input
+        paymentInput.addEventListener('input', updateChange);
+
+        // Cancel sale
+        document.getElementById('cancel-sale-btn').addEventListener('click', () => {
+            cartItems = [];
+            paymentInput.value = '';
+            updateCart();
+            window.showView('productos-view');
+        });
+
+        // Charge button
+        document.getElementById('charge-btn').addEventListener('click', () => {
+            const mode = document.getElementById('charge-btn').dataset.mode;
+            if (mode === 'order') {
+                createOrder();
+            } else if (mode === 'charge') {
+                completeSaleAndCharge();
+            }
+        });
+
+        // Gallery interactions
+        galleryContainer.addEventListener('click', (e) => {
+            const card = e.target.closest('.product-card');
+            if (!card) return;
+            
+            const key = card.dataset.key;
+            const productData = allProducts.find(p => p.key === key);
+            if (!productData) return;
+            
+            const actionTarget = e.target.closest('button');
+            const action = actionTarget ? actionTarget.dataset.action : null;
+
+            if (action === 'edit') {
+                setupProductForm('edit', productData, key);
+            } else if (action === 'delete') {
+                showConfirmation('Borrar Producto', `¿Estás seguro de que quieres borrar \"${productData.producto}\"? Esta acción no se puede deshacer.`, () => {
+                    remove(ref(db, `productos/${key}`)).then(() => {
+                        logAction('product_delete', { productKey: key, productName: productData.producto });
+                        showToast('Producto eliminado.');
+                    });
+                });
+            } else if (action === 'add-to-cart') {
+                addToCart(productData);
+            } else {
+                // Show product detail (implement if needed)
+            }
+        });
+
+        // Confirm modal
+        document.getElementById('confirm-cancel-btn').addEventListener('click', () => closeModal('confirm-modal'));
+        document.getElementById('confirm-action-btn').addEventListener('click', () => {
+            if (typeof confirmActionCallback === 'function') {
+                confirmActionCallback();
+            }
+            closeModal('confirm-modal');
+            confirmActionCallback = null;
+        });
+
+        // Ticket modal
+        document.getElementById('download-ticket-btn').addEventListener('click', () => {
+            const canvas = document.getElementById('ticket-canvas');
+            const link = document.createElement('a');
+            link.download = `ticket-venta-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // Product form navigation
+        document.getElementById('back-from-form-btn').addEventListener('click', () => {
+            if (currentUserRole === 'collaborator') {
+                window.showView('mis-productos-view');
+            } else {
+                window.showView('productos-view');
+            }
+        });
+        
+        document.getElementById('cancel-product-form').addEventListener('click', () => {
+            if (currentUserRole === 'collaborator') {
+                window.showView('mis-productos-view');
+            } else {
+                window.showView('productos-view');
+            }
+        });
+
+        // Notifications
+        notificationsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notificationsPanel.classList.toggle('hidden');
+        });
+
+        notificationsPanel.addEventListener('click', (e) => {
+            const item = e.target.closest('.notification-item');
+            const btn = e.target.closest('.mark-read-btn');
+            
+            if (btn) {
+                e.stopPropagation();
+                const key = btn.dataset.key;
+                update(ref(db, `notifications/${key}`), { read: true });
+            } else if (item) {
+                const section = item.dataset.section;
+                const key = item.dataset.key;
+                const notification = localNotifications.find(n => n.key === key);
+                
+                if (notification && !notification.read) {
+                    update(ref(db, `notifications/${key}`), { read: true });
+                }
+                
+                if (section) {
+                    if (currentUserRole === 'admin') {
+                        window.showView('perfil-view');
+                        setTimeout(() => window.showAdminSection && window.showAdminSection(section), 50);
+                    } else {
+                        window.showView('dashboard-view');
+                    }
+                    notificationsPanel.classList.add('hidden');
+                }
+            }
+        });
+
+        // Floating cart
+        floatingCartBtn.addEventListener('click', () => {
+            const container = document.getElementById('floating-cart-items');
+            if (cartItems.length === 0) {
+                container.innerHTML = '<p class=\"text-gray-500 text-center py-4\">El carrito está vacío</p>';
+            } else {
+                container.innerHTML = cartItems.map((item) => `
+                    <div class=\"flex items-center gap-3 p-1 rounded-md\">
+                        <img src=\"${item.imagen_url}\" class=\"w-12 h-12 object-cover rounded-md flex-shrink-0\" />
+                        <div class=\"flex-grow min-w-0\">
+                            <p class=\"font-semibold text-sm truncate text-white\">${item.producto}</p>
+                            <p class=\"text-xs text-gray-400\">${item.quantity} x ${formatCurrency(item.precio_venta)}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            openModal('floating-cart-modal');
+        });
+
+        document.getElementById('close-floating-cart-btn').addEventListener('click', () => closeModal('floating-cart-modal'));
+        document.getElementById('go-to-checkout-btn').addEventListener('click', () => {
+            closeModal('floating-cart-modal');
+            prepareVentaView('order');
+        });
+
+        // Auth state change
+        setPersistence(auth, browserLocalPersistence).catch((error) => {
+            console.error(\"Error al configurar persistencia:\", error);
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                initializeUserSession(user);
+            } else {
+                document.body.classList.remove('role-admin', 'role-employee', 'role-collaborator');
+                authView.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+            }
+        });
+
+        // STUB FUNCTIONS (to be implemented as needed)
+        function renderAdminMainDashboard(container) {
+            container.innerHTML = '<div class=\"text-center p-8\"><p class=\"text-gray-400\">Admin Dashboard - En desarrollo</p></div>';
+        }
+
+        function renderAdminDashboard(user) {
+            perfilView.innerHTML = '<div class=\"text-center p-8\"><p class=\"text-gray-400\">Panel de Admin - En desarrollo</p></div>';
+        }
+
+        function selectPromoProduct(product) {
+            selectedPromoProduct = product;
+            // Implement promo product selection UI
+        }
+
+        console.log('✅ VentaPRO iniciado correctamente');
+    });
+</script>
+
+</body>
+</html>"
+Observation: Edit was successful.

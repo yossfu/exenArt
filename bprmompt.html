@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrector de Textos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+        }
+        button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Corrector de Textos</h1>
+    <label for="inputText">Ingrese el texto a corregir:</label><br>
+    <textarea id="inputText" placeholder="Pegue el texto aquí..."></textarea><br>
+    
+    <button onclick="corregirTexto()">Corregir</button><br><br>
+    
+    <label for="outputText">Texto corregido:</label><br>
+    <textarea id="outputText" readonly placeholder="El texto corregido aparecerá aquí..."></textarea><br>
+    
+    <button onclick="copiarAlPortapapeles()">Copiar al portapapeles</button>
+    
+    <script>
+        function corregirTexto() {
+            const input = document.getElementById('inputText').value;
+            let text = input.replace(/\n/g, ' ');
+            text = text.replace(/\s+/g, ' ');
+            text = text.trim();
+            
+            const parts = text.split(',').map(part => part.trim()).filter(part => part !== '');
+            const corrected = parts.join(', ');
+            
+            document.getElementById('outputText').value = corrected;
+        }
+        
+        async function copiarAlPortapapeles() {
+            const output = document.getElementById('outputText');
+            output.select();
+            output.setSelectionRange(0, 99999); // Para dispositivos móviles
+            
+            try {
+                await navigator.clipboard.writeText(output.value);
+                alert('Texto copiado al portapapeles');
+            } catch (err) {
+                alert('Error al copiar: ' + err);
+            }
+        }
+    </script>
+</body>
+</html>

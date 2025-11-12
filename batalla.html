@@ -15,16 +15,19 @@
     <style>
         :root { 
             --accent: #f97316; 
-            --accent-neon: #fb923c; 
+            --accent-glow: rgba(251, 146, 60, 0.6);
             --title-font: 'Poppins', sans-serif;
             --body-font: 'Inter', sans-serif;
-            --halo-green: #00ff00;
-            --halo-red: #ff0000;
+            --halo-green: rgba(0, 255, 0, 0.6);
+            --halo-red: rgba(255, 0, 0, 0.6);
         }
         html { scroll-behavior: smooth; }
         body { 
             font-family: var(--body-font); 
-            background-color: #121212; 
+            /* ******** UI MEJORADA: Fondo más oscuro y con gradiente ******** */
+            background-color: #0c0c0c;
+            background-image: radial-gradient(circle at 25% 25%, rgba(249, 115, 22, 0.05) 0%, transparent 40%), 
+                              radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
             color: #f3f4f6;
             padding-bottom: 80px;
         }
@@ -34,27 +37,29 @@
             letter-spacing: -0.02em;
         }
         .touch-feedback {
-            transition: transform 0.15s cubic-bezier(0.22, 0.61, 0.36, 1), background-color 0.15s;
+            transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .touch-feedback:active {
             transform: scale(0.95);
-            filter: brightness(0.8);
         }
+
+        /* ******** MEJORA: Estilos de navegación unificados ******** */
         .bottom-nav {
-            background-color: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(55, 65, 81, 0.5);
+            background-color: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(55, 65, 81, 0.3);
         }
-        .bottom-nav-link {
+        .nav-item {
             color: #9ca3af;
-            transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+            transition: color 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .bottom-nav-link.active {
+        .nav-item.active {
             color: var(--accent);
-            transform: scale(1.1);
+            transform: translateY(-4px);
         }
-        .bottom-nav-link.active span { font-weight: 600; }
+        
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
         .skeleton {
             background-color: #374151;
             background-image: linear-gradient(to right, #374151 0%, #4b5563 20%, #374151 40%, #374151 100%);
@@ -62,13 +67,18 @@
             animation: shimmer 1.5s linear infinite; border-radius: 0.75rem;
             aspect-ratio: 2 / 3;
         }
-        .winning { box-shadow: 0 0 20px 5px var(--halo-green); }
-        .losing { box-shadow: 0 0 20px 5px var(--halo-red); }
-        @keyframes vote-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 30px 10px var(--accent-neon); } 100% { transform: scale(1); } }
+        
+        /* ******** UI MEJORADA: Halos de ganador/perdedor ******** */
+        .winning-card { box-shadow: 0 0 20px 5px var(--halo-green); }
+        .losing-card { box-shadow: 0 0 15px 3px var(--halo-red); opacity: 0.8; }
+        
+        @keyframes vote-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 30px 10px var(--accent-glow); } 100% { transform: scale(1); } }
         .vote-animation { animation: vote-pulse 0.6s ease-out; }
+        
         @keyframes crown-appear { 0% { transform: translateX(-50%) translateY(10px) scale(0.5); opacity: 0; } 100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; } }
         .crown-icon { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); font-size: 2rem; color: #ffd700; text-shadow: 0 2px 10px rgba(0,0,0,0.5); display: none; z-index: 10; pointer-events: none; }
         .battle-item.has-crown .crown-icon { display: block; animation: crown-appear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
@@ -78,43 +88,64 @@
 
     <main class="container mx-auto px-4 py-8">
         <div class="my-8 flex justify-center">
-             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto">
+             <!-- ******** UI MEJORADA: Sombra en logo ******** -->
+             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
         </div>
+        
         <section id="battle-section" class="mb-12">
-            <h3 class="section-title mb-6 text-center text-3xl tracking-tight text-orange-400"><i class="fas fa-gavel"></i> Batalla de la Semana</h3>
-            <div id="battle-grid" class="flex items-start justify-center gap-4 md:gap-8 max-w-4xl mx-auto"></div>
-            <div id="battle-timer" class="mt-6 text-center text-lg font-semibold text-gray-400"></div>
+            <!-- ******** UI MEJORADA: Título con gradiente ******** -->
+            <h3 class="section-title mb-6 text-center text-3xl tracking-tight bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-transparent">
+                <i class="fas fa-gavel"></i> Batalla de la Semana
+            </h3>
+            <div id="battle-grid" class="flex items-start justify-center gap-4 md:gap-8 max-w-4xl mx-auto">
+                <!-- Skeleton loader -->
+                <div class="w-full"><div class="skeleton"></div></div>
+                <span class="text-3xl font-black text-orange-400 self-center pt-16">VS</span>
+                <div class="w-full"><div class="skeleton"></div></div>
+            </div>
+            <!-- ******** UI MEJORADA: Texto de timer más visible ******** -->
+            <div id="battle-timer" class="mt-6 text-center text-xl font-semibold text-white"></div>
+            
             <div id="battle-winner-container" class="mt-12" style="display: none;">
-                 <h4 class="section-title mb-4 text-center text-2xl text-orange-400">Ganador Anterior</h4>
-                <div id="battle-winner" class="relative mx-auto max-w-sm"></div>
+                 <h4 class="section-title mb-4 text-center text-2xl bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-transparent">Ganador Anterior</h4>
+                <!-- ******** UI MEJORADA: Borde de ganador ******** -->
+                <div id="battle-winner" class="relative mx-auto max-w-sm rounded-2xl border-2 border-orange-500/30 overflow-hidden"></div>
             </div>
         </section>
+        
         <hr class="border-gray-700/50 my-12">
+        
         <section id="comments-section" class="max-w-3xl mx-auto">
-            <h4 class="section-title mb-6 text-center text-2xl text-orange-400"><i class="fas fa-comments"></i> Comentarios</h4>
-            <form id="comment-form" class="mb-8 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4">
+            <!-- ******** UI MEJORADA: Título con gradiente ******** -->
+            <h4 class="section-title mb-6 text-center text-2xl bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-transparent">
+                <i class="fas fa-comments"></i> Comentarios
+            </h4>
+            <form id="comment-form" class="mb-8 flex flex-col gap-3 rounded-xl bg-gray-800/50 p-4 border border-gray-700/50">
                 <input type="text" id="name-input" placeholder="Nombre (opcional, máx 15)" maxlength="15" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none">
                 <textarea id="comment-input" placeholder="Opina sobre la batalla..." rows="3" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white transition focus:border-orange-500 focus:outline-none"></textarea>
                 <button type="submit" id="comment-btn" class="group self-end rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white transition hover:bg-orange-500 touch-feedback">
                     <i class="fas fa-paper-plane transition group-hover:rotate-12"></i> Enviar
                 </button>
             </form>
-            <div id="comments" class="flex flex-col gap-4"></div>
+            <div id="comments" class="flex flex-col gap-4">
+                <!-- Los comentarios se cargan aquí -->
+            </div>
         </section>
     </main>
     <footer class="mt-12 py-8 text-center text-gray-500"><p>&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
     
+    <!-- ******** MEJORA: Barra de navegación con iconos SVG ******** -->
     <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around">
-        <a href="index.html" id="nav-index" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <img src="images/galeria.png" class="h-6 w-6 mb-1">
+        <a href="index.html" id="nav-index" class="nav-item flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             <span class="text-xs">Galería</span>
         </a>
-        <a href="batalla.html" id="nav-batalla" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <img src="images/batalla.png" class="h-6 w-6 mb-1">
+        <a href="batalla.html" id="nav-batalla" class="nav-item flex flex-col items-center justify-center text-center px-2 touch-feedback">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12.01 2.011H12v1.99M12.01 20.011H12v1.99M6.35 4.931l1.41 1.41m9.9 9.9l1.41 1.41M4.93 17.651l1.41-1.41m9.9-9.9l1.41-1.41M2.01 12.011H4v-1.99m18 .011h-1.99v-1.99M9.5 8.5l5 7m-5 0l5-7" /></svg>
             <span class="text-xs">Batalla</span>
         </a>
-        <a href="videos.html" id="nav-videos" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <img src="images/musica.png" class="h-6 w-6 mb-1">
+        <a href="musica.html" id="nav-videos" class="nav-item flex flex-col items-center justify-center text-center px-2 touch-feedback">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
             <span class="text-xs">Música</span>
         </a>
     </nav>
@@ -150,8 +181,9 @@
         });
 
         function setActiveNavLink() {
-            const path = window.location.pathname.split("/").pop();
-            document.querySelectorAll('.bottom-nav-link').forEach(l => l.classList.remove('active'));
+            const path = window.location.pathname.split("/").pop() || 'batalla.html';
+            // ******** MEJORA: Unificado a .nav-item ********
+            document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
             if (path.startsWith('batalla.html')) {
                 document.getElementById('nav-batalla')?.classList.add('active');
             }
@@ -159,7 +191,7 @@
 
         async function initBattleSection() {
             const battleGrid = document.getElementById('battle-grid');
-            battleGrid.innerHTML = `<div class="w-full"><div class="skeleton"></div></div><span class="text-3xl font-black text-orange-400 self-center">VS</span><div class="w-full"><div class="skeleton"></div></div>`;
+            battleGrid.innerHTML = `<div class="w-full"><div class="skeleton"></div></div><span class="text-3xl font-black text-orange-400 self-center pt-16">VS</span><div class="w-full"><div class="skeleton"></div></div>`;
             const snap = await db.ref('battle').once('value');
             if (!snap.exists()) {
                 battleGrid.innerHTML = `<p class="text-center text-gray-500 col-span-full w-full py-20">Esperando la próxima batalla...</p>`;
@@ -178,15 +210,16 @@
             const battleGrid = document.getElementById('battle-grid');
             battleGrid.innerHTML = `
                 <div class="battle-item relative w-full" id="battle-item-1" data-image-id="${img1.id}"></div>
-                <span class="text-3xl font-black text-orange-400 self-center" style="text-shadow: 0 0 10px var(--accent);">VS</span>
+                <span class="text-3xl font-black text-orange-400 self-center pt-16" style="text-shadow: 0 0 10px var(--accent-glow);">VS</span>
                 <div class="battle-item relative w-full" id="battle-item-2" data-image-id="${img2.id}"></div>`;
             const renderItem = (container, img) => {
                 container.innerHTML = `
                     <i class="fas fa-crown crown-icon"></i>
-                    <div class="aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition duration-300 transform hover:scale-105 relative">
-                        <img src="${img.url}" alt="${img.title}" class="w-full h-full object-cover">
-                        <div class="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs font-bold" id="vote-count-${img.id}">0</div>
-                        <button class="battle-vote-btn absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 text-sm font-bold text-white transition hover:scale-105 touch-feedback" onclick="voteBattle('${img.id}', event)">Votar</button>
+                    <div class="battle-card aspect-[2/3] rounded-2xl overflow-hidden shadow-lg transition-all duration-300 transform hover:scale-105 relative border-2 border-transparent">
+                        <img src="${img.thumbnailUrl || img.url}" alt="${img.title}" class="w-full h-full object-cover">
+                        <!-- ******** UI MEJORADA: Contador de votos ******** -->
+                        <div class="absolute top-2 right-2 bg-orange-600/80 backdrop-blur-sm rounded-full px-3 py-1 text-sm font-bold text-white shadow-md" id="vote-count-${img.id}">0</div>
+                        <button class="battle-vote-btn absolute bottom-3 left-1/2 -translate-x-1/2 w-4/5 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 text-sm font-bold text-white transition hover:scale-105 touch-feedback shadow-lg" onclick="voteBattle('${img.id}', event)">Votar</button>
                     </div>
                     <h4 class="text-center font-bold mt-2 text-lg truncate">${img.title}</h4>`;
             };
@@ -197,7 +230,15 @@
                 const battle = snap.val(); if (!battle || !battle.votes) return;
                 document.getElementById(`vote-count-${img1.id}`).textContent = battle.votes[img1.id] || 0;
                 document.getElementById(`vote-count-${img2.id}`).textContent = battle.votes[img2.id] || 0;
-                if (battle.users && battle.users[deviceID]) { document.querySelectorAll('.battle-vote-btn').forEach(b => b.style.display = 'none'); }
+                if (battle.users && battle.users[deviceID]) { 
+                    document.querySelectorAll('.battle-vote-btn').forEach(b => {
+                        b.textContent = "¡Votado!";
+                        b.disabled = true;
+                        b.style.background = 'none';
+                        b.style.backgroundColor = 'rgba(0, 255, 0, 0.7)'; // Verde
+                        b.style.cursor = 'not-allowed';
+                    });
+                }
                 updateBattleHalo();
             });
             const timerEl = document.getElementById('battle-timer');
@@ -213,7 +254,7 @@
 
         function voteBattle(imageId, event) {
             event.stopPropagation();
-            const imageCard = event.target.closest('.aspect-\\[2\\/3\\]');
+            const imageCard = event.target.closest('.battle-card');
             if (imageCard) { imageCard.classList.add('vote-animation'); setTimeout(() => { imageCard.classList.remove('vote-animation'); }, 600); }
             db.ref(`battle/users/${deviceID}`).once('value', snap => {
                 if (snap.exists()) return;
@@ -227,13 +268,13 @@
                 const votes = snap.val(); if (!votes) return;
                 const item1 = document.getElementById('battle-item-1'); const item2 = document.getElementById('battle-item-2');
                 if (!item1 || !item2) return; const id1 = item1.dataset.imageId; const id2 = item2.dataset.imageId; if (!id1 || !id2) return;
-                const img1Container = item1.querySelector('.aspect-\\[2\\/3\\]'); const img2Container = item2.querySelector('.aspect-\\[2\\/3\\]');
+                const img1Container = item1.querySelector('.battle-card'); const img2Container = item2.querySelector('.battle-card');
                 if (!img1Container || !img2Container) return;
-                img1Container.classList.remove('winning', 'losing'); img2Container.classList.remove('winning', 'losing');
+                img1Container.classList.remove('winning-card', 'losing-card'); img2Container.classList.remove('winning-card', 'losing-card');
                 item1.classList.remove('has-crown'); item2.classList.remove('has-crown');
                 const votes1 = votes[id1] || 0; const votes2 = votes[id2] || 0;
-                if (votes1 > votes2) { img1Container.classList.add('winning'); img2Container.classList.add('losing'); item1.classList.add('has-crown'); }
-                else if (votes2 > votes1) { img2Container.classList.add('winning'); img1Container.classList.add('losing'); item2.classList.add('has-crown'); }
+                if (votes1 > votes2) { img1Container.classList.add('winning-card'); img2Container.classList.add('losing-card'); item1.classList.add('has-crown'); }
+                else if (votes2 > votes1) { img2Container.classList.add('winning-card'); img1Container.classList.add('losing-card'); item2.classList.add('has-crown'); }
             });
         }
 
@@ -247,7 +288,7 @@
             const winner = { id: winnerSnap.key, ...winnerSnap.val() };
             document.getElementById('battle-winner').innerHTML = `
                 <div class="relative group aspect-[2/3] rounded-2xl overflow-hidden shadow-lg">
-                    <img src="${winner.url}" alt="${winner.title}" class="w-full h-full object-cover">
+                    <img src="${winner.thumbnailUrl || winner.url}" alt="${winner.title}" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
                     <div class="absolute bottom-0 left-0 right-0 p-4 text-center">
                         <h5 class="text-2xl text-white font-black drop-shadow-lg mb-1">${winner.title}</h5>
