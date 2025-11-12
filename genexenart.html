@@ -2,149 +2,266 @@
 <html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Remoto Forge (v7 - Image Fit & Copy)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <title>Genexenart v3</title>
     <!-- Cargar Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- (NUEVO) Cargar Material Icons (Outlined) -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    
+    <!-- (NUEVO) Cargar Gradio (para Tagger) -->
+    <script type="module" src="https://gradio.s3-us-west-2.amazonaws.com/5.29.0/gradio.js"></script>
+
     <style>
-        /* Estilos base inspirados en Material Design (Dark) */
+        /* Estilos base inspirados en Material Design 3 (Dark) */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --bg-dark-primary: #121212;
+            --bg-dark-surface-1: #1E1E1E;
+            --bg-dark-surface-2: #2C2C2C;
+            --text-primary: #E0E0E0;
+            --text-secondary: #BDBDBD;
+            --accent-primary: #82b1ff; /* Azul Material */
+            --accent-secondary: #448aff;
+            --accent-danger: #ff5252;
+        }
+
         body, html {
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             height: 100%;
-            background-color: #121212; /* Color de fondo oscuro (Dark theme) */
+            background-color: var(--bg-dark-primary);
+            color: var(--text-primary);
+            overscroll-behavior: none; /* Evitar rebote */
         }
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
         /* Ocultar elementos por defecto */
         #app-container { display: none; }
         
-        /* HEADER/NAV ESTILO MOBILE */
+        #app-main-content {
+            padding-bottom: 120px; /* Espacio para el botón de generar fijo */
+        }
+
+        /* (NUEVO) HEADER/NAV ESTILO ANDROID */
+        .app-header {
+            background-color: var(--bg-dark-surface-1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            position: sticky; top: 0; z-index: 20;
+        }
+        .tab-nav-container {
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--bg-dark-surface-2);
+            /* Ocultar scrollbar */
+            -ms-overflow-style: none;  /* IE y Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .tab-nav-container::-webkit-scrollbar { display: none; } /* Chrome, Safari y Opera */
+
         .tab-btn {
-            flex-grow: 1; 
-            padding: 0.75rem 0.5rem;
-            font-weight: 500;
-            color: #BDBDBD; 
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 2px;
+            flex: 1 0 auto; /* No encoger, base automática */
+            padding: 10px 16px;
+            font-weight: 600; font-size: 0.75rem;
+            color: var(--text-secondary);
             border-bottom: 3px solid transparent;
             text-align: center;
-            transition: all 0.2s;
-            white-space: nowrap;
+            transition: all 0.3s ease;
+            min-width: 80px; /* Ancho mínimo por pestaña */
+        }
+        .tab-btn .material-icons-outlined {
+            font-size: 22px;
         }
         .tab-btn.active {
-            color: #4CAF50; 
-            border-color: #4CAF50;
-            background-color: #1E1E1E; 
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
         }
+        
         /* Ocultar paneles inactivos */
-        .tab-panel {
-            display: none;
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Tarjeta de Contenido */
+        .content-card {
+            background-color: var(--bg-dark-surface-1);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
-        .tab-panel.active {
-            display: block;
+        /* (NUEVO) Tarjeta colapsable */
+        .collapsible-card details summary {
+            cursor: pointer;
+            font-size: 1.25rem; font-weight: 700;
+            list-style: none; /* Ocultar flecha por defecto */
+        }
+        .collapsible-card summary::before {
+            content: 'expand_more'; /* Icono Material */
+            font-family: 'Material Icons Outlined';
+            font-size: 24px;
+            margin-right: 8px;
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+        .collapsible-card details[open] summary::before {
+            transform: rotate(180deg);
         }
 
         /* Campos de formulario - Estilo App */
         .input-base {
-            display: block; width: 100%; padding: 10px 12px;
-            background-color: #2C2C2C; 
-            border: 1px solid #424242; 
-            border-radius: 8px;
-            color: white; placeholder-color: #757575;
+            display: block; width: 100%; padding: 12px 14px;
+            background-color: var(--bg-dark-surface-2); 
+            border: 2px solid #424242; 
+            border-radius: 12px;
+            color: var(--text-primary); placeholder-color: #757575;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .input-base:focus {
-            outline: none; border-color: #4CAF50;
-            box-shadow: 0 0 0 1px #4CAF50;
+            outline: none; border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px var(--accent-primary);
         }
-
-        /* Textarea (Prompt) */
-        textarea.input-base { resize: vertical; }
-
-        /* Botón de Generar - Estilo Floating Action Button (FAB) */
-        .generate-btn {
-            width: 100%; margin-top: 1.5rem; background-color: #4CAF50;
-            transition: background-color 0.2s, box-shadow 0.2s;
-            font-weight: 700; padding: 12px 24px; border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        .input-base:disabled {
+            opacity: 0.5;
+            background-color: #3a3a3a;
         }
-        .generate-btn:hover { background-color: #66BB6A; }
-        .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        select.input-base {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23BDBDBD' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
         
-        /* Botón Secundario de UI */
+        textarea.input-base { resize: vertical; }
+        .label-base {
+            display: block; text-transform: uppercase;
+            font-size: 0.75rem; font-weight: 600;
+            color: var(--text-secondary); margin-bottom: 0.5rem;
+        }
+
+        /* (NUEVO) Grupo de botones de UI */
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        /* (NUEVO) Botón de UI (Icono) */
         .btn-ui {
+            background-color: var(--bg-dark-surface-2);
+            border: 2px solid #424242;
+            color: var(--text-primary);
+            padding: 8px;
+            border-radius: 12px;
+            transition: background-color 0.2s, border-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .btn-ui:hover { background-color: #424242; border-color: #616161; }
+        .btn-ui:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-ui .material-icons-outlined { font-size: 20px; }
+        
+        /* Botón de Generar Fijo (Floating Action Button - FAB) */
+        #footer-fab-container {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            padding: 1rem;
+            background: linear-gradient(180deg, rgba(18, 18, 18, 0) 0%, var(--bg-dark-primary) 80%);
+            z-index: 30;
+        }
+        .generate-btn {
+            width: 100%;
+            background-color: var(--accent-primary);
+            color: var(--bg-dark-primary);
+            font-weight: 700; font-size: 1rem;
+            padding: 16px 24px; border-radius: 16px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .generate-btn .material-icons-outlined { font-size: 24px; }
+        .generate-btn:hover { background-color: #a9c7ff; }
+        .generate-btn:disabled { 
             background-color: #424242;
+            color: #757575;
+            cursor: not-allowed; 
+        }
+        
+        /* (NUEVO) Botón de Interrumpir */
+        .interrupt-btn {
+            background-color: var(--accent-danger);
             color: white;
+            border-color: var(--accent-danger);
             padding: 8px 12px;
-            border-radius: 8px;
-            transition: background-color 0.2s;
-        }
-        .btn-ui:hover { background-color: #616161; }
-
-        /* Acordeón (Details) */
-        details > summary {
-            padding: 1rem; background-color: #2C2C2C; border-radius: 8px;
-            margin-top: 1rem; font-weight: 600; color: #E0E0E0;
-            cursor: pointer;
-        }
-        .details-content {
-            padding: 1rem; background-color: #1E1E1E; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+            font-weight: 600;
+            gap: 0.5rem;
         }
 
-        /* Contenedor de Sugerencias de Tags */
-        .tag-suggestions-container {
-            position: absolute; width: 100%; background-color: #1e1e1e;
-            border: 1px solid #4CAF50; border-radius: 0 0 8px 8px;
-            z-index: 20; 
-            max-height: 200px; overflow-y: auto;
-            transform: translateY(-8px); 
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-            display: none;
-        }
-        .tag-suggestion-item {
-            padding: 8px 12px; cursor: pointer; color: #E0E0E0;
-        }
-        .tag-suggestion-item:hover {
-            background-color: #2C2C2C;
-        }
-
-        /* Layout móvil: una sola columna con espaciado */
+        /* Layout */
         .main-grid {
-            display: grid; grid-template-columns: 1fr; gap: 1.5rem; /* Aumentado el gap */
+            display: grid; grid-template-columns: 1fr; gap: 1.5rem;
         }
-        /* Desktop: 2 columnas, contenido y resultado */
         @media (min-width: 768px) {
             .main-grid {
                 grid-template-columns: 2fr 1fr;
             }
         }
         
-        /* CORRECCIÓN CRÍTICA: Ajuste para mostrar la imagen completa */
+        /* Imagen de Salida */
         #output-image {
-            object-fit: contain; /* Asegura que la imagen se vea completa */
-            width: 100%; 
-            height: auto; /* Permite que la altura sea dictada por la relación de aspecto */
-            max-height: 100%; /* No exceder la altura del contenedor */
+            object-fit: contain; width: 100%; height: auto;
+            max-height: 100%; border-radius: 12px;
         }
-
-        /* Contenedor de la Imagen */
         #image-container {
-            min-height: 300px; 
-            aspect-ratio: 1 / 1; /* Valor por defecto */
+            min-height: 300px; aspect-ratio: 1 / 1;
         }
-
-        /* Metadatos (hacerlos desplazables y con formato) */
-        #metadata-display {
-            background-color: #2C2C2C; 
-            border: 1px solid #424242; 
+        
+        /* (NUEVO) Vista previa de imagen (para i2i, ControlNet, Extras) */
+        .image-preview-box {
+            background-color: var(--bg-dark-primary);
+            border: 2px dashed #424242;
+            border-radius: 12px;
+            min-height: 128px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            position: relative;
+        }
+        .image-preview-box img {
+            max-height: 200px;
+            max-width: 100%;
+            height: auto;
             border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
-            max-height: 200px; /* Limitar altura */
-            overflow-y: auto;
-            white-space: pre-wrap; /* Mantener saltos de línea y espacios */
+            display: none; /* Oculta por defecto */
         }
-
+        .image-preview-box span { /* Placeholder */
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        .image-preview-box img.active { display: block; }
+        .image-preview-box span.hidden { display: none; }
+        
+        /* (NUEVO) Estilos para Gradio App */
+        gradio-app {
+            background-color: var(--bg-dark-surface-1) !important;
+            border: none !important;
+            border-radius: 16px;
+        }
     </style>
 </head>
 <body class="h-full">
@@ -154,12 +271,12 @@
     <!-- ======================= -->
     <div id="splash-screen" class="fixed inset-0 bg-gray-900 flex items-center justify-center p-4 z-50">
         <div class="w-full max-w-sm bg-gray-800 shadow-2xl rounded-xl p-6 text-white">
-            <h1 class="text-2xl font-bold text-center mb-6 text-green-400">Forge Mobile Remote</h1>
+            <h1 class="text-2xl font-bold text-center mb-6 text-blue-400">Genexenart v3</h1>
             
             <label for="gradio-url" class="block text-sm font-medium text-gray-400 mb-2">URL de Gradio (https://)</label>
-            <input type="text" id="gradio-url" class="block w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Ej: https://xxxxxxxxx.gradio.app">
+            <input type="text" id="gradio-url" class="input-base" placeholder="Ej: https://xxxxxxxxx.gradio.app">
             
-            <button id="connect-btn" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-200 ease-in-out flex items-center justify-center">
+            <button id="connect-btn" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-200 ease-in-out flex items-center justify-center">
                 Conectar
             </button>
 
@@ -169,60 +286,88 @@
 
 
     <!-- ======================= -->
-    <!-- APLICACIÓN PRINCIPAL (OCULTA HASTA CONEXIÓN) -->
+    <!-- APLICACIÓN PRINCIPAL -->
     <!-- ======================= -->
     <div id="app-container" class="min-h-full">
         
-        <!-- HEADER / NAVEGACIÓN -->
-        <header class="bg-[#1e1e1e] shadow-lg sticky top-0 z-20">
-            <div class="max-w-7xl mx-auto">
-                <div class="flex items-center h-14 border-b border-[#2c2c2c]">
-                    <nav id="main-ui" class="flex flex-1 justify-around">
-                        <button id="tab-btn-txt2img" class="tab-btn active">Texto a Imagen</button>
-                        <button id="tab-btn-img2img" class="tab-btn">Imagen a Imagen</button>
-                    </nav>
-                </div>
+        <!-- (NUEVO) HEADER / NAVEGACIÓN TIPO APP -->
+        <header class="app-header">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <!-- Tabs Deslizables -->
+                <nav id="main-ui" class="tab-nav-container flex-1">
+                    <button id="tab-btn-txt2img" class="tab-btn active">
+                        <span class="material-icons-outlined">text_fields</span>
+                        Txt2Img
+                    </button>
+                    <button id="tab-btn-img2img" class="tab-btn">
+                        <span class="material-icons-outlined">image</span>
+                        Img2Img
+                    </button>
+                    <button id="tab-btn-extras" class="tab-btn">
+                        <span class="material-icons-outlined">add_photo_alternate</span>
+                        Extras
+                    </button>
+                    <button id="tab-btn-tagger" class="tab-btn">
+                        <span class="material-icons-outlined">label</span>
+                        Tagger
+                    </button>
+                    <button id="tab-btn-config" class="tab-btn">
+                        <span class="material-icons-outlined">settings</span>
+                        Config
+                    </button>
+                </nav>
+                <!-- Botón de Refrescar -->
+                <button id="refresh-resources-btn" class="btn-ui p-3 m-2" title="Refrescar Recursos">
+                    <span class="material-icons-outlined">refresh</span>
+                </button>
             </div>
         </header>
 
         <!-- CONTENIDO PRINCIPAL -->
-        <main class="max-w-7xl mx-auto p-4 md:p-6">
+        <main id="app-main-content" class="max-w-7xl mx-auto p-4 md:p-6">
             <div class="main-grid">
 
                 <!-- COLUMNA 1: CONFIGURACIÓN -->
-                <div class="bg-[#1e1e1e] shadow-xl rounded-xl p-4 md:p-6 h-fit">
+                <div class="h-fit">
                     
+                    <!-- ======================= -->
                     <!-- Panel Txt2Img -->
+                    <!-- ======================= -->
                     <div id="panel-txt2img" class="tab-panel active">
-                        <h2 class="text-xl font-bold mb-4 text-white">Generar (Txt2Img)</h2>
-                        
-                        <!-- Prompts con Autocomplete -->
-                        <div class="space-y-4">
-                            <!-- Prompt Positivo con Sugerencias -->
-                            <div class="relative">
-                                <label for="prompt-t2i" class="block text-sm font-medium text-gray-400 mb-2">Prompt Positivo</label>
-                                <textarea id="prompt-t2i" rows="4" class="input-base" placeholder="best quality, 1girl, ..."></textarea>
-                                <!-- Contenedor de Sugerencias de Tags para T2I -->
-                                <div id="tag-suggestions-t2i" class="tag-suggestions-container"></div>
-                            </div>
-                            
-                            <!-- Prompt Negativo -->
-                            <div>
-                                <label for="negative-prompt-t2i" class="block text-sm font-medium text-gray-400 mb-2">Prompt Negativo</label>
-                                <textarea id="negative-prompt-t2i" rows="4" class="input-base" placeholder="worst quality, ...">worst quality, low quality, lowres, (deformed, distorted, disfigured:1.3), bad anatomy, bad hands, (missing fingers), (extra fingers), (fused fingers), (extra limbs), (fused limbs), (missing limbs), (extra digit), (fused digit), (mutated hands:1.3), (poorly drawn hands:1.3), (poorly drawn face:1.3), (long neck:1.3), (extra legs)</textarea>
+                        <!-- Prompts -->
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Prompts</h2>
+                            <div class="space-y-4">
+                                <!-- Prompt Positivo -->
+                                <div class="relative">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label for="prompt-t2i" class="label-base" style="margin-bottom: 0;">Prompt Positivo</label>
+                                        <button class="btn-ui auto-prompt-btn" data-target="prompt-t2i" title="Generar Prompt Aleatorio">
+                                            <span class="material-icons-outlined" style="font-size: 20px;">auto_awesome</span>
+                                        </button>
+                                    </div>
+                                    <textarea id="prompt-t2i" rows="4" class="input-base" placeholder="best quality, 1girl, ..."></textarea>
+                                </div>
+                                <!-- Prompt Negativo -->
+                                <div>
+                                    <label for="negative-prompt-t2i" class="label-base">Prompt Negativo</label>
+                                    <textarea id="negative-prompt-t2i" rows="4" class="input-base" placeholder="worst quality, ...">worst quality, low quality, lowres, (deformed, distorted, disfigured:1.3), bad anatomy, bad hands, (missing fingers), (extra fingers), (fused fingers), (extra limbs), (fused limbs), (missing limbs), (extra digit), (fused digit), (mutated hands:1.3), (poorly drawn hands:1.3), (poorly drawn face:1.3), (long neck:1.3), (extra legs)</textarea>
+                                </div>
+                                <!-- (NUEVO) Estilos -->
+                                <div>
+                                    <label for="styles-t2i" class="label-base">Estilos</label>
+                                    <select id="styles-t2i" class="input-base"></select>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Botón de Generar (Flotante estilo app) -->
-                        <button id="generate-btn-txt2img" class="generate-btn text-white">Generar</button>
-                        
                         <!-- Parámetros T2I -->
-                        <details open class="mt-4">
-                            <summary>Parámetros Principales</summary>
-                            <div class="details-content space-y-4">
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Parámetros</h2>
+                            <div class="space-y-4">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label for="model-t2i" class="label-base">Modelo</label>
+                                        <label for="model-t2i" class="label-base">Modelo (Checkpoint)</label>
                                         <select id="model-t2i" class="input-base"></select>
                                     </div>
                                     <div>
@@ -245,29 +390,30 @@
                                         <label for="lora-t2i" class="label-base">Loras</label>
                                         <select id="lora-t2i" class="input-base"></select>
                                     </div>
-                                    <button class="btn-secondary add-lora-btn text-sm px-3 py-2" data-target="prompt-t2i">Añadir Lora</button>
+                                    <button class="btn-ui add-lora-btn flex-shrink-0" data-target="prompt-t2i" title="Añadir Lora">
+                                        <span class="material-icons-outlined">add</span>
+                                    </button>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label for="width-t2i" class="label-base">Ancho</label>
-                                        <input type="number" id="width-t2i" step="64" value="1080" class="input-base">
+                                        <input type="number" id="width-t2i" step="64" value="1024" class="input-base">
                                     </div>
                                     <div>
                                         <label for="height-t2i" class="label-base">Alto</label>
-                                        <input type="number" id="height-t2i" step="64" value="1568" class="input-base">
+                                        <input type="number" id="height-t2i" step="64" value="1024" class="input-base">
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label for="steps-t2i" class="label-base">Pasos</label>
-                                        <input type="number" id="steps-t2i" value="15" class="input-base">
+                                        <input type="number" id="steps-t2i" value="20" class="input-base">
                                     </div>
                                     <div>
                                         <label for="cfg-t2i" class="label-base">CFG Scale</label>
                                         <input type="number" id="cfg-t2i" step="0.5" value="7.0" class="input-base">
                                     </div>
                                 </div>
-                                <!-- Campos Batch y Seed con botón de random -->
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label for="batch-count-t2i" class="label-base">Cant. Lotes</label>
@@ -277,92 +423,136 @@
                                         <label for="seed-t2i" class="label-base">Semilla (Seed)</label>
                                         <div class="flex gap-2">
                                             <input type="number" id="seed-t2i" value="-1" class="input-base">
-                                            <button id="random-seed-t2i" class="btn-ui w-1/4 flex-shrink-0" title="Semilla Aleatoria">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M17.65 17.65l-4.24 4.24a2 2 0 0 1-2.83 0l-4.24-4.24a2 2 0 0 1 0-2.83l.88-.88"/><path d="M13.25 13.25l-.88.88a2 2 0 0 1-2.83 0l-4.24-4.24a2 2 0 0 1 0-2.83l4.24-4.24a2 2 0 0 1 2.83 0l4.24 4.24a2 2 0 0 1 0 2.83l-4.24 4.24z"/></svg>
+                                            <button id="random-seed-t2i" class="btn-ui flex-shrink-0" title="Semilla Aleatoria">
+                                                <span class="material-icons-outlined">casino</span>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </details>
-
-                        <!-- Hires. Fix -->
-                        <details class="mt-4">
-                            <summary>Hires. Fix</summary>
-                            <div class="details-content space-y-4">
-                                <label class="flex items-center space-x-2 text-white">
-                                    <input type="checkbox" id="hr-enable" class="w-5 h-5 rounded text-green-600 bg-gray-600 border-gray-500 focus:ring-green-500">
-                                    <span>Habilitar Hires. Fix</span>
-                                </label>
-                                <div id="hr-options" class="space-y-4 pt-2 border-t border-gray-700" style="display: none;">
-                                    <div>
-                                        <label for="hr-upscaler" class="label-base">Upscaler</label>
-                                        <select id="hr-upscaler" class="input-base"></select>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label for="hr-scale" class="label-base">Escala</label>
-                                            <input type="number" id="hr-scale" step="0.1" value="2.0" class="input-base">
-                                        </div>
-                                        <div>
-                                            <label for="hr-steps" class="label-base">Pasos Hires</label>
-                                            <input type="number" id="hr-steps" value="10" class="input-base">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="hr-denoising" class="label-base">Denoising Strength</label>
-                                        <input type="number" id="hr-denoising" step="0.05" min="0" max="1" value="0.7" class="input-base">
-                                    </div>
+                                <!-- (NUEVO) Restaurar Caras Dropdown -->
+                                <div>
+                                    <label for="face-restorer-t2i" class="label-base">Restaurar Caras</label>
+                                    <select id="face-restorer-t2i" class="input-base"></select>
                                 </div>
-                            </details>
-                    </div>
-                    
-                    <!-- Panel Img2Img -->
-                    <div id="panel-img2img" class="tab-panel">
-                        <h2 class="text-xl font-bold mb-4 text-white">Generar (Img2Img)</h2>
-                        
-                        <!-- Prompts con Autocomplete -->
-                        <div class="space-y-4">
-                            <!-- Prompt Positivo con Sugerencias -->
-                            <div class="relative">
-                                <label for="prompt-i2i" class="block text-sm font-medium text-gray-400 mb-2">Prompt Positivo</label>
-                                <textarea id="prompt-i2i" rows="4" class="input-base" placeholder="best quality, 1girl, ..."></textarea>
-                                <!-- Contenedor de Sugerencias de Tags para I2I -->
-                                <div id="tag-suggestions-i2i" class="tag-suggestions-container"></div>
-                            </div>
-                            
-                            <!-- Prompt Negativo -->
-                            <div>
-                                <label for="negative-prompt-i2i" class="block text-sm font-medium text-gray-400 mb-2">Prompt Negativo</label>
-                                <textarea id="negative-prompt-i2i" rows="4" class="input-base" placeholder="worst quality, ...">worst quality, low quality, lowres, (deformed, distorted, disfigured:1.3), bad anatomy, bad hands, (missing fingers), (extra fingers), (fused fingers), (extra limbs), (fused limbs), (missing limbs), (extra digit), (fused digit), (mutated hands:1.3), (poorly drawn hands:1.3), (poorly drawn face:1.3), (long neck:1.3), (extra legs)</textarea>
                             </div>
                         </div>
 
-                        <button id="generate-btn-img2img" class="generate-btn">Generar</button>
-
-                        <details open class="mt-4">
-                            <summary>Imagen de Origen</summary>
-                            <div class="details-content space-y-4">
-                                <label for="image-upload" class="label-base">Subir Imagen</label>
-                                <input type="file" id="image-upload" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-400 file:mr-4 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-600 file:text-gray-100 hover:file:bg-gray-500 cursor-pointer">
-                                <div class="bg-gray-900 rounded-lg border border-gray-700 min-h-[128px] flex items-center justify-center p-2">
-                                    <img id="image-preview" src="" alt="Vista previa" class="max-h-48 max-w-full h-auto hidden rounded">
-                                    <span id="image-preview-placeholder" class="text-gray-500 text-sm">Vista previa de la imagen</span>
+                        <!-- Hires. Fix -->
+                        <div class="content-card collapsible-card">
+                            <details id="hr-details-t2i">
+                                <summary>Hires. Fix</summary>
+                                <div id="hr-options-t2i" class="space-y-4 pt-4">
+                                    <div>
+                                        <label for="hr-upscaler-t2i" class="label-base">Upscaler</label>
+                                        <select id="hr-upscaler-t2i" class="input-base"></select>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="hr-scale-t2i" class="label-base">Escala</label>
+                                            <input type="number" id="hr-scale-t2i" step="0.1" value="2.0" class="input-base">
+                                        </div>
+                                        <div>
+                                            <label for="hr-steps-t2i" class="label-base">Pasos Hires</label>
+                                            <input type="number" id="hr-steps-t2i" value="10" class="input-base">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="hr-denoising-t2i" class="label-base">Denoising Strength</label>
+                                        <input type="number" id="hr-denoising-t2i" step="0.05" min="0" max="1" value="0.7" class="input-base">
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                        
+                        <!-- (NUEVO) ControlNet -->
+                        <div class="content-card collapsible-card">
+                            <details id="controlnet-details-t2i">
+                                <summary>ControlNet</summary>
+                                <div id="controlnet-options-t2i" class="space-y-4 pt-4">
+                                    <label for="controlnet-image-upload-t2i" class="label-base">Imagen de ControlNet</label>
+                                    <input type="file" id="controlnet-image-upload-t2i" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-400 file:mr-4 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-600 file:text-gray-100 hover:file:bg-gray-500 cursor-pointer">
+                                    <div class="image-preview-box">
+                                        <img id="controlnet-image-preview-t2i" src="" alt="Vista previa ControlNet">
+                                        <span id="controlnet-image-placeholder-t2i">Vista previa de ControlNet</span>
+                                    </div>
+                                    <div>
+                                        <label for="controlnet-module-t2i" class="label-base">Pre-procesador</label>
+                                        <select id="controlnet-module-t2i" class="input-base"></select>
+                                    </div>
+                                    <div>
+                                        <label for="controlnet-model-t2i" class="label-base">Modelo</label>
+                                        <select id="controlnet-model-t2i" class="input-base"></select>
+                                    </div>
+                                    <div>
+                                        <label for="controlnet-weight-t2i" class="label-base">Peso (Weight)</label>
+                                        <input type="number" id="controlnet-weight-t2i" step="0.1" value="1.0" class="input-base">
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                    
+                    <!-- ======================= -->
+                    <!-- Panel Img2Img -->
+                    <!-- ======================= -->
+                    <div id="panel-img2img" class="tab-panel">
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Imagen de Origen</h2>
+                            <div class="space-y-4">
+                                <label for="image-upload-i2i" class="label-base">Subir Imagen</label>
+                                <input type="file" id="image-upload-i2i" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-400 file:mr-4 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-600 file:text-gray-100 hover:file:bg-gray-500 cursor-pointer">
+                                <div class="image-preview-box">
+                                    <img id="image-preview-i2i" src="" alt="Vista previa" class="active">
+                                    <span id="image-preview-placeholder-i2i">Vista previa de la imagen</span>
+                                </div>
+                                <!-- (NUEVO) Botones de Interrogar y PNG Info -->
+                                <div class="btn-group">
+                                    <button id="interrogate-btn-i2i" class="btn-ui flex-1 gap-2" title="Interrogar Imagen (CLIP)">
+                                        <span class="material-icons-outlined">help_outline</span>
+                                        Interrogar
+                                    </button>
+                                    <button id="pnginfo-btn-i2i" class="btn-ui flex-1 gap-2" title="Leer Parámetros (PNG Info)">
+                                        <span class="material-icons-outlined">info</span>
+                                        PNG Info
+                                    </button>
                                 </div>
                                 <div>
                                     <label for="denoising-i2i" class="label-base">Denoising Strength</label>
                                     <input type="number" id="denoising-i2i" step="0.05" min="0" max="1" value="0.75" class="input-base">
                                 </div>
                             </div>
-                        </details>
+                        </div>
+
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Prompts</h2>
+                            <div class="space-y-4">
+                                <div class="relative">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label for="prompt-i2i" class="label-base" style="margin-bottom: 0;">Prompt Positivo</label>
+                                        <button class="btn-ui auto-prompt-btn" data-target="prompt-i2i" title="Generar Prompt Aleatorio">
+                                            <span class="material-icons-outlined" style="font-size: 20px;">auto_awesome</span>
+                                        </button>
+                                    </div>
+                                    <textarea id="prompt-i2i" rows="4" class="input-base" placeholder="best quality, 1girl, ..."></textarea>
+                                </div>
+                                <div>
+                                    <label for="negative-prompt-i2i" class="label-base">Prompt Negativo</label>
+                                    <textarea id="negative-prompt-i2i" rows="4" class="input-base" placeholder="worst quality, ...">worst quality, low quality, lowres, (deformed, distorted, disfigured:1.3), bad anatomy, bad hands, (missing fingers), (extra fingers), (fused fingers), (extra limbs), (fused limbs), (missing limbs), (extra digit), (fused digit), (mutated hands:1.3), (poorly drawn hands:1.3), (poorly drawn face:1.3), (long neck:1.3), (extra legs)</textarea>
+                                </div>
+                                <div>
+                                    <label for="styles-i2i" class="label-base">Estilos</label>
+                                    <select id="styles-i2i" class="input-base"></select>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Parámetros I2I -->
-                        <details class="mt-4">
-                            <summary>Parámetros Principales</summary>
-                            <div class="details-content space-y-4">
+                        <div class="content-card">
+                             <h2 class="text-xl font-bold mb-4 text-white">Parámetros</h2>
+                            <div class="space-y-4">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label for="model-i2i" class="label-base">Modelo</label>
+                                        <label for="model-i2i" class="label-base">Modelo (Checkpoint)</label>
                                         <select id="model-i2i" class="input-base"></select>
                                     </div>
                                     <div>
@@ -385,22 +575,24 @@
                                         <label for="lora-i2i" class="label-base">Loras</label>
                                         <select id="lora-i2i" class="input-base"></select>
                                     </div>
-                                    <button class="btn-secondary add-lora-btn text-sm px-3 py-2" data-target="prompt-i2i">Añadir Lora</button>
+                                    <button class="btn-ui add-lora-btn flex-shrink-0" data-target="prompt-i2i" title="Añadir Lora">
+                                        <span class="material-icons-outlined">add</span>
+                                    </button>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label for="width-i2i" class="label-base">Ancho Salida</label>
-                                        <input type="number" id="width-i2i" step="64" value="1080" class="input-base">
+                                        <input type="number" id="width-i2i" step="64" value="1024" class="input-base">
                                     </div>
                                     <div>
                                         <label for="height-i2i" class="label-base">Alto Salida</label>
-                                        <input type="number" id="height-i2i" step="64" value="1568" class="input-base">
+                                        <input type="number" id="height-i2i" step="64" value="1024" class="input-base">
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label for="steps-i2i" class="label-base">Pasos</label>
-                                        <input type="number" id="steps-i2i" value="15" class="input-base">
+                                        <input type="number" id="steps-i2i" value="20" class="input-base">
                                     </div>
                                     <div>
                                         <label for="cfg-i2i" class="label-base">CFG Scale</label>
@@ -416,81 +608,292 @@
                                         <label for="seed-i2i" class="label-base">Semilla (Seed)</label>
                                         <div class="flex gap-2">
                                             <input type="number" id="seed-i2i" value="-1" class="input-base">
-                                            <button id="random-seed-i2i" class="btn-ui w-1/4 flex-shrink-0" title="Semilla Aleatoria">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M17.65 17.65l-4.24 4.24a2 2 0 0 1-2.83 0l-4.24-4.24a2 2 0 0 1 0-2.83l.88-.88"/><path d="M13.25 13.25l-.88.88a2 2 0 0 1-2.83 0l-4.24-4.24a2 2 0 0 1 0-2.83l4.24-4.24a2 2 0 0 1 2.83 0l4.24 4.24a2 2 0 0 1 0 2.83l-4.24 4.24z"/></svg>
+                                            <button id="random-seed-i2i" class="btn-ui flex-shrink-0" title="Semilla Aleatoria">
+                                                <span class="material-icons-outlined">casino</span>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
+                                <div>
+                                    <label for="face-restorer-i2i" class="label-base">Restaurar Caras</label>
+                                    <select id="face-restorer-i2i" class="input-base"></select>
+                                </div>
                             </div>
-                        </details>
+                        </div>
+                        
+                        <!-- (NUEVO) ControlNet -->
+                        <div class="content-card collapsible-card">
+                            <details id="controlnet-details-i2i">
+                                <summary>ControlNet</summary>
+                                <div id="controlnet-options-i2i" class="space-y-4 pt-4">
+                                    <label for="controlnet-image-upload-i2i" class="label-base">Imagen de ControlNet</label>
+                                    <input type="file" id="controlnet-image-upload-i2i" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-400 file:mr-4 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-600 file:text-gray-100 hover:file:bg-gray-500 cursor-pointer">
+                                    <div class="image-preview-box">
+                                        <img id="controlnet-image-preview-i2i" src="" alt="Vista previa ControlNet">
+                                        <span id="controlnet-image-placeholder-i2i">Vista previa de ControlNet</span>
+                                    </div>
+                                    <div>
+                                        <label for="controlnet-module-i2i" class="label-base">Pre-procesador</label>
+                                        <select id="controlnet-module-i2i" class="input-base"></select>
+                                    </div>
+                                    <div>
+                                        <label for="controlnet-model-i2i" class="label-base">Modelo</label>
+                                        <select id="controlnet-model-i2i" class="input-base"></select>
+                                    </div>
+                                    <div>
+                                        <label for="controlnet-weight-i2i" class="label-base">Peso (Weight)</label>
+                                        <input type="number" id="controlnet-weight-i2i" step="0.1" value="1.0" class="input-base">
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                    <!-- ======================= -->
+                    <!-- (NUEVO) Panel Extras -->
+                    <!-- ======================= -->
+                    <div id="panel-extras" class="tab-panel">
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Subir Imagen para Escalar</h2>
+                            <div class="space-y-4">
+                                <label for="image-upload-extras" class="label-base">Subir Imagen</label>
+                                <input type="file" id="image-upload-extras" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-400 file:mr-4 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-600 file:text-gray-100 hover:file:bg-gray-500 cursor-pointer">
+                                <div class="image-preview-box">
+                                    <img id="image-preview-extras" src="" alt="Vista previa" class="active">
+                                    <span id="image-preview-placeholder-extras">Vista previa de la imagen</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Parámetros de Escalado</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="extras-upscaler-1" class="label-base">Upscaler 1</label>
+                                    <select id="extras-upscaler-1" class="input-base"></select>
+                                </div>
+                                <div>
+                                    <label for="extras-upscaler-2" class="label-base">Upscaler 2 (Opcional)</label>
+                                    <select id="extras-upscaler-2" class="input-base"></select>
+                                </div>
+                                <div>
+                                    <label for="extras-upscaler-2-visibility" class="label-base">Visibilidad Upscaler 2</label>
+                                    <input type="number" id="extras-upscaler-2-visibility" step="0.1" min="0" max="1" value="0.5" class="input-base">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="extras-resize-mode" class="label-base">Modo de Escalado</label>
+                                        <select id="extras-resize-mode" class="input-base">
+                                            <option value="0">Por Factor</option>
+                                            <option value="1">A Resolución</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="extras-scale-factor" class="label-base">Factor de Escalado</label>
+                                        <input type="number" id="extras-scale-factor" step="0.1" value="2.0" class="input-base">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="extras-width" class="label-base">Ancho (Modo 1)</label>
+                                        <input type="number" id="extras-width" step="64" value="1024" class="input-base">
+                                    </div>
+                                    <div>
+                                        <label for="extras-height" class="label-base">Alto (Modo 1)</label>
+                                        <input type="number" id="extras-height" step="64" value="1024" class="input-base">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="face-restorer-extras" class="label-base">Restaurar Caras</label>
+                                    <select id="face-restorer-extras" class="input-base"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ======================= -->
+                    <!-- (NUEVO) Panel Tagger -->
+                    <!-- ======================= -->
+                    <div id="panel-tagger" class="tab-panel">
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Generador de Tags (Tagger)</h2>
+                            <p class="text-sm text-gray-400 mb-4">Sube una imagen para obtener tags recomendados (usa el modelo WD-Tagger).</p>
+                            <gradio-app src="https://smilingwolf-wd-tagger.hf.space"></gradio-app>
+                        </div>
+                    </div>
+                    
+                    <!-- ======================= -->
+                    <!-- (NUEVO) Panel Config -->
+                    <!-- ======================= -->
+                    <div id="panel-config" class="tab-panel">
+                        <div class="content-card">
+                            <h2 class="text-xl font-bold mb-4 text-white">Sistema</h2>
+                            <button id="get-memory-btn" class="btn-ui w-full gap-2 font-medium py-3">
+                                <span class="material-icons-outlined">memory</span>
+                                Consultar Memoria (VRAM/RAM)
+                            </button>
+                            <pre id="memory-display" class="text-xs text-gray-300 mt-4 p-4 bg-gray-900 rounded-lg" style="display: none;"></pre>
+                        </div>
                     </div>
 
                 </div>
 
                 <!-- COLUMNA 2: RESULTADO -->
-                <div class="bg-[#1e1e1e] shadow-xl rounded-xl p-4 md:p-6 h-fit">
-                    <h2 class="text-xl font-bold mb-4 text-white">Resultado</h2>
-                    
-                    <!-- Mensaje de Estado -->
-                    <div id="status-message" class="text-center text-gray-400 mb-4">Listo para generar.</div>
+                <div class="h-fit sticky top-[70px]">
+                    <div class="content-card">
+                        <h2 class="text-xl font-bold mb-4 text-white">Resultado</h2>
+                        
+                        <!-- Mensaje de Estado -->
+                        <div id="status-message" class="text-center text-gray-400 mb-4">Listo para generar.</div>
 
-                    <!-- Barra de Progreso -->
-                    <div id="progress-container" class="mb-4" style="display: none;">
-                        <div class="w-full bg-[#2C2C2C] rounded-full h-2.5">
-                            <div id="progress-bar" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        <!-- Barra de Progreso -->
+                        <div id="progress-container" class="mb-4" style="display: none;">
+                            <div class="w-full bg-[#2C2C2C] rounded-full h-2.5">
+                                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%; transition: width 0.3s ease;"></div>
+                            </div>
+                            <span id="progress-label" class="text-xs text-gray-400 mt-1 block"></span>
                         </div>
-                        <span id="progress-label" class="text-xs text-gray-400 mt-1 block"></span>
-                    </div>
 
-                    <!-- Área de Resultado (Mobile-friendly) -->
-                    <!-- Contenedor con height/width flexible y object-fit: contain en la imagen -->
-                    <div id="image-container" class="mt-4 bg-[#121212] rounded-lg border border-[#2c2c2c] flex items-center justify-center p-2 relative">
-                        <img id="output-image" src="" alt="Imagen generada" class="max-w-full rounded-lg hidden shadow-md">
-                        <div id="placeholder" class="text-gray-500">La imagen generada aparecerá aquí</div>
-                    </div>
-                    
-                    <!-- Controles de Resultado -->
-                    <div class="flex flex-col sm:flex-row gap-4 mt-4">
-                        <button id="download-btn" class="flex-1 bg-[#424242] hover:bg-[#616161] text-white font-medium py-3 px-4 rounded-lg transition duration-200 ease-in-out" style="display: none;">
-                            Descargar Imagen
-                        </button>
-                        <button id="copy-metadata-btn" class="flex-1 bg-green-700 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition duration-200 ease-in-out" style="display: none;">
-                            Copiar Metadatos
-                        </button>
-                    </div>
+                        <!-- (NUEVO) Botones de Interrumpir/Saltar -->
+                        <div id="generation-controls" class="btn-group mb-4" style="display: none;">
+                            <button id="interrupt-btn" class="btn-ui interrupt-btn flex-1">
+                                <span class="material-icons-outlined">stop_circle</span>
+                                Interrumpir
+                            </button>
+                            <button id="skip-btn" class="btn-ui flex-1">
+                                <span class="material-icons-outlined">skip_next</span>
+                                Saltar
+                            </button>
+                        </div>
+                        
+                        <!-- Área de Resultado (Mobile-friendly) -->
+                        <div id="image-container" class="mt-4 bg-[#121212] rounded-lg border border-[#2c2c2c] flex items-center justify-center p-2 relative">
+                            <img id="output-image" src="" alt="Imagen generada" class="max-w-full rounded-lg hidden shadow-md">
+                            <div id="placeholder" class="text-gray-500">La imagen generada aparecerá aquí</div>
+                        </div>
+                        
+                        <!-- Controles de Resultado -->
+                        <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                            <button id="download-btn" class="flex-1 btn-ui font-medium py-3 gap-2" style="display: none;">
+                                <span class="material-icons-outlined">download</span>
+                                Descargar
+                            </button>
+                            <button id="copy-metadata-btn" class="flex-1 btn-ui font-medium py-3 gap-2" style="display: none; background-color: var(--accent-secondary); border-color: var(--accent-secondary);">
+                                <span class="material-icons-outlined">receipt_long</span>
+                                Copiar Metadatos
+                            </button>
+                        </div>
 
-                    <!-- Metadatos -->
-                    <div id="metadata-display" class="text-xs text-gray-300 hidden"></div>
+                        <!-- Metadatos -->
+                        <div id="metadata-display" class="text-xs text-gray-300 hidden whitespace-pre-wrap bg-gray-900 p-4 rounded-lg mt-4"></div>
+                    </div>
                 </div>
             </div>
         </main>
+        
+        <!-- (NUEVO) BOTÓN DE GENERAR FIJO (FAB) -->
+        <div id="footer-fab-container">
+            <button id="generate-btn-txt2img" class="generate-btn">
+                <span class="material-icons-outlined">auto_fix_high</span>
+                Generar
+            </button>
+            <button id="generate-btn-img2img" class="generate-btn" style="display: none;">
+                <span class="material-icons-outlined">auto_fix_high</span>
+                Generar
+            </button>
+            <button id="generate-btn-extras" class="generate-btn" style="display: none;">
+                <span class="material-icons-outlined">auto_fix_high</span>
+                Escalar
+            </button>
+        </div>
     </div>
 
     <script>
-        // --- Clases CSS Comunes (para JS) ---
-        const C_INPUT = "input-base";
-        const C_LABEL = "block text-sm font-medium text-gray-400 mb-2";
-        const C_BTN_PRIMARY = "generate-btn text-white";
-        const C_BTN_SECONDARY = "px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white font-medium rounded-lg transition duration-200 ease-in-out";
-
-        // Aplicar clases a elementos comunes para no repetirlas en HTML
-        document.addEventListener('DOMContentLoaded', () => {
-             document.querySelectorAll('.input-base').forEach(el => el.className = C_INPUT);
-             document.querySelectorAll('.label-base').forEach(el => el.className = C_LABEL);
-             document.querySelectorAll('.generate-btn').forEach(el => el.className = C_BTN_PRIMARY);
-             document.querySelectorAll('.btn-secondary').forEach(el => el.className = C_BTN_SECONDARY);
-        });
+        // --- (NUEVO) Generador de Prompts de ownerid.html ---
+        const AUTO_PROMPT_GENERATOR = {
+            tags: {
+                obligatorioCompleto: " (man:4) (male focus), ((1boy)), solo, (full body:1.2), masterpiece, <lora:Penis Bulge Slider_alpha1.0_rank4_noxattn_last:2> <lora:lightingSlider:-2> <lora:DetailerILv2:4> <lora:add-detail-xl:4> masterpiece, best quality, ultra-detailed, 8k resolution, high dynamic range, absurdres, stunningly beautiful, intricate details, sharp focus, cinematic color grading, high-resolution texture",
+                clothingOptions: {
+                    nude: ["(big penis:1.2)", "(erect penis:1.2)", "(flaccid penis:1.2)", "(penis:1.1)", "testicles", "nude", "uncensored", "(male pubic hair:1.2)", "foreskin", "dripping", "animal penis", "precum", "dog penis", "extreme big penis", "(big penis:1.2)", "(erect penis:1.2)", "(flaccid penis:1.2)", "(penis:1.1)", "testicles", "nude", "uncensored", "(male pubic hair:1.2)", "foreskin", "dripping", "animal penis", "precum", "dog penis", "extreme big penis", "(huge penis:1.3)", "(veiny penis:1.2)", "(circumcised penis:1.1)", "(uncircumcised penis:1.1)", "scrotum", "cumshot", "ejaculating", "semen", "(thick penis:1.2)", "(long penis:1.2)", "horse penis", "knot penis", "sheath", "pubic hair", "sweaty penis", "(pulsing penis:1.2)", "(bulbous glans:1.1)", "urethra", "penis bulge", "(erection:1.2)", "soft penis", "hard penis", "penis veins", "testicle hair", "animal genitalia", "zoo penis", "furry penis", "(massive penis:1.3)", "(hyper penis:1.4)", "dripping precum", "sticky penis", "glistening penis", "(curved penis:1.1)", "(straight penis:1.1)", "(red penis:1.1)", "wolf penis", "cat penis", "dragon penis"],
+                    underwear: ["(brief underwear:1.2)", "(thong:1.2)", "sexy bodysuit", "(jockstrap:1.2)", "(boxer briefs:1.2)", "harness", "chest harness", "socks", "white socks", "black male underwear", "white male underwear", "fundoshi", "(bulge:1.2)", "erection under clothes", "male swimwear", "see-through", "clothes pull", "pulled by self", "gloves", "fingerless gloves", "black gloves", "(athletic shorts:1.2)", "gym shorts", "running tights", "(compression shorts:1.2)", "(bike shorts:1.2)", "yoga pants", "leggings", "tights", "pantyhose", "stockings", "fishnet stockings", "garter belt", "suspenders", "corset", "bustier", "leather harness", "full body harness", "collar", "choker", "leash", "leather gloves", "latex gloves", "arm warmers", "leg warmers", "fingerless gloves", "red gloves", "white gloves", "knee socks", "thigh highs", "ankle socks", "crew socks", "no show socks", "striped socks", "argyle socks", "wool socks", "compression socks", "toe socks", "boots", "combat boots", "leather boots", "high heels", "platform shoes", "sneakers", "loafers", "sandals", "flip flops", "vest", "crop top", "tank top", "muscle shirt", "spandex bodysuit", "lycra suit", "wrestling singlet", "speedo", "trunks", "(boxers:1.2)", "loose boxers", "silk boxers", "cotton briefs", "low rise briefs", "high cut briefs", "lace underwear", "mesh underwear", "sheer underwear", "crotchless underwear", "see-through swimwear", "wet swimwear", "tight swimwear", "mankini", "posing pouch", "banana hammock", "c-string", "micro thong", "g-string", "satin thong", "leather thong", "wet clothes", "ripped clothes", "torn underwear", "shirt lift", "pants down", "undressing", "half dressed", "clothed male", "semi-nude", "transparent clothes", "clingy clothes", "form-fitting clothes", "bodycon outfit", "latex suit", "rubber harness", "chain harness", "metal collar", "spiked collar", "bow tie", "necktie", "cummerbund", "belt", "buckle"],
+                    outfits: ["socks", "sexy", ""]
+                },
+                kinkAndToys: ["", "anal", "dildo", "sex toy", "anal object insertion", "object insertion", "rating_explicit, solo yaoi, white tank top, sweating, blushing, heavy breathing, open mouth, laying on wood floor, legs spread open, parting buttcheeks, bottomless, creampied anus, cum trail, after-sex, male pubic hair, flaccid penis, testicles, wet clothes, blurry indoors room, anus facing viewer, oversized cropped off legs", "shibari bound arms behind back, gag ball, gag mouth, shibari bound, pubic hair, penis, flaccid, drip cum, cowboy shot", "genitals, male, bodily fluids, foreskin, penis, shiny skin, anal fingering, disembodied hands, on front, completely nude, spread anus, on bed", "(laying on back, legs over head, piledrive), open mouth, eating own cum, bent over, anus, cum in mouth, (ejaculating on face), completely naked, penis, testicles, bedroom, (male masturbation, ) side view, undercut, athletic, chest hair, armpit hair, extremely hairy chest, thick chest hair, thick armpit hair, vibrator in anus", "pain, scared, crying, male milking machine, pumps, ball gag, lactation, bdsm, milking machine, bound, kneeling", "red sweater, aran sweater, shirt lift, nipples, leaning, embarrassed, moaning, testicles, (cum in ass, excessive cum), yaoi, anal, 2boys, open mouth, rough sex, penis, sex, trembling, motion lines, size difference, nude larger man. larger man fucking boy, hardcore, faceless larger male, deep in ass, heavily excessive flooding cum, indoors, (lactation), stomach bulge", "muscular body shape, blushing smirk, open clothes, sweat soaking clothes, office suit, tie, white shirt, trousers, heavy sweating, (steaming: 1.3), visible_breath, visible cock, public_hair, crotch bulge, solo, BREAK, sitting, leg up, leg_crossed, feet closeup, man spreading, leaning on chair, BREAK, white socks, perfect feet, steamy_feet, sweaty_feet, BREAK, looking-at-viewer, looking at camera, long shot, side_view, BREAK, office background, office room", "1boy, male focus, soap on body, press the ass against the glass, press the balls against the glass, anus open, huge penis, large testicles, looking at viewer, indoors, shower, sho werroom, bathroom, muscular, cum shot, hairy anus, ass hair", "solo, (fully unzipped:1.4), (nipples:1.3), navel, (wolf onesie:1.4), (fluffy:1.2), (hood with ears:1.3), (tail:1.2), (paws:1.0), cozy, playful, luxury apartment, bedroom, white silk sheets, cosy, inviting, (looking at viewer:1.4), leaning back, reclined, male pubic hair, penis, erection, lying down on back, face up, supline, arms up, arm pits, hands behind head, flirty, smirk, tease, playful expression, smiling, laughing", "halo, multiple boys, angel, male focus, testicles, anus, horns, penis, wings, red eyes, green eyes, yaoi, 2boys, angel wings, cum, uncensored, open mouth, dark skin, feathered wings, ass, demon boy, looking back, dark-skinned male, blush, after sex, chain, gaping, pointy ears, brown hair, after anal, sweat, demon horns, cum in ass, sex, angel and devil, large penis, bare shoulders, veins, multiple penises, foreskin, smile, veiny penis, cumdrip, teeth, interracial", "naked chocolate, chocolate on penis, chocolate on body, chocolate on breasts, food on body, chocolate, nude, nipples, bed, on bed, on back, cowboy shot, dutch angle, ashamed, seductive pose, blush, smirk, cowboy shot", "male focus, blush, moaning, (hands bound), nude, nipples, tiny penis, anus, cumdrip, indoors, bed, top- down_bottom-up, bed room, on bed, kneeling, dutch angle, BREAK, (disembodied hands, male masturbation, dildo masturbation, grabbing dildo, anal masturbation, ) motion blur, motion lines, cumming, cum shot, (from below, ) from behind", "bed, naked, condom_on_penis, wearing_condom, solo, manly, low-angle, dutch_angle, dim light, condom_filling, close-up, lying_on_back, cum_in_condom, filled condom on penis, green condom, exhausted, panting, out of breath, gasping for air, satisfied", "open mouth, tongue, penis over eyes, penis on face, penis in front of eyes, upper body, close up, hand on anothers head, BREAK dark- skinned male, huge size difference, very dark skin, interracial, huge penis, extremely detailed penis, veiny penis, huge testicles","nude, low angle, dark, nighttime, dark room, BREAK 2boys, solo focus, adult, smug, naked, shiny skin, blushing, pov buttjob, ass, cumming, ass grab, long penis", "a topless young guy swimming in an inflatable toy by palm tree, male focus, shota, 1boy, penis, goggles, testicles, solo, goggles on head, innertube, on back, feet, looking at viewer, erection, from below, anus, penis focus", "male focus, solo, penis, balls, cock ring, flaccid, anus, ass, back, low angle, sweat, foreskin, ripped boxers, squatting, socks", "solo, t-shirt, (sleepy), standing, open mouth, no pants, (toothbrush, ) brushing teeth, holding toothbrush, bathroom, penis, foreskin, erection, precum, supported with one hand, bottomless", "rough sex, torso grab, yaoi, gay, (full nelson, anus penetrated, penis in anus, anal penetrated), male focus, naked, (man penetrated by gigantic (orc)), stomach bulge, (penis, erected, precum dripping), BREAK nude, drooling, saliva, saliva trail, bashful, blush lines, intense blushing, aroused face, angry, mad, nervous, heavy breathing, steamy, wet, excessive sweaty, motion lines, motion blur, speed lines", "solo, invert triangle body shape, penis tuck, excessive precum, pubic hair, (precum:1.2), dropping precum, testicles, masturbate, open mouth, (heavy breathing:1.1), blushing, angry, indoor, bedroom, from back, looking at viewer, back on bed, close- up, up close, sitting on floor carpet, (naked), clothes are on the floor, on front, anus, muscular back, male focus, indoors, motion lines, motion blur, speed lines", "in a trap, chained, chain on neck, BREAK, sex machine, fuck machine, anal penetration, sticking out tongue, floating hearts, mind control, pleasure, legs raised, focus on feet, soles", "nude, penis, veiny dick, testicles, pleasure expression, eyes looking up, BREAK pink thick tentacles, tentacles wraps around his asscheeks, tentacles spreading his legs, trapped, tight, BREAK dynamic angle, showing anus, (tentacle in anus, tentacle insertion, tentacles in anus, anal penetrated:1.4), ejaculating while penetrated, motion blur, motion lines, BREAK cumming, excessive cum, cum drip, overflow, excessive sweaty, wet, bashful, blush lines, intense blushing, aroused face, heavy breathing, steamy, angry, mad, ahegao, orgsam, climax, (double penetration, )", "solo, yaoi, pubic hair, armpit hair, blush, nude, navel, looking behind, from below, bondage, (spanking ass, body invasion:1.4), cum dripping, veiny penis, testicles, (very long scrotum skin:1.4), home, lying on sofa, back", "white shirt, short sleeves, collared shirt, pants, undressing. pubes. penis. uncut penis. foreskin. (supporting both hands). BREAK. ass, masturbating, (finger in anus, (anal fingering)). looking back. looking at viewer, saliva, penis, precum, testicles, dynamic pose, hand with 5 fingers, night. night time. indoors. classroom, \(place\). sweatdrop, smug.", "shirtless, swim trunks, beach, armpit hair, bent, open pants, flaccid, precum, from below, solo, all fours, :p, tongue out, open mouth, grin, from behind, upside down, penis, penis focus, pants down, anus, very hairy ass", "submissive, nude, (orgasm), penis, testicles, (handjob, disembodied hands), close-up, hands behind head, spread legs, (cum), ejaculation, screaming, looking away, (sound effects:1), moaning, tank top, (anal beads)", "baseball uniform, socks, Changing Room, Lockers, On Floor, Backs to Viewer, Hips Raised, Completely Naked, Sweaty, Object Insertion, Anal Insertion, Baseball ball, Shaking, penis, flaccid, Motion Lines, from behind, from below, close up, squatting", "uncensored, outdoors, night, against wall, graffiti, from below, 1boy, solo, toned, looking down at viewer, mouth mask, black hoodie, standing, pants pull, penis, erection, foreskin", "2boys, yaoi, furry, submissive man, in forest, sex from behind, deep penetration, sex with pain, pain sex tears, scared, recisiting sex, erect penis, testicles, overflowing semen, sex slave, slave collar, scars, BREAK, (1werewolf, black fur, black hair, ) grabbing pectorals, licking the cheek, hard fuking man", "gay, solo penis, flaccid, male, detailed background, crouched, squatting, arched_back, muscular male, masculine, anal_insertion, dildo_insertion, red dildo, riding dildo, back to viewer, lowered view, blushing, expressive face, cum, cumming, cum explosion, medieval background, dark room, warehouse", "man sitting naked on gaming chair, (fake livestream screenshot, livestream, livestream chat interface), penis, ballsack, spreading legs, anus, (holding nintendo switch), gaping anus, creampie, ejaculating, cumdrip, hairy anus, (excessive cum on body, excessive cum on face), blush, smile, shaking, yaoi, looking at viewer", "uncensored, totally naked, male focus, solo, penis, uncut, flaccid penis, nude, toned_male, pubic hair, white skin, tachi-e, standing, facing_viewer, full body, transparent_background, sprite sheet, multiple_views, front view, back view, persistent character, sprite sheet", "day, natural lighting, sweating, sweatdrop, male-anus focus, on all fours, looking back, moaning, presenting, heavy breathing, blushing, open mouth, closed eyes, completely nude, male pubic hair, flaccid veiny penis, testicles, brown anus, wet anus, hairy anus, leaking anal fluids, excessive anal fluids, legs apart, thick thighs, manly, solo, 1boy, simple plain red background, from below, dutch angle, (anal beads)", "solo, nsfw, yaoi, male focus, solo, light skin, santa hat, smirk, house, winter sky, christmas, giant gift box, relaxing, naked, body wrapped in ribbons, red ribbons, melted chocolate on body, holding hot cocoa, lying on sofa, night sky, penis, dripping_precum, cowboy shot", "solo, precum, sit on floor, feet focus, nipples, nude, sweating, ((lower view)), ((from below)), penis, shy, nipples, showing feet, feets, soles, feet focus, dirty socks, baseball cap, dirty body, gym room", "yellow duck onesie, open onese, bare chest, bedroom, Dark room, Cocky, Eyebags, sitting on bed, close up, erection under clothes", "solo, undershirt, long_sleeve_undershirt, (boxers down to knee, ) blush, lying on side, baseball field, best angle, feet, (anal fingering, penis, erection, pre-cum, ) motion blur, motion lines, fast speed lines, ass, saliva, open legs, spread legs, tree shadow, black-red baseball uniform, baseball black-red socks, baseball cap, no pants", "night, dark, naked, abs, torso, male nipples, navel, hands with five fingers, smal penis, tiny penis, testicles, erection, precum, pubic hair, hand behind head, standing, looking at viewer, annoyed, bored, bear hood, hood up, bear hoodie, after waking up, bad mood, holding water bottle", "//Base Prompt//, (pov, smartphone, smartphone border, recording, viewfinder, cellphone photo, phone interface, )", "sweating, blush, pectroals, nipples, public, completely naked, sweat drop, (fishnet thong), see-through fishnet thong, pubic peek, beach, smug, shiny skin, pubic hair, coconut tress, ocean, surfboard, toned_male, lewd, seductive_pose, cowboy shot", "closeup, front view, cowboy shot, low angle, from below, clutter, glossy skin, white shirt, blue tie, bottomless, excessive pubic hair, hairy legs, legs spread, flaccid penis, foreskin, teasing, looking at viewer, cocky grin, blush, black socks, sitting in office chair, visible anus, corporate office, precum string", "2boys, solo focus, aroused, blush, a face flushed with desire, humid, fog, half closed eyes, nude, face focus, close- up, penis, precum, sagging testicles, erection, penis on head, looking at another, drooling, in back alley, dark, night, testicle sucking, tongue out, portrait, motion line, grab head, side view", "solo, male_focus, nude, penis, testicles, hand on another's chin, looking at viewer, eye contact, angry, anger_vein, open mouth, cum in mouth, tongue out, from above, after oral sex, cum on face", "nude, topless, nsfw, large pecs, [spiral eyes], open mouth, head tilt, spoken questionmark, expressionless, mind control, hypnosis, (mind control app, hypnosis app, spiral, phone, ) indoors, modern, faceless man, BREAK, looking up, looking at viewer, (black dog ears, animal collar, choker, black dog tail, ) sitting, indoors, male pubic hair, penis, flaccid, precum, blush, 2 boys, yaoi, squatting cowgirl position, cowgirl position, white man fuck man, anal sex, boy on top, BREAK, pow pose, blush, happy face, heart bubble, heart pupil, spoken heart, ), background is (bedroom, on bed, ), motion blur, motion lines, fast speed lines, thrusting", "nude, topless, nsfw, large pecs, [spiral eyes], open mouth, head tilt, spoken questionmark, expressionless, mind control, hypnosis, (mind control app, hypnosis app, spiral, phone, ) indoors, modern, faceless man, BREAK, looking up, looking at viewer, dog ears, animal collar, choker, dog tail, indoors, male pubic hair, penis, flaccid, precum, blush, cumming, moaning, top-down_bottom-up, anal sex, fluids, yaoi, (faceless man, dark-skinned man, dark-skinned man off screen), huge cock, male pubic hair, hairy legs, fast speed lines, motion blur, side view", "solo, nude, restrained by a metal sex machine, man on top of a huge wooden stick with a base and a metal sex machine connected to a huge wooden stick, arms up, bound wrists, bound ankles, bound stomach, bound thighs, bound legs, stationary restraints, anal object insertion and standing, (sex machine, ) small penis, testicles, viewfinder, ejaculation, precum drip, lots of cum, hairy legs, cum on legs, from below, (fast speed lines, motion blur, motion lines, ) cowboy shot", "solo, sweat, lying on stomach, on sand, testicles, feet, ass, soles, nude, smile, anus, looking back, lying, foot focus, long penis, precum, barefoot, looking at viewer, beach, sand, sea shells, sand on body, seafoam, foreshortening", "pov, pleasure face, blush, nude, male pubic hair, dark penis, (foreskin:1.2), veiny penis, licking penis, twitching penis, precum, testicles, saliva on penis, wet penis, handjob, fast speed lines, motion blur, leg hair, grab head", "farm barn, blush, sweat, eyes half closed, milkup, kneeling, male pubic hair, penis, cum on one hand, cupping hand, cum on hair, cum on chest, ejaculation, cum in bucket, milk pails in background, handjob, motion lines on hand, cum in mouth, nude, cowboy shot, BREAK, animal, 1horse, horse penis, testicles), licking penis", "solo, looking back, spoken questionmark, medium bulge, (penis bulge), camo tank top, camo jockstrap, perineum, sweaty, feet, stinky, musk, ass, anus, on stomach, on bed, one leg bent, feets, closed mouth, dot mouth, holding cellphone", "solo, collared white shirt, open shirt, black pants, (torn shirt, torn pants, torn clothes), sweat, shiny skin, bruise, injury, cuts, angry, pubic hair, penis peek, blood, looking at viewer, musk, convenient censoring, bound, tape bondage, body wrapped in caution tape, arms behind head, pecs, tape gag, BREAK simple white background, caution tape, shade, shadow, (surrounded by multiple caution tape:1.2), BREAK dynamic pose, dramatic lighting, depth of field, blurry foreground, bloom, chiaroscuro, upper body", "blush, moaning, anus, 2boys, yaoi, bestiality, brown fur, brown hair, minotaur, nude, ass, (horse penis, erection, dripping precum), testicles, imminent_anal, looking at viewer, hug, posing, motion lines, barn, upright straddle, upright cowgirl position, excited, ^^^, looking at viewer, shocked expression, awkward face", "solo focus, blush, oversized hoodie, dark-gray hoodie, hood up, long sleeves, small penis, erection, foreskin, sagging testicles, cock ring, seductive smile, parted lips, teeth, (lift own clothes, pecs, nipples, ) looking at viewer, blushing, from below, sit on couch, tiles, dripping precum, nipple rings, nipple chain, (disembodied hand, (caressing_testicles))", "solo, abs, blush, dark skin, topless, tribal necklace, scratching head, small penis, dog penis:1.3, cock ring, (knotted penis), pubic hair, navel hair, chest hair, legs hair, sagging testicles, precum, armpit, perspective, wink, grin, sweat, erect nipples, wristband, tribal clothing, fur gauntlets, rope belt, armband, thigh strap, fingerless gloves, choker, shirtless, tribal tattoo, scar, wolf ears, wolf tail, outdoors, hand on hips", "nude, partially submerged, pubic hair, penis, flaccid, lying, testicles, armpit hair peek, wet skin, shiny skin, contemplating, looking away, parted lips, BREAK lake, sacred, mysterious, dreamlike, fantastic, moonlight, water, blue flowers, vibrant flowers, glowing butterflies, flower effects, water reflections, refraction, too many butterflies, too many flowers, moonlight, starry sky, bioluminescence, BREAK cinematic, dynamic pose, dynamic angle, natural lighting, smooth shading, glossy surfaces, subtle, high contrast, dark depth, real background, colorful depth, colorful lighting, dutch angle, beautiful atmosphere, muted colors, cinematic composition, heavily textured impasto oil painting, dark, violet theme, erotic, sexy pose", "closed eyes, saliva, blush, moaning, bondage, restrained, (hands bound), nude, nipples, penis, anus, ejaculation, projectile cum, feets, soles, legs bound, indoors, bed, top- down_bottom-up, bedroom, on bed, open legs, (on one knee), dutch angle, BREAK, disembodied hands, anal object insertion, grabbing dildo, anal masturbation, motion blur, motion lines, dripping cum from ass, cum on testicles, (from below, ) from behind", "sharp teeth, smile, happy, solo, at the crossroads, BREAK, mummy halloween costume, bandaged body, bandages on torso, bandages on arms, bandages on legs, penis, partially bandaged penis, jack-o- lanterns by feet, naked bandage, zombie, colored skin, stitches, grey skin, stitched face, zombie pose, halloween, halloween costume, night, moon, graveyard, tombstone, grave, open mouth, looking at viewer. sit on tombstone, precum drip"],
+                characterTypes: ["", "demon", "angel", "gnome", "monster", "elf", "orc", "vampire", "werewolf", "cyborg", "android", "alien", "fairy", "goblin", "dwarf", "centaur", "minotaur", "ghost", "zombie", "elemental", "satyr", "robot", "harpy", "nephilim", "construct", "demon boy", "mature male", "dark-skinned male", "wolf boy", "furry", "furry male", "androide man"],
+                bodyAndPose: ["", "(muscular:1.2)", "(bara:1.1)", "toned", "large pectorals", "abs", "(thighs:1.1)", "thick thighs", "ass", "back", "chest hair", "facial hair", "beard", "hairy", "veins", "scar", "shiny skin", "wet", "armpits", "collarbone", "navel", "standing", "sitting", "lying", "on stomach", "on back", "spread legs", "looking at viewer", "looking back", "from behind", "cowboy shot", "arm up", "arms up", "undressing", "ass focus", "feet", "toes", "barefoot", "smile", "blue eyes", "red eyes", "white hair", "thick eyebrows", "hands on own hips", "from below", "one eye covered", "solo, mojang"],            
+                sceneAndDetails: ["", "indoors", "outdoors", "poolside", "water", "simple background", "white background", "red background", "yellow background", "chair", "bed", "on bed", "pillow", "day", "shadow", "tentacles", "horns", "wings", "tail", "wolf ears", "animal ears", "wolf tail", "tattoo", "arm tattoo", "jewelry", "earrings", "restrained", "bound", "short hair", "long hair", "medium hair", "undercut", "ponytail", "black hair", "brown hair", "blush", "artist name", "signature", "bandages", "mask", "eyepatch"],
+                eras: ["", "1400s", "1500s", "1700s", "90s", "archaic", "chenla", "fantastic realism", "joseon dynasty", "yoruba", "renaissance", "baroque", "victorian era", "edwardian era", "art nouveau", "art deco", "cyberpunk era", "stone age", "bronze age", "roman empire"],
+                textures: ["", "3d fractals", "animal prints", "blistered", "blotchy", "brittle", "brushed", "bumpy", "chalky", "chipped", "chiseled", "coarse", "corded", "corky", "corroded", "cracked", "creased", "crinkled", "crumbly", "crusty", "elastic", "embossed", "embroidered", "feathery", "fibrous", "flaky", "fluffy", "frosted", "furrowed", "fuzzy", "glistening", "glittering", "glossy", "glowing", "granular", "gritty", "honeycombed", "iridescent", "jagged", "knitted", "leathery", "lustrous", "marbled", "matte", "metallic", "gelatinous", "powdery", "woven", "mossy", "pitted", "plush", "polished", "porous", "prickly", "ribbed", "rough", "rusted", "sandy", "scaly", "shining", "shiny", "silky", "slick", "slimy", "smooth", "sparkling", "spongy", "stained", "suede-like", "veined", "velvety", "viscous", "wavy", "weathered", "(gloss skin:2.5), (skin texture:1.4), (husband:1.1), (dynamic pose:2), high angle, real color tones, natural beauty, real life, photo, normal photo, camera, shadow, (pronounced bukeh effect:2), real, in love, detailed skin, ultra high quality hair, ultra detailed hair, ultra high quality nails,, (Street Art:1), graffiti tags, urban wall, spray texture, (Banksy aesthetic:1), (Vaporwave Aesthetic AI:2.5), (pastel gradients), (neon outlines:1.2), classical marble statues, (retro 80s arcade feel:2), tropical plants, hazy lighting, nostalgic digital art, (VHS filter), (geometric forms:1), SmoothNoob_Quality", "photorealistic, cinematic lighting, atmospheric, highly detailed, masterpiece,<LoRA:Cute_Emerald-V3:1.3>,<LoRA:MJ52:0.8>, (gloss skin:2.5), (skin texture:1.4), (husband:1.1),(character sketch:2.5), (multiple poses:4), (white background:2), (concept art:1.8), (dynamic poses:1.7), (line art:1.8), (character design:2), (full body views:1.5), (front side back:1.7), (clean lines:1.8), (minimalist:1.5), (highly detailed:2), (8k resolution:1.8), (same character:5)", "(cubist painting:2.5), (geometric shapes:2), (abstract forms:1.8), (Picasso style:2), (surrealist:2), (dream-like elements:1.7), (strange juxtapositions:1.5), (impressionist painting:2), (soft brush strokes:1.8), (vibrant colors:2), (glowing tones:1.5), (pop art:2.5), (bold colors:2), (iconic imagery:1.8), (geometric forms:1.7), (art nouveau:2), (flowing lines:1.8), (floral motifs:2), (elegant curves:1.5), (organic lines:1.7)", "(skin texture:1.4), (husband:3.6), (dynamic pose:2),(Enhanced stunning erotic beauty:3), (digitally enhanced:3), digital makeup, (beauty filters:4), Photoshop, masterpiece, best quality, ultra-detailed, 8k, cinematic, (hyperrealistic ethereal porcelain:2), (subsurface scattering:1), (ambient occlusion:3.1), (global illumination:3.1), (volumetric lighting:3.1), dynamic lighting, realistic materials, photorealism, soft (cinematic glow:2), (ultra detail glossy:2), enhance texture, (post-reallife realism:2.3), (perfect artificial creation:2.1), (virtualization reality:2), (motion graphics:1.1), Art Deco, geometric elegance, gold chrome, (1920s luxury style:3), (Drip Painting:1.1), paint splatter, (Jackson Pollock inspired chaos:4), (energetic brushwork:3.5), expressive texture, (Unreal Engine Render:1.3), (hyper-realistic 3D:3.4), (cinematic lighting:3.4), (game engine aesthetic:2), detailed textures, (physically based rendering (PBR):1), (atmospheric effects:3.3), (high polygon count:2), realistic subsurface scattering, (polished render:2.5), (dramatic shadows:3)", "(anime style render:2.4), Street Art, graffiti tags, urban wall, spray texture, (Banksy aesthetic:3), (Hyperrealistic Surrealism:4.1), impossibly sharp focus, dreamlike elements, distorted reality, uncanny valley, detailed textures, (bizarre juxtapositions:2.5), vibrant yet unsettling colors, (psychologically charged scene:3), (fine art realism with a twist:5), (steampunk:3.3)", "Photorealism, hyper-detailed painting, lifelike shadows, crisp realism, studio lighting, (Digital Impressionism:2), painterly brushstrokes, vibrant color fields, soft edges, ethereal light, digital paint texture, modern interpretation of light and atmosphere, atmospheric perspective, expressive brushwork, blurred forms", "moody atmosphere:1.4, standing in a rain-soaked alley with wet cobblestones, leaning against a brick wall, cigarette in hand, (genitalia bulge:1.5), (prominent genitalia bulge:1.4), ( etailed male crotch:1.3), low angle shot, dynamic composition, volumetric fog, <lora:lightingSlider:-1.4>, score_9, score_8_up, score_7_up"],
+                colors: ["ablaze colors", "apricot color", "aqua colors", "ash gray", "auburn color", "baby blue", "baby pink", "beaming colors", "beige colors", "black and white", "bleached colors", "blood red", "blue violet", "bold colors", "bright colors", "bronze colors", "brown", "burgundy colors", "burnt sienna", "canary yellow", "candy colors", "cerulean blue", "chartreuse color", "chestnut color", "cobalt blue", "cold colors", "colorful", "colorless", "cool colors", "coral color", "crimson red", "cyan", "danish pastel colors", "dark colors", "deep colors", "desaturated", "dim colors", "earth tones", "electric blue", "electric colors", "fiery colors", "fluorescent colors", "forest green", "golden yellow", "gradient colors", "hot pink", "hunter green", "indigo", "ivory", "monochromatic", "triadic colors", "analogous colors", "complementary colors", "viridian", "celadon", "vermilion", "lavender blush", "light colors", "lime colors", "magenta color", "mahogany", "maroon", "mauve", "midnight blue", "mint color", "mocha", "muted colors", "navy blue", "neon colors", "neutral colors", "olive color", "orange red", "pale colors", "pastel colors", "peach color", "pink color", "platinum color", "prismatic colors", "prussian blue", "radiant colors", "red", "retro colors", "rich colors", "rose color", "royal blue", "sepia colors", "silver colors", "sky blue", "slate gray", "smoky black", "spectrum colors", "spring green", "tan color", "taupe", "teal", "technicolor", "tropical colors", "turquoise color", "vantablack", "vibrant colors", "vintage colors", "violet", "vivid colors", "warm colors", "washed out colors"],
+                themes: ["", "academicism", "acid pixie", "acidwave", "adventurecore", "afrofuturism", "agropunk", "anachronism", "astropunk", "atompunk", "autumn", "biopunk", "bloomcore", "bohemian", "bronzepunk", "byzantine", "chaotic", "contemporary realism", "cosmic horror", "crusaderpunk", "crustpunk", "cybergoth", "dark fantasy", "dark nautical", "decopunk", "dieselpunk", "dreamy", "emo", "ethereal", "evil-theme", "extraterrestrial", "fairytale", "fantasy", "farmcore", "flowercore", "futuristic", "goblincore", "gothic", "hallyu", "happycore", "haunting", "hikecore", "lo-fi", "magic-realism", "mannerism", "mythology", "orientalism", "prehistoricore", "rainbowcore", "retro", "retrofuturism", "robotic", "romanticism", "solarpunk", "minimalism", "maximalism", "bioluminescent", "slimepunk", "socialist realism", "space opera", "sparklecore", "spring", "steampunk", "summer", "synthwave", "tiki", "tribal art", "tropical", "urbancore", "vaporwave", "winter", "witchcore", "wonderland"],
+                compositions: ["", "full body character design", "wide shot", "game assets", "album cover", "book cover", "brand identity", "character sheet", "coloring book page", "comic strip", "commercial ad", "diagram", "enamel pin", "fashion mockup", "flowchart", "game UI", "house plan", "icon set", "infographic", "interior design", "jewelry design", "knolling", "logo design", "magazine cover", "menu design", "mood board", "poster", "propaganda poster", "seamless pattern", "golden ratio", "rule of thirds", "isometric view", "blueprint schematic", "architectural drawing", "technical illustration", "concept art", "storyboard"],
+                extra: ["ultra detail", "ultra realism", "cinematic", "photorealistic", "no reflection", "perfect details", "volumetric lighting", "depth of field", "caustics", "god rays", "soft lighting", "hard lighting", "dramatic lighting", "subsurface scattering", "realistic"],
+            },
+            getRandomElement: function(arr) {
+                return arr[Math.floor(Math.random() * arr.length)];
+            },
+            generatePrompt: function() {
+                const promptParts = [];
+                promptParts.push(this.tags.obligatorioCompleto);
+                const clothingChoice = Math.random();
+                if (clothingChoice < 0.4) {
+                    const primaryNudeTag = this.getRandomElement(this.tags.clothingOptions.nude);
+                    promptParts.push(primaryNudeTag);
+                    if (Math.random() < 0.5) {
+                        let secondaryNudeTag;
+                        do {
+                            secondaryNudeTag = this.getRandomElement(this.tags.clothingOptions.nude);
+                        } while (secondaryNudeTag === primaryNudeTag);
+                        promptParts.push(secondaryNudeTag);
+                    }
+                } else if (clothingChoice < 0.8) {
+                    promptParts.push(this.getRandomElement(this.tags.clothingOptions.underwear));
+                } else {
+                    promptParts.push(this.getRandomElement(this.tags.clothingOptions.outfits));
+                }
+                const selectedCharacterType = this.getRandomElement(this.tags.characterTypes); 
+                const selectedKinkAndToys = this.getRandomElement(this.tags.kinkAndToys);
+                const selectedBodyAndPose = this.getRandomElement(this.tags.bodyAndPose);
+                const selectedSceneAndDetails = this.getRandomElement(this.tags.sceneAndDetails);
+                const selectedTexture = this.getRandomElement(this.tags.textures);
+                const selectedColor = this.getRandomElement(this.tags.colors);
+                const selectedTheme = this.getRandomElement(this.tags.themes);
+                const selectedComposition = this.getRandomElement(this.tags.compositions);
+                const selectedExtra = this.getRandomElement(this.tags.extra);
+                const selectedEra = this.getRandomElement(this.tags.eras);
+                if (selectedCharacterType) promptParts.push(selectedCharacterType);
+                if (selectedKinkAndToys && Math.random() < 0.25) {
+                    promptParts.push(selectedKinkAndToys);
+                }
+                if (selectedBodyAndPose) promptParts.push(selectedBodyAndPose);
+                if (selectedSceneAndDetails) promptParts.push(selectedSceneAndDetails);
+                if (selectedTexture) promptParts.push(`${selectedTexture} texture`);
+                if (selectedColor) promptParts.push(`${selectedColor} palette`);
+                if (selectedTheme) promptParts.push(`${selectedTheme} ambient`);
+                if (selectedComposition) promptParts.push(`${selectedComposition} style`);
+                if (selectedExtra) promptParts.push(selectedExtra);
+                if (selectedEra) promptParts.push(selectedEra);
+                return promptParts.join(', ');
+            }
+        };
 
         // --- Estado Global ---
         const G_STATE = {
             gradioUrl: '',
             samplers: [], models: [], vaes: [], schedulers: [], loras: [], upscalers: [],
+            styles: [], faceRestorers: [], // (NUEVO)
+            controlNetModels: [], controlNetModules: [], // (NUEVO)
             progressInterval: null,
             isGenerating: false,
-            uploadedImageBase64: null,
+            uploadedImageBase64: { // (NUEVO) Objeto para múltiples imágenes
+                i2i: null,
+                extras: null,
+                controlNetT2I: null,
+                controlNetI2I: null
+            },
             tagSearchTimeout: null,
-            lastMetadata: '' // Almacenar el último metadata generado
+            lastMetadata: '',
+            currentConfig: {} 
         };
 
         // --- Elementos de la UI ---
@@ -505,33 +908,38 @@
         const downloadBtn = document.getElementById('download-btn');
         const copyMetadataBtn = document.getElementById('copy-metadata-btn');
         const metadataDisplay = document.getElementById('metadata-display');
+        const refreshResourcesBtn = document.getElementById('refresh-resources-btn');
         
         // --- Progreso ---
         const progressContainer = document.getElementById('progress-container');
+        const generationControls = document.getElementById('generation-controls');
+        const interruptBtn = document.getElementById('interrupt-btn');
+        const skipBtn = document.getElementById('skip-btn');
         
-        // --- Botones ---
+        // --- Botones de Generar (FAB) ---
         const generateTxt2ImgBtn = document.getElementById('generate-btn-txt2img');
         const generateImg2ImgBtn = document.getElementById('generate-btn-img2img');
-
-        // --- Img2Img Upload ---
-        const imageUpload = document.getElementById('image-upload');
-        const imagePreview = document.getElementById('image-preview');
-        const imagePreviewPlaceholder = document.getElementById('image-preview-placeholder');
+        const generateExtrasBtn = document.getElementById('generate-btn-extras');
+        const allGenerateBtns = [generateTxt2ImgBtn, generateImg2ImgBtn, generateExtrasBtn];
 
         // --- Prompts y Tags ---
         const promptT2I = document.getElementById('prompt-t2i');
         const promptI2I = document.getElementById('prompt-i2i');
-        const tagSuggestionsT2I = document.getElementById('tag-suggestions-t2i');
-        const tagSuggestionsI2I = document.getElementById('tag-suggestions-i2i');
-
-        // --- Selectores (Dropdowns) ---
-        const E_SELECTORS = {
+        
+        // --- (NUEVO) Selectores (Dropdowns) ---
+        const E_SELECTORS_NODES = {
             model: [document.getElementById('model-t2i'), document.getElementById('model-i2i')],
             vae: [document.getElementById('vae-t2i'), document.getElementById('vae-i2i')],
             sampler: [document.getElementById('sampler-t2i'), document.getElementById('sampler-i2i')],
             scheduler: [document.getElementById('scheduler-t2i'), document.getElementById('scheduler-i2i')],
             lora: [document.getElementById('lora-t2i'), document.getElementById('lora-i2i')],
-            hrUpscaler: [document.getElementById('hr-upscaler')]
+            styles: [document.getElementById('styles-t2i'), document.getElementById('styles-i2i')],
+            faceRestorer: [document.getElementById('face-restorer-t2i'), document.getElementById('face-restorer-i2i'), document.getElementById('face-restorer-extras')],
+            hrUpscaler: [document.getElementById('hr-upscaler-t2i')],
+            extrasUpscaler1: [document.getElementById('extras-upscaler-1')],
+            extrasUpscaler2: [document.getElementById('extras-upscaler-2')],
+            controlNetModel: [document.getElementById('controlnet-model-t2i'), document.getElementById('controlnet-model-i2i')],
+            controlNetModule: [document.getElementById('controlnet-module-t2i'), document.getElementById('controlnet-module-i2i')],
         };
         
         // --- Helpers de UI ---
@@ -560,13 +968,35 @@
             button.disabled = false;
             button.innerHTML = originalText;
         }
-        
+
         function setGenerateButtons(disabled) {
-            G_STATE.isGenerating = disabled;
-            generateTxt2ImgBtn.disabled = disabled;
-            generateImg2ImgBtn.disabled = disabled;
+            allGenerateBtns.forEach(btn => btn.disabled = disabled);
+        }
+        
+        function showGenerationProgress(button) {
+            G_STATE.isGenerating = true;
+            setGenerateButtons(true);
+            generationControls.style.display = 'flex';
+            
+            button.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generando...
+            `;
         }
 
+        function hideGenerationProgress(button, originalText) {
+            G_STATE.isGenerating = false;
+            setGenerateButtons(false);
+            generationControls.style.display = 'none';
+            button.innerHTML = `
+                <span class="material-icons-outlined">auto_fix_high</span>
+                ${originalText}
+            `;
+        }
+        
         function toggleAppVisibility(show) {
             splashScreen.style.display = show ? 'none' : 'flex';
             appContainer.style.display = show ? 'block' : 'none';
@@ -609,28 +1039,24 @@
                 throw error;
             }
         }
-
-        // --- Lógica Principal de Conexión ---
-        connectBtn.addEventListener('click', async () => {
-            G_STATE.gradioUrl = urlInput.value.trim().replace(/\/$/, '');
-            if (!G_STATE.gradioUrl || !G_STATE.gradioUrl.startsWith('https://')) {
-                showInitialStatus('Por favor, ingresa una URL válida que comience con "https://"', true);
-                return;
-            }
-
-            const originalText = connectBtn.innerHTML;
-            showLoading(connectBtn);
-            showInitialStatus('Conectando y cargando recursos...');
-
+        
+        // --- Lógica de Carga de Recursos (¡¡AMPLIADA!!) ---
+        async function loadAndPopulateResources(isRefresh = false) {
+            showStatus('Cargando recursos (modelos, loras...)...', false);
             try {
-                // Se hace el fetch inicial de todos los recursos
-                const [models, samplers, schedulers, vaes, loras, upscalers] = await Promise.all([
+                G_STATE.currentConfig = await apiGet('/sdapi/v1/options');
+
+                const [models, samplers, schedulers, vaes, loras, upscalers, styles, faceRestorers, cnModels, cnModules] = await Promise.all([
                     apiGet('/sdapi/v1/sd-models'),
                     apiGet('/sdapi/v1/samplers'),
                     apiGet('/sdapi/v1/schedulers'),
                     apiGet('/sdapi/v1/sd-vae'),
                     apiGet('/sdapi/v1/loras'),
-                    apiGet('/sdapi/v1/upscalers')
+                    apiGet('/sdapi/v1/upscalers'),
+                    apiGet('/sdapi/v1/prompt-styles'), // (NUEVO)
+                    apiGet('/sdapi/v1/face-restorers'), // (NUEVO)
+                    apiGet('/controlnet/model_list').then(d => d.model_list), // (NUEVO)
+                    apiGet('/controlnet/module_list').then(d => d.module_list) // (NUEVO)
                 ]);
 
                 G_STATE.models = models;
@@ -639,101 +1065,186 @@
                 G_STATE.vaes = vaes;
                 G_STATE.loras = loras;
                 G_STATE.upscalers = upscalers;
+                G_STATE.styles = styles; // (NUEVO)
+                G_STATE.faceRestorers = faceRestorers; // (NUEVO)
+                G_STATE.controlNetModels = cnModels; // (NUEVO)
+                G_STATE.controlNetModules = cnModules; // (NUEVO)
 
                 // Rellenar Selectores
-                populateSelect(E_SELECTORS.model, models, 'name', 'title');
-                populateSelect(E_SELECTORS.sampler, samplers, 'name', 'name');
-                populateSelect(E_SELECTORS.scheduler, schedulers, 'name', 'label');
-                populateSelect(E_SELECTORS.vae, vaes, 'model_name', 'model_name', 'Automatic');
-                populateSelect(E_SELECTORS.lora, loras, 'name', 'name', "None");
-                populateSelect(E_SELECTORS.hrUpscaler, upscalers, 'name', 'name');
+                populateSelect(E_SELECTORS_NODES.model, models, 'name', 'title', null, G_STATE.currentConfig.sd_model_checkpoint);
+                populateSelect(E_SELECTORS_NODES.sampler, samplers, 'name', 'name', null, G_STATE.currentConfig.sampler_name);
+                populateSelect(E_SELECTORS_NODES.scheduler, schedulers, 'name', 'label', null, G_STATE.currentConfig.scheduler);
+                populateSelect(E_SELECTORS_NODES.vae, vaes, 'model_name', 'model_name', 'Automatic', G_STATE.currentConfig.sd_vae);
+                populateSelect(E_SELECTORS_NODES.lora, loras, 'name', 'name', "None");
+                
+                // (NUEVO) Rellenar nuevos selectores
+                populateSelect(E_SELECTORS_NODES.styles, styles, 'name', 'name', "None");
+                populateSelect(E_SELECTORS_NODES.faceRestorer, faceRestorers, 'name', 'name', "None", G_STATE.currentConfig.face_restoration_model);
+                populateSelect(E_SELECTORS_NODES.hrUpscaler, upscalers, 'name', 'name', null, G_STATE.currentConfig.hr_upscaler);
+                populateSelect(E_SELECTORS_NODES.extrasUpscaler1, upscalers, 'name', 'name', "None");
+                populateSelect(E_SELECTORS_NODES.extrasUpscaler2, upscalers, 'name', 'name', "None");
+                populateSelect(E_SELECTORS_NODES.controlNetModel, cnModels, val => val, val => val, "None");
+                populateSelect(E_SELECTORS_NODES.controlNetModule, cnModules, val => val, val => val, "None");
 
-                // Aplicar valores por defecto (1080x1568, 15 pasos)
-                document.getElementById('width-t2i').value = '1080';
-                document.getElementById('height-t2i').value = '1568';
-                document.getElementById('steps-t2i').value = '15';
-                document.getElementById('width-i2i').value = '1080';
-                document.getElementById('height-i2i').value = '1568';
-                document.getElementById('steps-i2i').value = '15';
+                showStatus('Recursos cargados. ¡Listo!', false);
+                
+            } catch (error) {
+                const errorMsg = `Error al cargar recursos: ${error.message}. Asegúrate de que ControlNet está instalado si hay errores con 'controlnet'.`;
+                if (appContainer.style.display === 'none') {
+                    showInitialStatus(errorMsg, true);
+                } else {
+                    showStatus(errorMsg, true);
+                }
+                throw error;
+            }
+        }
+        
+        async function refreshResources() {
+            if (G_STATE.isGenerating) {
+                showStatus('No se puede refrescar mientras se procesa.', true);
+                return;
+            }
 
-                // Transición a la aplicación principal
+            const originalText = refreshResourcesBtn.innerHTML;
+            refreshResourcesBtn.disabled = true;
+            refreshResourcesBtn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            showStatus('Refrescando listas en el servidor...', false);
+
+            try {
+                await Promise.all([
+                    apiPost('/sdapi/v1/refresh-checkpoints', {}),
+                    apiPost('/sdapi/v1/refresh-loras', {}),
+                    apiPost('/sdapi/v1/refresh-vae', {})
+                ]);
+                showStatus('Listas refrescadas. Recargando en la UI...', false);
+                await loadAndPopulateResources(true); // true = es un refresco
+                showStatus('¡Recursos actualizados!', false);
+            } catch (error) {
+                showStatus(`Error al refrescar: ${error.message}`, true);
+            } finally {
+                refreshResourcesBtn.disabled = false;
+                refreshResourcesBtn.innerHTML = originalText;
+            }
+        }
+
+        // --- Lógica Principal de Conexión ---
+        connectBtn.addEventListener('click', async () => {
+            let url = urlInput.value.trim().replace(/\/$/, '');
+            if (!url || !url.startsWith('https://')) {
+                showInitialStatus('Por favor, ingresa una URL válida que comience con "https://"', true);
+                return;
+            }
+            G_STATE.gradioUrl = url;
+            localStorage.setItem('gradioUrl', url); 
+            const originalText = connectBtn.innerHTML;
+            showLoading(connectBtn); 
+            showInitialStatus('Conectando y cargando recursos...');
+
+            try {
+                await loadAndPopulateResources(false); 
                 toggleAppVisibility(true);
-                showStatus('¡Conectado! Listo para generar. (Versión Móvil)', false);
+                showStatus('¡Conectado! Listo para generar.', false);
 
             } catch (error) {
-                showInitialStatus(`Error al cargar recursos. Detalle: ${error.message}`, true);
+                showInitialStatus(`Error al conectar. Verifica la URL y la consola.`, true);
             } finally {
-                hideLoading(connectBtn, originalText);
+                hideLoading(connectBtn, originalText); 
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUrl = localStorage.getItem('gradioUrl');
+            if (savedUrl) {
+                urlInput.value = savedUrl;
             }
         });
 
-        // Función para poblar un <select>
-        function populateSelect(selectElements, items, valueKey, textKey, firstOption) {
+        refreshResourcesBtn.addEventListener('click', refreshResources);
+
+        // (MODIFICADO) populateSelect ahora acepta funciones para value/text
+        function populateSelect(selectElements, items, valueKey, textKey, firstOption, selectedValue) {
+            if (!items) return;
             selectElements.forEach(selectElement => {
+                if (!selectElement) return;
+                const currentValue = selectElement.value; 
                 selectElement.innerHTML = '';
                 
                 if (firstOption) {
                     const option = document.createElement('option');
-                    option.value = firstOption;
+                    option.value = (firstOption === "None" || firstOption === "Automatic") ? firstOption : "";
                     option.textContent = firstOption;
                     selectElement.appendChild(option);
                 }
                 
-                if (items.length === 0 && !firstOption) {
-                    selectElement.innerHTML = `<option value="">No se encontraron items</option>`;
-                    return;
-                }
-                
                 items.forEach(item => {
                     const option = document.createElement('option');
-                    option.value = item[valueKey];
-                    option.textContent = item[textKey] || item[valueKey];
+                    const value = typeof valueKey === 'function' ? valueKey(item) : item[valueKey];
+                    const text = typeof textKey === 'function' ? textKey(item) : item[textKey];
+                    
+                    option.value = value;
+                    option.textContent = text || value;
                     selectElement.appendChild(option);
                 });
 
-                if (selectElement.id.includes('sampler')) {
-                    const defaultSampler = Array.from(selectElement.options).find(o => o.value === 'DPM++ 2M Karras');
-                    if (defaultSampler) selectElement.value = 'DPM++ 2M Karras';
+                if (selectedValue && Array.from(selectElement.options).some(o => o.value === selectedValue)) {
+                    selectElement.value = selectedValue;
+                } else if (currentValue && Array.from(selectElement.options).some(o => o.value === currentValue)) {
+                    selectElement.value = currentValue; 
                 }
             });
         }
 
-        // --- Lógica de Pestañas ---
+        // --- Lógica de Pestañas (¡¡AMPLIADA!!) ---
         const tabButtons = {
             txt2img: document.getElementById('tab-btn-txt2img'),
             img2img: document.getElementById('tab-btn-img2img'),
+            extras: document.getElementById('tab-btn-extras'),
+            tagger: document.getElementById('tab-btn-tagger'),
+            config: document.getElementById('tab-btn-config'),
         };
         const tabPanels = {
             txt2img: document.getElementById('panel-txt2img'),
             img2img: document.getElementById('panel-img2img'),
+            extras: document.getElementById('panel-extras'),
+            tagger: document.getElementById('panel-tagger'),
+            config: document.getElementById('panel-config'),
         };
 
         function switchTab(targetTab) {
             Object.keys(tabButtons).forEach(key => {
-                const isActive = key === targetTab;
-                tabButtons[key].classList.toggle('active', isActive);
+                tabButtons[key].classList.toggle('active', key === targetTab);
             });
             Object.keys(tabPanels).forEach(key => {
-                 const isActive = key === targetTab;
-                tabPanels[key].classList.toggle('active', isActive);
+                tabPanels[key].classList.toggle('active', key === targetTab);
             });
+            
+            // Lógica del FAB
+            generateTxt2ImgBtn.style.display = (targetTab === 'txt2img') ? 'flex' : 'none';
+            generateImg2ImgBtn.style.display = (targetTab === 'img2img') ? 'flex' : 'none';
+            generateExtrasBtn.style.display = (targetTab === 'extras') ? 'flex' : 'none';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             Object.keys(tabButtons).forEach(key => {
                 tabButtons[key].addEventListener('click', () => switchTab(key));
             });
-            // Hires. fix starts hidden
-            document.getElementById('hr-options').style.display = document.getElementById('hr-enable').checked ? 'block' : 'none';
-            
-            // Asegurar que solo Txt2Img esté activo al cargar
-            switchTab('txt2img');
+            switchTab('txt2img'); // Empezar en Txt2Img
+
+            // Listeners para auto-prompt
+            document.querySelectorAll('.auto-prompt-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = e.currentTarget.dataset.target;
+                    const targetTextarea = document.getElementById(targetId);
+                    if (targetTextarea) {
+                        targetTextarea.value = AUTO_PROMPT_GENERATOR.generatePrompt();
+                        targetTextarea.scrollTop = targetTextarea.scrollHeight;
+                        targetTextarea.focus();
+                    }
+                });
+            });
         });
 
-        document.getElementById('hr-enable').addEventListener('change', (e) => {
-            document.getElementById('hr-options').style.display = e.target.checked ? 'block' : 'none';
-        });
-        
         // --- Lógica de Seed Aleatoria ---
         document.getElementById('random-seed-t2i').addEventListener('click', () => {
             document.getElementById('seed-t2i').value = -1;
@@ -741,159 +1252,55 @@
         document.getElementById('random-seed-i2i').addEventListener('click', () => {
             document.getElementById('seed-i2i').value = -1;
         });
-
-
-        // --- Lógica de Autocompletado de Tags ---
         
-        function getLastWord(text, cursorPosition) {
-            const trimmed = text.substring(0, cursorPosition);
-            // Busca la última coma, paréntesis o espacio
-            const match = trimmed.match(/[^,()\s]*$/);
-            return match ? match[0] : '';
-        }
-
-        async function fetchTagSuggestions(currentWord, promptElement, suggestionsContainer) {
-            if (currentWord.length < 2) {
-                suggestionsContainer.style.display = 'none';
-                return;
-            }
-
-            try {
-                // Endpoint para buscar tags reales (requiere Tagger/other extension)
-                const data = await apiPost('/sdapi/v1/tag-search', {
-                    tag: currentWord,
-                    limit: 10
-                });
-
-                suggestionsContainer.innerHTML = '';
-                if (data && data.tags && data.tags.length > 0) {
-                    data.tags.forEach(tag => {
-                        const div = document.createElement('div');
-                        div.className = 'tag-suggestion-item';
-                        div.textContent = tag.name;
-                        div.addEventListener('click', (e) => {
-                            e.preventDefault(); 
-                            e.stopPropagation(); 
-                            selectTag(tag.name, promptElement, suggestionsContainer);
-                        });
-                        suggestionsContainer.appendChild(div);
-                    });
-                    suggestionsContainer.style.display = 'block';
-                } else {
-                    suggestionsContainer.style.display = 'none';
-                }
-
-            } catch (error) {
-                // Ignorar error si la API no está disponible (ej. Tagger no instalado)
-                suggestionsContainer.style.display = 'none';
-            }
-        }
-
-        function selectTag(tag, promptElement, suggestionsContainer) {
-            const fullText = promptElement.value;
-            const cursorPosition = promptElement.selectionStart;
-            
-            // Reemplazar la palabra parcial por el tag completo
-            const startOfWordIndex = fullText.substring(0, cursorPosition).search(/[^,()\s]*$/);
-            const newText = fullText.substring(0, startOfWordIndex) + tag + ', ' + fullText.substring(cursorPosition);
-
-            promptElement.value = newText;
-            
-            // Mover el cursor al final del tag + ', '
-            const newCursorPosition = startOfWordIndex + tag.length + 2; 
-            
-            // Usar setTimeout para asegurar que el foco se mantenga
-            setTimeout(() => {
-                promptElement.focus();
-                promptElement.setSelectionRange(newCursorPosition, newCursorPosition);
-            }, 0);
-
-            suggestionsContainer.style.display = 'none';
-        }
-
-        function handlePromptInput(event) {
-            clearTimeout(G_STATE.tagSearchTimeout);
-            
-            const promptElement = event.target;
-            const suggestionsContainer = promptElement.id === 'prompt-t2i' ? tagSuggestionsT2I : tagSuggestionsI2I;
-            const cursorPosition = promptElement.selectionStart;
-            const currentWord = getLastWord(promptElement.value, cursorPosition);
-            
-            if (currentWord.length >= 2) {
-                G_STATE.tagSearchTimeout = setTimeout(() => {
-                    fetchTagSuggestions(currentWord, promptElement, suggestionsContainer);
-                }, 300); // Pequeño delay para no saturar la API
-            } else {
-                suggestionsContainer.style.display = 'none';
-            }
-        }
-        
-        // Asignar listeners de input
-        promptT2I.addEventListener('input', handlePromptInput);
-        promptI2I.addEventListener('input', handlePromptInput);
-        
-        // CORRECCIÓN CRÍTICA: Ocultar sugerencias al hacer clic en cualquier lugar fuera de ellas.
-        document.addEventListener('click', (event) => {
-            // Verificar T2I
-            const isT2IPrompt = promptT2I.contains(event.target);
-            const isT2ISuggestion = tagSuggestionsT2I.contains(event.target);
-            if (!isT2IPrompt && !isT2ISuggestion) {
-                tagSuggestionsT2I.style.display = 'none';
-            }
-            
-            // Verificar I2I
-            const isI2IPrompt = promptI2I.contains(event.target);
-            const isI2ISuggestion = tagSuggestionsI2I.contains(event.target);
-            if (!isI2IPrompt && !isI2ISuggestion) {
-                tagSuggestionsI2I.style.display = 'none';
-            }
-        });
-        
-        // 8. Añadir Lora al Prompt
+        // --- Añadir Lora al Prompt ---
         document.querySelectorAll('.add-lora-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetId = btn.dataset.target;
                 const promptInput = document.getElementById(targetId);
                 const loraSelectId = targetId.replace('prompt', 'lora');
                 const selectedLora = document.getElementById(loraSelectId).value;
-                
                 if (!selectedLora || selectedLora === "None") return;
-                
-                // Añadir el Lora al final y dar foco
                 promptInput.value += ` <lora:${selectedLora}:1> `;
                 promptInput.focus();
-                
-                // Desplazar el cursor al final del texto.
                 const newCursorPosition = promptInput.value.length;
                 promptInput.setSelectionRange(newCursorPosition, newCursorPosition);
             });
         });
         
-        // 9. Manejo de Subida de Imagen (Img2Img)
-        imageUpload.addEventListener('change', function(e) {
+        // --- (NUEVO) Manejo de Subida de Imagen (Generalizado) ---
+        function handleImageUpload(e, previewId, placeholderId, stateKey) {
             const file = e.target.files[0];
+            const previewEl = document.getElementById(previewId);
+            const placeholderEl = document.getElementById(placeholderId);
+            
             if (!file) {
-                G_STATE.uploadedImageBase64 = null;
-                imagePreview.classList.add('hidden');
-                imagePreviewPlaceholder.classList.remove('hidden');
+                G_STATE.uploadedImageBase64[stateKey] = null;
+                previewEl.classList.remove('active');
+                placeholderEl.classList.remove('hidden');
                 return;
             }
-            
             const reader = new FileReader();
             reader.onloadend = () => {
                 const dataUrl = reader.result;
-                imagePreview.src = dataUrl;
-                imagePreview.classList.remove('hidden');
-                imagePreviewPlaceholder.classList.add('hidden');
-                G_STATE.uploadedImageBase64 = dataUrl.split(',')[1];
+                previewEl.src = dataUrl;
+                previewEl.classList.add('active');
+                placeholderEl.classList.add('hidden');
+                G_STATE.uploadedImageBase64[stateKey] = dataUrl; // Guardar con prefijo data:
             };
             reader.readAsDataURL(file);
-        });
+        }
+
+        // Asignar listeners de subida de imagen
+        document.getElementById('image-upload-i2i').addEventListener('change', (e) => handleImageUpload(e, 'image-preview-i2i', 'image-preview-placeholder-i2i', 'i2i'));
+        document.getElementById('image-upload-extras').addEventListener('change', (e) => handleImageUpload(e, 'image-preview-extras', 'image-preview-placeholder-extras', 'extras'));
+        document.getElementById('controlnet-image-upload-t2i').addEventListener('change', (e) => handleImageUpload(e, 'controlnet-image-preview-t2i', 'controlnet-image-placeholder-t2i', 'controlNetT2I'));
+        document.getElementById('controlnet-image-upload-i2i').addEventListener('change', (e) => handleImageUpload(e, 'controlnet-image-preview-i2i', 'controlnet-image-placeholder-i2i', 'controlNetI2I'));
+
         
-        // --- Lógica de Copiar Metadatos ---
+        // --- Copiar Metadatos ---
         copyMetadataBtn.addEventListener('click', () => {
             if (G_STATE.lastMetadata) {
-                // navigator.clipboard.writeText() puede fallar en iframes, usar document.execCommand('copy')
                 const tempTextArea = document.createElement('textarea');
                 tempTextArea.value = G_STATE.lastMetadata;
                 document.body.appendChild(tempTextArea);
@@ -909,7 +1316,7 @@
         });
 
 
-        // 10. Lógica de Progreso
+        // --- Lógica de Progreso (MODIFICADA) ---
         function startProgressCheck() {
             if (G_STATE.progressInterval) return;
             progressContainer.style.display = 'block';
@@ -920,7 +1327,6 @@
             
             G_STATE.progressInterval = setInterval(async () => {
                 if (!G_STATE.isGenerating) {
-                    // Ya se terminó, salir del intervalo
                     stopProgressCheck();
                     return;
                 }
@@ -928,14 +1334,14 @@
                     const data = await apiGet('/sdapi/v1/progress');
                     if (data.progress > 0) {
                         const percent = Math.round(data.progress * 100);
-                        document.getElementById('progress-bar').style.width = `${percent}%`;
+                        progressBar.style.width = `${percent}%`;
                         const step = data.state.sampling_step || 0;
                         const steps = data.state.sampling_steps || 0;
-                        document.getElementById('progress-label').textContent = `${percent}% (${step}/${steps}) - ETA: ${data.eta_relative.toFixed(1)}s`;
+                        progressLabel.textContent = `${percent}% (${step}/${steps}) - ETA: ${data.eta_relative.toFixed(1)}s`;
                     }
                     if (data.progress === 0 && data.state.job !== '') {
-                         document.getElementById('progress-bar').style.width = '5%';
-                         document.getElementById('progress-label').textContent = 'Esperando en la cola...';
+                         progressBar.style.width = '5%';
+                         progressLabel.textContent = 'Esperando en la cola...';
                     }
                 } catch (e) {
                     console.error("Error al consultar progreso:", e.message);
@@ -946,28 +1352,249 @@
         function stopProgressCheck() {
             clearInterval(G_STATE.progressInterval);
             G_STATE.progressInterval = null;
-            // Ocultar barra de progreso después de un pequeño retraso visual
             setTimeout(() => {
                  progressContainer.style.display = 'none';
             }, 1000);
         }
 
-        // 11. Lógica de Generación
+        // --- (NUEVO) Controles de Generación ---
+        async function handleInterrupt() {
+            showStatus('Enviando solicitud de interrupción...', false);
+            try {
+                await apiPost('/sdapi/v1/interrupt', {});
+                showStatus('Interrupción solicitada.', false);
+            } catch (e) {
+                showStatus(`Error al interrumpir: ${e.message}`, true);
+            }
+        }
+        interruptBtn.addEventListener('click', handleInterrupt);
+        
+        async function handleSkip() {
+            showStatus('Enviando solicitud de salto...', false);
+            try {
+                await apiPost('/sdapi/v1/skip', {});
+                showStatus('Salto solicitado.', false);
+            } catch (e) {
+                showStatus(`Error al saltar: ${e.message}`, true);
+            }
+        }
+        skipBtn.addEventListener('click', handleSkip);
+
+        // --- (NUEVO) Herramientas de Imagen ---
+        async function handleInterrogate() {
+            if (!G_STATE.uploadedImageBase64.i2i) {
+                showStatus('Sube una imagen en Img2Img primero.', true);
+                return;
+            }
+            showStatus('Interrogando imagen (CLIP)...', false);
+            try {
+                const payload = {
+                    "image": G_STATE.uploadedImageBase64.i2i, // Debe incluir "data:image/..."
+                    "model": "clip" // Puedes cambiar a "deepbooru" si lo prefieres
+                };
+                const result = await apiPost('/sdapi/v1/interrogate', payload);
+                if (result.caption) {
+                    promptI2I.value = result.caption;
+                    showStatus('Prompt generado desde la imagen.', false);
+                }
+            } catch (e) {
+                showStatus(`Error al interrogar: ${e.message}`, true);
+            }
+        }
+        document.getElementById('interrogate-btn-i2i').addEventListener('click', handleInterrogate);
+        
+        async function handlePngInfo() {
+            if (!G_STATE.uploadedImageBase64.i2i) {
+                showStatus('Sube una imagen generada en Img2Img primero.', true);
+                return;
+            }
+            showStatus('Leyendo metadatos PNG Info...', false);
+            try {
+                const payload = {
+                    "image": G_STATE.uploadedImageBase64.i2i.split(',')[1] // PNG Info requiere base64 puro
+                };
+                const result = await apiPost('/sdapi/v1/png-info', payload);
+                if (result.info) {
+                    metadataDisplay.textContent = result.info;
+                    metadataDisplay.classList.remove('hidden');
+                    G_STATE.lastMetadata = result.info;
+                    showStatus('Metadatos leídos con éxito.', false);
+                    
+                    // (Opcional) Intentar rellenar la UI
+                    // Esto es complejo, por ahora solo mostramos la info.
+                    if (result.parameters && result.parameters.Prompt) {
+                        promptI2I.value = result.parameters.Prompt;
+                    }
+                    if (result.parameters && result.parameters["Negative prompt"]) {
+                        document.getElementById('negative-prompt-i2i').value = result.parameters["Negative prompt"];
+                    }
+                    // ... etc ...
+                    
+                }
+            } catch (e) {
+                showStatus(`Error al leer PNG Info: ${e.message}`, true);
+            }
+        }
+        document.getElementById('pnginfo-btn-i2i').addEventListener('click', handlePngInfo);
+        
+        // --- (NUEVO) Pestaña de Configuración ---
+        async function handleGetMemory() {
+            const btn = document.getElementById('get-memory-btn');
+            const display = document.getElementById('memory-display');
+            btn.disabled = true;
+            display.style.display = 'block';
+            display.textContent = 'Consultando...';
+            
+            try {
+                const result = await apiGet('/sdapi/v1/memory');
+                const ram = result.ram;
+                const cuda = result.cuda;
+                
+                const formatBytes = (bytes) => (bytes / (1024**3)).toFixed(2) + ' GB';
+                
+                let text = `RAM (Sistema):\n`;
+                text += `  Total: ${formatBytes(ram.total)}\n`;
+                text += `  Usada: ${formatBytes(ram.used)}\n`;
+                text += `  Libre: ${formatBytes(ram.free)}\n\n`;
+                
+                text += `VRAM (CUDA):\n`;
+                text += `  Total: ${formatBytes(cuda.total)}\n`;
+                text += `  Usada: ${formatBytes(cuda.used)}\n`;
+                text += `  Libre: ${formatBytes(cuda.free)}\n`;
+                
+                display.textContent = text;
+                
+            } catch (e) {
+                display.textContent = `Error al consultar memoria:\n${e.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        document.getElementById('get-memory-btn').addEventListener('click', handleGetMemory);
+
+
+        // --- Lógica de Generación (¡¡MUY MODIFICADA!!) ---
         async function handleGeneration(mode) {
             if (G_STATE.isGenerating) return;
-            setGenerateButtons(true);
+            
             startProgressCheck();
             
             let payload;
             let endpoint;
+            let button;
+            let buttonText;
             
-            const button = mode === 'txt2img' ? generateTxt2ImgBtn : generateImg2ImgBtn;
-            const originalText = button.innerHTML;
-            showLoading(button);
+            // --- Construir Payload Base ---
+            const buildBasePayload = (prefix) => {
+                const p = {
+                    "prompt": document.getElementById(`prompt-${prefix}`).value,
+                    "negative_prompt": document.getElementById(`negative-prompt-${prefix}`).value,
+                    "styles": [document.getElementById(`styles-${prefix}`).value].filter(s => s && s !== "None"),
+                    "sampler_name": document.getElementById(`sampler-${prefix}`).value,
+                    "scheduler": document.getElementById(`scheduler-${prefix}`).value,
+                    "steps": parseInt(document.getElementById(`steps-${prefix}`).value, 10),
+                    "cfg_scale": parseFloat(document.getElementById(`cfg-${prefix}`).value),
+                    "width": parseInt(document.getElementById(`width-${prefix}`).value, 10),
+                    "height": parseInt(document.getElementById(`height-${prefix}`).value, 10),
+                    "n_iter": parseInt(document.getElementById(`batch-count-${prefix}`).value, 10),
+                    "batch_size": 1, 
+                    "seed": parseInt(document.getElementById(`seed-${prefix}`).value, 10),
+                    "restore_faces": document.getElementById(`face-restorer-${prefix}`).value !== "None",
+                    "send_images": true,
+                    "save_images": false,
+                    "override_settings": {
+                        "sd_model_checkpoint": document.getElementById(`model-${prefix}`).value,
+                        "sd_vae": document.getElementById(`vae-${prefix}`).value,
+                        "face_restoration_model": document.getElementById(`face-restorer-${prefix}`).value
+                    },
+                    "alwayson_scripts": {}
+                };
+                return p;
+            };
             
-            // Ocultar cualquier sugerencia de tags que pudiera haber quedado abierta
-            tagSuggestionsT2I.style.display = 'none';
-            tagSuggestionsI2I.style.display = 'none';
+            // --- (NUEVO) Construir Payload de ControlNet ---
+            const buildControlNetPayload = (prefix) => {
+                const cnDetails = document.getElementById(`controlnet-details-${prefix}`);
+                if (!cnDetails || !cnDetails.open) return null; // No añadir si está cerrado
+                
+                const image = G_STATE.uploadedImageBase64[prefix === 't2i' ? 'controlNetT2I' : 'controlNetI2I'];
+                if (!image) return null; // No añadir si no hay imagen
+
+                return {
+                    "args": [
+                        {
+                            "input_image": image.split(',')[1], // Base64 puro
+                            "module": document.getElementById(`controlnet-module-${prefix}`).value,
+                            "model": document.getElementById(`controlnet-model-${prefix}`).value,
+                            "weight": parseFloat(document.getElementById(`controlnet-weight-${prefix}`).value),
+                        }
+                    ]
+                };
+            };
+
+            // --- Seleccionar Modo ---
+            if (mode === 'txt2img') {
+                button = generateTxt2ImgBtn;
+                buttonText = "Generar";
+                payload = buildBasePayload('t2i');
+                
+                // Hires. Fix
+                const hrDetails = document.getElementById('hr-details-t2i');
+                if (hrDetails && hrDetails.open) {
+                    payload.enable_hr = true;
+                    payload.hr_scale = parseFloat(document.getElementById('hr-scale-t2i').value);
+                    payload.hr_upscaler = document.getElementById('hr-upscaler-t2i').value;
+                    payload.hr_second_pass_steps = parseInt(document.getElementById('hr-steps-t2i').value, 10);
+                    payload.denoising_strength = parseFloat(document.getElementById('hr-denoising-t2i').value); 
+                }
+                
+                // ControlNet
+                const cnPayload = buildControlNetPayload('t2i');
+                if (cnPayload) payload.alwayson_scripts.controlnet = cnPayload;
+                
+                endpoint = '/sdapi/v1/txt2img';
+                
+            } else if (mode === 'img2img') {
+                if (!G_STATE.uploadedImageBase64.i2i) {
+                    showStatus('Por favor, sube una imagen de origen primero.', true);
+                    return;
+                }
+                button = generateImg2ImgBtn;
+                buttonText = "Generar";
+                payload = buildBasePayload('i2i');
+                payload.init_images = [ G_STATE.uploadedImageBase64.i2i ];
+                payload.denoising_strength = parseFloat(document.getElementById('denoising-i2i').value);
+                
+                // ControlNet
+                const cnPayload = buildControlNetPayload('i2i');
+                if (cnPayload) payload.alwayson_scripts.controlnet = cnPayload;
+                
+                endpoint = '/sdapi/v1/img2img';
+
+            } else if (mode === 'extras') {
+                if (!G_STATE.uploadedImageBase64.extras) {
+                    showStatus('Sube una imagen en la pestaña Extras primero.', true);
+                    return;
+                }
+                button = generateExtrasBtn;
+                buttonText = "Escalar";
+                payload = {
+                    "image": G_STATE.uploadedImageBase64.extras.split(',')[1], // Base64 puro
+                    "resize_mode": parseInt(document.getElementById('extras-resize-mode').value, 10),
+                    "upscaling_resize": parseFloat(document.getElementById('extras-scale-factor').value),
+                    "upscaling_resize_w": parseInt(document.getElementById('extras-width').value, 10),
+                    "upscaling_resize_h": parseInt(document.getElementById('extras-height').value, 10),
+                    "upscaler_1": document.getElementById('extras-upscaler-1').value,
+                    "upscaler_2": document.getElementById('extras-upscaler-2').value,
+                    "extras_upscaler_2_visibility": parseFloat(document.getElementById('extras-upscaler-2-visibility').value),
+                    "gfpgan_visibility": document.getElementById('face-restorer-extras').value === "GFPGAN" ? 1 : 0,
+                    "codeformer_visibility": document.getElementById('face-restorer-extras').value === "CodeFormer" ? 1 : 0,
+                    "codeformer_weight": 0.5, // Podrías añadir un slider para esto
+                };
+                endpoint = '/sdapi/v1/extra-single-image';
+            }
+
+            showGenerationProgress(button);
             
             // Ocultar resultados anteriores
             downloadBtn.style.display = 'none';
@@ -977,109 +1604,43 @@
             placeholder.classList.remove('hidden');
 
             try {
-                if (mode === 'txt2img') {
-                    payload = {
-                        "prompt": promptT2I.value,
-                        "negative_prompt": document.getElementById('negative-prompt-t2i').value,
-                        "sampler_name": document.getElementById('sampler-t2i').value,
-                        "scheduler": document.getElementById('scheduler-t2i').value,
-                        "steps": parseInt(document.getElementById('steps-t2i').value, 10),
-                        "cfg_scale": parseFloat(document.getElementById('cfg-t2i').value),
-                        "width": parseInt(document.getElementById('width-t2i').value, 10),
-                        "height": parseInt(document.getElementById('height-t2i').value, 10),
-                        "n_iter": parseInt(document.getElementById('batch-count-t2i').value, 10),
-                        "batch_size": 1, 
-                        "seed": parseInt(document.getElementById('seed-t2i').value, 10),
-                        "override_settings": {
-                            "sd_model_checkpoint": document.getElementById('model-t2i').value,
-                            "sd_vae": document.getElementById('vae-t2i').value
-                        },
-                        "send_images": true,
-                        "save_images": false
-                    };
-                    
-                    if (document.getElementById('hr-enable').checked) {
-                        payload.enable_hr = true;
-                        payload.hr_scale = parseFloat(document.getElementById('hr-scale').value);
-                        payload.hr_upscaler = document.getElementById('hr-upscaler').value;
-                        payload.hr_second_pass_steps = parseInt(document.getElementById('hr-steps').value, 10);
-                        payload.denoising_strength = parseFloat(document.getElementById('hr-denoising').value); 
-                    }
-                    endpoint = '/sdapi/v1/txt2img';
-                    
-                } else if (mode === 'img2img') {
-                    if (!G_STATE.uploadedImageBase64) {
-                        throw new Error('Por favor, sube una imagen de origen primero.');
-                    }
-                    payload = {
-                        "init_images": [G_STATE.uploadedImageBase64],
-                        "prompt": promptI2I.value,
-                        "negative_prompt": document.getElementById('negative-prompt-i2i').value,
-                        "sampler_name": document.getElementById('sampler-i2i').value,
-                        "scheduler": document.getElementById('scheduler-i2i').value,
-                        "steps": parseInt(document.getElementById('steps-i2i').value, 10),
-                        "cfg_scale": parseFloat(document.getElementById('cfg-i2i').value),
-                        "width": parseInt(document.getElementById('width-i2i').value, 10),
-                        "height": parseInt(document.getElementById('height-i2i').value, 10),
-                        "n_iter": parseInt(document.getElementById('batch-count-i2i').value, 10),
-                        "batch_size": 1, 
-                        "seed": parseInt(document.getElementById('seed-i2i').value, 10),
-                        "denoising_strength": parseFloat(document.getElementById('denoising-i2i').value),
-                        "override_settings": {
-                            "sd_model_checkpoint": document.getElementById('model-i2i').value,
-                            "sd_vae": document.getElementById('vae-i2i').value
-                        },
-                        "send_images": true,
-                        "save_images": false
-                    };
-                    endpoint = '/sdapi/v1/img2img';
-                }
-
                 showStatus('Enviando solicitud de generación...');
                 const result = await apiPost(endpoint, payload);
                 
-                // Mostrar imagen y metadatos
-                if (result.images && result.images[0]) {
-                    const base64Image = result.images[0];
+                let base64Image, info;
+                
+                // (NUEVO) Manejar diferentes formatos de respuesta
+                if (mode === 'extras') {
+                    base64Image = result.image; // Singular
+                    info = result.html_info; // Es un string HTML
+                } else {
+                    base64Image = result.images[0]; // Plural
+                    info = result.info; // Es un JSON string
+                }
+                
+                if (base64Image) {
                     const dataUrl = 'data:image/png;base64,' + base64Image;
                     outputImage.src = dataUrl;
                     outputImage.classList.remove('hidden');
                     placeholder.classList.add('hidden');
                     
-                    // Mostrar Metadatos
-                    if (result.info) {
-                        try {
-                            const info = JSON.parse(result.info);
-                            const parameters = info.all_parameters || {};
-                            
-                            // Formateo de metadatos más legible
-                            const metadataText = `
-                                **Prompt:** ${info.prompt}
-                                **Negative Prompt:** ${info.negative_prompt}
-                                ---
-                                **Seed:** ${info.seed}
-                                **Steps:** ${info.steps}
-                                **CFG Scale:** ${info.cfg_scale}
-                                **Sampler:** ${info.sampler_name}
-                                **Scheduler:** ${parameters.scheduler_name || info.sampler_name}
-                                **Model:** ${info.model}
-                                **VAE:** ${parameters.sd_vae || 'Automatic'}
-                                **Size:** ${info.width}x${info.height}
-                            `.trim().replace(/\n\s*/g, '\n'); 
-
-                            metadataDisplay.textContent = metadataText;
-                            metadataDisplay.classList.remove('hidden');
-                            G_STATE.lastMetadata = metadataText; // Guardar para el botón de copiar
-                        } catch (e) {
-                            metadataDisplay.textContent = `Raw Info: ${result.info}`;
-                            metadataDisplay.classList.remove('hidden');
-                            G_STATE.lastMetadata = result.info;
+                    if (info) {
+                        let metadataText;
+                        if (mode === 'extras') {
+                            metadataText = info.replace(/<[^>]*>?/gm, ''); // Limpiar HTML
+                        } else {
+                             try {
+                                const infoParsed = JSON.parse(info);
+                                metadataText = `**Prompt:** ${infoParsed.prompt}\n**Negative Prompt:** ${infoParsed.negative_prompt}\n---\n**Seed:** ${infoParsed.seed}\n**Steps:** ${infoParsed.steps}\n**CFG Scale:** ${infoParsed.cfg_scale}\n**Sampler:** ${infoParsed.sampler_name}\n**Scheduler:** ${infoParsed.scheduler_name || 'N/A'}\n**Model:** ${infoParsed.sd_model_name || 'N/A'}\n**VAE:** ${infoParsed.sd_vae_name || 'N/A'}\n**Size:** ${infoParsed.width}x${infoParsed.height}`;
+                            } catch (e) {
+                                metadataText = `Raw Info: ${info}`;
+                            }
                         }
-                    } else {
-                        metadataDisplay.classList.add('hidden');
+                        metadataDisplay.textContent = metadataText;
+                        metadataDisplay.classList.remove('hidden');
+                        G_STATE.lastMetadata = metadataText;
                     }
 
-                    // Configurar y mostrar botones de resultado
                     downloadBtn.style.display = 'block';
                     copyMetadataBtn.style.display = 'block';
                     downloadBtn.onclick = () => {
@@ -1097,8 +1658,7 @@
                 console.error(error);
                 showStatus(`Error: ${error.message}. Verifica tu prompt y conexión.`, true);
             } finally {
-                setGenerateButtons(false);
-                hideLoading(button, originalText);
+                hideGenerationProgress(button, buttonText);
                 stopProgressCheck();
             }
         }
@@ -1106,6 +1666,7 @@
         // --- Triggers de Generación ---
         generateTxt2ImgBtn.addEventListener('click', () => handleGeneration('txt2img'));
         generateImg2ImgBtn.addEventListener('click', () => handleGeneration('img2img'));
+        generateExtrasBtn.addEventListener('click', () => handleGeneration('extras'));
 
     </script>
 </body>
