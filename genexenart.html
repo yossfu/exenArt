@@ -1329,7 +1329,7 @@
 
         function setGenerateButtons(disabled) {
             // (CORREGIDO) Definir los botones aquí adentro o pasarlos como argumento
-            // Es mejor obtenerlos cada vez para asegurarse de que existan
+            // Mejor pasarlos como argumento desde el listener DOMContentLoaded
             const allGenerateBtns = [
                 document.getElementById('generate-btn-txt2img'),
                 document.getElementById('generate-btn-img2img'),
@@ -1845,33 +1845,6 @@
                 btn.innerHTML = originalText;
             }
         }
-        
-        // --- (¡¡NUEVA!!) Función para cambiar el modelo en el servidor ---
-        async function setServerModel(modelName) {
-            if (!modelName) return false;
-            
-            // Deshabilitar botones mientras se carga
-            setGenerateButtons(true);
-            showStatus(`Cargando modelo: ${modelName}... Esto puede tardar.`, false);
-            
-            try {
-                // Esta es la llamada API correcta para cambiar el modelo
-                await apiPost('/sdapi/v1/options', { "sd_model_checkpoint": modelName });
-                
-                // Actualizar el estado local para que no lo vuelva a cargar
-                G_STATE.currentConfig.sd_model_checkpoint = modelName;
-                
-                showStatus(`Modelo '${modelName}' cargado y listo.`, false);
-                setGenerateButtons(false);
-                return true;
-                
-            } catch (e) {
-                showStatus(`Error al cambiar el modelo: ${e.message}`, true);
-                // Si falla, re-habilitar botones para que el usuario pueda intentarlo de nuevo
-                setGenerateButtons(false);
-                return false;
-            }
-        }
 
         // --- (NUEVO) Lógica del Visor Modal ---
         function openModal() {
@@ -1894,26 +1867,6 @@
         // --- Lógica de Generación (¡¡MODIFICADA!!) ---
         async function handleGeneration(mode) {
             if (G_STATE.isGenerating) return;
-
-            // (¡¡MODIFICADO!!) Determinar el prefijo primero
-            const prefix = mode === 'txt2img' ? 't2i' : (mode === 'img2img' ? 'i2i' : 'extras');
-
-            // --- (¡¡NUEVO!!) Lógica de cambio de modelo ---
-            // Solo se aplica a txt2img y img2img
-            if (mode === 'txt2img' || mode === 'img2img') {
-                const selectedModel = document.getElementById(`model-${prefix}`)?.value;
-                if (selectedModel && selectedModel !== G_STATE.currentConfig.sd_model_checkpoint) {
-                    showStatus(`Cambiando al modelo: ${selectedModel}...`, false);
-                    const modelLoaded = await setServerModel(selectedModel);
-                    if (!modelLoaded) {
-                        showStatus('Error al cargar el modelo. No se puede generar.', true);
-                        return; // Detener la generación si el modelo no carga
-                    }
-                    // El modelo se cargó, G_STATE se actualizó, la generación puede continuar
-                    showStatus('Modelo cargado. Iniciando generación...', false);
-                }
-            }
-            // --- Fin de la lógica de cambio de modelo ---
 
             // (NUEVO) Scroll al área de resultados
             try {
@@ -1963,8 +1916,7 @@
                     "send_images": true,
                     "save_images": false,
                     "override_settings": {
-                        // (¡¡ELIMINADO!!) El modelo ahora se establece ANTES de la generación.
-                        // "sd_model_checkpoint": document.getElementById(`model-${prefix}`)?.value,
+                        "sd_model_checkpoint": document.getElementById(`model-${prefix}`)?.value,
                         "sd_vae": document.getElementById(`vae-${prefix}`)?.value,
                         "face_restoration_model": document.getElementById(`face-restorer-${prefix}`)?.value
                     },
