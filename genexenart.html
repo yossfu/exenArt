@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Remoto Forge (v6 - Tags Fix)</title>
+    <title>Control Remoto Forge (v7 - Image Fit & Copy)</title>
     <!-- Cargar Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -22,19 +22,19 @@
         
         /* HEADER/NAV ESTILO MOBILE */
         .tab-btn {
-            flex-grow: 1; /* Ocupa el espacio disponible */
+            flex-grow: 1; 
             padding: 0.75rem 0.5rem;
             font-weight: 500;
-            color: #BDBDBD; /* Gris claro */
+            color: #BDBDBD; 
             border-bottom: 3px solid transparent;
             text-align: center;
             transition: all 0.2s;
             white-space: nowrap;
         }
         .tab-btn.active {
-            color: #4CAF50; /* Verde vibrante (como acento de Android) */
+            color: #4CAF50; 
             border-color: #4CAF50;
-            background-color: #1E1E1E; /* Fondo ligeramente más claro para la pestaña activa */
+            background-color: #1E1E1E; 
         }
         /* Ocultar paneles inactivos */
         .tab-panel {
@@ -47,8 +47,8 @@
         /* Campos de formulario - Estilo App */
         .input-base {
             display: block; width: 100%; padding: 10px 12px;
-            background-color: #2C2C2C; /* Fondo del input */
-            border: 1px solid #424242; /* Borde sutil */
+            background-color: #2C2C2C; 
+            border: 1px solid #424242; 
             border-radius: 8px;
             color: white; placeholder-color: #757575;
             transition: border-color 0.2s, box-shadow 0.2s;
@@ -70,11 +70,22 @@
         }
         .generate-btn:hover { background-color: #66BB6A; }
         .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Botón Secundario de UI */
+        .btn-ui {
+            background-color: #424242;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        .btn-ui:hover { background-color: #616161; }
 
         /* Acordeón (Details) */
         details > summary {
             padding: 1rem; background-color: #2C2C2C; border-radius: 8px;
             margin-top: 1rem; font-weight: 600; color: #E0E0E0;
+            cursor: pointer;
         }
         .details-content {
             padding: 1rem; background-color: #1E1E1E; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
@@ -84,9 +95,9 @@
         .tag-suggestions-container {
             position: absolute; width: 100%; background-color: #1e1e1e;
             border: 1px solid #4CAF50; border-radius: 0 0 8px 8px;
-            z-index: 20; /* Aumentado para evitar interferencia */
+            z-index: 20; 
             max-height: 200px; overflow-y: auto;
-            transform: translateY(-8px); /* Superponer ligeramente al textarea */
+            transform: translateY(-8px); 
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
             display: none;
         }
@@ -99,7 +110,7 @@
 
         /* Layout móvil: una sola columna con espaciado */
         .main-grid {
-            display: grid; grid-template-columns: 1fr; gap: 1rem;
+            display: grid; grid-template-columns: 1fr; gap: 1.5rem; /* Aumentado el gap */
         }
         /* Desktop: 2 columnas, contenido y resultado */
         @media (min-width: 768px) {
@@ -107,6 +118,33 @@
                 grid-template-columns: 2fr 1fr;
             }
         }
+        
+        /* CORRECCIÓN CRÍTICA: Ajuste para mostrar la imagen completa */
+        #output-image {
+            object-fit: contain; /* Asegura que la imagen se vea completa */
+            width: 100%; 
+            height: auto; /* Permite que la altura sea dictada por la relación de aspecto */
+            max-height: 100%; /* No exceder la altura del contenedor */
+        }
+
+        /* Contenedor de la Imagen */
+        #image-container {
+            min-height: 300px; 
+            aspect-ratio: 1 / 1; /* Valor por defecto */
+        }
+
+        /* Metadatos (hacerlos desplazables y con formato) */
+        #metadata-display {
+            background-color: #2C2C2C; 
+            border: 1px solid #424242; 
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 200px; /* Limitar altura */
+            overflow-y: auto;
+            white-space: pre-wrap; /* Mantener saltos de línea y espacios */
+        }
+
     </style>
 </head>
 <body class="h-full">
@@ -229,7 +267,7 @@
                                         <input type="number" id="cfg-t2i" step="0.5" value="7.0" class="input-base">
                                     </div>
                                 </div>
-                                <!-- Campos Batch y Seed en una sola fila para ahorrar espacio -->
+                                <!-- Campos Batch y Seed con botón de random -->
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label for="batch-count-t2i" class="label-base">Cant. Lotes</label>
@@ -237,7 +275,12 @@
                                     </div>
                                     <div>
                                         <label for="seed-t2i" class="label-base">Semilla (Seed)</label>
-                                        <input type="number" id="seed-t2i" value="-1" class="input-base">
+                                        <div class="flex gap-2">
+                                            <input type="number" id="seed-t2i" value="-1" class="input-base">
+                                            <button id="random-seed-t2i" class="btn-ui w-1/4 flex-shrink-0" title="Semilla Aleatoria">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M17.65 17.65l-4.24 4.24a2 2 0 0 1-2.83 0l-4.24-4.24a2 2 0 0 1 0-2.83l.88-.88"/><path d="M13.25 13.25l-.88.88a2 2 0 0 1-2.83 0l-4.24-4.24a2 2 0 0 1 0-2.83l4.24-4.24a2 2 0 0 1 2.83 0l4.24 4.24a2 2 0 0 1 0 2.83l-4.24 4.24z"/></svg>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -301,7 +344,6 @@
                             <summary>Imagen de Origen</summary>
                             <div class="details-content space-y-4">
                                 <label for="image-upload" class="label-base">Subir Imagen</label>
-                                <!-- Mejorar el estilo del input file para móvil -->
                                 <input type="file" id="image-upload" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-400 file:mr-4 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-600 file:text-gray-100 hover:file:bg-gray-500 cursor-pointer">
                                 <div class="bg-gray-900 rounded-lg border border-gray-700 min-h-[128px] flex items-center justify-center p-2">
                                     <img id="image-preview" src="" alt="Vista previa" class="max-h-48 max-w-full h-auto hidden rounded">
@@ -372,7 +414,12 @@
                                     </div>
                                     <div>
                                         <label for="seed-i2i" class="label-base">Semilla (Seed)</label>
-                                        <input type="number" id="seed-i2i" value="-1" class="input-base">
+                                        <div class="flex gap-2">
+                                            <input type="number" id="seed-i2i" value="-1" class="input-base">
+                                            <button id="random-seed-i2i" class="btn-ui w-1/4 flex-shrink-0" title="Semilla Aleatoria">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M17.65 17.65l-4.24 4.24a2 2 0 0 1-2.83 0l-4.24-4.24a2 2 0 0 1 0-2.83l.88-.88"/><path d="M13.25 13.25l-.88.88a2 2 0 0 1-2.83 0l-4.24-4.24a2 2 0 0 1 0-2.83l4.24-4.24a2 2 0 0 1 2.83 0l4.24 4.24a2 2 0 0 1 0 2.83l-4.24 4.24z"/></svg>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -382,7 +429,7 @@
                 </div>
 
                 <!-- COLUMNA 2: RESULTADO -->
-                <div class="bg-[#1e1e1e] shadow-xl rounded-xl p-4 md:p-6 h-fit max-h-[calc(100vh-140px)] overflow-y-auto">
+                <div class="bg-[#1e1e1e] shadow-xl rounded-xl p-4 md:p-6 h-fit">
                     <h2 class="text-xl font-bold mb-4 text-white">Resultado</h2>
                     
                     <!-- Mensaje de Estado -->
@@ -397,17 +444,24 @@
                     </div>
 
                     <!-- Área de Resultado (Mobile-friendly) -->
-                    <div class="mt-4 bg-[#121212] rounded-lg overflow-hidden border border-[#2c2c2c] min-h-[300px] flex items-center justify-center p-4 aspect-square md:aspect-auto">
-                        <img id="output-image" src="" alt="Imagen generada" class="max-w-full h-auto hidden rounded-lg shadow-md">
+                    <!-- Contenedor con height/width flexible y object-fit: contain en la imagen -->
+                    <div id="image-container" class="mt-4 bg-[#121212] rounded-lg border border-[#2c2c2c] flex items-center justify-center p-2 relative">
+                        <img id="output-image" src="" alt="Imagen generada" class="max-w-full rounded-lg hidden shadow-md">
                         <div id="placeholder" class="text-gray-500">La imagen generada aparecerá aquí</div>
                     </div>
                     
-                    <!-- Botón de Descarga -->
-                    <button id="download-btn" class="w-full mt-4 bg-[#424242] hover:bg-[#616161] text-white font-medium py-3 px-4 rounded-lg transition duration-200 ease-in-out" style="display: none;">
-                        Descargar Imagen
-                    </button>
-                    <!-- Metadatos (Opcional) -->
-                    <div id="metadata-info" class="mt-4 text-xs text-gray-500 break-words hidden"></div>
+                    <!-- Controles de Resultado -->
+                    <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                        <button id="download-btn" class="flex-1 bg-[#424242] hover:bg-[#616161] text-white font-medium py-3 px-4 rounded-lg transition duration-200 ease-in-out" style="display: none;">
+                            Descargar Imagen
+                        </button>
+                        <button id="copy-metadata-btn" class="flex-1 bg-green-700 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition duration-200 ease-in-out" style="display: none;">
+                            Copiar Metadatos
+                        </button>
+                    </div>
+
+                    <!-- Metadatos -->
+                    <div id="metadata-display" class="text-xs text-gray-300 hidden"></div>
                 </div>
             </div>
         </main>
@@ -436,6 +490,7 @@
             isGenerating: false,
             uploadedImageBase64: null,
             tagSearchTimeout: null,
+            lastMetadata: '' // Almacenar el último metadata generado
         };
 
         // --- Elementos de la UI ---
@@ -448,7 +503,8 @@
         const outputImage = document.getElementById('output-image');
         const placeholder = document.getElementById('placeholder');
         const downloadBtn = document.getElementById('download-btn');
-        const metadataInfo = document.getElementById('metadata-info');
+        const copyMetadataBtn = document.getElementById('copy-metadata-btn');
+        const metadataDisplay = document.getElementById('metadata-display');
         
         // --- Progreso ---
         const progressContainer = document.getElementById('progress-container');
@@ -677,6 +733,15 @@
         document.getElementById('hr-enable').addEventListener('change', (e) => {
             document.getElementById('hr-options').style.display = e.target.checked ? 'block' : 'none';
         });
+        
+        // --- Lógica de Seed Aleatoria ---
+        document.getElementById('random-seed-t2i').addEventListener('click', () => {
+            document.getElementById('seed-t2i').value = -1;
+        });
+        document.getElementById('random-seed-i2i').addEventListener('click', () => {
+            document.getElementById('seed-i2i').value = -1;
+        });
+
 
         // --- Lógica de Autocompletado de Tags ---
         
@@ -707,8 +772,8 @@
                         div.className = 'tag-suggestion-item';
                         div.textContent = tag.name;
                         div.addEventListener('click', (e) => {
-                            e.preventDefault(); // Evitar cualquier acción de blur/focus no deseada
-                            e.stopPropagation(); // Evitar que el click se propague al documento
+                            e.preventDefault(); 
+                            e.stopPropagation(); 
                             selectTag(tag.name, promptElement, suggestionsContainer);
                         });
                         suggestionsContainer.appendChild(div);
@@ -824,6 +889,25 @@
             };
             reader.readAsDataURL(file);
         });
+        
+        // --- Lógica de Copiar Metadatos ---
+        copyMetadataBtn.addEventListener('click', () => {
+            if (G_STATE.lastMetadata) {
+                // navigator.clipboard.writeText() puede fallar en iframes, usar document.execCommand('copy')
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = G_STATE.lastMetadata;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    showStatus('Metadatos copiados al portapapeles.', false);
+                } catch (err) {
+                    showStatus('Error al copiar metadatos.', true);
+                }
+                document.body.removeChild(tempTextArea);
+            }
+        });
+
 
         // 10. Lógica de Progreso
         function startProgressCheck() {
@@ -884,6 +968,13 @@
             // Ocultar cualquier sugerencia de tags que pudiera haber quedado abierta
             tagSuggestionsT2I.style.display = 'none';
             tagSuggestionsI2I.style.display = 'none';
+            
+            // Ocultar resultados anteriores
+            downloadBtn.style.display = 'none';
+            copyMetadataBtn.style.display = 'none';
+            metadataDisplay.classList.add('hidden');
+            outputImage.classList.add('hidden');
+            placeholder.classList.remove('hidden');
 
             try {
                 if (mode === 'txt2img') {
@@ -959,18 +1050,38 @@
                     if (result.info) {
                         try {
                             const info = JSON.parse(result.info);
-                            metadataInfo.textContent = `Prompt: ${info.prompt}\n\nNegative Prompt: ${info.negative_prompt}\n\nSettings: ${JSON.stringify(info.all_parameters, null, 2)}`;
-                            metadataInfo.classList.remove('hidden');
+                            const parameters = info.all_parameters || {};
+                            
+                            // Formateo de metadatos más legible
+                            const metadataText = `
+                                **Prompt:** ${info.prompt}
+                                **Negative Prompt:** ${info.negative_prompt}
+                                ---
+                                **Seed:** ${info.seed}
+                                **Steps:** ${info.steps}
+                                **CFG Scale:** ${info.cfg_scale}
+                                **Sampler:** ${info.sampler_name}
+                                **Scheduler:** ${parameters.scheduler_name || info.sampler_name}
+                                **Model:** ${info.model}
+                                **VAE:** ${parameters.sd_vae || 'Automatic'}
+                                **Size:** ${info.width}x${info.height}
+                            `.trim().replace(/\n\s*/g, '\n'); 
+
+                            metadataDisplay.textContent = metadataText;
+                            metadataDisplay.classList.remove('hidden');
+                            G_STATE.lastMetadata = metadataText; // Guardar para el botón de copiar
                         } catch (e) {
-                            metadataInfo.textContent = `Raw Info: ${result.info}`;
-                            metadataInfo.classList.remove('hidden');
+                            metadataDisplay.textContent = `Raw Info: ${result.info}`;
+                            metadataDisplay.classList.remove('hidden');
+                            G_STATE.lastMetadata = result.info;
                         }
                     } else {
-                        metadataInfo.classList.add('hidden');
+                        metadataDisplay.classList.add('hidden');
                     }
 
-                    // Configurar y mostrar botón de descarga
+                    // Configurar y mostrar botones de resultado
                     downloadBtn.style.display = 'block';
+                    copyMetadataBtn.style.display = 'block';
                     downloadBtn.onclick = () => {
                         const link = document.createElement('a');
                         link.href = dataUrl;
