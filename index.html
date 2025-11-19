@@ -150,6 +150,87 @@
         .sweep-line { position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(to bottom, transparent, var(--accent), transparent); box-shadow: 0 0 8px var(--accent-glow); }
         #image-container .loading-indicator { opacity: 1; transition: opacity 0.5s ease; }
         #image-container.loaded .loading-indicator { opacity: 0; }
+
+        /* --- ESTILOS HERO BANNER DELGADO Y HORIZONTAL --- */
+        .hero-wrapper {
+            position: relative;
+            width: 100%;
+            height: 200px; /* Altura Móvil reducida */
+            border-radius: 1rem; /* Borde un poco más sutil */
+            overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5);
+            display: none; 
+            background-color: #0a0a0a;
+        }
+        @media (min-width: 640px) { .hero-wrapper { height: 280px; } }
+        @media (min-width: 1024px) { .hero-wrapper { height: 320px; } } /* Desktop panorámico delgado */
+        
+        .hero-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            z-index: 1;
+            cursor: pointer;
+        }
+        .hero-slide.active { opacity: 1; z-index: 10; }
+        
+        .hero-slide img {
+            width: 100%; height: 100%; object-fit: cover;
+            transform: scale(1);
+            transition: transform 8s linear;
+            /* Ajuste crucial: Centrar imagen verticalmente, pero a la derecha horizontalmente */
+            object-position: 70% 20%; 
+        }
+        .hero-slide.active img { transform: scale(1.08); }
+        
+        /* Gradiente "Split Screen" Horizontal */
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center; /* Centrar texto verticalmente */
+            padding-left: 1.5rem;
+            
+            /* Gradiente Horizontal Fuerte: Negro solido a la izquierda, Transparente a la derecha */
+            background: linear-gradient(90deg, #0c0c0c 0%, rgba(12, 12, 12, 0.95) 35%, rgba(12, 12, 12, 0.4) 60%, transparent 100%);
+        }
+        
+        /* Ajuste para móvil donde el espacio es poco */
+        @media (max-width: 640px) {
+            .hero-overlay {
+                background: linear-gradient(90deg, #0c0c0c 0%, rgba(12, 12, 12, 0.9) 55%, transparent 100%);
+                padding-left: 1rem;
+            }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 30;
+            max-width: 65%; /* Dejar ver la imagen a la derecha */
+        }
+        @media (max-width: 640px) { .hero-content { max-width: 80%; } }
+        
+        .hero-indicators {
+            position: absolute;
+            bottom: 1rem; right: 1.5rem;
+            display: flex; gap: 0.5rem;
+            z-index: 40;
+        }
+        .hero-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background-color: rgba(255,255,255,0.2);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .hero-dot.active { 
+            background-color: var(--accent); 
+            width: 20px; 
+            border-radius: 3px; 
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -165,9 +246,22 @@
     
     <!-- CONTENIDO PRINCIPAL -->
     <main class="container mx-auto px-2 sm:px-4">
-        <div class="my-8 flex justify-center">
-             <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-20 w-auto drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+        
+        <!-- HEADER -->
+        <header class="pt-4 pb-2 flex justify-center relative z-40">
+            <div class="flex items-center gap-3 bg-gray-900/80 border border-gray-700/50 px-5 py-1.5 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md hover:shadow-[0_0_15px_rgba(249,115,22,0.15)] hover:border-orange-500/30 transition-all duration-300 group cursor-default">
+                <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-9 w-auto drop-shadow-[0_0_3px_rgba(249,115,22,0.8)] group-hover:scale-110 transition-transform duration-300">
+                <div class="h-4 w-[1px] bg-gray-700"></div>
+                <span class="text-xs font-bold tracking-widest text-gray-400 group-hover:text-white transition-colors" style="font-family: var(--title-font);">ART GALLERY</span>
+            </div>
+        </header>
+
+        <!-- === BANNER HERO DELGADO Y HORIZONTAL === -->
+        <div id="hero-wrapper" class="hero-wrapper">
+            <div id="hero-slides-container" class="w-full h-full relative"></div>
+            <div id="hero-indicators" class="hero-indicators"></div>
         </div>
+
         <form id="search-form" class="mb-6 flex justify-center">
             <div class="relative w-full max-w-xl">
                 <input type="text" id="search-input" placeholder="Buscar en toda la galería..." class="w-full rounded-full border-2 border-gray-700 bg-gray-800/50 py-3 pl-5 pr-24 text-white transition placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
@@ -266,10 +360,11 @@
         
         async function initializeApp() {
             await cacheFullGalleryForSearch();
+            loadHeroBanner(); // CARGAR BANNER
             await Promise.all([ fetchUserReactions(), cacheAllReactionCounts(), loadCategoryBanners() ]);
             loadInitialImages();
             loadTopLikedImages();
-            loadForYouImages(); // <-- Esta función ahora usará los datos locales
+            loadForYouImages(); 
             loadFeaturedVideos();
             setupIntersectionObserver();
             setupEventListeners();
@@ -300,6 +395,84 @@
             }
         }
 
+        // --- LÓGICA DEL BANNER HERO (DELGADO Y HORIZONTAL) ---
+        function loadHeroBanner() {
+            const recentImages = fullGalleryCache.slice(0, 4);
+            const container = document.getElementById('hero-slides-container');
+            const indicatorsContainer = document.getElementById('hero-indicators');
+            const heroWrapper = document.getElementById('hero-wrapper');
+            
+            if (recentImages.length === 0) return;
+
+            heroWrapper.style.display = 'block';
+            container.innerHTML = '';
+            indicatorsContainer.innerHTML = '';
+
+            recentImages.forEach((img, index) => {
+                const slide = document.createElement('div');
+                slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
+                slide.setAttribute('onclick', `openModal('${img.id}')`);
+                
+                const displayUrl = img.url; 
+                
+                // Texto ajustado para formato delgado: menos lineas, fuente mas pequeña
+                slide.innerHTML = `
+                    <img src="${displayUrl}" alt="${img.title}" loading="eager">
+                    <div class="hero-overlay">
+                        <div class="hero-content">
+                            <span class="text-orange-500 font-bold tracking-wider uppercase mb-1 text-[10px] sm:text-xs block">NUEVO AGREGADO</span>
+                            <h2 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight mb-2 uppercase drop-shadow-lg truncate">${img.title}</h2>
+                            <p class="text-gray-300 text-xs sm:text-sm line-clamp-2 mb-4 drop-shadow-md max-w-lg leading-relaxed">${img.desc || 'Sin descripción disponible.'}</p>
+                            <div class="flex gap-3">
+                                <button class="px-4 py-1.5 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition-all text-xs sm:text-sm">
+                                    Ver Ahora
+                                </button>
+                                <button class="px-4 py-1.5 bg-transparent border border-white text-white rounded-full font-bold hover:bg-white/10 transition-all text-xs sm:text-sm">
+                                    + Info
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(slide);
+
+                const dot = document.createElement('div');
+                dot.className = `hero-dot ${index === 0 ? 'active' : ''}`;
+                dot.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    manualSlide(index);
+                });
+                indicatorsContainer.appendChild(dot);
+            });
+
+            startHeroInterval();
+        }
+        
+        let heroInterval;
+        function startHeroInterval() {
+            if (heroInterval) clearInterval(heroInterval);
+            heroInterval = setInterval(() => {
+                const slides = document.querySelectorAll('.hero-slide');
+                if(slides.length === 0) return;
+                let current = 0;
+                slides.forEach((s, i) => { if(s.classList.contains('active')) current = i; });
+                const next = (current + 1) % slides.length;
+                manualSlide(next);
+            }, 6000);
+        }
+        
+        function manualSlide(index) {
+            const slides = document.querySelectorAll('.hero-slide');
+            const dots = document.querySelectorAll('.hero-dot');
+            if (!slides.length) return;
+            
+            slides.forEach(s => s.classList.remove('active'));
+            dots.forEach(d => d.classList.remove('active'));
+            
+            slides[index].classList.add('active');
+            dots[index].classList.add('active');
+        }
+
         async function cacheFullGalleryForSearch() { const searchInput = document.getElementById('search-input'); searchInput.disabled = true; searchInput.placeholder = "Cargando base de datos..."; const snapshot = await db.ref('images').once('value'); if (snapshot.exists()) { const allData = []; snapshot.forEach(child => { allData.push({ id: child.key, ...child.val() }); }); fullGalleryCache = allData.sort((a,b) => b.timestamp - a.timestamp); } searchInput.disabled = false; searchInput.placeholder = "Buscar en toda la galería..."; }
         async function fetchUserReactions() { const snapshot = await db.ref('reactions').once('value'); const allReactions = snapshot.val() || {}; userReactions = {}; Object.keys(allReactions).forEach(imgId => { if(allReactions[imgId][deviceID]) { userReactions[imgId] = allReactions[imgId][deviceID]; } }); }
         async function cacheAllReactionCounts() { const reactionsSnap = await db.ref('reactions').once('value'); const reactions = reactionsSnap.val() || {}; const counts = {}; Object.entries(reactions).forEach(([imgId, users]) => { counts[imgId] = Object.keys(users).length; }); allReactionCounts = counts; }
@@ -309,42 +482,32 @@
         function loadMoreImages() { if (isLoading || noMoreImages) return; isLoading = true; const loaderContainer = document.getElementById('loader'); loaderContainer.style.display = 'grid'; generateSkeletons(loaderContainer, 3); const currentLoadedCount = allImages.length; const newImages = fullGalleryCache.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); if (newImages.length === 0) { noMoreImages = true; } else { allImages = allImages.concat(newImages); displayImages(newImages, 'grid', true); } loaderContainer.style.display = 'none'; isLoading = false; }
         async function loadTopLikedImages() { const grid = document.getElementById('top-liked-grid'); generateSkeletons(grid, 9); const sortedIds = Object.keys(allReactionCounts).sort((a, b) => (allReactionCounts[b] || 0) - (allReactionCounts[a] || 0)).slice(0, 9); if (sortedIds.length === 0) { grid.innerHTML = '<p class="w-full col-span-3 text-center text-gray-500">Aún no hay imágenes gustadas.</p>'; return; } const images = sortedIds.map(id => fullGalleryCache.find(img => img.id === id)).filter(Boolean); displayImages(images, 'top-liked-grid'); }
         
-        // ******** FUNCIÓN MODIFICADA: "Para Ti" ahora usa LocalStorage ********
         async function loadForYouImages() {
             const grid = document.getElementById('for-you-grid');
             generateSkeletons(grid, 9);
-            
-            // 1. Puntuación de "Likes" (desde Firebase, como antes)
             const userLikedTags = {};
             Object.keys(userReactions).forEach(id => {
                 const img = fullGalleryCache.find(i => i.id === id);
                 if (img && img.tags) {
                     img.tags.forEach(tag => {
-                        userLikedTags[tag] = (userLikedTags[tag] || 0) + 3; // +3 puntos por tag de "like"
+                        userLikedTags[tag] = (userLikedTags[tag] || 0) + 3; 
                     });
                 }
             });
 
-            // 2. Puntuación de "Vistas" (desde LocalStorage, ¡NUEVO!)
             const userViewedTags = {};
             let viewedImages = [];
-            try {
-                viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || [];
-            } catch (e) {
-                viewedImages = []; // En caso de JSON corrupto
-            }
+            try { viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImages = []; }
 
-            // Analizar tags de las últimas 50 imágenes vistas
             viewedImages.slice(0, 50).forEach(id => {
                 const img = fullGalleryCache.find(i => i.id === id);
                 if (img && img.tags) {
                     img.tags.forEach(tag => {
-                        userViewedTags[tag] = (userViewedTags[tag] || 0) + 1; // +1 punto por tag de "vista"
+                        userViewedTags[tag] = (userViewedTags[tag] || 0) + 1; 
                     });
                 }
             });
 
-            // 3. Fallback: Si no hay historial Y no hay likes, mostrar aleatorios
             if (Object.keys(userLikedTags).length === 0 && Object.keys(userViewedTags).length === 0) {
                 const recentImages = [...fullGalleryCache].slice(0, 50);
                 for (let i = recentImages.length - 1; i > 0; i--) {
@@ -355,46 +518,40 @@
                 return;
             }
 
-            // 4. Calcular Puntuación Combinada
             let candidates = fullGalleryCache.map(img => {
                 let score = 0;
                 if (img.tags) {
                     img.tags.forEach(tag => {
-                        if (userLikedTags[tag]) score += userLikedTags[tag]; // Sumar puntos de likes
-                        if (userViewedTags[tag]) score += userViewedTags[tag]; // Sumar puntos de vistas
+                        if (userLikedTags[tag]) score += userLikedTags[tag]; 
+                        if (userViewedTags[tag]) score += userViewedTags[tag]; 
                     });
                 }
                 if (score > 0) {
-                    score += Math.random() * 0.5; // Añadir un poco de aleatoriedad
+                    score += Math.random() * 0.5; 
                 }
                 return { img, score };
-            }).filter(item => item.score > 0); // Solo imágenes con puntuación
+            }).filter(item => item.score > 0); 
 
-            // 5. Ordenar por puntuación
             candidates.sort((a, b) => b.score - a.score);
 
-            // 6. Seleccionar y Aleatorizar el Top 50 para variedad
             let topCandidates = candidates.map(item => item.img).slice(0, 50);
             for (let i = topCandidates.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [topCandidates[i], topCandidates[j]] = [topCandidates[j], topCandidates[i]];
             }
             
-            // 7. Mostrar las 9 mejores
             let finalSelection = topCandidates.slice(0, 9);
 
-            // 8. Rellenar si no hay suficientes
             if (finalSelection.length < 9) {
                 const needed = 9 - finalSelection.length;
                 const recentFiller = fullGalleryCache
-                    .filter(img => !finalSelection.find(r => r.id === img.id)) // Evitar duplicados
+                    .filter(img => !finalSelection.find(r => r.id === img.id)) 
                     .slice(0, needed);
                 finalSelection.push(...recentFiller);
             }
 
             displayImages(finalSelection, 'for-you-grid');
         }
-        // ******** FIN DE LA FUNCIÓN MODIFICADA ********
 
         async function loadFeaturedVideos() { const grid = document.getElementById('featured-videos-grid'); grid.innerHTML = ''; try { const videosSnap = await db.ref('videos').once('value'); if (!videosSnap.exists()) { grid.innerHTML = '<p class="w-full text-center text-gray-500">No hay música disponible.</p>'; return; } let allVideos = []; videosSnap.forEach(child => { allVideos.push({ id: child.key, ...child.val() }); }); for (let i = allVideos.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [allVideos[i], allVideos[j]] = [allVideos[j], allVideos[i]]; } const randomVideos = allVideos.slice(0, 10); if (randomVideos.length > 0) { displayVideos(randomVideos, 'featured-videos-grid'); initAutoSlider('featured-videos-grid'); } else { grid.innerHTML = '<p class="w-full text-center text-gray-500">No se pudo cargar la música.</p>'; } } catch (error) { console.error("Error al cargar videos destacados:", error); grid.innerHTML = '<p class="w-full text-center text-red-400">Error al cargar la música.</p>'; } }
         function displayVideos(videos, containerId) { const grid = document.getElementById(containerId); grid.innerHTML = ''; videos.forEach((video) => { if (!video || !video.thumbnailUrl || !video.title) return; const div = document.createElement('div'); div.className = 'flex flex-col items-center gap-1 flex-shrink-0 w-36 sm:w-44 text-center group touch-feedback'; div.setAttribute('onclick', `window.location.href='./videos.html?id=${video.id}'`); const genreHtml = video.genre ? `<p class="text-xs font-semibold text-orange-400 uppercase tracking-wider truncate w-full">${video.genre}</p>` : ''; div.innerHTML = `<div class="relative w-32 h-32 sm:w-40 sm:h-40 cursor-pointer"><div class="w-full h-full rounded-full bg-gray-700 animate-spin-slow group-hover:[animation-play-state:paused]"><img src="${video.thumbnailUrl}" alt="${video.title}" loading="lazy" class="h-full w-full object-cover rounded-full"></div><div class="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><i class="fas fa-play-circle text-5xl text-white/80"></i></div><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-900 border-2 border-gray-500 flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-gray-800"></div></div></div><div class="w-full px-1"><h4 class="font-semibold text-white truncate w-full">${video.title}</h4>${genreHtml}</div>`; grid.appendChild(div); }); }
@@ -402,7 +559,7 @@
         function toggleReactionFromGrid(imageId, event) { event.stopPropagation(); const btn = document.getElementById(`grid-like-btn-${imageId}`); const countEl = document.getElementById(`reaction-count-grid-${imageId}`); const reactionsRef = db.ref(`reactions/${imageId}/${deviceID}`); reactionsRef.once('value', snap => { if (snap.val() === 'like') { reactionsRef.remove(); btn.classList.remove('liked'); delete userReactions[imageId]; const newCount = Math.max(0, (allReactionCounts[imageId] || 1) - 1); allReactionCounts[imageId] = newCount; countEl.textContent = newCount; } else { reactionsRef.set('like'); btn.classList.add('liked'); userReactions[imageId] = 'like'; const newCount = (allReactionCounts[imageId] || 0) + 1; allReactionCounts[imageId] = newCount; countEl.textContent = newCount; } }); }
         async function openModal(id) { 
             document.getElementById('modal-content').scrollTop = 0; 
-            trackImageView(id); // <-- Aquí es donde se guardan los datos en LocalStorage
+            trackImageView(id); 
             let img = fullGalleryCache.find(i => i.id === id); 
             if (!img) { console.error("Image not found"); return; } 
             currentImageId = id; 
@@ -459,27 +616,14 @@
         function resetSearchView(){ document.getElementById('search-input').value = ''; document.getElementById('search-results-container').classList.add('hidden'); document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden'); }
         function setupIntersectionObserver() { const trigger = document.getElementById('load-more-trigger'); const observer = new IntersectionObserver((entries) => { if (entries[0].isIntersecting && document.getElementById('search-results-container').classList.contains('hidden')) loadMoreImages(); }, { rootMargin: '0px 0px 500px 0px' }); observer.observe(trigger); }
         
-        // Esta es la función que guarda los metadatos locales (Punto 1 de la guía)
         function trackImageView(imageId) { 
             if (!imageId) return; 
             let viewedImages = []; 
-            try { 
-                viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; 
-            } catch (e) { 
-                viewedImages = []; 
-            } 
-            
-            // Eliminar si ya existe para moverlo al principio
+            try { viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImages = []; } 
             const existingIndex = viewedImages.indexOf(imageId);
-            if (existingIndex > -1) {
-                viewedImages.splice(existingIndex, 1);
-            }
-
-            viewedImages.unshift(imageId); // Añadir al principio (más reciente)
-            
-            if (viewedImages.length > 200) { // Limitar el historial a 200 vistas
-                viewedImages = viewedImages.slice(0, 200); 
-            } 
+            if (existingIndex > -1) { viewedImages.splice(existingIndex, 1); }
+            viewedImages.unshift(imageId); 
+            if (viewedImages.length > 200) { viewedImages = viewedImages.slice(0, 200); } 
             localStorage.setItem('viewedImages', JSON.stringify(viewedImages)); 
         } 
         

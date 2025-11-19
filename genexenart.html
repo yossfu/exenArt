@@ -1340,36 +1340,46 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
             let delay = 1000;
             
             for (let i = 0; i < retries; i++) {
-                response = await fetch(GEMINI_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                try {
+                    response = await fetch(GEMINI_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
 
-                if (response.ok) break; // Éxito
+                    if (response.ok) break; // Éxito
 
-                // Si hay error de "Too Many Requests" (429) o error de servidor (5xx), reintentar
-                if (response.status === 429 || response.status >= 500) {
+                    // Si hay error de "Too Many Requests" (429) o error de servidor (5xx), reintentar
+                    if (response.status === 429 || response.status >= 500) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2; // Duplicar espera
+                    } else {
+                        // Otro error (ej. 400 Bad Request), no reintentar
+                        throw new Error(`Error de API de IA: ${response.statusText} (${response.status})`);
+                    }
+                } catch (fetchError) {
+                    // Capturar errores de red y reintentar
+                    if (i === retries - 1) throw fetchError; // Lanzar el último error
                     await new Promise(resolve => setTimeout(resolve, delay));
-                    delay *= 2; // Duplicar espera
-                } else {
-                    // Otro error (ej. 400 Bad Request), no reintentar
-                    throw new Error(`Error de API de IA: ${response.statusText} (${response.status})`);
+                    delay *= 2;
                 }
             }
 
-            if (!response.ok) {
-                throw new Error(`Error de API de IA después de ${retries} intentos: ${response.statusText}`);
+            if (!response || !response.ok) {
+                throw new Error(`Error de API de IA después de ${retries} intentos: ${response ? response.statusText : 'Fallo de red'}`);
             }
             
             const result = await response.json();
 
-            if (result.candidates && result.candidates[0].content.parts[0].text) {
+            if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts[0].text) {
                 return result.candidates[0].content.parts[0].text.trim(); // Devuelve los tags
             } else {
                 // Manejar respuesta bloqueada o vacía
                 let errorMsg = "Respuesta inesperada de la API de IA.";
-                if (result.promptFeedback && result.promptFeedback.blockReason) {
+                if (result.candidates && result.candidates[0] && result.candidates[0].finishReason === 'SAFETY') {
+                     errorMsg = "Contenido bloqueado por IA por razones de seguridad.";
+                }
+                else if (result.promptFeedback && result.promptFeedback.blockReason) {
                     errorMsg = `Contenido bloqueado por IA: ${result.promptFeedback.blockReason}`;
                 }
                 throw new Error(errorMsg);
@@ -1410,8 +1420,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
         }
 
         function setGenerateButtons(disabled) {
-            // (CORREGIDO) Definir los botones aquí adentro o pasarlos como argumento
-            // Mejor pasarlos como argumento desde el listener DOMContentLoaded
             const allGenerateBtns = [
                 document.getElementById('generate-btn-txt2img'),
                 document.getElementById('generate-btn-img2img'),
@@ -1422,9 +1430,23 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
             });
         }
         
+        // --- (NUEVA FUNCIÓN) ---
+        // Muestra el estado de carga específico de Gemini
+        function showGeminiLoading(button) {
+            button.disabled = true;
+            button.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Mejorando Prompt...
+            `;
+        }
+
+        // Muestra el estado de carga de Collab (antes showGenerationProgress)
         function showGenerationProgress(button) {
-            G_STATE.isGenerating = true;
-            setGenerateButtons(true);
+            // G_STATE.isGenerating = true; // Esto se debe establecer al inicio de handleGeneration
+            // setGenerateButtons(true); // Esto también
             const generationControls = document.getElementById('generation-controls');
             if (generationControls) generationControls.style.display = 'flex';
             
@@ -1437,12 +1459,14 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
             `;
         }
 
+        // Resetea el botón (antes hideGenerationProgress)
         function hideGenerationProgress(button, originalText) {
-            G_STATE.isGenerating = false;
-            setGenerateButtons(false);
+            // G_STATE.isGenerating = false; // Esto se debe establecer al final de handleGeneration
+            // setGenerateButtons(false); // Esto también
             const generationControls = document.getElementById('generation-controls');
             if(generationControls) generationControls.style.display = 'none';
             
+            button.disabled = false; // Asegurarse de re-habilitar
             button.innerHTML = `
                 <span class="material-icons-outlined">auto_fix_high</span>
                 ${originalText}
@@ -1496,9 +1520,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
         
         // --- Lógica de Carga de Recursos (¡¡AMPLIADA!!) ---
         async function loadAndPopulateResources(isRefresh = false) {
-            // (CORREGIDO) Definir E_SELECTORS_NODES aquí o pasarlo como argumento
-            // Es más limpio definirlo aquí ya que esta función solo se llama
-            // después de que el DOM esté listo (asegurado por la lógica de conexión).
             const E_SELECTORS_NODES = {
                 model: [document.getElementById('model-t2i'), document.getElementById('model-i2i')],
                 vae: [document.getElementById('vae-t2i'), document.getElementById('vae-i2i')],
@@ -1527,8 +1548,8 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                     apiGet('/sdapi/v1/upscalers'),
                     apiGet('/sdapi/v1/prompt-styles'), 
                     apiGet('/sdapi/v1/face-restorers'), 
-                    apiGet('/controlnet/model_list').then(d => d.model_list), 
-                    apiGet('/controlnet/module_list').then(d => d.module_list) 
+                    apiGet('/controlnet/model_list').then(d => d.model_list).catch(e => { console.warn("ControlNet no encontrado, continuando..."); return []; }), 
+                    apiGet('/controlnet/module_list').then(d => d.module_list).catch(e => { console.warn("ControlNet no encontrado, continuando..."); return []; }) 
                 ]);
 
                 G_STATE.models = models;
@@ -1545,8 +1566,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                 // Rellenar Selectores
                 populateSelect(E_SELECTORS_NODES.model, models, 'name', 'title', null, G_STATE.currentConfig.sd_model_checkpoint);
                 
-                // (NUEVO) Obtener el sampler por defecto de la config
-                // Primero intentamos con 'sampler_name', luego con 'sampler_index'
                 const defaultSampler = G_STATE.currentConfig.sampler_name || G_STATE.currentConfig.sampler_index || null;
                 populateSelect(E_SELECTORS_NODES.sampler, samplers, 'name', 'name', null, defaultSampler);
                 
@@ -1559,8 +1578,14 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                 populateSelect(E_SELECTORS_NODES.hrUpscaler, upscalers, 'name', 'name', null, G_STATE.currentConfig.hr_upscaler);
                 populateSelect(E_SELECTORS_NODES.extrasUpscaler1, upscalers, 'name', 'name', "None");
                 populateSelect(E_SELECTORS_NODES.extrasUpscaler2, upscalers, 'name', 'name', "None");
-                populateSelect(E_SELECTORS_NODES.controlNetModel, cnModels, val => val, val => val, "None");
-                populateSelect(E_SELECTORS_NODES.controlNetModule, cnModules, val => val, val => val, "None");
+                
+                // Solo rellenar si ControlNet está instalado
+                if (cnModels.length > 0) {
+                    populateSelect(E_SELECTORS_NODES.controlNetModel, cnModels, val => val, val => val, "None");
+                }
+                 if (cnModules.length > 0) {
+                    populateSelect(E_SELECTORS_NODES.controlNetModule, cnModules, val => val, val => val, "None");
+                }
                 
                 // Rellenar config de previews
                 if (G_STATE.currentConfig.live_previews_enable !== undefined) {
@@ -1576,8 +1601,7 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                 showStatus('Recursos cargados. ¡Listo!', false);
                 
             } catch (error) {
-                const errorMsg = `Error al cargar recursos: ${error.message}. Asegúrate de que ControlNet está instalado si hay errores con 'controlnet'.`;
-                // (CORREGIDO) Usar showInitialStatus si la app no es visible
+                const errorMsg = `Error al cargar recursos: ${error.message}.`;
                 const appContainer = document.getElementById('app-container');
                 if (appContainer && appContainer.style.display === 'none') {
                     showInitialStatus(errorMsg, true);
@@ -1594,7 +1618,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                 return;
             }
             
-            // (CORREGIDO) Obtener el botón aquí
             const refreshResourcesBtn = document.getElementById('refresh-resources-btn');
             if (!refreshResourcesBtn) return;
 
@@ -1620,7 +1643,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
             }
         }
 
-        // (MODIFICADO) populateSelect ahora acepta funciones para value/text
         function populateSelect(selectElements, items, valueKey, textKey, firstOption, selectedValue) {
             if (!items) return;
             selectElements.forEach(selectElement => {
@@ -1655,7 +1677,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
 
         // --- Lógica de Pestañas (¡¡AMPLIADA!!) ---
         function switchTab(targetTab) {
-            // (CORREGIDO) Definir botones y paneles aquí
             const tabButtons = {
                 txt2img: document.getElementById('tab-btn-txt2img'),
                 img2img: document.getElementById('tab-btn-img2img'),
@@ -1726,7 +1747,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
             if(progressBar) progressBar.style.width = '0%';
             if(progressLabel) progressLabel.textContent = 'Iniciando...';
             
-            // Ocultar botones de descarga/copia durante la generación/preview
             if(downloadBtn) downloadBtn.style.display = 'none';
             if(copyMetadataBtn) copyMetadataBtn.style.display = 'none';
 
@@ -1736,7 +1756,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                     return;
                 }
                 try {
-                    // Pedir progreso Y la imagen de preview
                     const data = await apiGet('/sdapi/v1/progress?skip_current_image=false');
                     
                     if (data.progress > 0) {
@@ -1751,7 +1770,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                          if(progressLabel) progressLabel.textContent = 'Esperando en la cola...';
                     }
                     
-                    // (¡¡NUEVO!!) Mostrar la imagen de preview
                     if (data.current_image) {
                         const outputImage = document.getElementById('output-image');
                         const placeholder = document.getElementById('placeholder');
@@ -1765,7 +1783,7 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                 } catch (e) {
                     console.error("Error al consultar progreso:", e.message);
                 }
-            }, 1000); // Aumentado a 1000ms para no saturar con peticiones de imagen
+            }, 1000); 
         }
         
         function stopProgressCheck() {
@@ -1807,8 +1825,8 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
             showStatus('Interrogando imagen (CLIP)...', false);
             try {
                 const payload = {
-                    "image": G_STATE.uploadedImageBase64.i2i, // Debe incluir "data:image/..."
-                    "model": "clip" // Puedes cambiar a "deepbooru" si lo prefieres
+                    "image": G_STATE.uploadedImageBase64.i2i, 
+                    "model": "clip" 
                 };
                 const result = await apiPost('/sdapi/v1/interrogate', payload);
                 if (result.caption) {
@@ -1841,19 +1859,20 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                     G_STATE.lastMetadata = result.info;
                     showStatus('Metadatos leídos con éxito.', false);
                     
-                    // (Opcional) Intentar rellenar la UI
-                    // Esto es complejo, por ahora solo mostramos la info.
                     const promptI2I = document.getElementById('prompt-i2i');
                     const negativePromptI2I = document.getElementById('negative-prompt-i2i');
 
-                    if (result.parameters && result.parameters.Prompt && promptI2I) {
-                        promptI2I.value = result.parameters.Prompt;
-                    }
-                    if (result.parameters && result.parameters["Negative prompt"] && negativePromptI2I) {
-                        negativePromptI2I.value = result.parameters["Negative prompt"];
-                    }
-                    // ... etc ...
+                    // Intentar extraer parámetros básicos
+                    const lines = result.info.split('\n');
+                    const promptLine = lines.find(l => !l.startsWith("Negative prompt:") && !l.startsWith("Steps:"));
+                    const negativeLine = lines.find(l => l.startsWith("Negative prompt:"));
                     
+                    if (promptLine && promptI2I) {
+                        promptI2I.value = promptLine;
+                    }
+                    if (negativeLine && negativePromptI2I) {
+                        negativePromptI2I.value = negativeLine.replace("Negative prompt: ", "");
+                    }
                 }
             } catch (e) {
                 showStatus(`Error al leer PNG Info: ${e.message}`, true);
@@ -1882,10 +1901,14 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                 text += `  Usada: ${formatBytes(ram.used)}\n`;
                 text += `  Libre: ${formatBytes(ram.free)}\n\n`;
                 
-                text += `VRAM (CUDA):\n`;
-                text += `  Total: ${formatBytes(cuda.total)}\n`;
-                text += `  Usada: ${formatBytes(cuda.used)}\n`;
-                text += `  Libre: ${formatBytes(cuda.free)}\n`;
+                if (cuda) {
+                    text += `VRAM (CUDA):\n`;
+                    text += `  Total: ${formatBytes(cuda.total)}\n`;
+                    text += `  Usada: ${formatBytes(cuda.used)}\n`;
+                    text += `  Libre: ${formatBytes(cuda.free)}\n`;
+                } else {
+                    text += `VRAM (CUDA): No disponible o no detectada.`;
+                }
                 
                 display.textContent = text;
                 
@@ -1896,7 +1919,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
             }
         }
 
-        // (¡¡NUEVO!!) Guardar Configuración de Preview
         async function handleSavePreviewConfig() {
             const btn = document.getElementById('save-preview-config-btn');
             if(!btn) return;
@@ -1915,7 +1937,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                 await apiPost('/sdapi/v1/options', payload);
                 showStatus('Configuración de preview guardada.', false);
                 
-                // Actualizar config local
                 G_STATE.currentConfig.live_previews_enable = payload.live_previews_enable;
                 G_STATE.currentConfig.show_progress_every_n_steps = payload.show_progress_every_n_steps;
                 G_STATE.currentConfig.show_progress_type = payload.show_progress_type;
@@ -1946,11 +1967,10 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
             if(modalImage) modalImage.src = '';
         }
 
-        // --- Lógica de Generación (¡¡MODIFICADA!!) ---
+        // --- (¡¡¡MODIFICADO!!!) Lógica de Generación con Flujo Corregido ---
         async function handleGeneration(mode) {
             if (G_STATE.isGenerating) return;
 
-            // (NUEVO) Definir botón y texto del botón primero
             let button, buttonText;
             if (mode === 'txt2img') {
                 button = document.getElementById('generate-btn-txt2img');
@@ -1967,68 +1987,76 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                 console.error("Botón de generación no encontrado");
                 return;
             }
+            
+            // 1. Establecer estado de generación
+            G_STATE.isGenerating = true;
+            setGenerateButtons(true);
 
-            // (NUEVO) Scroll al área de resultados
+            // Ocultar resultados anteriores
+            const downloadBtn = document.getElementById('download-btn');
+            const copyMetadataBtn = document.getElementById('copy-metadata-btn');
+            const metadataDisplay = document.getElementById('metadata-display');
+            
+            if(downloadBtn) downloadBtn.style.display = 'none';
+            if(copyMetadataBtn) copyMetadataBtn.style.display = 'none';
+            if(metadataDisplay) metadataDisplay.classList.add('hidden');
+
             try {
+                // Scroll al área de resultados
                 document.getElementById('results-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
             } catch(e) { console.warn("No se pudo hacer scroll:", e); }
 
             
-            startProgressCheck();
-            showGenerationProgress(button); // Mostrar carga AHORA
-            
-            // --- (¡¡¡NUEVO!!!) Interceptación de Gemini ---
+            // --- (NUEVO FLUJO) 2. Interceptación de Gemini ---
             if (mode === 'txt2img' || mode === 'img2img') {
                 const promptEl = document.getElementById(mode === 'txt2img' ? 'prompt-t2i' : 'prompt-i2i');
                 const originalPrompt = promptEl.value;
 
-                // Heurística: si no está vacío, no parece ser ya tags (no comas) y tiene espacios.
-                // Esto evita re-procesar un prompt que ya está en formato de tags.
                 const needsEnhancement = originalPrompt.trim().length > 0 && 
                                          !originalPrompt.includes(',') && 
                                          originalPrompt.includes(' ');
 
                 if (needsEnhancement) {
+                    // 3. Mostrar estado "Mejorando Prompt"
+                    showGeminiLoading(button);
                     showStatus('Mejorando prompt con IA (Gemini)...');
                     try {
                         const enhancedTags = await callGeminiForTags(originalPrompt);
                         promptEl.value = enhancedTags; // ¡Actualizar el textarea!
                         showStatus('Prompt mejorado. Generando en Collab...');
+                        // 4. Gemini OK, continuar...
                     } catch (error) {
+                        // 5. Gemini falló. Detener todo.
                         console.error("Error de Gemini:", error);
-                        // Detener la generación si Gemini falla
                         showStatus(`Error de IA: ${error.message}. No se pudo generar.`, true);
-                        hideGenerationProgress(button, buttonText);
-                        stopProgressCheck();
-                        return; 
+                        hideGenerationProgress(button, buttonText); // Resetear botón
+                        G_STATE.isGenerating = false; // Resetear estado
+                        setGenerateButtons(false); // Resetear botones
+                        return; // Detener la función aquí
                     }
                 }
             }
-            // --- (FIN) Interceptación de Gemini ---
+            // --- Fin Interceptación de Gemini ---
 
+            
+            // 6. Iniciar UI de Collab (Progress Check y Botón "Generando")
+            startProgressCheck();
+            showGenerationProgress(button); // Ahora muestra "Generando..."
             
             let payload;
             let endpoint;
             
-            // --- (MODIFICADO) Construir Payload Base ---
-            // Esta función leerá el valor del prompt *actualizado* desde el DOM
             const buildBasePayload = (prefix) => {
-                
-                // --- (NUEVO) Lógica para combinar prompts ---
                 const mainPromptEl = document.getElementById(`prompt-${prefix}`);
                 const stylePromptEl = document.getElementById(`style-prompt-${prefix}`);
                 
-                // AHORA, mainPromptEl.value contiene los tags mejorados por Gemini
+                // Leer el prompt (ya mejorado si era necesario)
                 const mainPrompt = mainPromptEl ? mainPromptEl.value : "";
                 const stylePrompt = stylePromptEl ? stylePromptEl.value : "";
                 
-                // Combina los prompts. Usa .filter(Boolean) para eliminar strings vacíos
-                // y .join(', ') para unirlos con una coma si ambos existen.
                 const combinedPrompt = [mainPrompt, stylePrompt].filter(Boolean).join(', ');
-                // --- Fin de la nueva lógica ---
 
                 const p = {
-                    // (MODIFICADO) Usar el prompt combinado
                     "prompt": combinedPrompt,
                     "negative_prompt": document.getElementById(`negative-prompt-${prefix}`)?.value || "",
                     "styles": [document.getElementById(`styles-${prefix}`)?.value].filter(s => s && s !== "None"),
@@ -2056,18 +2084,17 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                 return p;
             };
             
-            // --- Construir Payload de ControlNet ---
             const buildControlNetPayload = (prefix) => {
                 const cnDetails = document.getElementById(`controlnet-details-${prefix}`);
-                if (!cnDetails || !cnDetails.open) return null; // No añadir si está cerrado
+                if (!cnDetails || !cnDetails.open) return null;
                 
                 const image = G_STATE.uploadedImageBase64[prefix === 't2i' ? 'controlNetT2I' : 'controlNetI2I'];
-                if (!image) return null; // No añadir si no hay imagen
+                if (!image) return null;
 
                 return {
                     "args": [
                         {
-                            "input_image": image.split(',')[1], // Base64 puro
+                            "input_image": image.split(',')[1], 
                             "module": document.getElementById(`controlnet-module-${prefix}`)?.value,
                             "model": document.getElementById(`controlnet-model-${prefix}`)?.value,
                             "weight": parseFloat(document.getElementById(`controlnet-weight-${prefix}`)?.value || 1.0),
@@ -2079,8 +2106,6 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
             // --- Seleccionar Modo ---
             if (mode === 'txt2img') {
                 payload = buildBasePayload('t2i');
-                
-                // Hires. Fix
                 const hrDetails = document.getElementById('hr-details-t2i');
                 if (hrDetails && hrDetails.open) {
                     payload.enable_hr = true;
@@ -2089,37 +2114,37 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                     payload.hr_second_pass_steps = parseInt(document.getElementById('hr-steps-t2i')?.value || 10, 10);
                     payload.denoising_strength = parseFloat(document.getElementById('hr-denoising-t2i')?.value || 0.7); 
                 }
-                
-                // ControlNet
                 const cnPayload = buildControlNetPayload('t2i');
                 if (cnPayload) payload.alwayson_scripts.controlnet = cnPayload;
-                
                 endpoint = '/sdapi/v1/txt2img';
                 
             } else if (mode === 'img2img') {
                 if (!G_STATE.uploadedImageBase64.i2i) {
                     showStatus('Por favor, sube una imagen de origen primero.', true);
+                    hideGenerationProgress(button, buttonText); // Resetear
                     stopProgressCheck(); 
+                    G_STATE.isGenerating = false; // Resetear
+                    setGenerateButtons(false); // Resetear
                     return;
                 }
                 payload = buildBasePayload('i2i');
                 payload.init_images = [ G_STATE.uploadedImageBase64.i2i ];
                 payload.denoising_strength = parseFloat(document.getElementById('denoising-i2i')?.value || 0.75);
-                
-                // ControlNet
                 const cnPayload = buildControlNetPayload('i2i');
                 if (cnPayload) payload.alwayson_scripts.controlnet = cnPayload;
-                
                 endpoint = '/sdapi/v1/img2img';
 
             } else if (mode === 'extras') {
                 if (!G_STATE.uploadedImageBase64.extras) {
                     showStatus('Sube una imagen en la pestaña Extras primero.', true);
+                    hideGenerationProgress(button, buttonText); // Resetear
                     stopProgressCheck(); 
+                    G_STATE.isGenerating = false; // Resetear
+                    setGenerateButtons(false); // Resetear
                     return;
                 }
                 payload = {
-                    "image": G_STATE.uploadedImageBase64.extras.split(',')[1], // Base64 puro
+                    "image": G_STATE.uploadedImageBase64.extras.split(',')[1],
                     "resize_mode": parseInt(document.getElementById('extras-resize-mode')?.value || 0, 10),
                     "upscaling_resize": parseFloat(document.getElementById('extras-scale-factor')?.value || 2.0),
                     "upscaling_resize_w": parseInt(document.getElementById('extras-width')?.value || 1024, 10),
@@ -2129,38 +2154,25 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                     "extras_upscaler_2_visibility": parseFloat(document.getElementById('extras-upscaler-2-visibility')?.value || 0.5),
                     "gfpgan_visibility": (document.getElementById('face-restorer-extras')?.value || "None") === "GFPGAN" ? 1 : 0,
                     "codeformer_visibility": (document.getElementById('face-restorer-extras')?.value || "None") === "CodeFormer" ? 1 : 0,
-                    "codeformer_weight": 0.5, // Podrías añadir un slider para esto
+                    "codeformer_weight": 0.5,
                 };
                 endpoint = '/sdapi/v1/extra-single-image';
             }
 
-            // Ocultar resultados anteriores
-            const downloadBtn = document.getElementById('download-btn');
-            const copyMetadataBtn = document.getElementById('copy-metadata-btn');
-            const metadataDisplay = document.getElementById('metadata-display');
-            
-            if(downloadBtn) downloadBtn.style.display = 'none';
-            if(copyMetadataBtn) copyMetadataBtn.style.display = 'none';
-            if(metadataDisplay) metadataDisplay.classList.add('hidden');
-            // No ocultar la imagen/placeholder, el progress check la actualizará
 
+            // 7. Enviar la solicitud a Collab
             try {
-                // El estado de "Generando" o "Mejorando" ya se mostró
-                // Ahora solo actualizamos si no se mejoró
-                if (!payload.prompt.includes(',')) { // Asumimos que si no hay comas, no se mejoró
-                    showStatus('Enviando solicitud de generación...');
-                }
+                showStatus('Enviando solicitud de generación a Collab...');
                 const result = await apiPost(endpoint, payload);
                 
                 let base64Image, info;
                 
-                // Manejar diferentes formatos de respuesta
                 if (mode === 'extras') {
-                    base64Image = result.image; // Singular
-                    info = result.html_info; // Es un string HTML
+                    base64Image = result.image;
+                    info = result.html_info;
                 } else {
-                    base64Image = result.images[0]; // Plural
-                    info = result.info; // Es un JSON string
+                    base64Image = result.images[0];
+                    info = result.info;
                 }
                 
                 const outputImage = document.getElementById('output-image');
@@ -2168,22 +2180,19 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
 
                 if (base64Image && outputImage && placeholder) {
                     const dataUrl = 'data:image/png;base64,' + base64Image;
-                    outputImage.src = dataUrl; // Imagen final
+                    outputImage.src = dataUrl;
                     outputImage.classList.remove('hidden');
                     placeholder.classList.add('hidden');
                     
                     if (info && metadataDisplay) {
                         let metadataText;
                         if (mode === 'extras') {
-                            metadataText = info.replace(/<[^>]*>?/gm, ''); // Limpiar HTML
+                            metadataText = info.replace(/<[^>]*>?/gm, ''); 
                         } else {
                              try {
                                 const infoParsed = JSON.parse(info);
-                                // (NUEVO) Mostrar el sampler y scheduler usados
                                 const sampler = infoParsed.sampler_name || (payload.sampler_name || "N/A");
                                 const scheduler = infoParsed.scheduler_name || (payload.scheduler || "N/A");
-
-                                // (MODIFICADO) Mostrar el prompt combinado en los metadatos
                                 metadataText = `**Prompt:** ${infoParsed.prompt}\n**Negative Prompt:** ${infoParsed.negative_prompt}\n---\n**Seed:** ${infoParsed.seed}\n**Steps:** ${infoParsed.steps}\n**CFG Scale:** ${infoParsed.cfg_scale}\n**Sampler:** ${sampler}\n**Scheduler:** ${scheduler}\n**Model:** ${infoParsed.sd_model_name || 'N/A'}\n**VAE:** ${infoParsed.sd_vae_name || 'N/A'}\n**Size:** ${infoParsed.width}x${infoParsed.height}`;
                             } catch (e) {
                                 metadataText = `Raw Info: ${info}`;
@@ -2209,239 +2218,243 @@ Responde únicamente con la lista de tags. Sin saludos ni texto introductorio.`;
                 }
                 
             } catch (error) {
+                // 8. Capturar errores de Collab
                 console.error(error);
                 showStatus(`Error: ${error.message}. Verifica tu prompt y conexión.`, true);
             } finally {
+                // 9. Limpiar todo sin importar el resultado
                 hideGenerationProgress(button, buttonText);
                 stopProgressCheck();
+                G_STATE.isGenerating = false;
+                setGenerateButtons(false);
             }
         }
         
         // --- (CORRECCIÓN) Mover todos los listeners y definiciones de elementos al DOMContentLoaded ---
-        // (CORRECCIÓN) Se elimina el wrapper DOMContentLoaded, ya que el script está al final del body
-        // y los elementos ya existen.
+        document.addEventListener('DOMContentLoaded', () => {
             
-        // --- Elementos de la UI ---
-        const splashScreen = document.getElementById('splash-screen');
-        const appContainer = document.getElementById('app-container');
-        const connectBtn = document.getElementById('connect-btn');
-        const urlInput = document.getElementById('gradio-url');
-        const initialStatusMessage = document.getElementById('initial-status-message');
-        const statusMessage = document.getElementById('status-message');
-        const outputImage = document.getElementById('output-image');
-        const placeholder = document.getElementById('placeholder');
-        const downloadBtn = document.getElementById('download-btn');
-        const copyMetadataBtn = document.getElementById('copy-metadata-btn');
-        const metadataDisplay = document.getElementById('metadata-display');
-        const refreshResourcesBtn = document.getElementById('refresh-resources-btn');
-        
-        // --- Progreso ---
-        const progressContainer = document.getElementById('progress-container');
-        const generationControls = document.getElementById('generation-controls');
-        const interruptBtn = document.getElementById('interrupt-btn');
-        const skipBtn = document.getElementById('skip-btn');
-        
-        // --- Botones de Generar (FAB) ---
-        const generateTxt2ImgBtn = document.getElementById('generate-btn-txt2img');
-        const generateImg2ImgBtn = document.getElementById('generate-btn-img2img');
-        const generateExtrasBtn = document.getElementById('generate-btn-extras');
-
-        // --- Prompts y Tags ---
-        const promptT2I = document.getElementById('prompt-t2i');
-        const promptI2I = document.getElementById('prompt-i2i');
-        
-        // --- Visor Modal ---
-        const modal = document.getElementById('image-viewer-modal');
-        const modalImage = document.getElementById('modal-image');
-        const modalCloseBtn = document.getElementById('modal-close-btn');
-
-        // --- Lógica de Pestañas (Elementos) ---
-        const tabButtons = {
-            txt2img: document.getElementById('tab-btn-txt2img'),
-            img2img: document.getElementById('tab-btn-img2img'),
-            extras: document.getElementById('tab-btn-extras'),
-            tagger: document.getElementById('tab-btn-tagger'),
-            config: document.getElementById('tab-btn-config'),
-        };
-
-        // --- Lógica Principal de Conexión ---
-        if (connectBtn) {
-            connectBtn.addEventListener('click', async () => {
-                if (!urlInput) return;
-                let url = urlInput.value.trim().replace(/\/$/, '');
-                if (!url || !url.startsWith('https://')) {
-                    showInitialStatus('Por favor, ingresa una URL válida que comience con "https://"', true);
-                    return;
-                }
-                G_STATE.gradioUrl = url;
-                localStorage.setItem('gradioUrl', url); 
-                const originalText = connectBtn.innerHTML;
-                showLoading(connectBtn); 
-                showInitialStatus('Conectando y cargando recursos...');
-
-                try {
-                    await loadAndPopulateResources(false); 
-                    toggleAppVisibility(true);
-                    showStatus('¡Conectado! Listo para generar.', false);
-                } catch (error) {
-                    showInitialStatus(`Error al conectar. Verifica la URL y la consola.`, true);
-                } finally {
-                    hideLoading(connectBtn, originalText); 
-                }
-            });
-        } else {
-            console.error("El botón de conexión no se encontró.");
-        }
-
-        // --- Cargar URL guardada ---
-        if (urlInput) {
-            const savedUrl = localStorage.getItem('gradioUrl');
-            if (savedUrl) {
-                urlInput.value = savedUrl;
-            }
-        }
-
-        // --- Botón de Refrescar ---
-        if (refreshResourcesBtn) {
-            refreshResourcesBtn.addEventListener('click', refreshResources);
-        }
-
-        // --- Lógica de Pestañas (Listeners) ---
-        Object.keys(tabButtons).forEach(key => {
-            if(tabButtons[key]) {
-                tabButtons[key].addEventListener('click', () => switchTab(key));
-            }
-        });
-        switchTab('txt2img'); // Empezar en Txt2Img
-
-        // --- Listeners de Auto-Prompt ---
-        document.querySelectorAll('.auto-prompt-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetId = e.currentTarget.dataset.target;
-                const targetTextarea = document.getElementById(targetId);
-                if (targetTextarea) {
-                    targetTextarea.value = AUTO_PROMPT_GENERATOR.generatePrompt();
-                    targetTextarea.scrollTop = targetTextarea.scrollHeight;
-                    targetTextarea.focus();
-                }
-            });
-        });
-
-        // --- Listeners del Constructor de Estilo ---
-        function updateStylePrompt(prefix) {
-            const genderKey = document.getElementById(`style-gender-${prefix}`)?.value || 'none';
-            const artisticKey = document.getElementById(`style-artistic-${prefix}`)?.value || 'none';
-            const lightKey = document.getElementById(`style-light-${prefix}`)?.value || 'none';
-            const detailKey = document.getElementById(`style-detail-${prefix}`)?.value || 'none';
-            const muscularKey = document.getElementById(`style-muscular-${prefix}`)?.value || 'none';
-            const ndxlKey = document.getElementById(`style-ndxl-${prefix}`)?.value || 'none';
+            // --- Elementos de la UI ---
+            const splashScreen = document.getElementById('splash-screen');
+            const appContainer = document.getElementById('app-container');
+            const connectBtn = document.getElementById('connect-btn');
+            const urlInput = document.getElementById('gradio-url');
+            const initialStatusMessage = document.getElementById('initial-status-message');
+            const statusMessage = document.getElementById('status-message');
+            const outputImage = document.getElementById('output-image');
+            const placeholder = document.getElementById('placeholder');
+            const downloadBtn = document.getElementById('download-btn');
+            const copyMetadataBtn = document.getElementById('copy-metadata-btn');
+            const metadataDisplay = document.getElementById('metadata-display');
+            const refreshResourcesBtn = document.getElementById('refresh-resources-btn');
             
-            const targetTextarea = document.getElementById(`style-prompt-${prefix}`);
-            if (!targetTextarea) return;
-
-            const genderTags = STYLE_TAGS.gender[genderKey] || '';
-            const artisticTags = STYLE_TAGS.artistic[artisticKey] || '';
-            const lightTags = STYLE_TAGS.light[lightKey] || '';
-            const detailTags = STYLE_TAGS.detail[detailKey] || '';
-            const muscularTags = STYLE_TAGS.muscular[muscularKey] || '';
-            const ndxlTags = STYLE_TAGS.ndxl[ndxlKey] || '';
+            // --- Progreso ---
+            const progressContainer = document.getElementById('progress-container');
+            const generationControls = document.getElementById('generation-controls');
+            const interruptBtn = document.getElementById('interrupt-btn');
+            const skipBtn = document.getElementById('skip-btn');
             
-            const textTags = [genderTags, artisticTags].filter(Boolean).join(', ');
-            const loraTags = [lightTags, detailTags, muscularTags, ndxlTags].filter(Boolean).join(' '); 
-            const combinedTags = [textTags, loraTags].filter(Boolean).join(' ');
+            // --- Botones de Generar (FAB) ---
+            const generateTxt2ImgBtn = document.getElementById('generate-btn-txt2img');
+            const generateImg2ImgBtn = document.getElementById('generate-btn-img2img');
+            const generateExtrasBtn = document.getElementById('generate-btn-extras');
+
+            // --- Prompts y Tags ---
+            const promptT2I = document.getElementById('prompt-t2i');
+            const promptI2I = document.getElementById('prompt-i2i');
             
-            targetTextarea.value = combinedTags;
-        }
+            // --- Visor Modal ---
+            const modal = document.getElementById('image-viewer-modal');
+            const modalImage = document.getElementById('modal-image');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
 
-        document.querySelectorAll('.style-builder-component').forEach(select => {
-            select.addEventListener('change', (e) => {
-                const prefix = e.currentTarget.dataset.panelPrefix;
-                updateStylePrompt(prefix);
-            });
-        });
+            // --- Lógica de Pestañas (Elementos) ---
+            const tabButtons = {
+                txt2img: document.getElementById('tab-btn-txt2img'),
+                img2img: document.getElementById('tab-btn-img2img'),
+                extras: document.getElementById('tab-btn-extras'),
+                tagger: document.getElementById('tab-btn-tagger'),
+                config: document.getElementById('tab-btn-config'),
+            };
 
-        // --- Lógica de Seed Aleatoria ---
-        document.getElementById('random-seed-t2i')?.addEventListener('click', () => {
-            const seedInput = document.getElementById('seed-t2i');
-            if(seedInput) seedInput.value = -1;
-        });
-        document.getElementById('random-seed-i2i')?.addEventListener('click', () => {
-            const seedInput = document.getElementById('seed-i2i');
-            if(seedInput) seedInput.value = -1;
-        });
-        
-        // --- Añadir Lora al Prompt ---
-        document.querySelectorAll('.add-lora-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetId = btn.dataset.target;
-                const promptInput = document.getElementById(targetId);
-                const loraSelectId = targetId.replace('prompt', 'lora');
-                const loraSelect = document.getElementById(loraSelectId);
-                
-                if (!promptInput || !loraSelect) return;
-                
-                const selectedLora = loraSelect.value;
-                if (!selectedLora || selectedLora === "None") return;
-                
-                promptInput.value += ` <lora:${selectedLora}:1> `;
-                promptInput.focus();
-                const newCursorPosition = promptInput.value.length;
-                promptInput.setSelectionRange(newCursorPosition, newCursorPosition);
-            });
-        });
-        
-        // --- Asignar listeners de subida de imagen ---
-        document.getElementById('image-upload-i2i')?.addEventListener('change', (e) => handleImageUpload(e, 'image-preview-i2i', 'image-preview-placeholder-i2i', 'i2i'));
-        document.getElementById('image-upload-extras')?.addEventListener('change', (e) => handleImageUpload(e, 'image-preview-extras', 'image-preview-placeholder-extras', 'extras'));
-        document.getElementById('controlnet-image-upload-t2i')?.addEventListener('change', (e) => handleImageUpload(e, 'controlnet-image-preview-t2i', 'controlnet-image-placeholder-t2i', 'controlNetT2I'));
-        document.getElementById('controlnet-image-upload-i2i')?.addEventListener('change', (e) => handleImageUpload(e, 'controlnet-image-preview-i2i', 'controlnet-image-placeholder-i2i', 'controlNetI2I'));
-
-        
-        // --- Copiar Metadatos ---
-        if (copyMetadataBtn) {
-            copyMetadataBtn.addEventListener('click', () => {
-                if (G_STATE.lastMetadata) {
-                    const tempTextArea = document.createElement('textarea');
-                    tempTextArea.value = G_STATE.lastMetadata;
-                    document.body.appendChild(tempTextArea);
-                    tempTextArea.select();
-                    try {
-                        document.execCommand('copy');
-                        showStatus('Metadatos copiados al portapapeles.', false);
-                    } catch (err) {
-                        showStatus('Error al copiar metadatos.', true);
+            // --- Lógica Principal de Conexión ---
+            if (connectBtn) {
+                connectBtn.addEventListener('click', async () => {
+                    if (!urlInput) return;
+                    let url = urlInput.value.trim().replace(/\/$/, '');
+                    if (!url || !url.startsWith('https://')) {
+                        showInitialStatus('Por favor, ingresa una URL válida que comience con "https://"', true);
+                        return;
                     }
-                    document.body.removeChild(tempTextArea);
+                    G_STATE.gradioUrl = url;
+                    localStorage.setItem('gradioUrl', url); 
+                    const originalText = connectBtn.innerHTML;
+                    showLoading(connectBtn); 
+                    showInitialStatus('Conectando y cargando recursos...');
+
+                    try {
+                        await loadAndPopulateResources(false); 
+                        toggleAppVisibility(true);
+                        showStatus('¡Conectado! Listo para generar.', false);
+                    } catch (error) {
+                        showInitialStatus(`Error al conectar. Verifica la URL y la consola.`, true);
+                    } finally {
+                        hideLoading(connectBtn, originalText); 
+                    }
+                });
+            } else {
+                console.error("El botón de conexión no se encontró.");
+            }
+
+            // --- Cargar URL guardada ---
+            if (urlInput) {
+                const savedUrl = localStorage.getItem('gradioUrl');
+                if (savedUrl) {
+                    urlInput.value = savedUrl;
+                }
+            }
+
+            // --- Botón de Refrescar ---
+            if (refreshResourcesBtn) {
+                refreshResourcesBtn.addEventListener('click', refreshResources);
+            }
+
+            // --- Lógica de Pestañas (Listeners) ---
+            Object.keys(tabButtons).forEach(key => {
+                if(tabButtons[key]) {
+                    tabButtons[key].addEventListener('click', () => switchTab(key));
                 }
             });
-        }
+            switchTab('txt2img'); // Empezar en Txt2Img
 
-        // --- Listeners de Interrumpir/Saltar ---
-        if(interruptBtn) interruptBtn.addEventListener('click', handleInterrupt);
-        if(skipBtn) skipBtn.addEventListener('click', handleSkip);
+            // --- Listeners de Auto-Prompt ---
+            document.querySelectorAll('.auto-prompt-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = e.currentTarget.dataset.target;
+                    const targetTextarea = document.getElementById(targetId);
+                    if (targetTextarea) {
+                        targetTextarea.value = AUTO_PROMPT_GENERATOR.generatePrompt();
+                        targetTextarea.scrollTop = targetTextarea.scrollHeight;
+                        targetTextarea.focus();
+                    }
+                });
+            });
 
-        // --- Listeners de Herramientas de Imagen ---
-        document.getElementById('interrogate-btn-i2i')?.addEventListener('click', handleInterrogate);
-        document.getElementById('pnginfo-btn-i2i')?.addEventListener('click', handlePngInfo);
-        
-        // --- Listeners de Configuración ---
-        document.getElementById('get-memory-btn')?.addEventListener('click', handleGetMemory);
-        document.getElementById('save-preview-config-btn')?.addEventListener('click', handleSavePreviewConfig);
+            // --- Listeners del Constructor de Estilo ---
+            function updateStylePrompt(prefix) {
+                const genderKey = document.getElementById(`style-gender-${prefix}`)?.value || 'none';
+                const artisticKey = document.getElementById(`style-artistic-${prefix}`)?.value || 'none';
+                const lightKey = document.getElementById(`style-light-${prefix}`)?.value || 'none';
+                const detailKey = document.getElementById(`style-detail-${prefix}`)?.value || 'none';
+                const muscularKey = document.getElementById(`style-muscular-${prefix}`)?.value || 'none';
+                const ndxlKey = document.getElementById(`style-ndxl-${prefix}`)?.value || 'none';
+                
+                const targetTextarea = document.getElementById(`style-prompt-${prefix}`);
+                if (!targetTextarea) return;
 
-        // --- Listeners del Visor Modal ---
-        if(outputImage) outputImage.addEventListener('click', openModal);
-        if(modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
-        if(modal) modal.addEventListener('click', (e) => {
-            if (e.target === modal) { // Cerrar solo si se hace clic en el fondo
-                closeModal();
+                const genderTags = STYLE_TAGS.gender[genderKey] || '';
+                const artisticTags = STYLE_TAGS.artistic[artisticKey] || '';
+                const lightTags = STYLE_TAGS.light[lightKey] || '';
+                const detailTags = STYLE_TAGS.detail[detailKey] || '';
+                const muscularTags = STYLE_TAGS.muscular[muscularKey] || '';
+                const ndxlTags = STYLE_TAGS.ndxl[ndxlKey] || '';
+                
+                const textTags = [genderTags, artisticTags].filter(Boolean).join(', ');
+                const loraTags = [lightTags, detailTags, muscularTags, ndxlTags].filter(Boolean).join(' '); 
+                const combinedTags = [textTags, loraTags].filter(Boolean).join(' ');
+                
+                targetTextarea.value = combinedTags;
             }
-        });
 
-        // --- Triggers de Generación ---
-        if(generateTxt2ImgBtn) generateTxt2ImgBtn.addEventListener('click', () => handleGeneration('txt2img'));
-        if(generateImg2ImgBtn) generateImg2ImgBtn.addEventListener('click', () => handleGeneration('img2img'));
-        if(generateExtrasBtn) generateExtrasBtn.addEventListener('click', () => handleGeneration('extras'));
+            document.querySelectorAll('.style-builder-component').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const prefix = e.currentTarget.dataset.panelPrefix;
+                    updateStylePrompt(prefix);
+                });
+            });
+
+            // --- Lógica de Seed Aleatoria ---
+            document.getElementById('random-seed-t2i')?.addEventListener('click', () => {
+                const seedInput = document.getElementById('seed-t2i');
+                if(seedInput) seedInput.value = -1;
+            });
+            document.getElementById('random-seed-i2i')?.addEventListener('click', () => {
+                const seedInput = document.getElementById('seed-i2i');
+                if(seedInput) seedInput.value = -1;
+            });
+            
+            // --- Añadir Lora al Prompt ---
+            document.querySelectorAll('.add-lora-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.dataset.target;
+                    const promptInput = document.getElementById(targetId);
+                    const loraSelectId = targetId.replace('prompt', 'lora');
+                    const loraSelect = document.getElementById(loraSelectId);
+                    
+                    if (!promptInput || !loraSelect) return;
+                    
+                    const selectedLora = loraSelect.value;
+                    if (!selectedLora || selectedLora === "None") return;
+                    
+                    promptInput.value += ` <lora:${selectedLora}:1> `;
+                    promptInput.focus();
+                    const newCursorPosition = promptInput.value.length;
+                    promptInput.setSelectionRange(newCursorPosition, newCursorPosition);
+                });
+            });
+            
+            // --- Asignar listeners de subida de imagen ---
+            document.getElementById('image-upload-i2i')?.addEventListener('change', (e) => handleImageUpload(e, 'image-preview-i2i', 'image-preview-placeholder-i2i', 'i2i'));
+            document.getElementById('image-upload-extras')?.addEventListener('change', (e) => handleImageUpload(e, 'image-preview-extras', 'image-preview-placeholder-extras', 'extras'));
+            document.getElementById('controlnet-image-upload-t2i')?.addEventListener('change', (e) => handleImageUpload(e, 'controlnet-image-preview-t2i', 'controlnet-image-placeholder-t2i', 'controlNetT2I'));
+            document.getElementById('controlnet-image-upload-i2i')?.addEventListener('change', (e) => handleImageUpload(e, 'controlnet-image-preview-i2i', 'controlnet-image-placeholder-i2i', 'controlNetI2I'));
+
+            
+            // --- Copiar Metadatos ---
+            if (copyMetadataBtn) {
+                copyMetadataBtn.addEventListener('click', () => {
+                    if (G_STATE.lastMetadata) {
+                        const tempTextArea = document.createElement('textarea');
+                        tempTextArea.value = G_STATE.lastMetadata;
+                        document.body.appendChild(tempTextArea);
+                        tempTextArea.select();
+                        try {
+                            document.execCommand('copy');
+                            showStatus('Metadatos copiados al portapapeles.', false);
+                        } catch (err) {
+                            showStatus('Error al copiar metadatos.', true);
+                        }
+                        document.body.removeChild(tempTextArea);
+                    }
+                });
+            }
+
+            // --- Listeners de Interrumpir/Saltar ---
+            if(interruptBtn) interruptBtn.addEventListener('click', handleInterrupt);
+            if(skipBtn) skipBtn.addEventListener('click', handleSkip);
+
+            // --- Listeners de Herramientas de Imagen ---
+            document.getElementById('interrogate-btn-i2i')?.addEventListener('click', handleInterrogate);
+            document.getElementById('pnginfo-btn-i2i')?.addEventListener('click', handlePngInfo);
+            
+            // --- Listeners de Configuración ---
+            document.getElementById('get-memory-btn')?.addEventListener('click', handleGetMemory);
+            document.getElementById('save-preview-config-btn')?.addEventListener('click', handleSavePreviewConfig);
+
+            // --- Listeners del Visor Modal ---
+            if(outputImage) outputImage.addEventListener('click', openModal);
+            if(modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
+            if(modal) modal.addEventListener('click', (e) => {
+                if (e.target === modal) { 
+                    closeModal();
+                }
+            });
+
+            // --- Triggers de Generación ---
+            if(generateTxt2ImgBtn) generateTxt2ImgBtn.addEventListener('click', () => handleGeneration('txt2img'));
+            if(generateImg2ImgBtn) generateImg2ImgBtn.addEventListener('click', () => handleGeneration('img2img'));
+            if(generateExtrasBtn) generateExtrasBtn.addEventListener('click', () => handleGeneration('extras'));
+        });
 
     </script>
 </body>

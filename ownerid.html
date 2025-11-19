@@ -2,220 +2,70 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Prompts para Automatic1111 v7.2</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Galería de Álbum Catbox</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #111827; /* bg-gray-900 */
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
         }
-        .glass-container {
-            background: rgba(31, 41, 55, 0.5); /* bg-gray-800 with opacity */
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .gallery img {
+            max-width: 300px;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .gradient-text {
-            background: linear-gradient(90deg, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .btn-glow {
-            box-shadow: 0 0 5px #38bdf8, 0 0 15px #38bdf8, 0 0 25px #38bdf8;
-        }
-        .btn-secondary {
-            border: 1px solid #38bdf8;
-            transition: all 0.3s ease;
-        }
-        .btn-secondary:hover {
-            background-color: #38bdf8;
-            color: #111827;
-        }
-        #prompt-output {
-            transition: all 0.3s ease-in-out;
-            word-break: break-word; /* Prevents text overflow */
-        }
-        .prompt-enter {
-            opacity: 0;
-            transform: translateY(10px);
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen p-4 overflow-x-hidden">
-    <!-- Fondo decorativo -->
-    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-900 via-gray-900 to-sky-900 -z-10"></div>
-
-    <div class="w-full max-w-4xl mx-auto my-8 glass-container rounded-2xl shadow-2xl p-8 space-y-8">
-        <!-- Encabezado -->
-        <div class="text-center">
-            <h1 class="text-5xl font-bold gradient-text">Generador de Prompts v7.2</h1>
-            <p class="text-gray-400 mt-2">Ahora con más variedad, fetiches y personajes tipo furry.</p>
-        </div>
-
-        <!-- Área de resultado -->
-        <div class="bg-gray-900/50 p-6 rounded-lg min-h-[160px] flex items-center justify-center border border-dashed border-gray-600">
-            <p id="prompt-output" class="text-gray-200 text-lg leading-relaxed text-left w-full">Presiona "Generar Prompt" para crear magia.</p>
-        </div>
-
-        <!-- Botones de acción -->
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <button id="generate-btn" class="flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 hover:btn-glow">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
-                Generar Prompt
-            </button>
-            <button id="copy-btn" class="flex items-center justify-center gap-2 btn-secondary text-sky-400 font-bold py-3 px-8 rounded-lg relative">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                Copiar Resultado
-                <span id="copy-feedback" class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-md opacity-0 transition-opacity duration-300">¡Copiado!</span>
-            </button>
-        </div>
-    </div>
+<body>
+    <h1>Imágenes del Álbum: brtgx6</h1>
+    <div id="gallery" class="gallery"></div>
+    <div id="loading" class="loading">Cargando imágenes...</div>
 
     <script>
-        // --- BASE DE DATOS DE TAGS ---
-        const tags = {
-            obligatorioCompleto: " (man:4) (male focus), ((1boy)), solo, (full body:1.2), masterpiece, <lora:Penis Bulge Slider_alpha1.0_rank4_noxattn_last:2> <lora:lightingSlider:-2> <lora:DetailerILv2:4> <lora:add-detail-xl:4> masterpiece, best quality, ultra-detailed, 8k resolution, high dynamic range, absurdres, stunningly beautiful, intricate details, sharp focus, cinematic color grading, high-resolution texture",
-            
-            clothingOptions: {
-                nude: ["(big penis:1.2)", "(erect penis:1.2)", "(flaccid penis:1.2)", "(penis:1.1)", "testicles", "nude", "uncensored", "(male pubic hair:1.2)", "foreskin", "dripping", "animal penis", "precum", "dog penis", "extreme big penis", "(big penis:1.2)", "(erect penis:1.2)", "(flaccid penis:1.2)", "(penis:1.1)", "testicles", "nude", "uncensored", "(male pubic hair:1.2)", "foreskin", "dripping", "animal penis", "precum", "dog penis", "extreme big penis", "(huge penis:1.3)", "(veiny penis:1.2)", "(circumcised penis:1.1)", "(uncircumcised penis:1.1)", "scrotum", "cumshot", "ejaculating", "semen", "(thick penis:1.2)", "(long penis:1.2)", "horse penis", "knot penis", "sheath", "pubic hair", "sweaty penis", "(pulsing penis:1.2)", "(bulbous glans:1.1)", "urethra", "penis bulge", "(erection:1.2)", "soft penis", "hard penis", "penis veins", "testicle hair", "animal genitalia", "zoo penis", "furry penis", "(massive penis:1.3)", "(hyper penis:1.4)", "dripping precum", "sticky penis", "glistening penis", "(curved penis:1.1)", "(straight penis:1.1)", "(red penis:1.1)", "wolf penis", "cat penis", "dragon penis"
-
-],
-                underwear: ["(brief underwear:1.2)", "(thong:1.2)", "sexy bodysuit", "(jockstrap:1.2)", "(boxer briefs:1.2)", "harness", "chest harness", "socks", "white socks", "black male underwear", "white male underwear", "fundoshi", "(bulge:1.2)", "erection under clothes", "male swimwear", "see-through", "clothes pull", "pulled by self", "gloves", "fingerless gloves", "black gloves", "(athletic shorts:1.2)", "gym shorts", "running tights", "(compression shorts:1.2)", "(bike shorts:1.2)", "yoga pants", "leggings", "tights", "pantyhose", "stockings", "fishnet stockings", "garter belt", "suspenders", "corset", "bustier", "leather harness", "full body harness", "collar", "choker", "leash", "leather gloves", "latex gloves", "arm warmers", "leg warmers", "fingerless gloves", "red gloves", "white gloves", "knee socks", "thigh highs", "ankle socks", "crew socks", "no show socks", "striped socks", "argyle socks", "wool socks", "compression socks", "toe socks", "boots", "combat boots", "leather boots", "high heels", "platform shoes", "sneakers", "loafers", "sandals", "flip flops", "vest", "crop top", "tank top", "muscle shirt", "spandex bodysuit", "lycra suit", "wrestling singlet", "speedo", "trunks", "(boxers:1.2)", "loose boxers", "silk boxers", "cotton briefs", "low rise briefs", "high cut briefs", "lace underwear", "mesh underwear", "sheer underwear", "crotchless underwear", "see-through swimwear", "wet swimwear", "tight swimwear", "mankini", "posing pouch", "banana hammock", "c-string", "micro thong", "g-string", "satin thong", "leather thong", "wet clothes", "ripped clothes", "torn underwear", "shirt lift", "pants down", "undressing", "half dressed", "clothed male", "semi-nude", "transparent clothes", "clingy clothes", "form-fitting clothes", "bodycon outfit", "latex suit", "rubber harness", "chain harness", "metal collar", "spiked collar", "bow tie", "necktie", "cummerbund", "belt", "buckle"
-
-],
-                outfits: ["socks", "sexy", ""]
-            },
-            
-            kinkAndToys: ["", "anal", "dildo", "sex toy", "anal object insertion", "object insertion", "rating_explicit, solo yaoi, white tank top, sweating, blushing, heavy breathing, open mouth, laying on wood floor, legs spread open, parting buttcheeks, bottomless, creampied anus, cum trail, after-sex, male pubic hair, flaccid penis, testicles, wet clothes, blurry indoors room, anus facing viewer, oversized cropped off legs", "shibari bound arms behind back, gag ball, gag mouth, shibari bound, pubic hair, penis, flaccid, drip cum, cowboy shot", "genitals, male, bodily fluids, foreskin, penis, shiny skin, anal fingering, disembodied hands, on front, completely nude, spread anus, on bed", "(laying on back, legs over head, piledrive), open mouth, eating own cum, bent over, anus, cum in mouth, (ejaculating on face), completely naked, penis, testicles, bedroom, (male masturbation, ) side view, undercut, athletic, chest hair, armpit hair, extremely hairy chest, thick chest hair, thick armpit hair, vibrator in anus", "pain, scared, crying, male milking machine, pumps, ball gag, lactation, bdsm, milking machine, bound, kneeling", "red sweater, aran sweater, shirt lift, nipples, leaning, embarrassed, moaning, testicles, (cum in ass, excessive cum), yaoi, anal, 2boys, open mouth, rough sex, penis, sex, trembling, motion lines, size difference, nude larger man. larger man fucking boy, hardcore, faceless larger male, deep in ass, heavily excessive flooding cum, indoors, (lactation), stomach bulge", "muscular body shape, blushing smirk, open clothes, sweat soaking clothes, office suit, tie, white shirt, trousers, heavy sweating, (steaming: 1.3), visible_breath, visible cock, public_hair, crotch bulge, solo, BREAK, sitting, leg up, leg_crossed, feet closeup, man spreading, leaning on chair, BREAK, white socks, perfect feet, steamy_feet, sweaty_feet, BREAK, looking-at-viewer, looking at camera, long shot, side_view, BREAK, office background, office room", "1boy, male focus, soap on body, press the ass against the glass, press the balls against the glass, anus open, huge penis, large testicles, looking at viewer, indoors, shower, sho werroom, bathroom, muscular, cum shot, hairy anus, ass hair", "solo, (fully unzipped:1.4), (nipples:1.3), navel, (wolf onesie:1.4), (fluffy:1.2), (hood with ears:1.3), (tail:1.2), (paws:1.0), cozy, playful, luxury apartment, bedroom, white silk sheets, cosy, inviting, (looking at viewer:1.4), leaning back, reclined, male pubic hair, penis, erection, lying down on back, face up, supline, arms up, arm pits, hands behind head, flirty, smirk, tease, playful expression, smiling, laughing", "halo, multiple boys, angel, male focus, testicles, anus, horns, penis, wings, red eyes, green eyes, yaoi, 2boys, angel wings, cum, uncensored, open mouth, dark skin, feathered wings, ass, demon boy, looking back, dark-skinned male, blush, after sex, chain, gaping, pointy ears, brown hair, after anal, sweat, demon horns, cum in ass, sex, angel and devil, large penis, bare shoulders, veins, multiple penises, foreskin, smile, veiny penis, cumdrip, teeth, interracial", "naked chocolate, chocolate on penis, chocolate on body, chocolate on breasts, food on body, chocolate, nude, nipples, bed, on bed, on back, cowboy shot, dutch angle, ashamed, seductive pose, blush, smirk, cowboy shot", "male focus, blush, moaning, (hands bound), nude, nipples, tiny penis, anus, cumdrip, indoors, bed, top- down_bottom-up, bed room, on bed, kneeling, dutch angle, BREAK, (disembodied hands, male masturbation, dildo masturbation, grabbing dildo, anal masturbation, ) motion blur, motion lines, cumming, cum shot, (from below, ) from behind", "bed, naked, condom_on_penis, wearing_condom, solo, manly, low-angle, dutch_angle, dim light, condom_filling, close-up, lying_on_back, cum_in_condom, filled condom on penis, green condom, exhausted, panting, out of breath, gasping for air, satisfied", "open mouth, tongue, penis over eyes, penis on face, penis in front of eyes, upper body, close up, hand on anothers head, BREAK dark- skinned male, huge size difference, very dark skin, interracial, huge penis, extremely detailed penis, veiny penis, huge testicles","nude, low angle, dark, nighttime, dark room, BREAK 2boys, solo focus, adult, smug, naked, shiny skin, blushing, pov buttjob, ass, cumming, ass grab, long penis", "a topless young guy swimming in an inflatable toy by palm tree, male focus, shota, 1boy, penis, goggles, testicles, solo, goggles on head, innertube, on back, feet, looking at viewer, erection, from below, anus, penis focus", "male focus, solo, penis, balls, cock ring, flaccid, anus, ass, back, low angle, sweat, foreskin, ripped boxers, squatting, socks", "solo, t-shirt, (sleepy), standing, open mouth, no pants, (toothbrush, ) brushing teeth, holding toothbrush, bathroom, penis, foreskin, erection, precum, supported with one hand, bottomless", "rough sex, torso grab, yaoi, gay, (full nelson, anus penetrated, penis in anus, anal penetrated), male focus, naked, (man penetrated by gigantic (orc)), stomach bulge, (penis, erected, precum dripping), BREAK nude, drooling, saliva, saliva trail, bashful, blush lines, intense blushing, aroused face, angry, mad, nervous, heavy breathing, steamy, wet, excessive sweaty, motion lines, motion blur, speed lines", "solo, invert triangle body shape, penis tuck, excessive precum, pubic hair, (precum:1.2), dropping precum, testicles, masturbate, open mouth, (heavy breathing:1.1), blushing, angry, indoor, bedroom, from back, looking at viewer, back on bed, close- up, up close, sitting on floor carpet, (naked), clothes are on the floor, on front, anus, muscular back, male focus, indoors, motion lines, motion blur, speed lines", "in a trap, chained, chain on neck, BREAK, sex machine, fuck machine, anal penetration, sticking out tongue, floating hearts, mind control, pleasure, legs raised, focus on feet, soles", "nude, penis, veiny dick, testicles, pleasure expression, eyes looking up, BREAK pink thick tentacles, tentacles wraps around his asscheeks, tentacles spreading his legs, trapped, tight, BREAK dynamic angle, showing anus, (tentacle in anus, tentacle insertion, tentacles in anus, anal penetrated:1.4), ejaculating while penetrated, motion blur, motion lines, BREAK cumming, excessive cum, cum drip, overflow, excessive sweaty, wet, bashful, blush lines, intense blushing, aroused face, heavy breathing, steamy, angry, mad, ahegao, orgsam, climax, (double penetration, )", "solo, yaoi, pubic hair, armpit hair, blush, nude, navel, looking behind, from below, bondage, (spanking ass, body invasion:1.4), cum dripping, veiny penis, testicles, (very long scrotum skin:1.4), home, lying on sofa, back", "white shirt, short sleeves, collared shirt, pants, undressing. pubes. penis. uncut penis. foreskin. (supporting both hands). BREAK. ass, masturbating, (finger in anus, (anal fingering)). looking back. looking at viewer, saliva, penis, precum, testicles, dynamic pose, hand with 5 fingers, night. night time. indoors. classroom, \(place\). sweatdrop, smug.", "shirtless, swim trunks, beach, armpit hair, bent, open pants, flaccid, precum, from below, solo, all fours, :p, tongue out, open mouth, grin, from behind, upside down, penis, penis focus, pants down, anus, very hairy ass", "submissive, nude, (orgasm), penis, testicles, (handjob, disembodied hands), close-up, hands behind head, spread legs, (cum), ejaculation, screaming, looking away, (sound effects:1), moaning, tank top, (anal beads)", "baseball uniform, socks, Changing Room, Lockers, On Floor, Backs to Viewer, Hips Raised, Completely Naked, Sweaty, Object Insertion, Anal Insertion, Baseball ball, Shaking, penis, flaccid, Motion Lines, from behind, from below, close up, squatting", "uncensored, outdoors, night, against wall, graffiti, from below, 1boy, solo, toned, looking down at viewer, mouth mask, black hoodie, standing, pants pull, penis, erection, foreskin", "2boys, yaoi, furry, submissive man, in forest, sex from behind, deep penetration, sex with pain, pain sex tears, scared, recisiting sex, erect penis, testicles, overflowing semen, sex slave, slave collar, scars, BREAK, (1werewolf, black fur, black hair, ) grabbing pectorals, licking the cheek, hard fuking man", "gay, solo penis, flaccid, male, detailed background, crouched, squatting, arched_back, muscular male, masculine, anal_insertion, dildo_insertion, red dildo, riding dildo, back to viewer, lowered view, blushing, expressive face, cum, cumming, cum explosion, medieval background, dark room, warehouse", "man sitting naked on gaming chair, (fake livestream screenshot, livestream, livestream chat interface), penis, ballsack, spreading legs, anus, (holding nintendo switch), gaping anus, creampie, ejaculating, cumdrip, hairy anus, (excessive cum on body, excessive cum on face), blush, smile, shaking, yaoi, looking at viewer", "uncensored, totally naked, male focus, solo, penis, uncut, flaccid penis, nude, toned_male, pubic hair, white skin, tachi-e, standing, facing_viewer, full body, transparent_background, sprite sheet, multiple_views, front view, back view, persistent character, sprite sheet", "day, natural lighting, sweating, sweatdrop, male-anus focus, on all fours, looking back, moaning, presenting, heavy breathing, blushing, open mouth, closed eyes, completely nude, male pubic hair, flaccid veiny penis, testicles, brown anus, wet anus, hairy anus, leaking anal fluids, excessive anal fluids, legs apart, thick thighs, manly, solo, 1boy, simple plain red background, from below, dutch angle, (anal beads)", "solo, nsfw, yaoi, male focus, solo, light skin, santa hat, smirk, house, winter sky, christmas, giant gift box, relaxing, naked, body wrapped in ribbons, red ribbons, melted chocolate on body, holding hot cocoa, lying on sofa, night sky, penis, dripping_precum, cowboy shot", "solo, precum, sit on floor, feet focus, nipples, nude, sweating, ((lower view)), ((from below)), penis, shy, nipples, showing feet, feets, soles, feet focus, dirty socks, baseball cap, dirty body, gym room", "yellow duck onesie, open onese, bare chest, bedroom, Dark room, Cocky, Eyebags, sitting on bed, close up, erection under clothes", "solo, undershirt, long_sleeve_undershirt, (boxers down to knee, ) blush, lying on side, baseball field, best angle, feet, (anal fingering, penis, erection, pre-cum, ) motion blur, motion lines, fast speed lines, ass, saliva, open legs, spread legs, tree shadow, black-red baseball uniform, baseball black-red socks, baseball cap, no pants", "night, dark, naked, abs, torso, male nipples, navel, hands with five fingers, smal penis, tiny penis, testicles, erection, precum, pubic hair, hand behind head, standing, looking at viewer, annoyed, bored, bear hood, hood up, bear hoodie, after waking up, bad mood, holding water bottle", "//Base Prompt//, (pov, smartphone, smartphone border, recording, viewfinder, cellphone photo, phone interface, )", "sweating, blush, pectroals, nipples, public, completely naked, sweat drop, (fishnet thong), see-through fishnet thong, pubic peek, beach, smug, shiny skin, pubic hair, coconut tress, ocean, surfboard, toned_male, lewd, seductive_pose, cowboy shot", "closeup, front view, cowboy shot, low angle, from below, clutter, glossy skin, white shirt, blue tie, bottomless, excessive pubic hair, hairy legs, legs spread, flaccid penis, foreskin, teasing, looking at viewer, cocky grin, blush, black socks, sitting in office chair, visible anus, corporate office, precum string", "2boys, solo focus, aroused, blush, a face flushed with desire, humid, fog, half closed eyes, nude, face focus, close- up, penis, precum, sagging testicles, erection, penis on head, looking at another, drooling, in back alley, dark, night, testicle sucking, tongue out, portrait, motion line, grab head, side view", "solo, male_focus, nude, penis, testicles, hand on another's chin, looking at viewer, eye contact, angry, anger_vein, open mouth, cum in mouth, tongue out, from above, after oral sex, cum on face", "nude, topless, nsfw, large pecs, [spiral eyes], open mouth, head tilt, spoken questionmark, expressionless, mind control, hypnosis, (mind control app, hypnosis app, spiral, phone, ) indoors, modern, faceless man, BREAK, looking up, looking at viewer, (black dog ears, animal collar, choker, black dog tail, ) sitting, indoors, male pubic hair, penis, flaccid, precum, blush, 2 boys, yaoi, squatting cowgirl position, cowgirl position, white man fuck man, anal sex, boy on top, BREAK, pow pose, blush, happy face, heart bubble, heart pupil, spoken heart, ), background is (bedroom, on bed, ), motion blur, motion lines, fast speed lines, thrusting", "nude, topless, nsfw, large pecs, [spiral eyes], open mouth, head tilt, spoken questionmark, expressionless, mind control, hypnosis, (mind control app, hypnosis app, spiral, phone, ) indoors, modern, faceless man, BREAK, looking up, looking at viewer, dog ears, animal collar, choker, dog tail, indoors, male pubic hair, penis, flaccid, precum, blush, cumming, moaning, top-down_bottom-up, anal sex, fluids, yaoi, (faceless man, dark-skinned man, dark-skinned man off screen), huge cock, male pubic hair, hairy legs, fast speed lines, motion blur, side view", "solo, nude, restrained by a metal sex machine, man on top of a huge wooden stick with a base and a metal sex machine connected to a huge wooden stick, arms up, bound wrists, bound ankles, bound stomach, bound thighs, bound legs, stationary restraints, anal object insertion and standing, (sex machine, ) small penis, testicles, viewfinder, ejaculation, precum drip, lots of cum, hairy legs, cum on legs, from below, (fast speed lines, motion blur, motion lines, ) cowboy shot", "solo, sweat, lying on stomach, on sand, testicles, feet, ass, soles, nude, smile, anus, looking back, lying, foot focus, long penis, precum, barefoot, looking at viewer, beach, sand, sea shells, sand on body, seafoam, foreshortening", "pov, pleasure face, blush, nude, male pubic hair, dark penis, (foreskin:1.2), veiny penis, licking penis, twitching penis, precum, testicles, saliva on penis, wet penis, handjob, fast speed lines, motion blur, leg hair, grab head", "farm barn, blush, sweat, eyes half closed, milkup, kneeling, male pubic hair, penis, cum on one hand, cupping hand, cum on hair, cum on chest, ejaculation, cum in bucket, milk pails in background, handjob, motion lines on hand, cum in mouth, nude, cowboy shot, BREAK, animal, 1horse, horse penis, testicles), licking penis", "solo, looking back, spoken questionmark, medium bulge, (penis bulge), camo tank top, camo jockstrap, perineum, sweaty, feet, stinky, musk, ass, anus, on stomach, on bed, one leg bent, feets, closed mouth, dot mouth, holding cellphone", "solo, collared white shirt, open shirt, black pants, (torn shirt, torn pants, torn clothes), sweat, shiny skin, bruise, injury, cuts, angry, pubic hair, penis peek, blood, looking at viewer, musk, convenient censoring, bound, tape bondage, body wrapped in caution tape, arms behind head, pecs, tape gag, BREAK simple white background, caution tape, shade, shadow, (surrounded by multiple caution tape:1.2), BREAK dynamic pose, dramatic lighting, depth of field, blurry foreground, bloom, chiaroscuro, upper body", "blush, moaning, anus, 2boys, yaoi, bestiality, brown fur, brown hair, minotaur, nude, ass, (horse penis, erection, dripping precum), testicles, imminent_anal, looking at viewer, hug, posing, motion lines, barn, upright straddle, upright cowgirl position, excited, ^^^, looking at viewer, shocked expression, awkward face", "solo focus, blush, oversized hoodie, dark-gray hoodie, hood up, long sleeves, small penis, erection, foreskin, sagging testicles, cock ring, seductive smile, parted lips, teeth, (lift own clothes, pecs, nipples, ) looking at viewer, blushing, from below, sit on couch, tiles, dripping precum, nipple rings, nipple chain, (disembodied hand, (caressing_testicles))", "solo, abs, blush, dark skin, topless, tribal necklace, scratching head, small penis, dog penis:1.3, cock ring, (knotted penis), pubic hair, navel hair, chest hair, legs hair, sagging testicles, precum, armpit, perspective, wink, grin, sweat, erect nipples, wristband, tribal clothing, fur gauntlets, rope belt, armband, thigh strap, fingerless gloves, choker, shirtless, tribal tattoo, scar, wolf ears, wolf tail, outdoors, hand on hips", "nude, partially submerged, pubic hair, penis, flaccid, lying, testicles, armpit hair peek, wet skin, shiny skin, contemplating, looking away, parted lips, BREAK lake, sacred, mysterious, dreamlike, fantastic, moonlight, water, blue flowers, vibrant flowers, glowing butterflies, flower effects, water reflections, refraction, too many butterflies, too many flowers, moonlight, starry sky, bioluminescence, BREAK cinematic, dynamic pose, dynamic angle, natural lighting, smooth shading, glossy surfaces, subtle, high contrast, dark depth, real background, colorful depth, colorful lighting, dutch angle, beautiful atmosphere, muted colors, cinematic composition, heavily textured impasto oil painting, dark, violet theme, erotic, sexy pose", "closed eyes, saliva, blush, moaning, bondage, restrained, (hands bound), nude, nipples, penis, anus, ejaculation, projectile cum, feets, soles, legs bound, indoors, bed, top- down_bottom-up, bedroom, on bed, open legs, (on one knee), dutch angle, BREAK, disembodied hands, anal object insertion, grabbing dildo, anal masturbation, motion blur, motion lines, dripping cum from ass, cum on testicles, (from below, ) from behind", "sharp teeth, smile, happy, solo, at the crossroads, BREAK, mummy halloween costume, bandaged body, bandages on torso, bandages on arms, bandages on legs, penis, partially bandaged penis, jack-o- lanterns by feet, naked bandage, zombie, colored skin, stitches, grey skin, stitched face, zombie pose, halloween, halloween costume, night, moon, graveyard, tombstone, grave, open mouth, looking at viewer. sit on tombstone, precum drip"],
-            
-            characterTypes: ["", "demon", "angel", "gnome", "monster", "elf", "orc", "vampire", "werewolf", "cyborg", "android", "alien", "fairy", "goblin", "dwarf", "centaur", "minotaur", "ghost", "zombie", "elemental", "satyr", "robot", "harpy", "nephilim", "construct", "demon boy", "mature male", "dark-skinned male", "wolf boy", "furry", "furry male", "androide man"],
-
-            bodyAndPose: ["", "(muscular:1.2)", "(bara:1.1)", "toned", "large pectorals", "abs", "(thighs:1.1)", "thick thighs", "ass", "back", "chest hair", "facial hair", "beard", "hairy", "veins", "scar", "shiny skin", "wet", "armpits", "collarbone", "navel", "standing", "sitting", "lying", "on stomach", "on back", "spread legs", "looking at viewer", "looking back", "from behind", "cowboy shot", "arm up", "arms up", "undressing", "ass focus", "feet", "toes", "barefoot", "smile", "blue eyes", "red eyes", "white hair", "thick eyebrows", "hands on own hips", "from below", "one eye covered", "solo, mojang"],            
-            
-                        sceneAndDetails: ["", "indoors", "outdoors", "poolside", "water", "simple background", "white background", "red background", "yellow background", "chair", "bed", "on bed", "pillow", "day", "shadow", "tentacles", "horns", "wings", "tail", "wolf ears", "animal ears", "wolf tail", "tattoo", "arm tattoo", "jewelry", "earrings", "restrained", "bound", "short hair", "long hair", "medium hair", "undercut", "ponytail", "black hair", "brown hair", "blush", "artist name", "signature", "bandages", "mask", "eyepatch"],
-            
-            eras: ["", "1400s", "1500s", "1700s", "90s", "archaic", "chenla", "fantastic realism", "joseon dynasty", "yoruba", "renaissance", "baroque", "victorian era", "edwardian era", "art nouveau", "art deco", "cyberpunk era", "stone age", "bronze age", "roman empire"],
-            textures: ["", "3d fractals", "animal prints", "blistered", "blotchy", "brittle", "brushed", "bumpy", "chalky", "chipped", "chiseled", "coarse", "corded", "corky", "corroded", "cracked", "creased", "crinkled", "crumbly", "crusty", "elastic", "embossed", "embroidered", "feathery", "fibrous", "flaky", "fluffy", "frosted", "furrowed", "fuzzy", "glistening", "glittering", "glossy", "glowing", "granular", "gritty", "honeycombed", "iridescent", "jagged", "knitted", "leathery", "lustrous", "marbled", "matte", "metallic", "gelatinous", "powdery", "woven", "mossy", "pitted", "plush", "polished", "porous", "prickly", "ribbed", "rough", "rusted", "sandy", "scaly", "shining", "shiny", "silky", "slick", "slimy", "smooth", "sparkling", "spongy", "stained", "suede-like", "veined", "velvety", "viscous", "wavy", "weathered", "(gloss skin:2.5), (skin texture:1.4), (husband:1.1), (dynamic pose:2), high angle, real color tones, natural beauty, real life, photo, normal photo, camera, shadow, (pronounced bukeh effect:2), real, in love, detailed skin, ultra high quality hair, ultra detailed hair, ultra high quality nails,, (Street Art:1), graffiti tags, urban wall, spray texture, (Banksy aesthetic:1), (Vaporwave Aesthetic AI:2.5), (pastel gradients), (neon outlines:1.2), classical marble statues, (retro 80s arcade feel:2), tropical plants, hazy lighting, nostalgic digital art, (VHS filter), (geometric forms:1), SmoothNoob_Quality", "photorealistic, cinematic lighting, atmospheric, highly detailed, masterpiece,<LoRA:Cute_Emerald-V3:1.3>,<LoRA:MJ52:0.8>, (gloss skin:2.5), (skin texture:1.4), (husband:1.1),(character sketch:2.5), (multiple poses:4), (white background:2), (concept art:1.8), (dynamic poses:1.7), (line art:1.8), (character design:2), (full body views:1.5), (front side back:1.7), (clean lines:1.8), (minimalist:1.5), (highly detailed:2), (8k resolution:1.8), (same character:5)", "(cubist painting:2.5), (geometric shapes:2), (abstract forms:1.8), (Picasso style:2), (surrealist:2), (dream-like elements:1.7), (strange juxtapositions:1.5), (impressionist painting:2), (soft brush strokes:1.8), (vibrant colors:2), (glowing tones:1.5), (pop art:2.5), (bold colors:2), (iconic imagery:1.8), (geometric forms:1.7), (art nouveau:2), (flowing lines:1.8), (floral motifs:2), (elegant curves:1.5), (organic lines:1.7)", "(skin texture:1.4), (husband:3.6), (dynamic pose:2),(Enhanced stunning erotic beauty:3), (digitally enhanced:3), digital makeup, (beauty filters:4), Photoshop, masterpiece, best quality, ultra-detailed, 8k, cinematic, (hyperrealistic ethereal porcelain:2), (subsurface scattering:1), (ambient occlusion:3.1), (global illumination:3.1), (volumetric lighting:3.1), dynamic lighting, realistic materials, photorealism, soft (cinematic glow:2), (ultra detail glossy:2), enhance texture, (post-reallife realism:2.3), (perfect artificial creation:2.1), (virtualization reality:2), (motion graphics:1.1), Art Deco, geometric elegance, gold chrome, (1920s luxury style:3), (Drip Painting:1.1), paint splatter, (Jackson Pollock inspired chaos:4), (energetic brushwork:3.5), expressive texture, (Unreal Engine Render:1.3), (hyper-realistic 3D:3.4), (cinematic lighting:3.4), (game engine aesthetic:2), detailed textures, (physically based rendering (PBR):1), (atmospheric effects:3.3), (high polygon count:2), realistic subsurface scattering, (polished render:2.5), (dramatic shadows:3)", "(anime style render:2.4), Street Art, graffiti tags, urban wall, spray texture, (Banksy aesthetic:3), (Hyperrealistic Surrealism:4.1), impossibly sharp focus, dreamlike elements, distorted reality, uncanny valley, detailed textures, (bizarre juxtapositions:2.5), vibrant yet unsettling colors, (psychologically charged scene:3), (fine art realism with a twist:5), (steampunk:3.3)", "Photorealism, hyper-detailed painting, lifelike shadows, crisp realism, studio lighting, (Digital Impressionism:2), painterly brushstrokes, vibrant color fields, soft edges, ethereal light, digital paint texture, modern interpretation of light and atmosphere, atmospheric perspective, expressive brushwork, blurred forms", "moody atmosphere:1.4, standing in a rain-soaked alley with wet cobblestones, leaning against a brick wall, cigarette in hand, (genitalia bulge:1.5), (prominent genitalia bulge:1.4), ( etailed male crotch:1.3), low angle shot, dynamic composition, volumetric fog, <lora:lightingSlider:-1.4>, score_9, score_8_up, score_7_up"],
-            colors: ["ablaze colors", "apricot color", "aqua colors", "ash gray", "auburn color", "baby blue", "baby pink", "beaming colors", "beige colors", "black and white", "bleached colors", "blood red", "blue violet", "bold colors", "bright colors", "bronze colors", "brown", "burgundy colors", "burnt sienna", "canary yellow", "candy colors", "cerulean blue", "chartreuse color", "chestnut color", "cobalt blue", "cold colors", "colorful", "colorless", "cool colors", "coral color", "crimson red", "cyan", "danish pastel colors", "dark colors", "deep colors", "desaturated", "dim colors", "earth tones", "electric blue", "electric colors", "fiery colors", "fluorescent colors", "forest green", "golden yellow", "gradient colors", "hot pink", "hunter green", "indigo", "ivory", "monochromatic", "triadic colors", "analogous colors", "complementary colors", "viridian", "celadon", "vermilion", "lavender blush", "light colors", "lime colors", "magenta color", "mahogany", "maroon", "mauve", "midnight blue", "mint color", "mocha", "muted colors", "navy blue", "neon colors", "neutral colors", "olive color", "orange red", "pale colors", "pastel colors", "peach color", "pink color", "platinum color", "prismatic colors", "prussian blue", "radiant colors", "red", "retro colors", "rich colors", "rose color", "royal blue", "sepia colors", "silver colors", "sky blue", "slate gray", "smoky black", "spectrum colors", "spring green", "tan color", "taupe", "teal", "technicolor", "tropical colors", "turquoise color", "vantablack", "vibrant colors", "vintage colors", "violet", "vivid colors", "warm colors", "washed out colors"],
-            themes: ["", "academicism", "acid pixie", "acidwave", "adventurecore", "afrofuturism", "agropunk", "anachronism", "astropunk", "atompunk", "autumn", "biopunk", "bloomcore", "bohemian", "bronzepunk", "byzantine", "chaotic", "contemporary realism", "cosmic horror", "crusaderpunk", "crustpunk", "cybergoth", "dark fantasy", "dark nautical", "decopunk", "dieselpunk", "dreamy", "emo", "ethereal", "evil-theme", "extraterrestrial", "fairytale", "fantasy", "farmcore", "flowercore", "futuristic", "goblincore", "gothic", "hallyu", "happycore", "haunting", "hikecore", "lo-fi", "magic-realism", "mannerism", "mythology", "orientalism", "prehistoricore", "rainbowcore", "retro", "retrofuturism", "robotic", "romanticism", "solarpunk", "minimalism", "maximalism", "bioluminescent", "slimepunk", "socialist realism", "space opera", "sparklecore", "spring", "steampunk", "summer", "synthwave", "tiki", "tribal art", "tropical", "urbancore", "vaporwave", "winter", "witchcore", "wonderland"],
-            compositions: ["", "full body character design", "wide shot", "game assets", "album cover", "book cover", "brand identity", "character sheet", "coloring book page", "comic strip", "commercial ad", "diagram", "enamel pin", "fashion mockup", "flowchart", "game UI", "house plan", "icon set", "infographic", "interior design", "jewelry design", "knolling", "logo design", "magazine cover", "menu design", "mood board", "poster", "propaganda poster", "seamless pattern", "golden ratio", "rule of thirds", "isometric view", "blueprint schematic", "architectural drawing", "technical illustration", "concept art", "storyboard"],
-            extra: ["ultra detail", "ultra realism", "cinematic", "photorealistic", "no reflection", "perfect details", "volumetric lighting", "depth of field", "caustics", "god rays", "soft lighting", "hard lighting", "dramatic lighting", "subsurface scattering", "realistic"],
-        };
-
-        const generateBtn = document.getElementById('generate-btn');
-        const copyBtn = document.getElementById('copy-btn');
-        const promptOutput = document.getElementById('prompt-output');
-        const copyFeedback = document.getElementById('copy-feedback');
-
-        function getRandomElement(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
-        }
-
-        function generatePrompt() {
-            // --- 1. SELECCIÓN ALEATORIA DE TAGS OPCIONALES ---
-            const selectedCharacterType = getRandomElement(tags.characterTypes); 
-            const selectedKinkAndToys = getRandomElement(tags.kinkAndToys);
-            const selectedBodyAndPose = getRandomElement(tags.bodyAndPose);
-            const selectedSceneAndDetails = getRandomElement(tags.sceneAndDetails);
-            const selectedTexture = getRandomElement(tags.textures);
-            const selectedColor = getRandomElement(tags.colors);
-            const selectedTheme = getRandomElement(tags.themes);
-            const selectedComposition = getRandomElement(tags.compositions);
-            const selectedExtra = getRandomElement(tags.extra);
-            const selectedEra = getRandomElement(tags.eras);
-
-            // --- 2. CONSTRUCCIÓN DEL PROMPT ---
-            const promptParts = [];
-            
-            // Base obligatoria con LoRAs y calidad
-            promptParts.push(tags.obligatorioCompleto);
-            
-            // REGLA FUNDAMENTAL: Desnudo, Ropa Interior o Atuendo (con pesos)
-            const clothingChoice = Math.random();
-            if (clothingChoice < 0.4) { // 40% chance for nude
-                const primaryNudeTag = getRandomElement(tags.clothingOptions.nude);
-                promptParts.push(primaryNudeTag);
-
-                if (Math.random() < 0.5) {
-                    let secondaryNudeTag;
-                    do {
-                        secondaryNudeTag = getRandomElement(tags.clothingOptions.nude);
-                    } while (secondaryNudeTag === primaryNudeTag);
-                    promptParts.push(secondaryNudeTag);
+        async function cargarAlbum(albumId) {
+            try {
+                const response = await fetch(`https://catbox.moe/c/${albumId}`);
+                if (!response.ok) {
+                    throw new Error('Error al cargar el álbum');
                 }
-            } else if (clothingChoice < 0.8) { // 40% chance for underwear
-                const selectedUnderwear = getRandomElement(tags.clothingOptions.underwear);
-                promptParts.push(selectedUnderwear);
-            } else { // 20% chance for outfit
-                const selectedOutfit = getRandomElement(tags.clothingOptions.outfits);
-                promptParts.push(selectedOutfit);
-            }
+                const text = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
 
-            // --- 3. AÑADIR TAGS SELECCIONADOS AL PROMPT ---
-            if (selectedCharacterType) promptParts.push(selectedCharacterType);
-            
-            // Añade un tag de fetiche/juguete con una probabilidad del 25%
-            if (selectedKinkAndToys && Math.random() < 0.25) {
-                promptParts.push(selectedKinkAndToys);
-            }
+                // Selector ajustado para imágenes reales (excluye placeholders)
+                const imgs = doc.querySelectorAll('img[src^="https://files.catbox.moe/"]');
 
-            if (selectedBodyAndPose) promptParts.push(selectedBodyAndPose);
-            if (selectedSceneAndDetails) promptParts.push(selectedSceneAndDetails);
-            if (selectedTexture) promptParts.push(`${selectedTexture} texture`);
-            if (selectedColor) promptParts.push(`${selectedColor} palette`);
-            if (selectedTheme) promptParts.push(`${selectedTheme} ambient`);
-            if (selectedComposition) promptParts.push(`${selectedComposition} style`);
-            if (selectedExtra) promptParts.push(selectedExtra);
-            if (selectedEra) promptParts.push(selectedEra);
+                const gallery = document.getElementById('gallery');
+                const loading = document.getElementById('loading');
 
-            const finalPrompt = promptParts.join(', ');
-            
-            // --- 4. MOSTRAR RESULTADO ---
-            promptOutput.classList.add('prompt-enter');
-            setTimeout(() => {
-                promptOutput.textContent = finalPrompt;
-                promptOutput.classList.remove('prompt-enter');
-            }, 150);
-        }
-
-        function copyPrompt() {
-            const textToCopy = promptOutput.textContent;
-            const defaultText = "Presiona \"Generar Prompt\" para crear magia.";
-            if (textToCopy && textToCopy !== defaultText) {
-                 if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(textToCopy).then(showCopyFeedback);
-                } else {
-                    const textArea = document.createElement("textarea");
-                    textArea.value = textToCopy;
-                    textArea.style.position = "absolute";
-                    textArea.style.left = "-9999px";
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
-                        showCopyFeedback();
-                    } catch (err) {
-                        console.error('Fallback: Error al copiar texto: ', err);
-                    }
-                    document.body.removeChild(textArea);
+                if (imgs.length === 0) {
+                    loading.textContent = 'El álbum está vacío o no se encontraron imágenes.';
+                    return;
                 }
+
+                imgs.forEach(img => {
+                    const newImg = document.createElement('img');
+                    newImg.src = img.src;
+                    newImg.alt = img.alt || 'Imagen del álbum';
+                    gallery.appendChild(newImg);
+                });
+
+                loading.style.display = 'none';
+            } catch (error) {
+                document.getElementById('loading').textContent = 'Error: ' + error.message + ' (Posible problema de CORS o conexión)';
             }
         }
 
-        let feedbackTimeout;
-        function showCopyFeedback() {
-            clearTimeout(feedbackTimeout);
-            copyFeedback.style.opacity = '1';
-            feedbackTimeout = setTimeout(() => {
-                copyFeedback.style.opacity = '0';
-            }, 2000);
-        }
-
-        generateBtn.addEventListener('click', generatePrompt);
-        copyBtn.addEventListener('click', copyPrompt);
+        // Carga el álbum específico
+        cargarAlbum('brtgx6');
     </script>
 </body>
 </html>
-
-

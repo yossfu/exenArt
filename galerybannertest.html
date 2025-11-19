@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tailwind CSS (Opcional: Si tu web ya lo tiene, borra esta línea) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* --- ESTILOS DEL BANNER (Copiar desde aquí) --- */
+        
+        /* Contenedor Principal: Define el tamaño del banner */
+        .fb-banner-container {
+            position: relative;
+            width: 100%;
+            max-width: 851px; /* Ancho estándar FB */
+            height: 315px;    /* Alto estándar FB */
+            margin: 0 auto;   /* Centrado */
+            background-color: #111; /* Fondo de seguridad */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 800px; /* Perspectiva ajustada para formato panorámico */
+        }
+
+        /* El motor 3D que gira */
+        .fb-carousel-engine {
+            position: relative;
+            width: 200px; /* Ancho base para el centro */
+            height: 200px;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* Discos de imagen */
+        .fb-disc {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 180px;  /* Tamaño reducido para caber verticalmente */
+            height: 180px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            background: #000;
+            overflow: hidden;
+            /* Ajuste para que brillen al estar activos */
+            transition: opacity 0.5s, filter 0.5s, border-color 0.5s, transform 0.5s;
+            backface-visibility: visible; 
+        }
+
+        .fb-disc img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        /* Estado Activo (Frente) */
+        .fb-disc.active {
+            border-color: #ffffff;
+            filter: brightness(1.1);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+            z-index: 10;
+        }
+
+        /* Estado Inactivo (Fondo) */
+        .fb-disc:not(.active) {
+            filter: brightness(0.4) blur(1px);
+            opacity: 0.8;
+            z-index: 1;
+        }
+
+        /* Plataforma / Base decorativa (estilo "caja" tecnológica) */
+        .fb-platform {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(60, 100, 255, 0.15) 0%, rgba(0,0,0,0) 60%);
+            transform: translate(-50%, -50%) rotateX(90deg) translateZ(-100px);
+            pointer-events: none;
+        }
+
+        /* Controles de navegación minimalistas */
+        .fb-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.3);
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 100;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        .fb-nav:hover { background: rgba(255,255,255,0.2); }
+        .fb-prev { left: 15px; }
+        .fb-next { right: 15px; }
+
+        /* --- FIN ESTILOS --- */
+    </style>
+</head>
+<body class="bg-gray-200 p-5">
+
+    <!-- COMIENZO DEL HTML DEL BANNER -->
+    <div class="fb-banner-container shadow-2xl rounded-lg">
+        
+        <!-- Fondo decorativo sutil interno -->
+        <div class="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 z-0"></div>
+
+        <!-- Escenario 3D -->
+        <div class="fb-carousel-engine" id="fbEngine">
+            <div class="fb-platform"></div>
+
+            <!-- Imagen 1 -->
+            <div class="fb-disc active">
+                <img src="https://files.catbox.moe/cgw65m.jpg" alt="Img 1">
+            </div>
+            <!-- Imagen 2 -->
+            <div class="fb-disc">
+                <img src="https://files.catbox.moe/wl7mai.jpg" alt="Img 2">
+            </div>
+            <!-- Imagen 3 -->
+            <div class="fb-disc">
+                <img src="https://files.catbox.moe/escy9h.jpg" alt="Img 3">
+            </div>
+            <!-- Imagen 4 -->
+            <div class="fb-disc">
+                <img src="https://files.catbox.moe/upu8mp.jpg" alt="Img 4">
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <button class="fb-nav fb-prev" onclick="moveBanner(-1)">&#10094;</button>
+        <button class="fb-nav fb-next" onclick="moveBanner(1)">&#10095;</button>
+
+    </div>
+    <!-- FIN DEL HTML DEL BANNER -->
+
+    <script>
+        /* --- SCRIPT DEL BANNER (Puede ir al final del body) --- */
+        (function() {
+            const engine = document.getElementById('fbEngine');
+            const items = engine.querySelectorAll('.fb-disc');
+            const count = items.length;
+            const angleStep = 360 / count;
+            let currentAngle = 0;
+            
+            // Radio horizontal alargado para efecto panorámico
+            const radiusX = 220; 
+            // Radio Z (profundidad) menor para que no se salgan mucho
+            const translateZ = 180; 
+
+            // Configuración inicial
+            items.forEach((item, index) => {
+                const angle = index * angleStep;
+                // Guardamos el ángulo base
+                item.dataset.baseAngle = angle;
+                // Distribuimos en círculo
+                item.style.transform = `rotateY(${angle}deg) translateZ(${translateZ}px)`;
+            });
+
+            window.moveBanner = function(direction) {
+                currentAngle += (direction * angleStep * -1); // -1 para invertir giro natural
+                
+                // Girar el motor
+                engine.style.transform = `rotateY(${currentAngle}deg)`;
+
+                // Calcular activos
+                updateHighlights();
+            };
+
+            function updateHighlights() {
+                // Normalizar el ángulo actual del motor para saber qué "cara" mira al frente
+                // El motor gira en `currentAngle`. El item que está al frente es el que contrarresta ese ángulo.
+                // Ejemplo: Motor gira -90, el item en +90 queda al frente.
+                
+                items.forEach((item, index) => {
+                    let itemAngle = parseFloat(item.dataset.baseAngle);
+                    // Ángulo total relativo a la cámara
+                    let totalAngle = (itemAngle + currentAngle) % 360;
+                    
+                    // Normalizar a positivo 0-360
+                    if (totalAngle < 0) totalAngle += 360;
+
+                    // El frente es 0 grados (o 360). Tolerancia de +/- 30 grados
+                    const isFront = (totalAngle < 30 || totalAngle > 330);
+
+                    if (isFront) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            }
+
+            // Auto-play suave
+            setInterval(() => {
+                moveBanner(1);
+            }, 3500);
+
+        })();
+    </script>
+</body>
+</html>
+
