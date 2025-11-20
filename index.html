@@ -554,6 +554,21 @@
             .promo-content h3 span { font-size: 1.8rem; }
         }
 
+        /* --- ESTILOS PARA EL DOT DE VISITAS (LIVE STATUS) --- */
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #22c55e; /* green-500 */
+            border-radius: 50%;
+            animation: pulse-green 2s infinite;
+            margin-bottom: 2px;
+        }
+
     </style>
 </head>
 <body class="antialiased">
@@ -572,10 +587,17 @@
         
         <!-- HEADER -->
         <header class="pt-4 pb-2 flex justify-center relative z-40">
+            <!-- Logo Central (Pill) -->
             <div class="flex items-center gap-3 bg-gray-900/80 border border-gray-700/50 px-5 py-1.5 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md hover:shadow-[0_0_15px_rgba(249,115,22,0.15)] hover:border-orange-500/30 transition-all duration-300 group cursor-default">
                 <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-9 w-auto drop-shadow-[0_0_3px_rgba(249,115,22,0.8)] group-hover:scale-110 transition-transform duration-300">
                 <div class="h-4 w-[1px] bg-gray-700"></div>
                 <span class="text-xs font-bold tracking-widest text-gray-400 group-hover:text-white transition-colors" style="font-family: var(--title-font);">ART GALLERY</span>
+            </div>
+
+            <!-- VISITAS (TOP RIGHT) -->
+            <div class="absolute top-1 right-2 sm:right-4 flex flex-col items-center justify-center">
+                <div class="status-dot"></div>
+                <span id="visit-count-display" class="text-[10px] font-bold text-gray-400 tracking-wide leading-none">...</span>
             </div>
         </header>
 
@@ -794,7 +816,9 @@
         
         async function initializeApp() {
             await cacheFullGalleryForSearch();
-            loadHeroBanner(); // CARGAR BANNER
+            loadHeroBanner(); 
+            // Cargamos también el contador de visitas
+            handleVisitCounter();
             await Promise.all([ fetchUserReactions(), cacheAllReactionCounts(), loadCategoryBanners() ]);
             loadInitialImages();
             loadTopLikedImages();
@@ -803,6 +827,30 @@
             setupIntersectionObserver();
             setupEventListeners();
             setActiveNavLink();
+        }
+
+        // --- LÓGICA DEL CONTADOR DE VISITAS ---
+        function handleVisitCounter() {
+            const visitStatsRef = db.ref('siteStats/totalVisits');
+            
+            // Incremento transaccional solo si es una nueva sesión
+            if (!sessionStorage.getItem('visitCounted')) {
+                visitStatsRef.transaction(currentVisits => {
+                    return (currentVisits || 0) + 1;
+                });
+                sessionStorage.setItem('visitCounted', 'true');
+            }
+            
+            // Listener en tiempo real para actualizar el texto
+            visitStatsRef.on('value', snapshot => {
+                const count = snapshot.val() || 0;
+                // Formateo bonito: 1.2k, etc. si es muy grande, o el número directo
+                let displayCount = count;
+                if (count >= 1000) {
+                    displayCount = (count / 1000).toFixed(1) + 'k';
+                }
+                document.getElementById('visit-count-display').textContent = `${displayCount} visitas`;
+            });
         }
 
         function setActiveNavLink() {
@@ -847,14 +895,10 @@
                 slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
                 slide.setAttribute('onclick', `openModal('${img.id}')`);
                 
-                // Usamos thumbnailUrl (baja calidad) para optimización, como pediste
                 const displayUrl = img.thumbnailUrl || img.url; 
                 
                 slide.innerHTML = `
-                    <!-- 1. IMAGEN DE FONDO (ZOOM LENTO) -->
                     <img src="${displayUrl}" alt="${img.title}" loading="eager" class="hero-bg-img">
-                    
-                    <!-- OVERLAY OSCURO PARA TEXTO -->
                     <div class="hero-overlay">
                         <div class="hero-content">
                             <span class="text-orange-500 font-bold tracking-wider uppercase mb-1 text-[10px] sm:text-xs block">NUEVO AGREGADO</span>
@@ -870,8 +914,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- 2. CARTA FLOTANTE DERECHA (IMAGEN COMPLETA SUBIENDO) -->
                     <div class="hero-floating-card">
                         <img src="${displayUrl}" class="hero-floating-img" alt="Preview Animada">
                     </div>
