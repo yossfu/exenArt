@@ -127,38 +127,48 @@
         #image-container .loading-indicator { opacity: 1; transition: opacity 0.5s ease; }
         #image-container.loaded .loading-indicator { opacity: 0; }
 
-        /* --- ESTILOS HERO BANNER DELGADO Y HORIZONTAL --- */
+        /* --- ESTILOS HERO BANNER (OPTIMIZADO PARA MÓVIL) --- */
         .hero-wrapper {
             position: relative;
             width: 100%;
-            height: 200px; /* Altura Móvil reducida */
-            border-radius: 1rem; /* Borde un poco más sutil */
+            height: 240px; /* Aumentado para que quepa todo en móvil */
+            border-radius: 1rem;
             overflow: hidden;
             margin-bottom: 2rem;
             box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5);
             display: none; 
             background-color: #0a0a0a;
+            border: 1px solid rgba(255,255,255,0.05);
         }
-        @media (min-width: 640px) { .hero-wrapper { height: 280px; } }
-        @media (min-width: 1024px) { .hero-wrapper { height: 320px; } } /* Desktop panorámico delgado */
+        /* En tablets y desktop, más alto */
+        @media (min-width: 640px) { .hero-wrapper { height: 300px; } }
+        @media (min-width: 1024px) { .hero-wrapper { height: 350px; } } 
         
         .hero-slide {
             position: absolute;
             inset: 0;
             opacity: 0;
-            transition: opacity 0.8s ease-in-out;
+            transition: opacity 1s ease-in-out;
             z-index: 1;
-            cursor: pointer;
+            overflow: hidden;
         }
         .hero-slide.active { opacity: 1; z-index: 10; }
         
-        .hero-slide img {
+        /* 1. ANIMACIÓN DEL FONDO: ZOOM MUY LENTO */
+        .hero-bg-img {
             width: 100%; height: 100%; object-fit: cover;
             transform: scale(1);
-            transition: transform 8s linear;
-            object-position: 70% 20%; 
+            filter: brightness(0.5) blur(2px); /* Un poco más oscuro en móvil para legibilidad */
         }
-        .hero-slide.active img { transform: scale(1.08); }
+        
+        .hero-slide.active .hero-bg-img {
+            animation: slowZoom 25s linear infinite alternate;
+        }
+
+        @keyframes slowZoom {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.35); } /* Zoom un poco más intenso */
+        }
         
         .hero-overlay {
             position: absolute;
@@ -167,39 +177,82 @@
             display: flex;
             align-items: center;
             padding-left: 1.5rem;
-            background: linear-gradient(90deg, #0c0c0c 0%, rgba(12, 12, 12, 0.95) 35%, rgba(12, 12, 12, 0.4) 60%, transparent 100%);
+            /* Gradiente ajustado para móvil: Oscuro a la izquierda para texto, transparente a la derecha para imagen */
+            background: linear-gradient(90deg, rgba(12, 12, 12, 0.95) 0%, rgba(12, 12, 12, 0.7) 55%, transparent 100%);
         }
         
-        @media (max-width: 640px) {
-            .hero-overlay {
-                background: linear-gradient(90deg, #0c0c0c 0%, rgba(12, 12, 12, 0.9) 55%, transparent 100%);
-                padding-left: 1rem;
-            }
-        }
-
         .hero-content {
             position: relative;
             z-index: 30;
-            max-width: 65%;
+            /* En móvil, limitamos el ancho para que no choque con la imagen flotante */
+            max-width: 58%; 
         }
-        @media (max-width: 640px) { .hero-content { max-width: 80%; } }
+        @media (min-width: 640px) { .hero-content { max-width: 65%; } }
         
+        /* 2. CONTENEDOR DE IMAGEN FLOTANTE (DERECHA) */
+        .hero-floating-card {
+            position: absolute;
+            /* CONFIGURACIÓN MÓVIL POR DEFECTO */
+            top: 12%; 
+            bottom: 12%;
+            right: -2%; /* Pegado a la derecha, ligeramente salido para estilo */
+            width: 40%; /* Tamaño generoso en móvil */
+            max-width: 160px;
+            z-index: 25;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.2);
+            transform: rotate(-5deg); /* Inclinación opuesta al desktop para variar */
+            background: #1a1a1a;
+            /* Máscara para suavizar bordes superior/inferior */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+            display: block; /* SIEMPRE VISIBLE */
+        }
+        
+        @media (min-width: 640px) { 
+            /* Configuración Desktop/Tablet */
+            .hero-floating-card { 
+                top: 10%;
+                bottom: 10%;
+                right: 5%;
+                width: 28%;
+                max-width: 250px;
+                transform: rotate(3deg);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            } 
+        }
+
+        /* 3. ANIMACIÓN DE LA IMAGEN DENTRO DE LA CARTA: MOVIMIENTO HACIA ARRIBA */
+        .hero-floating-img {
+            width: 100%;
+            display: block;
+            animation: scrollUpSlow 18s linear infinite alternate; 
+            will-change: transform;
+        }
+
+        @keyframes scrollUpSlow {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-35%); } 
+        }
+
         .hero-indicators {
             position: absolute;
-            bottom: 1rem; right: 1.5rem;
-            display: flex; gap: 0.5rem;
+            bottom: 0.8rem; right: 1rem;
+            display: flex; gap: 0.4rem;
             z-index: 40;
         }
         .hero-dot {
-            width: 6px; height: 6px;
+            width: 5px; height: 5px;
             border-radius: 50%;
-            background-color: rgba(255,255,255,0.2);
+            background-color: rgba(255,255,255,0.3);
             transition: all 0.3s;
             cursor: pointer;
         }
         .hero-dot.active { 
             background-color: var(--accent); 
-            width: 20px; 
+            width: 16px; 
             border-radius: 3px; 
         }
 
@@ -676,7 +729,7 @@
             }
         }
 
-        // --- LÓGICA DEL BANNER HERO (DELGADO Y HORIZONTAL) ---
+        // --- LÓGICA DEL BANNER HERO ---
         function loadHeroBanner() {
             const recentImages = fullGalleryCache.slice(0, 4);
             const container = document.getElementById('hero-slides-container');
@@ -694,10 +747,14 @@
                 slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
                 slide.setAttribute('onclick', `openModal('${img.id}')`);
                 
-                const displayUrl = img.url; 
+                // Usamos thumbnailUrl (baja calidad) para optimización, como pediste
+                const displayUrl = img.thumbnailUrl || img.url; 
                 
                 slide.innerHTML = `
-                    <img src="${displayUrl}" alt="${img.title}" loading="eager">
+                    <!-- 1. IMAGEN DE FONDO (ZOOM LENTO) -->
+                    <img src="${displayUrl}" alt="${img.title}" loading="eager" class="hero-bg-img">
+                    
+                    <!-- OVERLAY OSCURO PARA TEXTO -->
                     <div class="hero-overlay">
                         <div class="hero-content">
                             <span class="text-orange-500 font-bold tracking-wider uppercase mb-1 text-[10px] sm:text-xs block">NUEVO AGREGADO</span>
@@ -712,6 +769,11 @@
                                 </button>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- 2. CARTA FLOTANTE DERECHA (IMAGEN COMPLETA SUBIENDO) -->
+                    <div class="hero-floating-card">
+                        <img src="${displayUrl}" class="hero-floating-img" alt="Preview Animada">
                     </div>
                 `;
                 container.appendChild(slide);
