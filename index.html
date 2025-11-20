@@ -79,22 +79,38 @@
         .bottom-nav-link svg { transition: transform 0.2s ease; }
         .bottom-nav-link.active svg { transform: scale(1.1); }
 
+        /* --- MODAL VISOR RENOVADO (Estilo Sólido/Darkroom) --- */
         #modal {
             display: none;
-            --tw-bg-opacity: 0.8;
-            background-color: rgba(0,0,0,var(--tw-bg-opacity));
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background-color: #050505; /* Negro casi puro, sin transparencia */
+            z-index: 2000; /* Por encima de todo */
         }
-        @keyframes modal-enter {
-            from { opacity: 0; transform: translateY(20px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
+        
         #modal.visible {
             display: block;
+            animation: modalFadeIn 0.3s ease-out forwards;
         }
-        #modal.visible #modal-content {
-             animation: modal-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #modal-content {
+             /* No animation here for better performance, handle in modal visibility */
+        }
+
+        /* Contenedor "Visor" para la imagen */
+        .viewer-frame {
+            background-color: #111; /* Un tono ligeramente más claro que el fondo total */
+            border: 1px solid #222;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); /* Sombra profunda */
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            max-width: 100%;
+            /* Aspect ratio manejado dinámicamente o con clases */
         }
 
         .decorative-divider { display: flex; align-items: center; text-align: center; margin: 3rem 0; }
@@ -647,9 +663,93 @@
             <div id="load-more-trigger" class="h-10"></div>
         </section>
     </main>
-    <div id="modal" class="fixed inset-0 z-[1000]"><button id="prev-image" class="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-left text-2xl"></i></button><button id="next-image" class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition hover:bg-gray-700 hover:text-white touch-feedback"><i class="fas fa-chevron-right text-2xl"></i></button><div id="modal-content" class="h-full w-full overflow-y-auto"><div class="container mx-auto flex max-w-4xl flex-col gap-4 p-2 sm:p-4"><header id="modal-header" class="flex items-center justify-between"><h2 id="title" class="section-title bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-2xl sm:text-4xl text-transparent"></h2><button id="close-modal" class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-800/80 text-gray-400 transition-all duration-300 hover:bg-gray-700 hover:text-white hover:rotate-90 touch-feedback"><i class="fas fa-times text-2xl"></i></button></header><div class="flex flex-col items-center gap-4">
-        <div id="image-container" class="relative -mx-2 sm:mx-0 rounded-2xl overflow-hidden w-full aspect-[2/3] max-h-[75vh]"></div>
-        <div id="reaction-circle-container" class="relative z-20"><div class="relative flex items-center justify-center"><div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/50 backdrop-blur-sm transition-transform duration-300 scale-0 -z-10"></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="like">❤️</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="hot">🔥</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="wow">😯</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="laugh">😂</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sad">😢</span></div><div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sexy">🫦</span></div><button id="like-btn" class="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-400 text-white shadow-lg shadow-orange-500/30 touch-feedback"><i class="fas fa-heart text-3xl"></i></button></div></div><div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full bg-gray-800/80 px-4 py-2 text-lg"></div><p id="desc" class="rounded-2xl border-2 border-orange-500/30 bg-gray-800/50 p-4 text-center text-gray-300"></p><section id="similar-section" class="mt-4 w-full"><h3 class="section-title mb-4 text-center text-xl text-orange-400"><i class="fas fa-th-large"></i> Similares</h3><div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div></section><section id="comments-section" class="mt-4 w-full"><form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-2xl bg-gray-800/50 p-4 sm:flex-row"><input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white sm:w-1/4"><input type="text" id="comment-input" placeholder="Escribe un comentario..." class="flex-grow rounded-lg border-2 border-gray-700 bg-gray-900 px-4 py-2 text-white"><button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-5 py-2 font-semibold text-white touch-feedback"><i class="fas fa-paper-plane"></i> Enviar</button></form><div id="comments" class="flex flex-col gap-4"></div></section></div></div></div></div>
+    
+    <!-- MODAL RENOVADO: VISOR SÓLIDO -->
+    <div id="modal" class="fixed inset-0">
+        <!-- Botones Flotantes (Arriba) -->
+        <div class="absolute top-4 right-4 z-[2010] flex gap-3">
+             <button id="close-modal" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition touch-feedback border border-gray-700 shadow-lg">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Navegación Lateral (Centrada verticalmente) -->
+        <button id="prev-image" class="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-[2010] h-14 w-14 flex items-center justify-center rounded-full bg-gray-800/50 hover:bg-gray-700 text-white transition touch-feedback backdrop-blur-sm border border-gray-700/50">
+            <i class="fas fa-chevron-left text-xl"></i>
+        </button>
+        <button id="next-image" class="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-[2010] h-14 w-14 flex items-center justify-center rounded-full bg-gray-800/50 hover:bg-gray-700 text-white transition touch-feedback backdrop-blur-sm border border-gray-700/50">
+            <i class="fas fa-chevron-right text-xl"></i>
+        </button>
+
+        <!-- Contenido Scrollable -->
+        <div id="modal-content" class="h-full w-full overflow-y-auto bg-[#050505]">
+            <div class="container mx-auto flex min-h-full max-w-5xl flex-col items-center justify-center px-2 py-12 md:px-6">
+                
+                <!-- Título y Header de Imagen -->
+                <div class="w-full text-center mb-4 md:mb-6">
+                    <h2 id="title" class="font-bold text-2xl md:text-3xl text-gray-100 tracking-tight font-[Poppins]"></h2>
+                </div>
+
+                <!-- CONTENEDOR PRINCIPAL DE IMAGEN (FRAME) -->
+                <div id="image-container" class="viewer-frame relative w-full bg-[#111] aspect-[2/3] md:aspect-auto md:min-h-[80vh] flex items-center justify-center rounded-xl border border-gray-800 shadow-2xl overflow-hidden">
+                    <!-- La imagen se inyecta aquí via JS -->
+                </div>
+
+                <!-- Panel de Interacción (Debajo de la imagen) -->
+                <div class="w-full max-w-3xl mt-8 flex flex-col gap-6">
+                    
+                    <!-- Reacciones -->
+                    <div class="relative z-20 flex justify-center">
+                         <!-- ... (Mismo código de reacciones que tenías, solo ajustado layout) ... -->
+                        <div id="reaction-circle-container" class="relative">
+                            <div class="relative flex items-center justify-center">
+                                <div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-800 transition-transform duration-300 scale-0 -z-10 border border-gray-700"></div>
+                                <!-- Iconos de reacción (mantenidos igual) -->
+                                <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="like">❤️</span></div>
+                                <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="hot">🔥</span></div>
+                                <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="wow">😯</span></div>
+                                <div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="laugh">😂</span></div>
+                                <div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sad">😢</span></div>
+                                <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="sexy">🫦</span></div>
+                                
+                                <button id="like-btn" class="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/20 touch-feedback transition-transform active:scale-95">
+                                    <i class="fas fa-heart text-3xl"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-gray-400"></div>
+
+                    <!-- Descripción -->
+                    <div class="bg-[#111] border border-gray-800 rounded-xl p-5 text-center">
+                        <p id="desc" class="text-gray-300 leading-relaxed"></p>
+                    </div>
+
+                    <!-- Similares -->
+                    <section id="similar-section" class="w-full pt-4 border-t border-gray-900">
+                        <h3 class="text-lg font-bold text-gray-400 mb-4 flex items-center gap-2"><i class="fas fa-images"></i> Relacionados</h3>
+                        <div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div>
+                    </section>
+
+                    <!-- Comentarios -->
+                    <section id="comments-section" class="w-full pt-4">
+                         <h3 class="text-lg font-bold text-gray-400 mb-4 flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h3>
+                        <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-[#111] border border-gray-800 p-4 sm:flex-row">
+                            <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border border-gray-700 bg-[#0a0a0a] px-4 py-3 text-white sm:w-1/3 focus:border-orange-500 focus:outline-none transition-colors">
+                            <input type="text" id="comment-input" placeholder="Deja tu comentario..." class="flex-grow rounded-lg border border-gray-700 bg-[#0a0a0a] px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
+                            <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white touch-feedback hover:bg-orange-500 transition-colors"><i class="fas fa-paper-plane"></i></button>
+                        </form>
+                        <div id="comments" class="flex flex-col gap-4"></div>
+                    </section>
+                    
+                    <!-- Espacio extra al final para scroll cómodo -->
+                    <div class="h-20"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <button id="scrollToTopBtn" class="fixed bottom-[90px] right-5 h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm touch-feedback z-[100]" title="Ir arriba"><i class="fas fa-arrow-up"></i></button>
     <footer class="mt-12 py-8 text-center text-gray-500"><p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
 
