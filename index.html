@@ -15,7 +15,7 @@
     <!-- Google Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -118,31 +118,7 @@
         .grid-like-btn.liked i { color: #ef4444; }
         @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .animate-spin-slow { animation: spin-slow 20s linear infinite; }
-        .category-drawer { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); max-height: 0; opacity: 0; overflow: hidden; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-        @media (min-width: 640px) { .category-drawer { grid-template-columns: repeat(4, 1fr); } }
-        .category-drawer.open { max-height: 500px; opacity: 1; margin-top: 1rem; margin-bottom: 2rem; }
-        .category-button { 
-            text-decoration: none; 
-            aspect-ratio: 16 / 9; 
-            border-radius: 1rem; 
-            background-size: cover; 
-            background-position: center; 
-            position: relative; 
-            display: flex; 
-            align-items: flex-end; 
-            justify-content: center; 
-            padding: 0.75rem; 
-            overflow: hidden; 
-            transition: transform 0.3s ease, box-shadow 0.3s ease; 
-            background-image: url('https://placehold.co/400x225/1f2937/4b5563?text=Cargando...');
-        }
-        .category-button:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(0,0,0,0.5); }
-        .category-button::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 10%, transparent 70%); transition: background 0.3s ease; }
-        .category-button:hover::after { background: linear-gradient(to top, rgba(0,0,0,0.7) 5%, transparent 60%); }
-        .category-button span { color: white; font-weight: 700; font-size: 1rem; text-shadow: 0 2px 4px rgba(0,0,0,0.8); position: relative; z-index: 2; text-align: center; }
-        @media (min-width: 640px) { .category-button span { font-size: 1.125rem; } }
         
-        #filter-toggle-btn.active { box-shadow: 0 0 15px var(--accent-glow); }
         #image-container .progressive-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #image-container .thumbnail-img { opacity: 1; }
         .full-res-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: inset(0 100% 0 0); transition: clip-path 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
@@ -180,25 +156,20 @@
             width: 100%; height: 100%; object-fit: cover;
             transform: scale(1);
             transition: transform 8s linear;
-            /* Ajuste crucial: Centrar imagen verticalmente, pero a la derecha horizontalmente */
             object-position: 70% 20%; 
         }
         .hero-slide.active img { transform: scale(1.08); }
         
-        /* Gradiente "Split Screen" Horizontal */
         .hero-overlay {
             position: absolute;
             inset: 0;
             z-index: 20;
             display: flex;
-            align-items: center; /* Centrar texto verticalmente */
+            align-items: center;
             padding-left: 1.5rem;
-            
-            /* Gradiente Horizontal Fuerte: Negro solido a la izquierda, Transparente a la derecha */
             background: linear-gradient(90deg, #0c0c0c 0%, rgba(12, 12, 12, 0.95) 35%, rgba(12, 12, 12, 0.4) 60%, transparent 100%);
         }
         
-        /* Ajuste para móvil donde el espacio es poco */
         @media (max-width: 640px) {
             .hero-overlay {
                 background: linear-gradient(90deg, #0c0c0c 0%, rgba(12, 12, 12, 0.9) 55%, transparent 100%);
@@ -209,7 +180,7 @@
         .hero-content {
             position: relative;
             z-index: 30;
-            max-width: 65%; /* Dejar ver la imagen a la derecha */
+            max-width: 65%;
         }
         @media (max-width: 640px) { .hero-content { max-width: 80%; } }
         
@@ -231,6 +202,289 @@
             width: 20px; 
             border-radius: 3px; 
         }
+
+        /* ========================================= */
+        /* === ESTILOS DEL NUEVO MENÚ CATEGORÍAS === */
+        /* ========================================= */
+
+        /* Botón principal */
+        .menu-btn {
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            font-family: var(--title-font);
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 35;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(249, 115, 22, 0.4);
+            background: linear-gradient(135deg, #fb923c, #f97316);
+        }
+
+        /* Contenedor del menú desplegable */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 25, 0.95);
+            padding: 20px 15px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            width: 90vw;
+            max-width: 500px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+            z-index: 34;
+            overflow: hidden;
+        }
+
+        .dropdown-content.show {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+            top: 55px;
+        }
+
+        /* Contenedor horizontal deslizable */
+        .categories-horizontal {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) rgba(20, 20, 20, 0.5);
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .categories-horizontal::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .categories-horizontal::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #f97316, #ec4899);
+            border-radius: 10px;
+        }
+
+        .categories-horizontal::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        /* Círculos de Categoría */
+        .category-circle {
+            width: 90px;
+            height: 90px;
+            min-width: 90px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            font-family: var(--body-font);
+            border: 2px solid rgba(255,255,255,0.2);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 8px 20px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+        }
+
+        .category-circle:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.4), 0 15px 30px rgba(0, 0, 0, 0.7);
+            border-color: var(--accent);
+        }
+
+        .category-circle::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .category-circle:hover::after {
+            opacity: 1;
+        }
+
+        /* Colores fallback */
+        .cat-anime    { background-image: linear-gradient(135deg, #ff7eb3, #ff6a8c); }
+        .cat-furry    { background-image: linear-gradient(135deg, #a8e6cf, #66bb6a); } 
+        .cat-realismo { background-image: linear-gradient(135deg, #90caf9, #42a5f5); }
+        .cat-mecas    { background-image: linear-gradient(135deg, #b39ddb, #7e57c2); }
+        .cat-devils   { background-image: linear-gradient(135deg, #ef5350, #b71c1c); } 
+        .cat-colors   { background-image: linear-gradient(135deg, #ffd54f, #ffb300); } 
+        .cat-amateur  { background-image: linear-gradient(135deg, #ff8a65, #f4511e); } 
+        .cat-tvgames  { background-image: linear-gradient(135deg, #81d4fa, #29b6f6); } 
+
+        @media (max-width: 768px) {
+            .dropdown { max-width: 100%; }
+            .category-circle {
+                width: 80px;
+                height: 80px;
+                min-width: 80px;
+                font-size: 11px;
+            }
+        }
+
+        /* ========================================= */
+        /* === ESTILOS DEL BANNER "CREA TU CHICO" === */
+        /* ========================================= */
+        .promo-banner {
+            position: relative;
+            width: 100%;
+            height: 180px; /* Altura prominente */
+            border-radius: 1.5rem;
+            overflow: hidden;
+            margin: 3rem 0; /* Espaciado generoso */
+            cursor: pointer;
+            box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.3);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-decoration: none;
+            display: block;
+            /* Background fallback */
+            background-color: #1a1a1a;
+        }
+
+        .promo-banner:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 40px -5px rgba(249, 115, 22, 0.5);
+            border-color: rgba(249, 115, 22, 0.5);
+        }
+
+        .promo-banner-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url('https://i.picasion.com/pic92/d4ce8e1a0c82019097e1cf1c191faeaa.gif');
+            background-size: cover;
+            background-position: center 40%;
+            transition: transform 8s ease;
+        }
+
+        .promo-banner:hover .promo-banner-bg {
+            transform: scale(1.1);
+        }
+
+        .promo-banner-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0.2) 100%);
+            display: flex;
+            align-items: center;
+            padding-left: 2rem;
+            backdrop-filter: blur(1px);
+        }
+
+        .promo-content {
+            position: relative;
+            z-index: 10;
+            max-width: 70%;
+        }
+
+        .promo-content h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 900;
+            line-height: 1.1;
+            color: white;
+            text-transform: uppercase;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.9);
+            letter-spacing: -0.5px;
+        }
+
+        .promo-content h3 span {
+            color: #f97316; /* Naranja exen-E */
+            display: block;
+            font-size: 2.4rem;
+            filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.5));
+            background: linear-gradient(to right, #ffedd5, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .promo-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(249, 115, 22, 0.2);
+            border: 1px solid rgba(249, 115, 22, 0.4);
+            color: #fdba74;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.15);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .promo-icon {
+            position: absolute;
+            right: 25px;
+            bottom: 25px;
+            font-size: 1.8rem;
+            color: white;
+            opacity: 0.9;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+            animation: floatArrow 2s ease-in-out infinite;
+        }
+
+        @keyframes floatArrow {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+        }
+
+        @media (max-width: 640px) {
+            .promo-banner { height: 150px; }
+            .promo-content h3 { font-size: 1.4rem; }
+            .promo-content h3 span { font-size: 1.8rem; }
+        }
+
     </style>
 </head>
 <body class="antialiased">
@@ -269,21 +523,31 @@
                 <button type="submit" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-400 hover:text-orange-500 touch-feedback" aria-label="Buscar"><i class="fas fa-search text-xl"></i></button>
             </div>
         </form>
-        <div class="mb-4 flex justify-center">
-            <button id="filter-toggle-btn" class="flex items-center justify-center rounded-full h-14 w-14 border-2 border-gray-800 text-2xl text-gray-400 bg-gray-900/50 hover:border-orange-500 hover:text-orange-400 transition-all duration-300 touch-feedback">
-                <i class="fas fa-filter"></i>
-            </button>
+
+        <!-- === NUEVO SELECTOR DE CATEGORÍAS CON IMÁGENES === -->
+        <div class="flex justify-center mb-8 relative z-30">
+            <div class="dropdown">
+                <button class="menu-btn w-full justify-center sm:w-auto" id="categories-toggle">
+                    Categorías <i class="fas fa-chevron-down text-xs ml-1 transition-transform duration-300" id="cat-arrow"></i>
+                </button>
+            
+                <div class="dropdown-content" id="categories-dropdown">
+                    <div class="categories-horizontal">
+                        <a href="categoria.html?cat=anime" id="cat-btn-anime" class="category-circle cat-anime">Anime</a>
+                        <a href="categoria.html?cat=furry" id="cat-btn-furry" class="category-circle cat-furry">Furry</a>
+                        <a href="categoria.html?cat=realismo" id="cat-btn-realismo" class="category-circle cat-realismo">Realismo</a>
+                        <a href="categoria.html?cat=mecas" id="cat-btn-mecas" class="category-circle cat-mecas">Mecas</a>
+                        <a href="categoria.html?cat=devils" id="cat-btn-devils" class="category-circle cat-devils">Devils</a>
+                        <a href="categoria.html?cat=colors" id="cat-btn-colors" class="category-circle cat-colors">ColorFull</a>
+                        <a href="categoria.html?cat=amateur" id="cat-btn-amateur" class="category-circle cat-amateur">Amateur</a>
+                        <a href="categoria.html?cat=tvgames" id="cat-btn-tvgames" class="category-circle cat-tvgames">TV & Games</a>
+                    </div>
+                    <div class="text-center mt-3 text-xs text-gray-400">Desliza para ver más <i class="fas fa-arrow-right ml-1"></i></div>
+                </div>
+            </div>
         </div>
-        <div id="category-drawer" class="category-drawer">
-             <a href="categoria.html?cat=anime" id="cat-btn-anime" class="category-button touch-feedback"><span>Anime</span></a>
-            <a href="categoria.html?cat=furry" id="cat-btn-furry" class="category-button touch-feedback"><span>Furry</span></a>
-            <a href="categoria.html?cat=realismo" id="cat-btn-realismo" class="category-button touch-feedback"><span>Realismo</span></a>
-            <a href="categoria.html?cat=mecas" id="cat-btn-mecas" class="category-button touch-feedback"><span>Mecas</span></a>
-            <a href="categoria.html?cat=devils" id="cat-btn-devils" class="category-button touch-feedback"><span>Devils & Angels</span></a>
-            <a href="categoria.html?cat=colors" id="cat-btn-colors" class="category-button touch-feedback"><span>ColorFull</span></a>
-            <a href="categoria.html?cat=amateur" id="cat-btn-amateur" class="category-button touch-feedback"><span>Amateur</span></a>
-            <a href="categoria.html?cat=tvgames" id="cat-btn-tvgames" class="category-button touch-feedback"><span>TV & Games</span></a>
-        </div>
+        <!-- === FIN NUEVO SELECTOR === -->
+
         <div id="search-results-container" class="hidden">
             <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
             <div id="search-pagination" class="mt-8 flex items-center justify-center gap-4"></div>
@@ -294,10 +558,27 @@
                 <div id="for-you-grid" class="grid grid-cols-3 gap-3 md:gap-4"></div>
             </section>
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
+            
             <section id="top-liked-section" class="mb-12">
                 <h3 class="section-title mb-4 flex items-center gap-3 text-2xl"><i class="fas fa-trophy text-yellow-400"></i><span class="text-yellow-400">Más Gustadas</span></h3>
                 <div id="top-liked-grid" class="grid grid-cols-3 gap-3 md:gap-4"></div>
             </section>
+
+            <!-- ================================================================================= -->
+            <!-- === NUEVO BANNER: CREA TU CHICO (Art Design) === -->
+            <!-- ================================================================================= -->
+            <a href="characterDesigner.html" class="promo-banner touch-feedback group">
+                <div class="promo-banner-bg"></div>
+                <div class="promo-banner-overlay">
+                    <div class="promo-content">
+                        <span class="promo-tag"><i class="fas fa-magic"></i> Beta</span>
+                        <h3>Crea al chico de <br><span>tus sueños</span></h3>
+                    </div>
+                    <i class="fas fa-chevron-right promo-icon"></i>
+                </div>
+            </a>
+            <!-- ================================================================================= -->
+            
             <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
             <section id="featured-videos-section" class="mb-12">
                 <h3 class="section-title mb-4 flex items-center gap-3 text-2xl"><i class="fas fa-music text-teal-400"></i><span class="text-teal-400">Música</span></h3>
@@ -415,7 +696,6 @@
                 
                 const displayUrl = img.url; 
                 
-                // Texto ajustado para formato delgado: menos lineas, fuente mas pequeña
                 slide.innerHTML = `
                     <img src="${displayUrl}" alt="${img.title}" loading="eager">
                     <div class="hero-overlay">
@@ -598,7 +878,52 @@
             document.body.style.overflow = 'hidden';
         }
         function closeModal() { const modal = document.getElementById('modal'); modal.classList.remove('visible'); document.body.style.overflow = 'auto'; }
-        function setupEventListeners() { const scrollToTopBtn = document.getElementById('scrollToTopBtn'); window.addEventListener('scroll', () => { (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible'); }); scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'})); document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); const query = normalize(document.getElementById('search-input').value); executeSearch(query); }); document.getElementById('clear-search-btn').addEventListener('click', resetSearchView); document.getElementById('close-modal').addEventListener('click', closeModal); document.getElementById('prev-image').addEventListener('click', navigateToPrevious); document.getElementById('next-image').addEventListener('click', navigateToNext); document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); }); const imageContainer = document.getElementById('image-container'); imageContainer.addEventListener('dblclick', handleDoubleTapLike); const modal = document.getElementById('modal'); modal.addEventListener('touchstart', e => { if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true }); modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; }); document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); }); document.querySelectorAll('.reaction').forEach(reaction => { reaction.addEventListener('click', e => { e.stopPropagation(); if (!currentImageId) return; const type = e.currentTarget.dataset.type; handleReaction(type); }); }); document.addEventListener('click', () => { if (document.getElementById('reaction-circle-container')) document.getElementById('reaction-circle-container').classList.remove('open'); }); const filterBtn = document.getElementById('filter-toggle-btn'); const categoryDrawer = document.getElementById('category-drawer'); filterBtn.addEventListener('click', () => { categoryDrawer.classList.toggle('open'); filterBtn.classList.toggle('active'); }); }
+        function setupEventListeners() { 
+            const scrollToTopBtn = document.getElementById('scrollToTopBtn'); 
+            window.addEventListener('scroll', () => { (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? scrollToTopBtn.classList.add('visible') : scrollToTopBtn.classList.remove('visible'); }); 
+            scrollToTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'})); 
+            document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); const query = normalize(document.getElementById('search-input').value); executeSearch(query); }); 
+            document.getElementById('clear-search-btn').addEventListener('click', resetSearchView); 
+            document.getElementById('close-modal').addEventListener('click', closeModal); 
+            document.getElementById('prev-image').addEventListener('click', navigateToPrevious); 
+            document.getElementById('next-image').addEventListener('click', navigateToNext); 
+            document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); }); 
+            const imageContainer = document.getElementById('image-container'); imageContainer.addEventListener('dblclick', handleDoubleTapLike); 
+            const modal = document.getElementById('modal'); modal.addEventListener('touchstart', e => { if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true }); 
+            modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; }); 
+            document.getElementById('like-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('reaction-circle-container').classList.toggle('open'); }); 
+            document.querySelectorAll('.reaction').forEach(reaction => { reaction.addEventListener('click', e => { e.stopPropagation(); if (!currentImageId) return; const type = e.currentTarget.dataset.type; handleReaction(type); }); }); 
+            document.addEventListener('click', () => { if (document.getElementById('reaction-circle-container')) document.getElementById('reaction-circle-container').classList.remove('open'); }); 
+            
+            // --- EVENT LISTENERS DEL NUEVO MENÚ ---
+            const categoriesToggle = document.getElementById('categories-toggle');
+            const categoriesDropdown = document.getElementById('categories-dropdown');
+            const catArrow = document.getElementById('cat-arrow');
+            const dropdownContainer = document.querySelector('.dropdown');
+
+            if (categoriesToggle) {
+                categoriesToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isVisible = categoriesDropdown.classList.contains('show');
+                    
+                    if (isVisible) {
+                        categoriesDropdown.classList.remove('show');
+                        catArrow.classList.remove('rotate-180');
+                    } else {
+                        categoriesDropdown.classList.add('show');
+                        catArrow.classList.add('rotate-180');
+                    }
+                });
+
+                // Cerrar al hacer clic fuera
+                document.addEventListener('click', (e) => {
+                    if (!dropdownContainer.contains(e.target)) {
+                        categoriesDropdown.classList.remove('show');
+                        catArrow.classList.remove('rotate-180');
+                    }
+                });
+            }
+        }
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
         function navigateToNext() { const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; if (currentImageIndex > -1 && currentImageIndex < currentView.length - 1) { openModal(currentView[currentImageIndex + 1].id); } }
         function navigateToPrevious() { const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; if (currentImageIndex > 0) { openModal(currentView[currentImageIndex - 1].id); } }
