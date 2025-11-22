@@ -96,16 +96,15 @@
             to { opacity: 1; }
         }
 
-        /* Fondo difuminado detrás del modal - BLUR AJUSTADO */
+        /* Fondo difuminado detrás del modal */
         .modal-backdrop-blur {
             position: fixed; 
             inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            /* Blur reducido de 40px a 15px para que se distinga mejor */
             filter: blur(15px) brightness(0.5) saturate(1.1); 
-            transform: scale(1.1); /* Escalar para evitar bordes blancos */
+            transform: scale(1.1); 
             z-index: 0;
             pointer-events: none;
             transition: opacity 0.5s ease;
@@ -167,7 +166,6 @@
             background-color: #0a0a0a;
             border: 1px solid rgba(255,255,255,0.05);
         }
-        /* En tablets y desktop, más alto */
         @media (min-width: 640px) { .hero-wrapper { height: 360px; } }
         @media (min-width: 1024px) { .hero-wrapper { height: 400px; } } 
         
@@ -181,11 +179,10 @@
         }
         .hero-slide.active { opacity: 1; z-index: 10; }
         
-        /* 1. ANIMACIÓN DEL FONDO: ZOOM MUY LENTO */
         .hero-bg-img {
             width: 100%; height: 100%; object-fit: cover;
             transform: scale(1);
-            filter: brightness(0.5) blur(2px); /* Un poco más oscuro en móvil para legibilidad */
+            filter: brightness(0.5) blur(2px);
         }
         
         .hero-slide.active .hero-bg-img {
@@ -194,7 +191,7 @@
 
         @keyframes slowZoom {
             0% { transform: scale(1); }
-            100% { transform: scale(1.35); } /* Zoom un poco más intenso */
+            100% { transform: scale(1.35); }
         }
         
         .hero-overlay {
@@ -204,43 +201,37 @@
             display: flex;
             align-items: center;
             padding-left: 1.5rem;
-            /* Gradiente ajustado para móvil: Oscuro a la izquierda para texto, transparente a la derecha para imagen */
             background: linear-gradient(90deg, rgba(12, 12, 12, 0.95) 0%, rgba(12, 12, 12, 0.7) 55%, transparent 100%);
         }
         
         .hero-content {
             position: relative;
             z-index: 30;
-            /* En móvil, limitamos el ancho para que no choque con la imagen flotante */
             max-width: 58%; 
-            margin-bottom: 40px; /* Espacio para el buscador */
+            margin-bottom: 40px; 
         }
         @media (min-width: 640px) { .hero-content { max-width: 65%; } }
         
-        /* 2. CONTENEDOR DE IMAGEN FLOTANTE (DERECHA) */
         .hero-floating-card {
             position: absolute;
-            /* CONFIGURACIÓN MÓVIL POR DEFECTO */
             top: 12%; 
             bottom: 12%;
-            right: -2%; /* Pegado a la derecha, ligeramente salido para estilo */
-            width: 40%; /* Tamaño generoso en móvil */
+            right: -2%; 
+            width: 40%; 
             max-width: 160px;
             z-index: 25;
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.7);
             border: 1px solid rgba(255,255,255,0.2);
-            transform: rotate(-5deg); /* Inclinación opuesta al desktop para variar */
+            transform: rotate(-5deg);
             background: #1a1a1a;
-            /* Máscara para suavizar bordes superior/inferior */
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
-            display: block; /* SIEMPRE VISIBLE */
+            display: block; 
         }
         
         @media (min-width: 640px) { 
-            /* Configuración Desktop/Tablet */
             .hero-floating-card { 
                 top: 10%;
                 bottom: 10%;
@@ -252,7 +243,6 @@
             } 
         }
 
-        /* 3. ANIMACIÓN DE LA IMAGEN DENTRO DE LA CARTA: MOVIMIENTO HACIA ARRIBA */
         .hero-floating-img {
             width: 100%;
             display: block;
@@ -265,10 +255,9 @@
             100% { transform: translateY(-35%); } 
         }
 
-        /* INDICADORES MOVIDOS ARRIBA PARA DEJAR ESPACIO AL BUSCADOR */
         .hero-indicators {
             position: absolute;
-            top: 1rem; /* Cambio: Top en vez de bottom */
+            top: 1rem; 
             right: 1rem;
             display: flex; gap: 0.4rem;
             z-index: 40;
@@ -286,7 +275,6 @@
             border-radius: 3px; 
         }
 
-        /* Sombras inferiores para el buscador en el banner */
         .hero-bottom-gradient {
             position: absolute;
             bottom: 0;
@@ -301,8 +289,6 @@
         /* ========================================= */
         /* === ESTILOS DEL NUEVO MENÚ CATEGORÍAS === */
         /* ========================================= */
-
-        /* Botón principal */
         .menu-btn {
             padding: 12px 28px;
             background: linear-gradient(135deg, #f97316, #ea580c);
@@ -328,7 +314,6 @@
             background: linear-gradient(135deg, #fb923c, #f97316);
         }
 
-        /* Contenedor del menú desplegable */
         .dropdown {
             position: relative;
             display: inline-block;
@@ -364,7 +349,6 @@
             top: 55px;
         }
 
-        /* Contenedor horizontal deslizable */
         .categories-horizontal {
             display: flex;
             flex-direction: row;
@@ -391,7 +375,6 @@
             border-radius: 10px;
         }
 
-        /* Círculos de Categoría */
         .category-circle {
             width: 90px;
             height: 90px;
@@ -595,24 +578,194 @@
             margin-bottom: 2px;
         }
 
+        /* --- ESTILOS LOGIN / PROFILE MODALS --- */
+        .overlay-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            background-color: #000;
+            background-image: url('https://files.catbox.moe/4ubhtv.jpg'); /* Fondo temático */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .overlay-blur {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+        }
+        .overlay-card {
+            position: relative;
+            z-index: 3010;
+            background: rgba(20, 20, 25, 0.9);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            border-radius: 24px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(249, 115, 22, 0.1);
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .login-btn {
+            background: white;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .login-btn:hover { transform: scale(1.02); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+
+        .profile-input {
+            width: 100%;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .profile-input:focus { border-color: var(--accent); }
+
+        .user-avatar-btn {
+            position: absolute;
+            top: 12px;
+            left: 16px;
+            z-index: 50;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .user-avatar-btn:hover { transform: scale(1.1); }
+        
+        /* Menú de perfil */
+        #profile-menu {
+            position: absolute;
+            top: 60px;
+            left: 16px;
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 10px;
+            width: 150px;
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+        }
+        #profile-menu.open { display: flex; }
+        .menu-item {
+            padding: 8px 12px;
+            color: #ccc;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .menu-item:hover { background: rgba(249, 115, 22, 0.2); color: var(--accent); }
+
     </style>
 </head>
 <body class="antialiased">
-    <!-- OVERLAYS -->
-    <div id="warning-overlay" class="fixed inset-0 z-[2000] flex-col items-center justify-center bg-gray-950/90 p-4 text-center backdrop-blur-sm" style="display: none;">
-        <h1 class="mb-6 text-3xl font-bold text-orange-500 flex items-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
+    <!-- OVERLAYS DE INICIO -->
+    <div id="warning-overlay" class="fixed inset-0 z-[3000] flex flex-col items-center justify-center bg-gray-950/95 p-4 text-center backdrop-blur-md" style="display: none;">
+        <h1 class="mb-6 text-3xl font-bold text-orange-500 flex items-center justify-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
         <p class="mb-8 max-w-md text-lg text-gray-300">Esta galería contiene material sensible. Debes tener al menos 18 años para continuar.</p>
-        <div class="flex flex-col sm:flex-row gap-4">
-            <button class="w-full rounded-full bg-orange-600 px-8 py-3 font-semibold text-white transition hover:bg-orange-500 hover:scale-105 touch-feedback" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Sí, Soy Mayor de Edad</button>
-            <button class="w-full rounded-full bg-gray-700 px-8 py-3 font-semibold text-white transition hover:bg-gray-600 hover:scale-105 touch-feedback" onclick="rejectWarning()"><i class="fas fa-times mr-2"></i> No, salir</button>
+        <div class="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+            <button class="w-full rounded-full bg-orange-600 px-8 py-3 font-semibold text-white transition hover:bg-orange-500 hover:scale-105 touch-feedback" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Soy Mayor de Edad</button>
+            <button class="w-full rounded-full bg-gray-700 px-8 py-3 font-semibold text-white transition hover:bg-gray-600 hover:scale-105 touch-feedback" onclick="rejectWarning()"><i class="fas fa-times mr-2"></i> Salir</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA LOGIN -->
+    <div id="login-overlay" class="overlay-screen" style="display: none;">
+        <div class="overlay-blur"></div>
+        <div class="overlay-card">
+            <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E" class="h-16 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
+            <h2 class="text-2xl font-bold text-white mb-2">Bienvenido</h2>
+            <p class="text-gray-400 mb-6 text-sm">Inicia sesión para acceder a la galería premium.</p>
+            <button onclick="loginWithGoogle()" class="login-btn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google">
+                Iniciar sesión con Google
+            </button>
+        </div>
+    </div>
+
+    <!-- PANTALLA COMPLETAR PERFIL -->
+    <div id="profile-setup-overlay" class="overlay-screen" style="display: none;">
+        <div class="overlay-blur"></div>
+        <div class="overlay-card">
+            <h2 class="text-2xl font-bold text-orange-500 mb-4">Configura tu Perfil</h2>
+            <form id="profile-setup-form" onsubmit="saveUserProfile(event)">
+                <input type="text" id="setup-username" placeholder="Nombre de Usuario" class="profile-input" required maxlength="15">
+                <input type="number" id="setup-age" placeholder="Tu Edad" class="profile-input" required min="18" max="99">
+                <div class="text-left mb-2">
+                    <label class="text-xs text-gray-400 ml-1 block mb-1">Foto de Perfil:</label>
+                    <p class="text-[10px] text-orange-300 mb-2"><i class="fas fa-info-circle"></i> Sube tu imagen a <a href="https://catbox.moe" target="_blank" class="underline">catbox.moe</a> y pega el enlace aquí.</p>
+                </div>
+                <input type="url" id="setup-avatar" placeholder="URL de imagen (ej: https://files.catbox.moe/...)" class="profile-input">
+                <button type="submit" class="w-full rounded-full bg-gradient-to-r from-orange-500 to-orange-600 py-3 font-bold text-white shadow-lg hover:scale-105 transition">Guardar y Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PANTALLA EDITAR PERFIL (CONFIG) -->
+    <div id="config-overlay" class="overlay-screen" style="display: none;">
+        <div class="overlay-blur"></div>
+        <div class="overlay-card relative">
+            <button onclick="closeConfig()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            <h2 class="text-xl font-bold text-white mb-4">Editar Perfil</h2>
+            <form onsubmit="updateUserProfile(event)">
+                <input type="text" id="edit-username" placeholder="Nombre de Usuario" class="profile-input" required maxlength="15">
+                <input type="url" id="edit-avatar" placeholder="URL de Foto (Catbox)" class="profile-input">
+                <button type="submit" class="w-full rounded-full bg-gray-700 py-2 font-bold text-white hover:bg-orange-500 transition">Actualizar Datos</button>
+            </form>
+            <button onclick="logout()" class="mt-4 text-red-400 text-sm hover:text-red-300 underline">Cerrar Sesión</button>
         </div>
     </div>
     
     <!-- CONTENIDO PRINCIPAL -->
-    <main class="container mx-auto px-2 sm:px-4">
+    <main class="container mx-auto px-2 sm:px-4" id="main-app-content" style="display: none;"> <!-- Oculto hasta login -->
         
         <!-- HEADER -->
         <header class="pt-4 pb-2 flex justify-center relative z-40">
+            
+            <!-- FOTO DE PERFIL (TOP LEFT) -->
+            <div class="absolute top-2 left-2 sm:left-4">
+                <div id="user-profile-pic" class="user-avatar-btn" onclick="toggleProfileMenu()">
+                    <img id="header-avatar-img" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
+                </div>
+                <!-- Menú desplegable -->
+                <div id="profile-menu">
+                    <div class="menu-item" onclick="openConfig()"><i class="fas fa-cog mr-2"></i> Config</div>
+                    <div class="menu-item text-red-400" onclick="logout()"><i class="fas fa-sign-out-alt mr-2"></i> Salir</div>
+                </div>
+            </div>
+
             <!-- Logo Central (Pill) -->
             <div class="flex items-center gap-3 bg-gray-900/80 border border-gray-700/50 px-5 py-1.5 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md hover:shadow-[0_0_15px_rgba(249,115,22,0.15)] hover:border-orange-500/30 transition-all duration-300 group cursor-default">
                 <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E Logo" class="h-9 w-auto drop-shadow-[0_0_3px_rgba(249,115,22,0.8)] group-hover:scale-110 transition-transform duration-300">
@@ -733,7 +886,6 @@
         </button>
 
         <!-- Contenido Scrollable (Semi-Transparente) -->
-        <!-- IMPORTANTISIMO: bg-black/30 para que se vea el fondo difuminado -->
         <div id="modal-content" class="h-full w-full overflow-y-auto bg-black/30 relative z-10 backdrop-blur-none">
             <div class="container mx-auto flex min-h-full max-w-5xl flex-col items-center justify-center px-2 py-12 md:px-6">
                 
@@ -752,11 +904,10 @@
                     
                     <!-- Reacciones -->
                     <div class="relative z-20 flex justify-center">
-                         <!-- ... (Mismo código de reacciones que tenías, solo ajustado layout) ... -->
                         <div id="reaction-circle-container" class="relative">
                             <div class="relative flex items-center justify-center">
                                 <div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/90 transition-transform duration-300 scale-0 -z-10 border border-gray-700"></div>
-                                <!-- Iconos de reacción (mantenidos igual) -->
+                                <!-- Iconos de reacción -->
                                 <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="like">❤️</span></div>
                                 <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="hot">🔥</span></div>
                                 <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="wow">😯</span></div>
@@ -788,9 +939,11 @@
                     <section id="comments-section" class="w-full pt-4">
                          <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2 drop-shadow-md"><i class="fas fa-comments"></i> Comentarios</h3>
                         <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-black/60 border border-white/10 p-4 sm:flex-row backdrop-blur-md">
-                            <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border border-gray-600 bg-black/50 px-4 py-3 text-white sm:w-1/3 focus:border-orange-500 focus:outline-none transition-colors">
-                            <input type="text" id="comment-input" placeholder="Deja tu comentario..." class="flex-grow rounded-lg border border-gray-600 bg-black/50 px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
-                            <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white touch-feedback hover:bg-orange-500 transition-colors"><i class="fas fa-paper-plane"></i></button>
+                            <!-- Input de Nombre removido, ahora usa el nombre del perfil -->
+                            <div class="w-full flex gap-2">
+                                <input type="text" id="comment-input" placeholder="Deja tu comentario..." class="flex-grow rounded-lg border border-gray-600 bg-black/50 px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
+                                <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white touch-feedback hover:bg-orange-500 transition-colors"><i class="fas fa-paper-plane"></i></button>
+                            </div>
                         </form>
                         <div id="comments" class="flex flex-col gap-4"></div>
                     </section>
@@ -826,37 +979,188 @@
         const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        firebase.auth().signInAnonymously().catch(console.error);
+        const auth = firebase.auth();
+        
+        let currentUserProfile = null;
         const imagesPerLoad = 21; let allImages = []; let fullGalleryCache = []; let isLoading = false; let noMoreImages = false; let currentImageId = ''; let currentImageIndex = -1;
         let deviceID = localStorage.getItem('deviceID'); if (!deviceID) { deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); localStorage.setItem('deviceID', deviceID); }
         let userReactions = {}; let allReactionCounts = {}; let currentSearchResults = []; let searchCurrentPage = 1; const searchResultsPerPage = 21; const sliderAnimationState = {}; let touchStartX = 0; let touchEndX = 0; const swipeThreshold = 50;
         
-        // ******** NUEVAS VARIABLES DE TRACKING ********
         let viewStartTime = 0;
         let currentViewingId = null;
         
         // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => { 
+            // Flujo: Warning -> Login -> App
             const warningOverlay = document.getElementById('warning-overlay'); 
-            if (!localStorage.getItem('adultConsent')) { 
+            const adultConsent = localStorage.getItem('adultConsent');
+
+            if (!adultConsent) { 
                 warningOverlay.style.display = 'flex'; 
                 document.body.style.overflow = 'hidden'; 
             } else { 
-                initializeApp(); 
+                checkAuthState(); // Directamente verifica si está logueado
             } 
         });
-        function acceptWarning() { localStorage.setItem('adultConsent', 'true'); document.getElementById('warning-overlay').style.display = 'none'; document.body.style.overflow = 'auto'; initializeApp(); }
+
+        function acceptWarning() { 
+            localStorage.setItem('adultConsent', 'true'); 
+            document.getElementById('warning-overlay').style.display = 'none'; 
+            checkAuthState();
+        }
+        
         function rejectWarning() { window.location.href = 'https://www.google.com'; }
         
+        // --- LÓGICA DE AUTENTICACIÓN GOOGLE ---
+        function checkAuthState() {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // Usuario logueado, verificar si tiene perfil completo
+                    const userRef = db.ref('users/' + user.uid);
+                    userRef.once('value').then(snapshot => {
+                        if (snapshot.exists()) {
+                            // Perfil existe, cargar app
+                            currentUserProfile = snapshot.val();
+                            document.getElementById('login-overlay').style.display = 'none';
+                            document.getElementById('profile-setup-overlay').style.display = 'none';
+                            loadApp();
+                        } else {
+                            // Perfil nuevo, mostrar setup
+                            document.getElementById('login-overlay').style.display = 'none';
+                            document.getElementById('profile-setup-overlay').style.display = 'flex';
+                        }
+                    });
+                } else {
+                    // No logueado, mostrar login overlay
+                    document.getElementById('login-overlay').style.display = 'flex';
+                    document.getElementById('main-app-content').style.display = 'none';
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+        }
+
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => {
+                console.error("Error login:", error);
+                alert("Error al iniciar sesión: " + error.message);
+            });
+        }
+
+        function saveUserProfile(e) {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const username = document.getElementById('setup-username').value.trim();
+            const age = document.getElementById('setup-age').value;
+            let avatar = document.getElementById('setup-avatar').value.trim();
+
+            if (!avatar) avatar = "https://placehold.co/100x100/333/fff?text=" + username.charAt(0).toUpperCase();
+
+            if (age < 18) {
+                alert("Debes ser mayor de 18 años para usar esta aplicación.");
+                auth.signOut();
+                return;
+            }
+
+            const profileData = {
+                uid: user.uid,
+                email: user.email,
+                username: username,
+                age: age,
+                avatar: avatar,
+                createdAt: Date.now()
+            };
+
+            db.ref('users/' + user.uid).set(profileData).then(() => {
+                currentUserProfile = profileData;
+                document.getElementById('profile-setup-overlay').style.display = 'none';
+                loadApp();
+            });
+        }
+        
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.reload();
+            });
+        }
+
+        // --- CARGA DE LA APLICACIÓN PRINCIPAL ---
+        function loadApp() {
+            document.getElementById('main-app-content').style.display = 'block';
+            document.body.style.overflow = 'auto';
+            
+            // Cargar Avatar en Header
+            updateHeaderAvatar();
+
+            // Iniciar lógica de la galería
+            initializeApp();
+        }
+        
+        function updateHeaderAvatar() {
+            if (currentUserProfile && currentUserProfile.avatar) {
+                document.getElementById('header-avatar-img').src = currentUserProfile.avatar;
+            }
+        }
+
+        // --- MENÚ DE PERFIL Y CONFIGURACIÓN ---
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.classList.toggle('open');
+            // Cerrar al hacer click fuera (simple handler)
+            setTimeout(() => {
+                document.addEventListener('click', closeMenuOnClickOutside, {once: true});
+            }, 100);
+        }
+        
+        function closeMenuOnClickOutside(e) {
+            if (!e.target.closest('#user-profile-pic') && !e.target.closest('#profile-menu')) {
+                document.getElementById('profile-menu').classList.remove('open');
+            }
+        }
+
+        function openConfig() {
+            if (!currentUserProfile) return;
+            document.getElementById('edit-username').value = currentUserProfile.username;
+            document.getElementById('edit-avatar').value = currentUserProfile.avatar;
+            document.getElementById('config-overlay').style.display = 'flex';
+            document.getElementById('profile-menu').classList.remove('open');
+        }
+
+        function closeConfig() {
+            document.getElementById('config-overlay').style.display = 'none';
+        }
+
+        function updateUserProfile(e) {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const newUsername = document.getElementById('edit-username').value.trim();
+            const newAvatar = document.getElementById('edit-avatar').value.trim();
+            
+            const updates = {
+                username: newUsername,
+                avatar: newAvatar || currentUserProfile.avatar
+            };
+            
+            db.ref('users/' + user.uid).update(updates).then(() => {
+                currentUserProfile = { ...currentUserProfile, ...updates };
+                updateHeaderAvatar();
+                closeConfig();
+                alert("Perfil actualizado correctamente.");
+            });
+        }
+
+        // --- LÓGICA ORIGINAL DE LA GALERÍA ---
         async function initializeApp() {
             await cacheFullGalleryForSearch();
             loadHeroBanner(); 
-            // Cargamos también el contador de visitas
             handleVisitCounter();
             await Promise.all([ fetchUserReactions(), cacheAllReactionCounts(), loadCategoryBanners() ]);
             loadInitialImages();
             loadTopLikedImages();
-            // ******** ALGORITMO MEJORADO PARA "PARA TI" ********
             loadForYouImages(); 
             
             setupIntersectionObserver();
@@ -994,23 +1298,18 @@
         function loadMoreImages() { if (isLoading || noMoreImages) return; isLoading = true; const loaderContainer = document.getElementById('loader'); loaderContainer.style.display = 'grid'; generateSkeletons(loaderContainer, 3); const currentLoadedCount = allImages.length; const newImages = fullGalleryCache.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); if (newImages.length === 0) { noMoreImages = true; } else { allImages = allImages.concat(newImages); displayImages(newImages, 'grid', true); } loaderContainer.style.display = 'none'; isLoading = false; }
         async function loadTopLikedImages() { const grid = document.getElementById('top-liked-grid'); generateSkeletons(grid, 9); const sortedIds = Object.keys(allReactionCounts).sort((a, b) => (allReactionCounts[b] || 0) - (allReactionCounts[a] || 0)).slice(0, 9); if (sortedIds.length === 0) { grid.innerHTML = '<p class="w-full col-span-3 text-center text-gray-500">Aún no hay imágenes gustadas.</p>'; return; } const images = sortedIds.map(id => fullGalleryCache.find(img => img.id === id)).filter(Boolean); displayImages(images, 'top-liked-grid'); }
         
-        // ******** SISTEMA DE GUSTOS Y RECOMENDACIONES ********
         function logInteraction(tags, type) {
-            // type: 'click' (1pt), 'view_short' (2pts), 'view_long' (5pts), 'reaction' (10pts)
             if (!tags || tags.length === 0) return;
-            
             let prefs = JSON.parse(localStorage.getItem('exen_user_prefs')) || { tagScores: {} };
             let score = 1;
             if (type === 'view_short') score = 2;
             else if (type === 'view_long') score = 5;
             else if (type === 'reaction') score = 10;
-            
             tags.forEach(tag => {
                 const normTag = normalize(tag);
                 if (!prefs.tagScores[normTag]) prefs.tagScores[normTag] = 0;
                 prefs.tagScores[normTag] += score;
             });
-            
             localStorage.setItem('exen_user_prefs', JSON.stringify(prefs));
         }
 
@@ -1027,16 +1326,12 @@
             viewStartTime = 0;
         }
 
-        // ******** LÓGICA MEJORADA PARA "PARA TI" ********
         async function loadForYouImages() {
             const grid = document.getElementById('for-you-grid');
             generateSkeletons(grid, 9);
-            
-            // 1. Obtener preferencias guardadas
             let prefs = JSON.parse(localStorage.getItem('exen_user_prefs')) || { tagScores: {} };
             const tagScores = prefs.tagScores || {};
 
-            // 2. Calcular score de relevancia para cada imagen
             let scoredImages = fullGalleryCache.map(img => {
                 let score = 0;
                 if (img.tags) {
@@ -1047,23 +1342,12 @@
                         }
                     });
                 }
-                
-                // Factor de "Novedad": Añadir un poco de aleatoriedad (0 a 5 puntos)
-                // para que no sea siempre lo mismo y permita descubrir cosas nuevas.
                 score += Math.random() * 5; 
-                
-                // Penalizar ligeramente imágenes ya vistas (opcional, aquí simple)
                 return { img, score };
             });
 
-            // 3. Filtrar imágenes con score > 0 (alguna relevancia)
-            // Si no hay suficientes interacciones, mostrará las más recientes con el factor aleatorio
             scoredImages.sort((a, b) => b.score - a.score);
-            
-            // 4. Seleccionar Top 50 candidatos y mezclar un poco los mejores 9
             let candidates = scoredImages.slice(0, 50).map(item => item.img);
-            
-            // Shuffle ligero de los top results para variedad visual
             for (let i = Math.min(candidates.length, 15) - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
@@ -1095,8 +1379,6 @@
                     const newCount = (allReactionCounts[imageId] || 0) + 1; 
                     allReactionCounts[imageId] = newCount; 
                     countEl.textContent = newCount;
-                    
-                    // ***** TRACKING: Reacción desde Grid *****
                     const img = fullGalleryCache.find(i => i.id === imageId);
                     if (img && img.tags) logInteraction(img.tags, 'reaction');
                 } 
@@ -1104,27 +1386,17 @@
         }
         
         async function openModal(id) { 
-            // Detener tracking de la imagen anterior si existía
             stopTrackingCurrent();
-            
             document.getElementById('modal-content').scrollTop = 0; 
-            // Double check scroll reset
             setTimeout(() => { document.getElementById('modal-content').scrollTop = 0; }, 10);
-            
             let img = fullGalleryCache.find(i => i.id === id); 
             if (!img) { console.error("Image not found"); return; } 
-            
-            // ***** INICIAR TRACKING *****
             currentImageId = id; 
             currentViewingId = id;
             viewStartTime = Date.now();
-            
-            // Tracking simple de click (+1 punto)
             if (img.tags) logInteraction(img.tags, 'click');
-
             const backdropEl = document.getElementById('modal-backdrop');
             backdropEl.src = img.thumbnailUrl || img.url;
-
             const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; 
             currentImageIndex = currentView.findIndex(i => i && i.id === id); 
             const imageContainer = document.getElementById('image-container'); 
@@ -1161,7 +1433,7 @@
         }
 
         function closeModal() { 
-            stopTrackingCurrent(); // Guardar datos de tiempo al cerrar
+            stopTrackingCurrent(); 
             const modal = document.getElementById('modal'); 
             modal.classList.remove('visible'); 
             document.body.style.overflow = 'auto'; 
@@ -1176,7 +1448,10 @@
             document.getElementById('close-modal').addEventListener('click', closeModal); 
             document.getElementById('prev-image').addEventListener('click', navigateToPrevious); 
             document.getElementById('next-image').addEventListener('click', navigateToNext); 
+            
+            // Modificado para incluir nombre de usuario automáticamente
             document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); }); 
+            
             const imageContainer = document.getElementById('image-container'); imageContainer.addEventListener('dblclick', handleDoubleTapLike); 
             const modal = document.getElementById('modal'); modal.addEventListener('touchstart', e => { if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true }); 
             modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; }); 
@@ -1184,7 +1459,6 @@
             document.querySelectorAll('.reaction').forEach(reaction => { reaction.addEventListener('click', e => { e.stopPropagation(); if (!currentImageId) return; const type = e.currentTarget.dataset.type; handleReaction(type); }); }); 
             document.addEventListener('click', () => { if (document.getElementById('reaction-circle-container')) document.getElementById('reaction-circle-container').classList.remove('open'); }); 
             
-            // --- EVENT LISTENERS DEL NUEVO MENÚ ---
             const categoriesToggle = document.getElementById('categories-toggle');
             const categoriesDropdown = document.getElementById('categories-dropdown');
             const catArrow = document.getElementById('cat-arrow');
@@ -1194,7 +1468,6 @@
                 categoriesToggle.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const isVisible = categoriesDropdown.classList.contains('show');
-                    
                     if (isVisible) {
                         categoriesDropdown.classList.remove('show');
                         catArrow.classList.remove('rotate-180');
@@ -1203,8 +1476,6 @@
                         catArrow.classList.add('rotate-180');
                     }
                 });
-
-                // Cerrar al hacer clic fuera
                 document.addEventListener('click', (e) => {
                     if (!dropdownContainer.contains(e.target)) {
                         categoriesDropdown.classList.remove('show');
@@ -1225,8 +1496,6 @@
                 (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); 
             }); 
             document.getElementById('reaction-circle-container').classList.remove('open'); 
-            
-            // ***** TRACKING: Reacción en modal *****
             const img = fullGalleryCache.find(i => i.id === currentImageId);
             if (img && img.tags) logInteraction(img.tags, 'reaction');
         }
@@ -1234,7 +1503,25 @@
         function handleDoubleTapLike() { if (!currentImageId) return; handleReaction('like'); }
         function animateReactionOnImage(type) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; const icon = icons[type]; if (!icon) return; const container = document.getElementById('image-container'); const animationEl = document.createElement('div'); animationEl.className = 'punch-animation'; animationEl.textContent = icon; container.appendChild(animationEl); setTimeout(() => { if (animationEl.parentElement) animationEl.remove(); }, 500); }
         function loadLikes(id) { db.ref(`reactions/${id}`).on('value', snap => { const reactions = snap.val() || {}; const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 }; Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; }); const container = document.getElementById('reaction-counts-container'); if (container) container.innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join(''); }); }
-        function postComment() { const name = document.getElementById('name-input').value.trim(); const comment = document.getElementById('comment-input').value.trim(); if (!comment || !currentImageId) return; const commentData = { name: name || 'Anónimo', text: comment, timestamp: Date.now() }; db.ref(`comments/${currentImageId}`).push(commentData).then(() => document.getElementById('comment-input').value = ''); }
+        
+        // ***** CAMBIO IMPORTANTE: Usar el perfil real para comentar *****
+        function postComment() { 
+            const commentText = document.getElementById('comment-input').value.trim(); 
+            if (!commentText || !currentImageId) return; 
+            
+            // Usar datos del perfil o fallback
+            const userName = currentUserProfile ? currentUserProfile.username : 'Anónimo';
+            
+            const commentData = { 
+                name: userName, 
+                text: commentText, 
+                timestamp: Date.now(),
+                userId: auth.currentUser ? auth.currentUser.uid : null
+            }; 
+            
+            db.ref(`comments/${currentImageId}`).push(commentData).then(() => document.getElementById('comment-input').value = ''); 
+        }
+        
         function initAutoSlider(containerId) { const container = document.getElementById(containerId); if (!container || container.children.length < 2) return; if (sliderAnimationState[containerId]?.animationFrameId) cancelAnimationFrame(sliderAnimationState[containerId].animationFrameId); if (!container.dataset.cloned) { const originalChildren = Array.from(container.children); originalChildren.forEach(child => { const clone = child.cloneNode(true); container.appendChild(clone); }); container.dataset.cloned = 'true'; } const scrollWidth = container.scrollWidth / 2; let isPaused = false; const scroll = () => { if (!isPaused) { container.scrollLeft += 0.5; if (container.scrollLeft >= scrollWidth) container.scrollLeft = 0; } sliderAnimationState[containerId] = { animationFrameId: requestAnimationFrame(scroll) }; }; container.addEventListener('mouseenter', () => isPaused = true); container.addEventListener('mouseleave', () => isPaused = false); scroll(); }
         async function loadSimilarImages(tags) { const grid = document.getElementById('similar-grid'); grid.innerHTML = ''; if (!tags || tags.length === 0) return; const candidates = fullGalleryCache.filter(img => img.id !== currentImageId && Array.isArray(img.tags)); const scoredImages = candidates.map(img => { const commonTags = img.tags.filter(tag => tags.includes(tag)); return { image: img, score: commonTags.length }; }).filter(item => item.score > 0); scoredImages.sort((a, b) => b.score - a.score); const similarImages = scoredImages.slice(0, 10).map(item => item.image); if(similarImages.length > 0) displayImages(similarImages, 'similar-grid'); }
         function executeSearch(query) { document.getElementById('main-content-sections').classList.add('hidden'); document.getElementById('gallery').classList.add('hidden'); document.getElementById('search-results-container').classList.remove('hidden'); currentSearchResults = fullGalleryCache.filter(item => (item.title && normalize(item.title).includes(query)) || (item.tags && item.tags.some(tag => normalize(tag).includes(query)))); displaySearchResultsPage(1); }
