@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>exen-E | Acceso</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        :root { 
+            --accent: #f97316; 
+            --title-font: 'Poppins', sans-serif;
+            --body-font: 'Inter', sans-serif;
+        }
+        body { 
+            font-family: var(--body-font); 
+            background-color: #0c0c0c;
+            background-image: radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.1) 0%, transparent 50%);
+            color: #f3f4f6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .form-card {
+            background: rgba(20, 20, 25, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        .input-field {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 10px rgba(249, 115, 22, 0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:active { transform: scale(0.98); }
+        .hidden-step { display: none; animation: fadeIn 0.5s forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="w-full max-w-md form-card rounded-2xl p-8 relative overflow-hidden">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-16 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
+            <h2 class="text-2xl font-bold font-[Poppins] text-white">Bienvenido</h2>
+            <div class="flex justify-center gap-4 mt-4 text-sm font-semibold">
+                <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1" onclick="switchTab('login')">Iniciar Sesión</button>
+                <button id="tab-register" class="text-gray-400 pb-1 hover:text-white" onclick="switchTab('register')">Registrarse</button>
+            </div>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="login-form" class="flex flex-col gap-4">
+            <div class="space-y-1">
+                <label class="text-xs text-gray-400 ml-1">Correo Electrónico</label>
+                <input type="email" id="login-email" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="tu@correo.com" required>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs text-gray-400 ml-1">Contraseña</label>
+                <input type="password" id="login-password" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2 shadow-lg shadow-orange-500/20">
+                Entrar
+            </button>
+            <p id="login-error" class="text-red-400 text-sm text-center mt-2 hidden"></p>
+        </form>
+
+        <!-- REGISTER FORM (Step 1: Data Check) -->
+        <form id="register-step-1" class="flex flex-col gap-4 hidden-step" style="display: none;">
+            <p class="text-sm text-gray-300 text-center mb-2">Paso 1: Verificación de Datos</p>
+            
+            <div class="space-y-1">
+                <label class="text-xs text-gray-400 ml-1">Nombre de Usuario</label>
+                <input type="text" id="reg-name" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Como quieres que te llamen" required>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs text-gray-400 ml-1">Edad</label>
+                <input type="number" id="reg-age" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Tu edad real" required>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs text-gray-400 ml-1">Foto de Perfil (URL)</label>
+                <input type="url" id="reg-photo" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="https://..." required>
+                <p class="text-[10px] text-orange-400/80 mt-1 ml-1 flex items-center gap-1">
+                    <i class="fas fa-info-circle"></i> Sube tu imagen a <a href="https://catbox.moe" target="_blank" class="underline hover:text-orange-300">HTTPS://catbox.moe</a> y pega el enlace aquí.
+                </p>
+            </div>
+
+            <button type="button" onclick="validateAgeStep()" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2">
+                Continuar <i class="fas fa-arrow-right ml-1"></i>
+            </button>
+        </form>
+
+        <!-- REGISTER FORM (Step 2: Credentials) -->
+        <form id="register-step-2" class="flex flex-col gap-4 hidden-step" style="display: none;">
+            <div class="flex items-center gap-3 bg-green-900/30 p-3 rounded-lg border border-green-500/30 mb-2">
+                <div class="bg-green-500 rounded-full p-1"><i class="fas fa-check text-white text-xs"></i></div>
+                <p class="text-sm text-green-200">Edad verificada. Completa tu registro.</p>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs text-gray-400 ml-1">Correo Electrónico</label>
+                <input type="email" id="reg-email" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="tu@correo.com" required>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs text-gray-400 ml-1">Contraseña</label>
+                <input type="password" id="reg-password" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Crea una contraseña" required>
+            </div>
+
+            <div class="flex gap-2 mt-2">
+                <button type="button" onclick="backToStep1()" class="w-1/3 py-3 rounded-lg font-semibold text-gray-400 border border-gray-600 hover:bg-gray-800">
+                    Atrás
+                </button>
+                <button type="submit" class="btn-primary w-2/3 py-3 rounded-lg font-bold text-white shadow-lg shadow-orange-500/20">
+                    Finalizar Registro
+                </button>
+            </div>
+            <p id="reg-error" class="text-red-400 text-sm text-center mt-2 hidden"></p>
+        </form>
+
+    </div>
+
+    <!-- Modal de Alerta de Edad -->
+    <div id="age-alert-modal" class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" style="display: none;">
+        <div class="bg-gray-900 border border-red-500/50 rounded-2xl p-6 max-w-sm w-full text-center shadow-[0_0_30px_rgba(239,68,68,0.3)]">
+            <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4 animate-pulse"></i>
+            <h3 class="text-xl font-bold text-white mb-2">Acceso Restringido</h3>
+            <p class="text-gray-300 mb-6">Lo sentimos, esta plataforma contiene contenido exclusivo para mayores de edad. No puedes registrarte si tienes menos de 18 años.</p>
+            <button onclick="closeAgeAlert()" class="w-full py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-semibold transition">Entendido</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
+            authDomain: "exene-53e6b.firebaseapp.com",
+            databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
+            projectId: "exene-53e6b",
+            storageBucket: "exene-53e6b.appspot.com",
+            messagingSenderId: "481369419867",
+            appId: "1:481369419867:web:ac5db24c436344262c8f7e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let userDataCache = {};
+
+        function switchTab(tab) {
+            const loginForm = document.getElementById('login-form');
+            const regStep1 = document.getElementById('register-step-1');
+            const regStep2 = document.getElementById('register-step-2');
+            const tabLogin = document.getElementById('tab-login');
+            const tabRegister = document.getElementById('tab-register');
+
+            if (tab === 'login') {
+                loginForm.style.display = 'flex';
+                regStep1.style.display = 'none';
+                regStep2.style.display = 'none';
+                tabLogin.className = "text-orange-500 border-b-2 border-orange-500 pb-1";
+                tabRegister.className = "text-gray-400 pb-1 hover:text-white";
+            } else {
+                loginForm.style.display = 'none';
+                regStep1.style.display = 'flex'; // Reset to step 1
+                regStep2.style.display = 'none';
+                tabLogin.className = "text-gray-400 pb-1 hover:text-white";
+                tabRegister.className = "text-orange-500 border-b-2 border-orange-500 pb-1";
+            }
+        }
+
+        function validateAgeStep() {
+            const name = document.getElementById('reg-name').value.trim();
+            const age = parseInt(document.getElementById('reg-age').value);
+            const photo = document.getElementById('reg-photo').value.trim();
+
+            if (!name || !age || !photo) {
+                alert("Por favor completa todos los campos del paso 1.");
+                return;
+            }
+
+            if (age < 18) {
+                document.getElementById('age-alert-modal').style.display = 'flex';
+                return;
+            }
+
+            // Cache data for next step
+            userDataCache = { name, age, photo };
+
+            // Show next step
+            document.getElementById('register-step-1').style.display = 'none';
+            document.getElementById('register-step-2').style.display = 'flex';
+        }
+
+        function backToStep1() {
+            document.getElementById('register-step-2').style.display = 'none';
+            document.getElementById('register-step-1').style.display = 'flex';
+        }
+
+        function closeAgeAlert() {
+            document.getElementById('age-alert-modal').style.display = 'none';
+        }
+
+        // Login Logic
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => {
+                    window.location.href = 'index.html';
+                })
+                .catch((error) => {
+                    errorEl.textContent = "Error: " + error.message;
+                    errorEl.classList.remove('hidden');
+                });
+        });
+
+        // Register Logic
+        document.getElementById('register-step-2').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-password').value;
+            const errorEl = document.getElementById('reg-error');
+
+            auth.createUserWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    // Save extra data to Realtime Database
+                    return db.ref('users/' + user.uid).set({
+                        username: userDataCache.name,
+                        age: userDataCache.age,
+                        profilePic: userDataCache.photo,
+                        email: email
+                    });
+                })
+                .then(() => {
+                    window.location.href = 'index.html';
+                })
+                .catch((error) => {
+                    errorEl.textContent = "Error: " + error.message;
+                    errorEl.classList.remove('hidden');
+                });
+        });
+    </script>
+</body>
+</html>

@@ -61,23 +61,24 @@
             transform: scale(0.95);
         }
 
+        /* ESTILOS NAVEGACIÓN UNIFICADA */
         .bottom-nav {
-            background-color: rgba(10, 10, 10, 0.7);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background-color: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-top: 1px solid rgba(55, 65, 81, 0.3);
         }
-        .bottom-nav-link {
+        .nav-item {
             color: #9ca3af;
             transition: color 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .bottom-nav-link.active {
+        .nav-item.active {
             color: var(--accent);
             transform: translateY(-4px);
         }
-        .bottom-nav-link.active span { font-weight: 700; }
-        .bottom-nav-link svg { transition: transform 0.2s ease; }
-        .bottom-nav-link.active svg { transform: scale(1.1); }
+        .nav-item.active span { font-weight: 700; }
+        .nav-item i { transition: transform 0.2s ease; }
+        .nav-item.active i { transform: translateY(-2px); filter: drop-shadow(0 0 8px var(--accent)); }
 
         /* --- MODAL VISOR AMBIENT --- */
         #modal {
@@ -96,7 +97,7 @@
             to { opacity: 1; }
         }
 
-        /* Fondo difuminado detrás del modal */
+        /* Fondo difuminado detrás del modal - BLUR AJUSTADO */
         .modal-backdrop-blur {
             position: fixed; 
             inset: 0;
@@ -104,7 +105,7 @@
             height: 100%;
             object-fit: cover;
             filter: blur(15px) brightness(0.5) saturate(1.1); 
-            transform: scale(1.1); 
+            transform: scale(1.1); /* Escalar para evitar bordes blancos */
             z-index: 0;
             pointer-events: none;
             transition: opacity 0.5s ease;
@@ -157,7 +158,7 @@
         .hero-wrapper {
             position: relative;
             width: 100%;
-            height: 300px; /* Altura aumentada para acomodar el buscador */
+            height: 300px;
             border-radius: 1rem;
             overflow: hidden;
             margin-bottom: 2rem;
@@ -208,7 +209,7 @@
             position: relative;
             z-index: 30;
             max-width: 58%; 
-            margin-bottom: 40px; 
+            margin-bottom: 40px;
         }
         @media (min-width: 640px) { .hero-content { max-width: 65%; } }
         
@@ -216,8 +217,8 @@
             position: absolute;
             top: 12%; 
             bottom: 12%;
-            right: -2%; 
-            width: 40%; 
+            right: -2%;
+            width: 40%;
             max-width: 160px;
             z-index: 25;
             border-radius: 10px;
@@ -228,18 +229,12 @@
             background: #1a1a1a;
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
-            display: block; 
+            display: block;
         }
         
         @media (min-width: 640px) { 
             .hero-floating-card { 
-                top: 10%;
-                bottom: 10%;
-                right: 5%;
-                width: 28%;
-                max-width: 250px;
-                transform: rotate(3deg);
-                box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+                top: 10%; bottom: 10%; right: 5%; width: 28%; max-width: 250px; transform: rotate(3deg); box-shadow: 0 20px 40px rgba(0,0,0,0.6);
             } 
         }
 
@@ -257,7 +252,7 @@
 
         .hero-indicators {
             position: absolute;
-            top: 1rem; 
+            top: 1rem;
             right: 1rem;
             display: flex; gap: 0.4rem;
             z-index: 40;
@@ -277,18 +272,9 @@
 
         .hero-bottom-gradient {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 80px;
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-            z-index: 35;
-            pointer-events: none;
+            bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index: 35; pointer-events: none;
         }
 
-        /* ========================================= */
-        /* === ESTILOS DEL NUEVO MENÚ CATEGORÍAS === */
-        /* ========================================= */
         .menu-btn {
             padding: 12px 28px;
             background: linear-gradient(135deg, #f97316, #ea580c);
@@ -314,119 +300,28 @@
             background: linear-gradient(135deg, #fb923c, #f97316);
         }
 
-        .dropdown {
-            position: relative;
-            display: inline-block;
-            width: 100%;
-            max-width: 400px;
-        }
-
+        .dropdown { position: relative; display: inline-block; width: 100%; max-width: 400px; }
         .dropdown-content {
-            display: none;
-            position: absolute;
-            top: 65px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(20, 20, 25, 0.95);
-            padding: 20px 15px;
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(249, 115, 22, 0.2);
-            width: 90vw;
-            max-width: 500px;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s ease;
-            z-index: 34;
-            overflow: hidden;
+            display: none; position: absolute; top: 65px; left: 50%; transform: translateX(-50%); background: rgba(20, 20, 25, 0.95); padding: 20px 15px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(249, 115, 22, 0.2); width: 90vw; max-width: 500px; opacity: 0; visibility: hidden; transition: all 0.4s ease; z-index: 34; overflow: hidden;
         }
 
-        .dropdown-content.show {
-            display: block;
-            opacity: 1;
-            visibility: visible;
-            top: 55px;
-        }
+        .dropdown-content.show { display: block; opacity: 1; visibility: visible; top: 55px; }
 
         .categories-horizontal {
-            display: flex;
-            flex-direction: row;
-            gap: 15px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent) rgba(20, 20, 20, 0.5);
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
+            display: flex; flex-direction: row; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin; scrollbar-color: var(--accent) rgba(20, 20, 20, 0.5); white-space: nowrap; -webkit-overflow-scrolling: touch;
         }
 
-        .categories-horizontal::-webkit-scrollbar {
-            height: 6px;
-        }
-
-        .categories-horizontal::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #f97316, #ec4899);
-            border-radius: 10px;
-        }
-
-        .categories-horizontal::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-        }
+        .categories-horizontal::-webkit-scrollbar { height: 6px; }
+        .categories-horizontal::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #f97316, #ec4899); border-radius: 10px; }
+        .categories-horizontal::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
 
         .category-circle {
-            width: 90px;
-            height: 90px;
-            min-width: 90px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: white;
-            font-weight: 700;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-            position: relative;
-            overflow: hidden;
-            font-family: var(--body-font);
-            border: 2px solid rgba(255,255,255,0.2);
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 8px 20px rgba(0, 0, 0, 0.5);
-            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+            width: 90px; height: 90px; min-width: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; color: white; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden; font-family: var(--body-font); border: 2px solid rgba(255,255,255,0.2); background-size: cover; background-position: center; background-repeat: no-repeat; box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 8px 20px rgba(0, 0, 0, 0.5); text-shadow: 0 2px 4px rgba(0,0,0,0.9);
         }
+        .category-circle:hover { transform: translateY(-5px) scale(1.05); box-shadow: inset 0 0 20px rgba(0,0,0,0.4), 0 15px 30px rgba(0, 0, 0, 0.7); border-color: var(--accent); }
+        .category-circle::after { content: ''; position: absolute; width: 100%; height: 100%; background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent); border-radius: 50%; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .category-circle:hover::after { opacity: 1; }
 
-        .category-circle:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.4), 0 15px 30px rgba(0, 0, 0, 0.7);
-            border-color: var(--accent);
-        }
-
-        .category-circle::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-            border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-
-        .category-circle:hover::after {
-            opacity: 1;
-        }
-
-        /* Colores fallback */
         .cat-anime    { background-image: linear-gradient(135deg, #ff7eb3, #ff6a8c); }
         .cat-furry    { background-image: linear-gradient(135deg, #a8e6cf, #66bb6a); } 
         .cat-realismo { background-image: linear-gradient(135deg, #90caf9, #42a5f5); }
@@ -438,332 +333,83 @@
 
         @media (max-width: 768px) {
             .dropdown { max-width: 100%; }
-            .category-circle {
-                width: 80px;
-                height: 80px;
-                min-width: 80px;
-                font-size: 11px;
-            }
+            .category-circle { width: 80px; height: 80px; min-width: 80px; font-size: 11px; }
         }
 
-        /* ========================================= */
-        /* === ESTILOS DEL BANNER "CREA TU CHICO" === */
-        /* ========================================= */
         .promo-banner {
-            position: relative;
-            width: 100%;
-            height: 180px; /* Altura prominente */
-            border-radius: 1.5rem;
-            overflow: hidden;
-            margin: 3rem 0; /* Espaciado generoso */
-            cursor: pointer;
-            box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.3);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-decoration: none;
-            display: block;
-            /* Background fallback */
-            background-color: #1a1a1a;
+            position: relative; width: 100%; height: 180px; border-radius: 1.5rem; overflow: hidden; margin: 3rem 0; cursor: pointer; box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.3); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease; border: 1px solid rgba(255, 255, 255, 0.1); text-decoration: none; display: block; background-color: #1a1a1a;
         }
+        .promo-banner:hover { transform: scale(1.02); box-shadow: 0 20px 40px -5px rgba(249, 115, 22, 0.5); border-color: rgba(249, 115, 22, 0.5); }
+        .promo-banner-bg { position: absolute; inset: 0; background-image: url('https://i.picasion.com/pic92/d4ce8e1a0c82019097e1cf1c191faeaa.gif'); background-size: cover; background-position: center 40%; transition: transform 8s ease; }
+        .promo-banner:hover .promo-banner-bg { transform: scale(1.1); }
+        .promo-banner-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0.2) 100%); display: flex; align-items: center; padding-left: 2rem; backdrop-filter: blur(1px); }
+        .promo-content { position: relative; z-index: 10; max-width: 70%; }
+        .promo-content h3 { font-family: 'Poppins', sans-serif; font-size: 1.75rem; font-weight: 900; line-height: 1.1; color: white; text-transform: uppercase; text-shadow: 0 4px 15px rgba(0,0,0,0.9); letter-spacing: -0.5px; }
+        .promo-content h3 span { color: #f97316; display: block; font-size: 2.4rem; filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.5)); background: linear-gradient(to right, #ffedd5, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .promo-tag { display: inline-flex; align-items: center; gap: 5px; background: rgba(249, 115, 22, 0.2); border: 1px solid rgba(249, 115, 22, 0.4); color: #fdba74; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; margin-bottom: 8px; backdrop-filter: blur(4px); box-shadow: 0 0 15px rgba(249, 115, 22, 0.15); text-transform: uppercase; letter-spacing: 1.5px; }
+        .promo-icon { position: absolute; right: 25px; bottom: 25px; font-size: 1.8rem; color: white; opacity: 0.9; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); animation: floatArrow 2s ease-in-out infinite; }
+        @keyframes floatArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+        @media (max-width: 640px) { .promo-banner { height: 150px; } .promo-content h3 { font-size: 1.4rem; } .promo-content h3 span { font-size: 1.8rem; } }
 
-        .promo-banner:hover {
-            transform: scale(1.02);
-            box-shadow: 0 20px 40px -5px rgba(249, 115, 22, 0.5);
-            border-color: rgba(249, 115, 22, 0.5);
-        }
+        /* Status Dot */
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
+        .status-dot { width: 10px; height: 10px; background-color: #22c55e; border-radius: 50%; animation: pulse-green 2s infinite; margin-bottom: 2px; }
 
-        .promo-banner-bg {
-            position: absolute;
-            inset: 0;
-            background-image: url('https://i.picasion.com/pic92/d4ce8e1a0c82019097e1cf1c191faeaa.gif');
-            background-size: cover;
-            background-position: center 40%;
-            transition: transform 8s ease;
-        }
-
-        .promo-banner:hover .promo-banner-bg {
-            transform: scale(1.1);
-        }
-
-        .promo-banner-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0.2) 100%);
-            display: flex;
-            align-items: center;
-            padding-left: 2rem;
-            backdrop-filter: blur(1px);
-        }
-
-        .promo-content {
-            position: relative;
-            z-index: 10;
-            max-width: 70%;
-        }
-
-        .promo-content h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.75rem;
-            font-weight: 900;
-            line-height: 1.1;
-            color: white;
-            text-transform: uppercase;
-            text-shadow: 0 4px 15px rgba(0,0,0,0.9);
-            letter-spacing: -0.5px;
-        }
-
-        .promo-content h3 span {
-            color: #f97316; /* Naranja exen-E */
-            display: block;
-            font-size: 2.4rem;
-            filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.5));
-            background: linear-gradient(to right, #ffedd5, #f97316);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .promo-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background: rgba(249, 115, 22, 0.2);
-            border: 1px solid rgba(249, 115, 22, 0.4);
-            color: #fdba74;
-            font-size: 0.75rem;
-            font-weight: 800;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 8px;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 0 15px rgba(249, 115, 22, 0.15);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-        }
-
-        .promo-icon {
-            position: absolute;
-            right: 25px;
-            bottom: 25px;
-            font-size: 1.8rem;
-            color: white;
-            opacity: 0.9;
-            filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
-            animation: floatArrow 2s ease-in-out infinite;
-        }
-
-        @keyframes floatArrow {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(5px); }
-        }
-
-        @media (max-width: 640px) {
-            .promo-banner { height: 150px; }
-            .promo-content h3 { font-size: 1.4rem; }
-            .promo-content h3 span { font-size: 1.8rem; }
-        }
-
-        /* --- ESTILOS PARA EL DOT DE VISITAS (LIVE STATUS) --- */
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
-            70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
-        }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            background-color: #22c55e; /* green-500 */
-            border-radius: 50%;
-            animation: pulse-green 2s infinite;
-            margin-bottom: 2px;
-        }
-
-        /* --- ESTILOS LOGIN / PROFILE MODALS --- */
-        .overlay-screen {
-            position: fixed;
-            inset: 0;
-            z-index: 3000;
-            background-color: #000;
-            background-image: url('https://files.catbox.moe/4ubhtv.jpg'); /* Fondo temático */
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .overlay-blur {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
-        }
-        .overlay-card {
-            position: relative;
-            z-index: 3010;
-            background: rgba(20, 20, 25, 0.9);
-            border: 1px solid rgba(249, 115, 22, 0.3);
-            border-radius: 24px;
-            padding: 30px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(249, 115, 22, 0.1);
-            text-align: center;
-            animation: slideUp 0.5s ease-out;
-        }
-        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .login-btn {
-            background: white;
-            color: #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            padding: 12px;
-            border-radius: 50px;
-            font-weight: bold;
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        .login-btn:hover { transform: scale(1.02); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
-
-        .profile-input {
-            width: 100%;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            color: white;
-            padding: 12px 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        .profile-input:focus { border-color: var(--accent); }
-
-        .user-avatar-btn {
-            position: absolute;
-            top: 12px;
-            left: 16px;
-            z-index: 50;
-            width: 40px;
-            height: 40px;
+        /* --- NUEVO: ESTILOS DE USUARIO --- */
+        .user-profile-btn {
+            position: absolute; left: 10px; top: 10px;
+            width: 45px; height: 45px;
             border-radius: 50%;
             overflow: hidden;
             border: 2px solid var(--accent);
-            box-shadow: 0 0 10px var(--accent-glow);
             cursor: pointer;
-            transition: transform 0.3s;
-        }
-        .user-avatar-btn:hover { transform: scale(1.1); }
-        
-        /* Menú de perfil */
-        #profile-menu {
-            position: absolute;
-            top: 60px;
-            left: 16px;
-            background: rgba(20, 20, 20, 0.95);
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 10px;
-            width: 150px;
             z-index: 50;
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
+            transition: transform 0.2s;
         }
-        #profile-menu.open { display: flex; }
-        .menu-item {
-            padding: 8px 12px;
-            color: #ccc;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-size: 0.9rem;
-            text-align: left;
+        .user-profile-btn:hover { transform: scale(1.1); }
+        .user-profile-btn img { width: 100%; height: 100%; object-fit: cover; }
+        
+        #config-modal {
+            display: none; position: fixed; inset: 0; z-index: 3000;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            align-items: center; justify-content: center;
         }
-        .menu-item:hover { background: rgba(249, 115, 22, 0.2); color: var(--accent); }
+        .config-card {
+            background: #1a1a1a; border: 1px solid #333; border-radius: 16px; p-6;
+            width: 90%; max-width: 350px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+        }
 
     </style>
 </head>
 <body class="antialiased">
-    <!-- OVERLAYS DE INICIO -->
-    <div id="warning-overlay" class="fixed inset-0 z-[3000] flex flex-col items-center justify-center bg-gray-950/95 p-4 text-center backdrop-blur-md" style="display: none;">
-        <h1 class="mb-6 text-3xl font-bold text-orange-500 flex items-center justify-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
+    <!-- OVERLAYS -->
+    <div id="warning-overlay" class="fixed inset-0 z-[2000] flex-col items-center justify-center bg-gray-950/90 p-4 text-center backdrop-blur-sm" style="display: none;">
+        <h1 class="mb-6 text-3xl font-bold text-orange-500 flex items-center gap-3 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Contenido +18</h1>
         <p class="mb-8 max-w-md text-lg text-gray-300">Esta galería contiene material sensible. Debes tener al menos 18 años para continuar.</p>
-        <div class="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-            <button class="w-full rounded-full bg-orange-600 px-8 py-3 font-semibold text-white transition hover:bg-orange-500 hover:scale-105 touch-feedback" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Soy Mayor de Edad</button>
-            <button class="w-full rounded-full bg-gray-700 px-8 py-3 font-semibold text-white transition hover:bg-gray-600 hover:scale-105 touch-feedback" onclick="rejectWarning()"><i class="fas fa-times mr-2"></i> Salir</button>
-        </div>
-    </div>
-
-    <!-- PANTALLA LOGIN -->
-    <div id="login-overlay" class="overlay-screen" style="display: none;">
-        <div class="overlay-blur"></div>
-        <div class="overlay-card">
-            <img src="https://files.catbox.moe/ap1lh0.png" alt="exen-E" class="h-16 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
-            <h2 class="text-2xl font-bold text-white mb-2">Bienvenido</h2>
-            <p class="text-gray-400 mb-6 text-sm">Inicia sesión para acceder a la galería premium.</p>
-            <button onclick="loginWithGoogle()" class="login-btn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google">
-                Iniciar sesión con Google
-            </button>
-        </div>
-    </div>
-
-    <!-- PANTALLA COMPLETAR PERFIL -->
-    <div id="profile-setup-overlay" class="overlay-screen" style="display: none;">
-        <div class="overlay-blur"></div>
-        <div class="overlay-card">
-            <h2 class="text-2xl font-bold text-orange-500 mb-4">Configura tu Perfil</h2>
-            <form id="profile-setup-form" onsubmit="saveUserProfile(event)">
-                <input type="text" id="setup-username" placeholder="Nombre de Usuario" class="profile-input" required maxlength="15">
-                <input type="number" id="setup-age" placeholder="Tu Edad" class="profile-input" required min="18" max="99">
-                <div class="text-left mb-2">
-                    <label class="text-xs text-gray-400 ml-1 block mb-1">Foto de Perfil:</label>
-                    <p class="text-[10px] text-orange-300 mb-2"><i class="fas fa-info-circle"></i> Sube tu imagen a <a href="https://catbox.moe" target="_blank" class="underline">catbox.moe</a> y pega el enlace aquí.</p>
-                </div>
-                <input type="url" id="setup-avatar" placeholder="URL de imagen (ej: https://files.catbox.moe/...)" class="profile-input">
-                <button type="submit" class="w-full rounded-full bg-gradient-to-r from-orange-500 to-orange-600 py-3 font-bold text-white shadow-lg hover:scale-105 transition">Guardar y Entrar</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- PANTALLA EDITAR PERFIL (CONFIG) -->
-    <div id="config-overlay" class="overlay-screen" style="display: none;">
-        <div class="overlay-blur"></div>
-        <div class="overlay-card relative">
-            <button onclick="closeConfig()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            <h2 class="text-xl font-bold text-white mb-4">Editar Perfil</h2>
-            <form onsubmit="updateUserProfile(event)">
-                <input type="text" id="edit-username" placeholder="Nombre de Usuario" class="profile-input" required maxlength="15">
-                <input type="url" id="edit-avatar" placeholder="URL de Foto (Catbox)" class="profile-input">
-                <button type="submit" class="w-full rounded-full bg-gray-700 py-2 font-bold text-white hover:bg-orange-500 transition">Actualizar Datos</button>
-            </form>
-            <button onclick="logout()" class="mt-4 text-red-400 text-sm hover:text-red-300 underline">Cerrar Sesión</button>
+        <div class="flex flex-col sm:flex-row gap-4">
+            <button class="w-full rounded-full bg-orange-600 px-8 py-3 font-semibold text-white transition hover:bg-orange-500 hover:scale-105 touch-feedback" onclick="acceptWarning()"><i class="fas fa-check mr-2"></i> Sí, Soy Mayor de Edad</button>
+            <button class="w-full rounded-full bg-gray-700 px-8 py-3 font-semibold text-white transition hover:bg-gray-600 hover:scale-105 touch-feedback" onclick="rejectWarning()"><i class="fas fa-times mr-2"></i> No, salir</button>
         </div>
     </div>
     
     <!-- CONTENIDO PRINCIPAL -->
-    <main class="container mx-auto px-2 sm:px-4" id="main-app-content" style="display: none;"> <!-- Oculto hasta login -->
+    <main class="container mx-auto px-2 sm:px-4">
         
         <!-- HEADER -->
         <header class="pt-4 pb-2 flex justify-center relative z-40">
+            <!-- BOTÓN PERFIL USUARIO (Izquierda) -->
+            <div id="user-profile-container" class="hidden">
+                <div class="user-profile-btn" onclick="openConfigModal()">
+                    <img id="header-user-img" src="https://placehold.co/100x100/333/fff?text=U" alt="Perfil">
+                </div>
+            </div>
             
-            <!-- FOTO DE PERFIL (TOP LEFT) -->
-            <div class="absolute top-2 left-2 sm:left-4">
-                <div id="user-profile-pic" class="user-avatar-btn" onclick="toggleProfileMenu()">
-                    <img id="header-avatar-img" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
-                </div>
-                <!-- Menú desplegable -->
-                <div id="profile-menu">
-                    <div class="menu-item" onclick="openConfig()"><i class="fas fa-cog mr-2"></i> Config</div>
-                    <div class="menu-item text-red-400" onclick="logout()"><i class="fas fa-sign-out-alt mr-2"></i> Salir</div>
-                </div>
+            <!-- Link de Login si NO hay usuario -->
+            <div id="login-link-container" class="absolute left-4 top-4 z-50">
+                <a href="login.html" class="text-xs text-orange-400 font-bold border border-orange-500/50 rounded-full px-3 py-1 bg-black/50 backdrop-blur hover:bg-orange-500 hover:text-white transition">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
             </div>
 
             <!-- Logo Central (Pill) -->
@@ -886,6 +532,7 @@
         </button>
 
         <!-- Contenido Scrollable (Semi-Transparente) -->
+        <!-- IMPORTANTISIMO: bg-black/30 para que se vea el fondo difuminado -->
         <div id="modal-content" class="h-full w-full overflow-y-auto bg-black/30 relative z-10 backdrop-blur-none">
             <div class="container mx-auto flex min-h-full max-w-5xl flex-col items-center justify-center px-2 py-12 md:px-6">
                 
@@ -904,10 +551,11 @@
                     
                     <!-- Reacciones -->
                     <div class="relative z-20 flex justify-center">
+                         <!-- ... (Mismo código de reacciones que tenías, solo ajustado layout) ... -->
                         <div id="reaction-circle-container" class="relative">
                             <div class="relative flex items-center justify-center">
                                 <div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/90 transition-transform duration-300 scale-0 -z-10 border border-gray-700"></div>
-                                <!-- Iconos de reacción -->
+                                <!-- Iconos de reacción (mantenidos igual) -->
                                 <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="like">❤️</span></div>
                                 <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="hot">🔥</span></div>
                                 <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125 touch-feedback" data-type="wow">😯</span></div>
@@ -939,11 +587,9 @@
                     <section id="comments-section" class="w-full pt-4">
                          <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2 drop-shadow-md"><i class="fas fa-comments"></i> Comentarios</h3>
                         <form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-black/60 border border-white/10 p-4 sm:flex-row backdrop-blur-md">
-                            <!-- Input de Nombre removido, ahora usa el nombre del perfil -->
-                            <div class="w-full flex gap-2">
-                                <input type="text" id="comment-input" placeholder="Deja tu comentario..." class="flex-grow rounded-lg border border-gray-600 bg-black/50 px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
-                                <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white touch-feedback hover:bg-orange-500 transition-colors"><i class="fas fa-paper-plane"></i></button>
-                            </div>
+                            <input type="text" id="name-input" placeholder="Nombre (opcional)" class="w-full rounded-lg border border-gray-600 bg-black/50 px-4 py-3 text-white sm:w-1/3 focus:border-orange-500 focus:outline-none transition-colors">
+                            <input type="text" id="comment-input" placeholder="Deja tu comentario..." class="flex-grow rounded-lg border border-gray-600 bg-black/50 px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
+                            <button type="submit" id="comment-btn" class="group flex-shrink-0 rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white touch-feedback hover:bg-orange-500 transition-colors"><i class="fas fa-paper-plane"></i></button>
                         </form>
                         <div id="comments" class="flex flex-col gap-4"></div>
                     </section>
@@ -954,25 +600,49 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL CONFIGURACIÓN PERFIL -->
+    <div id="config-modal">
+        <div class="config-card p-6 flex flex-col gap-4">
+            <h3 class="text-xl font-bold text-white mb-2 border-b border-gray-700 pb-2">Configuración</h3>
+            
+            <div>
+                <label class="text-sm text-gray-400">Cambiar Foto de Perfil (URL)</label>
+                <input type="url" id="config-photo-input" class="w-full mt-1 rounded bg-black/50 border border-gray-600 p-2 text-white text-sm" placeholder="https://catbox.moe/...">
+                <p class="text-[10px] text-gray-500 mt-1">Sube a Catbox.moe y pega el link.</p>
+            </div>
+
+            <div class="flex gap-2 mt-4">
+                <button onclick="updateProfilePic()" class="w-full bg-orange-600 hover:bg-orange-500 text-white rounded py-2 font-bold transition">Guardar</button>
+                <button onclick="closeConfigModal()" class="w-full bg-gray-700 hover:bg-gray-600 text-white rounded py-2 transition">Cancelar</button>
+            </div>
+             <button onclick="logoutUser()" class="w-full mt-2 text-red-400 hover:text-red-300 text-sm underline">Cerrar Sesión</button>
+        </div>
+    </div>
     
     <button id="scrollToTopBtn" class="fixed bottom-[90px] right-5 h-12 w-12 rounded-full bg-orange-600/80 text-white shadow-lg backdrop-blur-sm touch-feedback z-[100]" title="Ir arriba"><i class="fas fa-arrow-up"></i></button>
     <footer class="mt-12 py-8 text-center text-gray-500"><p class="mt-2 text-sm">&copy; 2025 exen-E. Todos los derechos reservados.</p></footer>
 
-    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
-    <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around">
-        <a href="index.html" id="nav-index" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-            <span class="text-xs">Galería</span>
+    <!-- BARRA DE NAVEGACIÓN INFERIOR UNIFICADA -->
+    <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around items-center px-2">
+        <a href="index.html" class="nav-item active flex flex-col items-center justify-center text-center px-2 w-1/4 touch-feedback">
+            <i class="fas fa-th-large text-xl mb-1"></i>
+            <span class="text-[10px] font-semibold">Galería</span>
         </a>
-        <a href="batalla.html" id="nav-batalla" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12.01 2.011H12v1.99M12.01 20.011H12v1.99M6.35 4.931l1.41 1.41m9.9 9.9l1.41 1.41M4.93 17.651l1.41-1.41m9.9-9.9l1.41-1.41M2.01 12.011H4v-1.99m18 .011h-1.99v-1.99M9.5 8.5l5 7m-5 0l5-7" /></svg>
-            <span class="text-xs">Batalla</span>
+        <a href="feed.html" class="nav-item flex flex-col items-center justify-center text-center px-2 w-1/4 touch-feedback">
+            <i class="fas fa-globe-americas text-xl mb-1"></i>
+            <span class="text-[10px] font-semibold">Social</span>
         </a>
-        <a href="videos.html" id="nav-videos" class="bottom-nav-link flex flex-col items-center justify-center text-center px-2 touch-feedback">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
-            <span class="text-xs">Música</span>
+        <a href="batalla.html" class="nav-item flex flex-col items-center justify-center text-center px-2 w-1/4 touch-feedback">
+            <i class="fas fa-fire text-xl mb-1"></i>
+            <span class="text-[10px] font-semibold">Batalla</span>
+        </a>
+        <a href="profile.html" class="nav-item flex flex-col items-center justify-center text-center px-2 w-1/4 touch-feedback">
+            <i class="fas fa-user text-xl mb-1"></i>
+            <span class="text-[10px] font-semibold">Perfil</span>
         </a>
     </nav>
+
     <script>
         "use strict";
         // --- CONFIGURACIÓN Y VARIABLES GLOBALES ---
@@ -980,10 +650,69 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
+
+        let currentUser = null; // Guardará el objeto de usuario de Firebase Auth
+        let deviceID = localStorage.getItem('deviceID'); 
+        if (!deviceID) { deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); localStorage.setItem('deviceID', deviceID); }
         
-        let currentUserProfile = null;
+        // --- MANEJO DE SESIÓN Y USUARIO ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                // Si el usuario no es anónimo, es un usuario registrado
+                if (!user.isAnonymous) {
+                    document.getElementById('login-link-container').style.display = 'none';
+                    document.getElementById('user-profile-container').style.display = 'block';
+                    loadUserProfile(user.uid);
+                } else {
+                    document.getElementById('login-link-container').style.display = 'block';
+                    document.getElementById('user-profile-container').style.display = 'none';
+                }
+            } else {
+                // Si no hay usuario, iniciamos anónimo (fallback)
+                firebase.auth().signInAnonymously().catch(console.error);
+                document.getElementById('login-link-container').style.display = 'block';
+            }
+        });
+
+        function loadUserProfile(uid) {
+            db.ref('users/' + uid).on('value', snap => {
+                if (snap.exists()) {
+                    const data = snap.val();
+                    const photoUrl = data.profilePic || 'https://placehold.co/100x100/333/fff?text=U';
+                    document.getElementById('header-user-img').src = photoUrl;
+                    document.getElementById('config-photo-input').value = data.profilePic || '';
+                    // Actualizar input de comentarios si es necesario
+                    const nameInput = document.getElementById('name-input');
+                    if (nameInput && data.username) nameInput.value = data.username;
+                }
+            });
+        }
+        
+        // --- FUNCIONES CONFIGURACIÓN USUARIO ---
+        function openConfigModal() {
+            document.getElementById('config-modal').style.display = 'flex';
+        }
+        function closeConfigModal() {
+            document.getElementById('config-modal').style.display = 'none';
+        }
+        function updateProfilePic() {
+            const newUrl = document.getElementById('config-photo-input').value.trim();
+            if (currentUser && newUrl) {
+                db.ref('users/' + currentUser.uid).update({ profilePic: newUrl })
+                    .then(() => {
+                        closeConfigModal();
+                        alert('Foto actualizada');
+                    });
+            }
+        }
+        function logoutUser() {
+            auth.signOut().then(() => {
+                window.location.reload();
+            });
+        }
+
         const imagesPerLoad = 21; let allImages = []; let fullGalleryCache = []; let isLoading = false; let noMoreImages = false; let currentImageId = ''; let currentImageIndex = -1;
-        let deviceID = localStorage.getItem('deviceID'); if (!deviceID) { deviceID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); localStorage.setItem('deviceID', deviceID); }
         let userReactions = {}; let allReactionCounts = {}; let currentSearchResults = []; let searchCurrentPage = 1; const searchResultsPerPage = 21; const sliderAnimationState = {}; let touchStartX = 0; let touchEndX = 0; const swipeThreshold = 50;
         
         let viewStartTime = 0;
@@ -991,173 +720,22 @@
         
         // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => { 
-            // Flujo: Warning -> Login -> App
             const warningOverlay = document.getElementById('warning-overlay'); 
-            const adultConsent = localStorage.getItem('adultConsent');
-
-            if (!adultConsent) { 
+            if (!localStorage.getItem('adultConsent')) { 
                 warningOverlay.style.display = 'flex'; 
                 document.body.style.overflow = 'hidden'; 
             } else { 
-                checkAuthState(); // Directamente verifica si está logueado
+                initializeApp(); 
             } 
         });
-
-        function acceptWarning() { 
-            localStorage.setItem('adultConsent', 'true'); 
-            document.getElementById('warning-overlay').style.display = 'none'; 
-            checkAuthState();
-        }
-        
+        function acceptWarning() { localStorage.setItem('adultConsent', 'true'); document.getElementById('warning-overlay').style.display = 'none'; document.body.style.overflow = 'auto'; initializeApp(); }
         function rejectWarning() { window.location.href = 'https://www.google.com'; }
         
-        // --- LÓGICA DE AUTENTICACIÓN GOOGLE ---
-        function checkAuthState() {
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    // Usuario logueado, verificar si tiene perfil completo
-                    const userRef = db.ref('users/' + user.uid);
-                    userRef.once('value').then(snapshot => {
-                        if (snapshot.exists()) {
-                            // Perfil existe, cargar app
-                            currentUserProfile = snapshot.val();
-                            document.getElementById('login-overlay').style.display = 'none';
-                            document.getElementById('profile-setup-overlay').style.display = 'none';
-                            loadApp();
-                        } else {
-                            // Perfil nuevo, mostrar setup
-                            document.getElementById('login-overlay').style.display = 'none';
-                            document.getElementById('profile-setup-overlay').style.display = 'flex';
-                        }
-                    });
-                } else {
-                    // No logueado, mostrar login overlay
-                    document.getElementById('login-overlay').style.display = 'flex';
-                    document.getElementById('main-app-content').style.display = 'none';
-                    document.body.style.overflow = 'hidden';
-                }
-            });
-        }
-
-        function loginWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(error => {
-                console.error("Error login:", error);
-                alert("Error al iniciar sesión: " + error.message);
-            });
-        }
-
-        function saveUserProfile(e) {
-            e.preventDefault();
-            const user = auth.currentUser;
-            if (!user) return;
-
-            const username = document.getElementById('setup-username').value.trim();
-            const age = document.getElementById('setup-age').value;
-            let avatar = document.getElementById('setup-avatar').value.trim();
-
-            if (!avatar) avatar = "https://placehold.co/100x100/333/fff?text=" + username.charAt(0).toUpperCase();
-
-            if (age < 18) {
-                alert("Debes ser mayor de 18 años para usar esta aplicación.");
-                auth.signOut();
-                return;
-            }
-
-            const profileData = {
-                uid: user.uid,
-                email: user.email,
-                username: username,
-                age: age,
-                avatar: avatar,
-                createdAt: Date.now()
-            };
-
-            db.ref('users/' + user.uid).set(profileData).then(() => {
-                currentUserProfile = profileData;
-                document.getElementById('profile-setup-overlay').style.display = 'none';
-                loadApp();
-            });
-        }
-        
-        function logout() {
-            auth.signOut().then(() => {
-                window.location.reload();
-            });
-        }
-
-        // --- CARGA DE LA APLICACIÓN PRINCIPAL ---
-        function loadApp() {
-            document.getElementById('main-app-content').style.display = 'block';
-            document.body.style.overflow = 'auto';
-            
-            // Cargar Avatar en Header
-            updateHeaderAvatar();
-
-            // Iniciar lógica de la galería
-            initializeApp();
-        }
-        
-        function updateHeaderAvatar() {
-            if (currentUserProfile && currentUserProfile.avatar) {
-                document.getElementById('header-avatar-img').src = currentUserProfile.avatar;
-            }
-        }
-
-        // --- MENÚ DE PERFIL Y CONFIGURACIÓN ---
-        function toggleProfileMenu() {
-            const menu = document.getElementById('profile-menu');
-            menu.classList.toggle('open');
-            // Cerrar al hacer click fuera (simple handler)
-            setTimeout(() => {
-                document.addEventListener('click', closeMenuOnClickOutside, {once: true});
-            }, 100);
-        }
-        
-        function closeMenuOnClickOutside(e) {
-            if (!e.target.closest('#user-profile-pic') && !e.target.closest('#profile-menu')) {
-                document.getElementById('profile-menu').classList.remove('open');
-            }
-        }
-
-        function openConfig() {
-            if (!currentUserProfile) return;
-            document.getElementById('edit-username').value = currentUserProfile.username;
-            document.getElementById('edit-avatar').value = currentUserProfile.avatar;
-            document.getElementById('config-overlay').style.display = 'flex';
-            document.getElementById('profile-menu').classList.remove('open');
-        }
-
-        function closeConfig() {
-            document.getElementById('config-overlay').style.display = 'none';
-        }
-
-        function updateUserProfile(e) {
-            e.preventDefault();
-            const user = auth.currentUser;
-            if (!user) return;
-            
-            const newUsername = document.getElementById('edit-username').value.trim();
-            const newAvatar = document.getElementById('edit-avatar').value.trim();
-            
-            const updates = {
-                username: newUsername,
-                avatar: newAvatar || currentUserProfile.avatar
-            };
-            
-            db.ref('users/' + user.uid).update(updates).then(() => {
-                currentUserProfile = { ...currentUserProfile, ...updates };
-                updateHeaderAvatar();
-                closeConfig();
-                alert("Perfil actualizado correctamente.");
-            });
-        }
-
-        // --- LÓGICA ORIGINAL DE LA GALERÍA ---
         async function initializeApp() {
             await cacheFullGalleryForSearch();
             loadHeroBanner(); 
             handleVisitCounter();
+            // Fetch reactions based on USER ID if logged in, otherwise deviceID
             await Promise.all([ fetchUserReactions(), cacheAllReactionCounts(), loadCategoryBanners() ]);
             loadInitialImages();
             loadTopLikedImages();
@@ -1165,10 +743,8 @@
             
             setupIntersectionObserver();
             setupEventListeners();
-            setActiveNavLink();
         }
 
-        // --- LÓGICA DEL CONTADOR DE VISITAS ---
         function handleVisitCounter() {
             const visitStatsRef = db.ref('siteStats/totalVisits');
             if (!sessionStorage.getItem('visitCounted')) {
@@ -1185,14 +761,6 @@
             });
         }
 
-        function setActiveNavLink() {
-            const path = window.location.pathname.split("/").pop() || 'index.html';
-            document.querySelectorAll('.bottom-nav-link').forEach(l => l.classList.remove('active'));
-            if (path === 'index.html' || path === '') document.getElementById('nav-index')?.classList.add('active');
-            else if (path.startsWith('batalla.html')) document.getElementById('nav-batalla')?.classList.add('active');
-            else if (path.startsWith('videos.html')) document.getElementById('nav-videos')?.classList.add('active');
-        }
-
         async function loadCategoryBanners() {
             try {
                 const bannersSnap = await db.ref('categoryBanners').once('value');
@@ -1204,9 +772,7 @@
                         element.style.backgroundImage = `url('${banners[key]}')`;
                     }
                 }
-            } catch (error) {
-                console.error("Error al cargar los banners de categoría:", error);
-            }
+            } catch (error) { console.error("Error al cargar los banners de categoría:", error); }
         }
 
         // --- LÓGICA DEL BANNER HERO ---
@@ -1226,41 +792,15 @@
                 const slide = document.createElement('div');
                 slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
                 slide.setAttribute('onclick', `openModal('${img.id}')`);
-                
                 const displayUrl = img.thumbnailUrl || img.url; 
-                
-                slide.innerHTML = `
-                    <img src="${displayUrl}" alt="${img.title}" loading="eager" class="hero-bg-img">
-                    <div class="hero-overlay">
-                        <div class="hero-content">
-                            <span class="text-orange-500 font-bold tracking-wider uppercase mb-1 text-[10px] sm:text-xs block">NUEVO AGREGADO</span>
-                            <h2 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight mb-2 uppercase drop-shadow-lg truncate">${img.title}</h2>
-                            <p class="text-gray-300 text-xs sm:text-sm line-clamp-2 mb-4 drop-shadow-md max-w-lg leading-relaxed">${img.desc || 'Sin descripción disponible.'}</p>
-                            <div class="flex gap-3">
-                                <button class="px-4 py-1.5 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition-all text-xs sm:text-sm">
-                                    Ver Ahora
-                                </button>
-                                <button class="px-4 py-1.5 bg-transparent border border-white text-white rounded-full font-bold hover:bg-white/10 transition-all text-xs sm:text-sm">
-                                    + Info
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="hero-floating-card">
-                        <img src="${displayUrl}" class="hero-floating-img" alt="Preview Animada">
-                    </div>
-                `;
+                slide.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="eager" class="hero-bg-img"><div class="hero-overlay"><div class="hero-content"><span class="text-orange-500 font-bold tracking-wider uppercase mb-1 text-[10px] sm:text-xs block">NUEVO AGREGADO</span><h2 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight mb-2 uppercase drop-shadow-lg truncate">${img.title}</h2><p class="text-gray-300 text-xs sm:text-sm line-clamp-2 mb-4 drop-shadow-md max-w-lg leading-relaxed">${img.desc || 'Sin descripción disponible.'}</p><div class="flex gap-3"><button class="px-4 py-1.5 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition-all text-xs sm:text-sm">Ver Ahora</button><button class="px-4 py-1.5 bg-transparent border border-white text-white rounded-full font-bold hover:bg-white/10 transition-all text-xs sm:text-sm">+ Info</button></div></div></div><div class="hero-floating-card"><img src="${displayUrl}" class="hero-floating-img" alt="Preview Animada"></div>`;
                 container.appendChild(slide);
 
                 const dot = document.createElement('div');
                 dot.className = `hero-dot ${index === 0 ? 'active' : ''}`;
-                dot.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    manualSlide(index);
-                });
+                dot.addEventListener('click', (e) => { e.stopPropagation(); manualSlide(index); });
                 indicatorsContainer.appendChild(dot);
             });
-
             startHeroInterval();
         }
         
@@ -1281,16 +821,27 @@
             const slides = document.querySelectorAll('.hero-slide');
             const dots = document.querySelectorAll('.hero-dot');
             if (!slides.length) return;
-            
             slides.forEach(s => s.classList.remove('active'));
             dots.forEach(d => d.classList.remove('active'));
-            
             slides[index].classList.add('active');
             dots[index].classList.add('active');
         }
 
         async function cacheFullGalleryForSearch() { const searchInput = document.getElementById('search-input'); searchInput.disabled = true; searchInput.placeholder = "Cargando base de datos..."; const snapshot = await db.ref('images').once('value'); if (snapshot.exists()) { const allData = []; snapshot.forEach(child => { allData.push({ id: child.key, ...child.val() }); }); fullGalleryCache = allData.sort((a,b) => b.timestamp - a.timestamp); } searchInput.disabled = false; searchInput.placeholder = "Buscar en toda la galería..."; }
-        async function fetchUserReactions() { const snapshot = await db.ref('reactions').once('value'); const allReactions = snapshot.val() || {}; userReactions = {}; Object.keys(allReactions).forEach(imgId => { if(allReactions[imgId][deviceID]) { userReactions[imgId] = allReactions[imgId][deviceID]; } }); }
+        
+        // ***** USER REACTION LOGIC UPDATE *****
+        async function fetchUserReactions() { 
+            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
+            const snapshot = await db.ref('reactions').once('value'); 
+            const allReactions = snapshot.val() || {}; 
+            userReactions = {}; 
+            Object.keys(allReactions).forEach(imgId => { 
+                if(allReactions[imgId][userId]) { 
+                    userReactions[imgId] = allReactions[imgId][userId]; 
+                } 
+            }); 
+        }
+
         async function cacheAllReactionCounts() { const reactionsSnap = await db.ref('reactions').once('value'); const reactions = reactionsSnap.val() || {}; const counts = {}; Object.entries(reactions).forEach(([imgId, users]) => { counts[imgId] = Object.keys(users).length; }); allReactionCounts = counts; }
         
         function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton'; } }
@@ -1302,9 +853,7 @@
             if (!tags || tags.length === 0) return;
             let prefs = JSON.parse(localStorage.getItem('exen_user_prefs')) || { tagScores: {} };
             let score = 1;
-            if (type === 'view_short') score = 2;
-            else if (type === 'view_long') score = 5;
-            else if (type === 'reaction') score = 10;
+            if (type === 'view_short') score = 2; else if (type === 'view_long') score = 5; else if (type === 'reaction') score = 10;
             tags.forEach(tag => {
                 const normTag = normalize(tag);
                 if (!prefs.tagScores[normTag]) prefs.tagScores[normTag] = 0;
@@ -1331,38 +880,35 @@
             generateSkeletons(grid, 9);
             let prefs = JSON.parse(localStorage.getItem('exen_user_prefs')) || { tagScores: {} };
             const tagScores = prefs.tagScores || {};
-
             let scoredImages = fullGalleryCache.map(img => {
                 let score = 0;
                 if (img.tags) {
                     img.tags.forEach(tag => {
                         const normTag = normalize(tag);
-                        if (tagScores[normTag]) {
-                            score += tagScores[normTag];
-                        }
+                        if (tagScores[normTag]) score += tagScores[normTag];
                     });
                 }
                 score += Math.random() * 5; 
                 return { img, score };
             });
-
             scoredImages.sort((a, b) => b.score - a.score);
             let candidates = scoredImages.slice(0, 50).map(item => item.img);
             for (let i = Math.min(candidates.length, 15) - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
             }
-
             const finalSelection = candidates.slice(0, 9);
             displayImages(finalSelection, 'for-you-grid');
         }
 
         function displayImages(images, containerId, append = false) { const grid = document.getElementById(containerId); if (!append) grid.innerHTML = ''; if (images.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron imágenes.</div>`; return; } const isSlider = containerId === 'similar-grid'; images.forEach((img, index) => { if (!img || !img.url || !img.title) return; const div = document.createElement('div'); let classList = 'image-item-animation group relative aspect-[2/3] overflow-hidden image-card'; if (isSlider) classList += ' flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%] cursor-pointer'; div.className = classList; div.setAttribute('onclick', `openModal('${img.id}')`); div.style.animationDelay = `${(index * 0.05)}s`; const isLiked = userReactions[img.id] === 'like'; const displayUrl = img.thumbnailUrl || img.url; const reactionCount = allReactionCounts[img.id] || 0; div.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div><div class="absolute bottom-0 left-0 p-3 pointer-events-none"><h4 class="truncate font-bold text-white">${img.title}</h4></div><button id="grid-like-btn-${img.id}" onclick="toggleReactionFromGrid('${img.id}', event)" class="grid-like-btn absolute top-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm touch-feedback ${isLiked ? 'liked' : ''}"><i class="fas fa-heart text-gray-300"></i><span id="reaction-count-grid-${img.id}">${reactionCount}</span></button>`; grid.appendChild(div); }); }
+        
         function toggleReactionFromGrid(imageId, event) { 
             event.stopPropagation(); 
+            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
             const btn = document.getElementById(`grid-like-btn-${imageId}`); 
             const countEl = document.getElementById(`reaction-count-grid-${imageId}`); 
-            const reactionsRef = db.ref(`reactions/${imageId}/${deviceID}`); 
+            const reactionsRef = db.ref(`reactions/${imageId}/${userId}`); 
             
             reactionsRef.once('value', snap => { 
                 if (snap.val() === 'like') { 
@@ -1395,8 +941,10 @@
             currentViewingId = id;
             viewStartTime = Date.now();
             if (img.tags) logInteraction(img.tags, 'click');
+
             const backdropEl = document.getElementById('modal-backdrop');
             backdropEl.src = img.thumbnailUrl || img.url;
+
             const currentView = document.getElementById('search-results-container').classList.contains('hidden') ? allImages : currentSearchResults; 
             currentImageIndex = currentView.findIndex(i => i && i.id === id); 
             const imageContainer = document.getElementById('image-container'); 
@@ -1433,7 +981,7 @@
         }
 
         function closeModal() { 
-            stopTrackingCurrent(); 
+            stopTrackingCurrent();
             const modal = document.getElementById('modal'); 
             modal.classList.remove('visible'); 
             document.body.style.overflow = 'auto'; 
@@ -1448,10 +996,7 @@
             document.getElementById('close-modal').addEventListener('click', closeModal); 
             document.getElementById('prev-image').addEventListener('click', navigateToPrevious); 
             document.getElementById('next-image').addEventListener('click', navigateToNext); 
-            
-            // Modificado para incluir nombre de usuario automáticamente
             document.getElementById('comment-form').addEventListener('submit', e => { e.preventDefault(); postComment(); }); 
-            
             const imageContainer = document.getElementById('image-container'); imageContainer.addEventListener('dblclick', handleDoubleTapLike); 
             const modal = document.getElementById('modal'); modal.addEventListener('touchstart', e => { if (e.target.closest('#similar-section, button, input, textarea, .reaction, a')) { touchStartX = 0; return; } touchStartX = e.changedTouches[0].screenX; }, { passive: true }); 
             modal.addEventListener('touchend', e => { if (touchStartX === 0) return; touchEndX = e.changedTouches[0].screenX; handleSwipe(); touchStartX = 0; }); 
@@ -1463,25 +1008,9 @@
             const categoriesDropdown = document.getElementById('categories-dropdown');
             const catArrow = document.getElementById('cat-arrow');
             const dropdownContainer = document.querySelector('.dropdown');
-
             if (categoriesToggle) {
-                categoriesToggle.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const isVisible = categoriesDropdown.classList.contains('show');
-                    if (isVisible) {
-                        categoriesDropdown.classList.remove('show');
-                        catArrow.classList.remove('rotate-180');
-                    } else {
-                        categoriesDropdown.classList.add('show');
-                        catArrow.classList.add('rotate-180');
-                    }
-                });
-                document.addEventListener('click', (e) => {
-                    if (!dropdownContainer.contains(e.target)) {
-                        categoriesDropdown.classList.remove('show');
-                        catArrow.classList.remove('rotate-180');
-                    }
-                });
+                categoriesToggle.addEventListener('click', (e) => { e.stopPropagation(); const isVisible = categoriesDropdown.classList.contains('show'); if (isVisible) { categoriesDropdown.classList.remove('show'); catArrow.classList.remove('rotate-180'); } else { categoriesDropdown.classList.add('show'); catArrow.classList.add('rotate-180'); } });
+                document.addEventListener('click', (e) => { if (!dropdownContainer.contains(e.target)) { categoriesDropdown.classList.remove('show'); catArrow.classList.remove('rotate-180'); } });
             }
         }
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
@@ -1490,8 +1019,9 @@
         function handleSwipe() { const deltaX = touchEndX - touchStartX; if (Math.abs(deltaX) > swipeThreshold) { if (deltaX < 0) navigateToNext(); else navigateToPrevious(); } }
         
         function handleReaction(type) { 
+            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
             animateReactionOnImage(type); 
-            const reactionsRef = db.ref(`reactions/${currentImageId}/${deviceID}`); 
+            const reactionsRef = db.ref(`reactions/${currentImageId}/${userId}`); 
             reactionsRef.once('value', snap => { 
                 (snap.val() === type) ? reactionsRef.remove() : reactionsRef.set(type); 
             }); 
@@ -1504,42 +1034,20 @@
         function animateReactionOnImage(type) { const icons = { hot: '🔥', like: '❤️', wow: '😯', sexy: '🫦', laugh: '😂', sad: '😢' }; const icon = icons[type]; if (!icon) return; const container = document.getElementById('image-container'); const animationEl = document.createElement('div'); animationEl.className = 'punch-animation'; animationEl.textContent = icon; container.appendChild(animationEl); setTimeout(() => { if (animationEl.parentElement) animationEl.remove(); }, 500); }
         function loadLikes(id) { db.ref(`reactions/${id}`).on('value', snap => { const reactions = snap.val() || {}; const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 }; Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; }); const container = document.getElementById('reaction-counts-container'); if (container) container.innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join(''); }); }
         
-        // ***** CAMBIO IMPORTANTE: Usar el perfil real para comentar *****
         function postComment() { 
-            const commentText = document.getElementById('comment-input').value.trim(); 
-            if (!commentText || !currentImageId) return; 
-            
-            // Usar datos del perfil o fallback
-            const userName = currentUserProfile ? currentUserProfile.username : 'Anónimo';
-            
-            const commentData = { 
-                name: userName, 
-                text: commentText, 
-                timestamp: Date.now(),
-                userId: auth.currentUser ? auth.currentUser.uid : null
-            }; 
-            
+            const name = document.getElementById('name-input').value.trim(); 
+            const comment = document.getElementById('comment-input').value.trim(); 
+            if (!comment || !currentImageId) return; 
+            const commentData = { name: name || 'Anónimo', text: comment, timestamp: Date.now() }; 
             db.ref(`comments/${currentImageId}`).push(commentData).then(() => document.getElementById('comment-input').value = ''); 
         }
         
-        function initAutoSlider(containerId) { const container = document.getElementById(containerId); if (!container || container.children.length < 2) return; if (sliderAnimationState[containerId]?.animationFrameId) cancelAnimationFrame(sliderAnimationState[containerId].animationFrameId); if (!container.dataset.cloned) { const originalChildren = Array.from(container.children); originalChildren.forEach(child => { const clone = child.cloneNode(true); container.appendChild(clone); }); container.dataset.cloned = 'true'; } const scrollWidth = container.scrollWidth / 2; let isPaused = false; const scroll = () => { if (!isPaused) { container.scrollLeft += 0.5; if (container.scrollLeft >= scrollWidth) container.scrollLeft = 0; } sliderAnimationState[containerId] = { animationFrameId: requestAnimationFrame(scroll) }; }; container.addEventListener('mouseenter', () => isPaused = true); container.addEventListener('mouseleave', () => isPaused = false); scroll(); }
         async function loadSimilarImages(tags) { const grid = document.getElementById('similar-grid'); grid.innerHTML = ''; if (!tags || tags.length === 0) return; const candidates = fullGalleryCache.filter(img => img.id !== currentImageId && Array.isArray(img.tags)); const scoredImages = candidates.map(img => { const commonTags = img.tags.filter(tag => tags.includes(tag)); return { image: img, score: commonTags.length }; }).filter(item => item.score > 0); scoredImages.sort((a, b) => b.score - a.score); const similarImages = scoredImages.slice(0, 10).map(item => item.image); if(similarImages.length > 0) displayImages(similarImages, 'similar-grid'); }
         function executeSearch(query) { document.getElementById('main-content-sections').classList.add('hidden'); document.getElementById('gallery').classList.add('hidden'); document.getElementById('search-results-container').classList.remove('hidden'); currentSearchResults = fullGalleryCache.filter(item => (item.title && normalize(item.title).includes(query)) || (item.tags && item.tags.some(tag => normalize(tag).includes(query)))); displaySearchResultsPage(1); }
         function displaySearchResultsPage(page) { searchCurrentPage = page; const startIndex = (page - 1) * searchResultsPerPage; const pageItems = currentSearchResults.slice(startIndex, startIndex + searchResultsPerPage); displayImages(pageItems, 'search-results-grid'); renderPaginationControls(); }
         function renderPaginationControls(){ const paginationContainer = document.getElementById('search-pagination'); const totalPages = Math.ceil(currentSearchResults.length / searchResultsPerPage); paginationContainer.innerHTML = ''; if (totalPages <= 1) return; paginationContainer.innerHTML = `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-gray-700 rounded-md touch-feedback" ${searchCurrentPage === 1 ? 'disabled' : ''}>Anterior</button><span>Página ${searchCurrentPage} de ${totalPages}</span><button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-gray-700 rounded-md touch-feedback" ${searchCurrentPage === totalPages ? 'disabled' : ''}>Siguiente</button>`; }
         function resetSearchView(){ document.getElementById('search-input').value = ''; document.getElementById('search-results-container').classList.add('hidden'); document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden'); }
         function setupIntersectionObserver() { const trigger = document.getElementById('load-more-trigger'); const observer = new IntersectionObserver((entries) => { if (entries[0].isIntersecting && document.getElementById('search-results-container').classList.contains('hidden')) loadMoreImages(); }, { rootMargin: '0px 0px 500px 0px' }); observer.observe(trigger); }
-        
-        function trackImageView(imageId) { 
-            if (!imageId) return; 
-            let viewedImages = []; 
-            try { viewedImages = JSON.parse(localStorage.getItem('viewedImages')) || []; } catch (e) { viewedImages = []; } 
-            const existingIndex = viewedImages.indexOf(imageId);
-            if (existingIndex > -1) { viewedImages.splice(existingIndex, 1); }
-            viewedImages.unshift(imageId); 
-            if (viewedImages.length > 200) { viewedImages = viewedImages.slice(0, 200); } 
-            localStorage.setItem('viewedImages', JSON.stringify(viewedImages)); 
-        } 
         
         function loadComments(id) { db.ref(`comments/${id}`).orderByChild('timestamp').on('value', snap => { const commentsContainer = document.getElementById('comments'); commentsContainer.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500">Sé el primero en comentar.</p>' : ''; const comments = []; snap.forEach(child => { comments.push(child.val()); }); comments.reverse().forEach(comment => { const div = document.createElement('div'); const initial = comment.name ? comment.name.charAt(0).toUpperCase() : 'A'; div.innerHTML = `<div class="flex gap-3"><div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-400 font-bold">${initial}</div><div class="flex-grow min-w-0"><div class="rounded-2xl rounded-tl-none bg-gray-800 p-3"><p class="font-bold text-orange-400">${comment.name || 'Anónimo'}</p><p class="text-gray-300 break-words">${comment.text || ''}</p></div><small class="pl-2 pt-1 text-xs text-gray-500">${new Date(comment.timestamp).toLocaleString()}</small></div></div>`; commentsContainer.appendChild(div); }); }); }
     </script>
