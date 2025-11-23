@@ -53,6 +53,10 @@
         .btn-primary:active { transform: scale(0.98); }
         .hidden-step { display: none; animation: fadeIn 0.5s forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Loading spinner para subida de imagen */
+        .upload-spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="p-4">
@@ -64,8 +68,8 @@
             <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-16 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
             <h2 class="text-2xl font-bold font-[Poppins] text-white">Bienvenido</h2>
             <div class="flex justify-center gap-4 mt-4 text-sm font-semibold">
-                <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1" onclick="switchTab('login')">Iniciar Sesión</button>
-                <button id="tab-register" class="text-gray-400 pb-1 hover:text-white" onclick="switchTab('register')">Registrarse</button>
+                <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1 transition-colors" onclick="switchTab('login')">Iniciar Sesión</button>
+                <button id="tab-register" class="text-gray-400 pb-1 hover:text-white transition-colors" onclick="switchTab('register')">Registrarse</button>
             </div>
         </div>
 
@@ -79,19 +83,20 @@
                 <label class="text-xs text-gray-400 ml-1">Contraseña</label>
                 <input type="password" id="login-password" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="••••••••" required>
             </div>
-            <button type="submit" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2 shadow-lg shadow-orange-500/20">
-                Entrar
+            <button type="submit" id="btn-login-submit" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2 shadow-lg shadow-orange-500/20 flex justify-center items-center gap-2">
+                <span>Entrar</span>
             </button>
-            <p id="login-error" class="text-red-400 text-sm text-center mt-2 hidden"></p>
+            <p id="login-error" class="text-red-400 text-xs text-center mt-2 hidden bg-red-900/20 p-2 rounded border border-red-500/30"></p>
         </form>
 
         <!-- REGISTER FORM (Step 1: Data Check) -->
         <form id="register-step-1" class="flex flex-col gap-4 hidden-step" style="display: none;">
-            <p class="text-sm text-gray-300 text-center mb-2">Paso 1: Verificación de Datos</p>
+            <p class="text-sm text-gray-300 text-center mb-2">Paso 1: Tu Identidad</p>
             
             <div class="space-y-1">
                 <label class="text-xs text-gray-400 ml-1">Nombre de Usuario</label>
                 <input type="text" id="reg-name" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Como quieres que te llamen" required>
+                <p id="username-check-msg" class="text-[10px] h-3 ml-1"></p>
             </div>
 
             <div class="space-y-1">
@@ -100,23 +105,37 @@
             </div>
 
             <div class="space-y-1">
-                <label class="text-xs text-gray-400 ml-1">Foto de Perfil (URL)</label>
-                <input type="url" id="reg-photo" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="https://..." required>
-                <p class="text-[10px] text-orange-400/80 mt-1 ml-1 flex items-center gap-1">
-                    <i class="fas fa-info-circle"></i> Sube tu imagen a <a href="https://catbox.moe" target="_blank" class="underline hover:text-orange-300">HTTPS://catbox.moe</a> y pega el enlace aquí.
-                </p>
+                <label class="text-xs text-gray-400 ml-1">Foto de Perfil</label>
+                
+                <!-- Nuevo Selector de Archivos -->
+                <div class="relative w-full">
+                    <input type="file" id="file-upload" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
+                    <label for="file-upload" class="flex items-center gap-3 w-full input-field rounded-lg px-4 py-3 cursor-pointer hover:bg-white/5 transition group">
+                        <div class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0 border border-gray-500 group-hover:border-orange-500 transition">
+                            <img id="preview-img" src="https://placehold.co/100x100/333/fff?text=Foto" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-sm text-gray-300 block font-medium">Toca para subir imagen</span>
+                            <span class="text-[10px] text-gray-500 block" id="upload-status">Max 5MB</span>
+                        </div>
+                        <i class="fas fa-camera text-gray-400 group-hover:text-orange-500 transition"></i>
+                    </label>
+                </div>
+                <!-- Input oculto para guardar la URL final -->
+                <input type="hidden" id="reg-photo-url">
             </div>
 
-            <button type="button" onclick="validateAgeStep()" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2">
-                Continuar <i class="fas fa-arrow-right ml-1"></i>
+            <button type="button" id="btn-step-1" onclick="validateAgeStep()" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2 flex justify-center items-center gap-2">
+                <span>Continuar</span> <i class="fas fa-arrow-right ml-1"></i>
             </button>
+            <p id="step1-error" class="text-red-400 text-xs text-center mt-2 hidden"></p>
         </form>
 
         <!-- REGISTER FORM (Step 2: Credentials) -->
         <form id="register-step-2" class="flex flex-col gap-4 hidden-step" style="display: none;">
             <div class="flex items-center gap-3 bg-green-900/30 p-3 rounded-lg border border-green-500/30 mb-2">
                 <div class="bg-green-500 rounded-full p-1"><i class="fas fa-check text-white text-xs"></i></div>
-                <p class="text-sm text-green-200">Edad verificada. Completa tu registro.</p>
+                <p class="text-sm text-green-200">Datos verificados. Crea tu cuenta.</p>
             </div>
 
             <div class="space-y-1">
@@ -126,18 +145,23 @@
 
             <div class="space-y-1">
                 <label class="text-xs text-gray-400 ml-1">Contraseña</label>
-                <input type="password" id="reg-password" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Crea una contraseña" required>
+                <input type="password" id="reg-password" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Mínimo 6 caracteres" required>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs text-gray-400 ml-1">Confirmar Contraseña</label>
+                <input type="password" id="reg-confirm-password" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Repite tu contraseña" required>
             </div>
 
             <div class="flex gap-2 mt-2">
                 <button type="button" onclick="backToStep1()" class="w-1/3 py-3 rounded-lg font-semibold text-gray-400 border border-gray-600 hover:bg-gray-800">
                     Atrás
                 </button>
-                <button type="submit" class="btn-primary w-2/3 py-3 rounded-lg font-bold text-white shadow-lg shadow-orange-500/20">
-                    Finalizar Registro
+                <button type="submit" id="btn-register-final" class="btn-primary w-2/3 py-3 rounded-lg font-bold text-white shadow-lg shadow-orange-500/20 flex justify-center items-center gap-2">
+                    <span>Finalizar</span>
                 </button>
             </div>
-            <p id="reg-error" class="text-red-400 text-sm text-center mt-2 hidden"></p>
+            <p id="reg-error" class="text-red-400 text-xs text-center mt-2 hidden bg-red-900/20 p-2 rounded border border-red-500/30"></p>
         </form>
 
     </div>
@@ -165,8 +189,10 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
+        const CATBOX_USERHASH = "341adb9d3c2d09d0485aa908c";
 
         let userDataCache = {};
+        let isUploading = false;
 
         function switchTab(tab) {
             const loginForm = document.getElementById('login-form');
@@ -174,95 +200,223 @@
             const regStep2 = document.getElementById('register-step-2');
             const tabLogin = document.getElementById('tab-login');
             const tabRegister = document.getElementById('tab-register');
+            
+            // Limpiar errores
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('reg-error').classList.add('hidden');
+            document.getElementById('step1-error').classList.add('hidden');
 
             if (tab === 'login') {
                 loginForm.style.display = 'flex';
                 regStep1.style.display = 'none';
                 regStep2.style.display = 'none';
-                tabLogin.className = "text-orange-500 border-b-2 border-orange-500 pb-1";
-                tabRegister.className = "text-gray-400 pb-1 hover:text-white";
+                tabLogin.className = "text-orange-500 border-b-2 border-orange-500 pb-1 transition-colors";
+                tabRegister.className = "text-gray-400 pb-1 hover:text-white transition-colors";
             } else {
                 loginForm.style.display = 'none';
-                regStep1.style.display = 'flex'; // Reset to step 1
+                regStep1.style.display = 'flex'; 
                 regStep2.style.display = 'none';
-                tabLogin.className = "text-gray-400 pb-1 hover:text-white";
-                tabRegister.className = "text-orange-500 border-b-2 border-orange-500 pb-1";
+                tabLogin.className = "text-gray-400 pb-1 hover:text-white transition-colors";
+                tabRegister.className = "text-orange-500 border-b-2 border-orange-500 pb-1 transition-colors";
             }
         }
 
-        function validateAgeStep() {
-            const name = document.getElementById('reg-name').value.trim();
-            const age = parseInt(document.getElementById('reg-age').value);
-            const photo = document.getElementById('reg-photo').value.trim();
-
-            if (!name || !age || !photo) {
-                alert("Por favor completa todos los campos del paso 1.");
+        // --- MANEJO DE SUBIDA DE FOTO ---
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 5 * 1024 * 1024) {
+                alert("La imagen es muy grande. Máximo 5MB.");
                 return;
             }
+
+            // UI Loading
+            const statusEl = document.getElementById('upload-status');
+            const previewImg = document.getElementById('preview-img');
+            const btn = document.getElementById('btn-step-1');
+            
+            isUploading = true;
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            statusEl.innerHTML = '<i class="fas fa-spinner upload-spinner text-orange-500"></i> Subiendo...';
+            
+            // Preview local inmediato
+            previewImg.src = URL.createObjectURL(file);
+
+            try {
+                const formData = new FormData();
+                formData.append('reqtype', 'fileupload');
+                formData.append('userhash', CATBOX_USERHASH);
+                formData.append('fileToUpload', file);
+
+                const response = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error("Error de red al subir");
+                const resultUrl = await response.text();
+
+                if (resultUrl.includes('catbox.moe')) {
+                    document.getElementById('reg-photo-url').value = resultUrl.trim();
+                    statusEl.innerHTML = '<span class="text-green-400"><i class="fas fa-check"></i> Subida exitosa</span>';
+                } else {
+                    throw new Error("Respuesta inválida del servidor");
+                }
+            } catch (error) {
+                console.error(error);
+                statusEl.innerHTML = '<span class="text-red-400"><i class="fas fa-times"></i> Error al subir</span>';
+                alert("No se pudo subir la imagen. Intenta de nuevo.");
+            } finally {
+                isUploading = false;
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            }
+        }
+
+        // --- VALIDACIÓN DEL PASO 1 (NOMBRE, EDAD, FOTO) ---
+        async function validateAgeStep() {
+            const nameInput = document.getElementById('reg-name');
+            const name = nameInput.value.trim();
+            const age = parseInt(document.getElementById('reg-age').value);
+            const photoUrl = document.getElementById('reg-photo-url').value;
+            const errorEl = document.getElementById('step1-error');
+            const btn = document.getElementById('btn-step-1');
+
+            errorEl.classList.add('hidden');
+
+            // 1. Validaciones básicas
+            if (!name) { showError(errorEl, "Por favor escribe un nombre de usuario."); return; }
+            if (!age) { showError(errorEl, "Por favor ingresa tu edad."); return; }
+            if (!photoUrl && !isUploading) { showError(errorEl, "Debes subir una foto de perfil."); return; }
+            if (isUploading) { showError(errorEl, "Espera a que termine de subir la imagen."); return; }
 
             if (age < 18) {
                 document.getElementById('age-alert-modal').style.display = 'flex';
                 return;
             }
 
+            // 2. Verificar Nombre de Usuario en Firebase
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner upload-spinner"></i> Verificando...';
+
+            try {
+                const snapshot = await db.ref('users').orderByChild('username').equalTo(name).once('value');
+                if (snapshot.exists()) {
+                    showError(errorEl, "Este nombre de usuario ya está ocupado. Elige otro.");
+                    nameInput.classList.add('border-red-500');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Continuar <i class="fas fa-arrow-right ml-1"></i>';
+                    return;
+                }
+                nameInput.classList.remove('border-red-500');
+            } catch (e) {
+                showError(errorEl, "Error de conexión. Intenta de nuevo.");
+                btn.disabled = false;
+                btn.innerHTML = 'Continuar <i class="fas fa-arrow-right ml-1"></i>';
+                return;
+            }
+
             // Cache data for next step
-            userDataCache = { name, age, photo };
+            userDataCache = { name, age, photo: photoUrl };
 
             // Show next step
+            btn.disabled = false;
+            btn.innerHTML = 'Continuar <i class="fas fa-arrow-right ml-1"></i>';
             document.getElementById('register-step-1').style.display = 'none';
             document.getElementById('register-step-2').style.display = 'flex';
+        }
+
+        function showError(element, message) {
+            element.textContent = message;
+            element.classList.remove('hidden');
         }
 
         function backToStep1() {
             document.getElementById('register-step-2').style.display = 'none';
             document.getElementById('register-step-1').style.display = 'flex';
+            document.getElementById('reg-error').classList.add('hidden');
         }
 
         function closeAgeAlert() {
             document.getElementById('age-alert-modal').style.display = 'none';
         }
 
-        // Login Logic
+        // --- LÓGICA DE LOGIN ---
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-password').value;
             const errorEl = document.getElementById('login-error');
+            const btn = document.getElementById('btn-login-submit');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner upload-spinner"></i>';
+            errorEl.classList.add('hidden');
 
             auth.signInWithEmailAndPassword(email, pass)
                 .then(() => {
                     window.location.href = 'index.html';
                 })
                 .catch((error) => {
-                    errorEl.textContent = "Error: " + error.message;
-                    errorEl.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Entrar</span>';
+                    let msg = "Error al iniciar sesión.";
+                    if (error.code === 'auth/user-not-found') msg = "Usuario no encontrado.";
+                    else if (error.code === 'auth/wrong-password') msg = "Contraseña incorrecta.";
+                    else if (error.code === 'auth/invalid-email') msg = "Correo inválido.";
+                    showError(errorEl, msg);
                 });
         });
 
-        // Register Logic
+        // --- LÓGICA DE REGISTRO FINAL ---
         document.getElementById('register-step-2').addEventListener('submit', (e) => {
             e.preventDefault();
             const email = document.getElementById('reg-email').value;
             const pass = document.getElementById('reg-password').value;
+            const confirmPass = document.getElementById('reg-confirm-password').value;
             const errorEl = document.getElementById('reg-error');
+            const btn = document.getElementById('btn-register-final');
+
+            errorEl.classList.add('hidden');
+
+            // Validar contraseñas
+            if (pass !== confirmPass) {
+                showError(errorEl, "Las contraseñas no coinciden.");
+                return;
+            }
+            if (pass.length < 6) {
+                showError(errorEl, "La contraseña debe tener al menos 6 caracteres.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner upload-spinner"></i> Creando...';
 
             auth.createUserWithEmailAndPassword(email, pass)
                 .then((userCredential) => {
                     const user = userCredential.user;
-                    // Save extra data to Realtime Database
+                    // Guardar datos extra en Realtime Database
                     return db.ref('users/' + user.uid).set({
                         username: userDataCache.name,
                         age: userDataCache.age,
                         profilePic: userDataCache.photo,
-                        email: email
+                        email: email,
+                        slogan: "Bienvenido a mi espacio en exen-E."
                     });
                 })
                 .then(() => {
                     window.location.href = 'index.html';
                 })
                 .catch((error) => {
-                    errorEl.textContent = "Error: " + error.message;
-                    errorEl.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Finalizar</span>';
+                    let msg = "Error al registrarse: " + error.message;
+                    if (error.code === 'auth/email-already-in-use') msg = "Este correo ya está registrado.";
+                    else if (error.code === 'auth/invalid-email') msg = "El formato del correo no es válido.";
+                    else if (error.code === 'auth/weak-password') msg = "La contraseña es muy débil.";
+                    showError(errorEl, msg);
                 });
         });
     </script>

@@ -37,17 +37,35 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 1rem;
             margin-bottom: 1.5rem;
-            overflow: hidden;
+            overflow: visible; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            position: relative;
         }
 
         .upload-card {
             background: linear-gradient(145deg, #1a1a1c, #111112);
             border: 1px solid rgba(249, 115, 22, 0.2);
             box-shadow: 0 0 15px rgba(249, 115, 22, 0.05);
+            transition: all 0.3s ease;
         }
 
-        /* Grid Mode Styles */
+        /* Área expandible */
+        #extra-fields {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
+        }
+        
+        #extra-fields.expanded {
+            max-height: 500px; /* Suficiente para el contenido */
+            opacity: 1;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Grid Mode Styles - MOBILE OPTIMIZED */
         .grid-mode-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -59,26 +77,22 @@
             position: relative;
             background-color: #222;
             cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
-        .grid-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s;
-        }
-        .grid-item:hover img { transform: scale(1.05); }
+        .grid-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .grid-item:active img { transform: scale(0.98); }
+        
         .grid-overlay {
-            position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            display: flex; align-items: flex-end; padding: 4px; opacity: 0; transition: opacity 0.2s;
+            position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
+            display: flex; align-items: flex-end; padding: 6px; opacity: 1; 
         }
-        .grid-item:hover .grid-overlay { opacity: 1; }
 
         /* Inputs Styles */
         .custom-input {
             background: rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.1);
             color: white;
-            padding: 8px 12px;
+            padding: 10px 12px;
             border-radius: 8px;
             font-size: 0.875rem;
             width: 100%;
@@ -93,29 +107,33 @@
             -webkit-backdrop-filter: blur(12px);
             border-top: 1px solid rgba(55, 65, 81, 0.3);
         }
-        .nav-item {
-            color: #9ca3af;
-            transition: color 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .nav-item.active {
-            color: var(--accent);
-            transform: translateY(-4px);
-        }
+        .nav-item { color: #9ca3af; transition: color 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .nav-item.active { color: var(--accent); transform: translateY(-4px); }
         
         .like-anim { animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes likeBounce { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
         /* Modal Styles */
-        #modal { display: none; background-color: rgba(0,0,0,0.95); z-index: 2000; }
-        #modal.visible { display: block; animation: fadeIn 0.3s forwards; }
+        .modal-backdrop { display: none; position: fixed; inset: 0; background-color: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-backdrop.visible { display: flex; animation: fadeIn 0.3s forwards; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        .toggle-btn {
-            background: transparent; border: 1px solid #333; color: #666;
+        .toggle-btn { background: transparent; border: 1px solid #333; color: #666; }
+        .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+        /* Dropdown Menu */
+        .options-menu {
+            display: none; position: absolute; top: 40px; right: 10px; background: #222; border: 1px solid #333;
+            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 50; min-width: 150px; overflow: hidden;
         }
-        .toggle-btn.active {
-            background: var(--accent); border-color: var(--accent); color: white;
-        }
+        .options-menu.show { display: block; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        
+        .options-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #ccc; font-size: 0.95rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .options-item:last-child { border-bottom: none; }
+        .options-item:active { background: #333; color: white; }
+        .options-item.delete:active { background: #450a0a; color: #f87171; }
+
     </style>
 </head>
 <body class="antialiased">
@@ -126,57 +144,77 @@
             <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-8 w-auto">
             <span class="font-bold text-lg tracking-tight font-[Poppins] text-orange-500">Social</span>
         </div>
-        <a href="profile.html" class="w-8 h-8 rounded-full overflow-hidden border border-gray-600 block relative">
+        <a href="profile.html" class="w-9 h-9 rounded-full overflow-hidden border border-gray-600 block relative touch-feedback">
             <img id="current-user-avatar" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
         </a>
     </header>
 
     <main class="container mx-auto max-w-lg px-2 sm:px-4 py-4">
 
-        <!-- Upload Section -->
+        <!-- Upload Section Expandible -->
         <div class="feed-card upload-card p-4 rounded-2xl mb-6">
-            <div class="flex gap-3 mb-3">
-                <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+            <!-- Parte Superior Visible Siempre -->
+            <div class="flex gap-3 items-center mb-2">
+                <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0 self-start mt-1">
                     <img id="post-avatar" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
                 </div>
-                <div class="flex-1 flex flex-col gap-2">
-                    <!-- Campos nuevos -->
-                    <input type="text" id="post-title" placeholder="Título de tu obra..." class="custom-input font-bold">
-                    <textarea id="post-text" rows="2" placeholder="Comparte algo con la comunidad..." class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2"></textarea>
+                
+                <div class="flex-1 relative">
+                    <textarea id="post-text" rows="1" 
+                        class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" 
+                        placeholder="¿Qué quieres compartir?" 
+                        onfocus="expandPostArea()"
+                        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                </div>
+
+                <label class="flex items-center justify-center text-orange-500 cursor-pointer active:scale-90 transition p-2 rounded-full bg-gray-800 hover:bg-gray-700 border border-gray-700">
+                    <i class="fas fa-image text-lg"></i>
+                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event); expandPostArea()">
+                </label>
+            </div>
+
+            <!-- Preview de Imagen -->
+            <div id="preview-container" class="relative hidden mt-3 rounded-xl overflow-hidden border border-gray-700 group">
+                <img id="image-preview" src="" class="w-full h-auto max-h-64 object-contain bg-black">
+                <button onclick="clearSelection()" class="absolute top-2 right-2 bg-black/60 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center active:scale-90 transition z-10"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Campos Extra (Ocultos por defecto) -->
+            <div id="extra-fields">
+                <div class="flex flex-col gap-3">
+                    <input type="text" id="post-title" placeholder="Título de tu obra (Opcional)" class="custom-input font-bold bg-black/20 border-gray-700">
                     
                     <div class="flex gap-2">
-                        <input type="text" id="post-tags" placeholder="Tags: anime, arte, etc" class="custom-input flex-1">
-                        <select id="post-category" class="custom-input w-1/3 bg-[#1a1a1c]">
-                            <option value="" disabled selected>Categoría</option>
-                            <option value="anime">Anime</option>
-                            <option value="furry">Furry</option>
-                            <option value="realismo">Realismo</option>
-                            <option value="mecas">Mecas</option>
-                            <option value="devils">Devils</option>
-                            <option value="colors">ColorFull</option>
-                            <option value="amateur">Amateur</option>
-                            <option value="tvgames">TV/Games</option>
-                        </select>
+                        <input type="text" id="post-tags" placeholder="Tags: anime, arte..." class="custom-input flex-1 bg-black/20 border-gray-700">
+                        
+                        <div class="relative w-2/5">
+                            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none">
+                                <i class="fas fa-list text-sm"></i>
+                            </div>
+                            <select id="post-category" class="custom-input bg-black/20 border-gray-700 appearance-none pl-9 text-xs">
+                                <option value="" disabled selected>Categoría</option>
+                                <option value="anime">Anime</option>
+                                <option value="furry">Furry</option>
+                                <option value="realismo">Realismo</option>
+                                <option value="mecas">Mecas</option>
+                                <option value="devils">Devils</option>
+                                <option value="colors">ColorFull</option>
+                                <option value="amateur">Amateur</option>
+                                <option value="tvgames">TV/Games</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-2 pt-2 border-t border-white/5">
+                        <button onclick="collapsePostArea()" class="flex-1 py-2 rounded-full text-gray-400 text-sm font-semibold hover:text-white hover:bg-gray-800 transition">
+                            Cancelar
+                        </button>
+                        <button id="publish-btn" onclick="uploadPost()" class="bg-orange-600 active:scale-95 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 justify-center flex-[2]">
+                            <span>Publicar</span>
+                            <i class="fas fa-paper-plane text-xs"></i>
+                        </button>
                     </div>
                 </div>
-            </div>
-
-            <div id="preview-container" class="relative hidden mb-3 rounded-xl overflow-hidden border border-gray-700 group">
-                <img id="image-preview" src="" class="w-full h-auto max-h-64 object-contain bg-black">
-                <button onclick="clearSelection()" class="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 w-8 h-8 flex items-center justify-center hover:bg-red-500 transition"><i class="fas fa-times"></i></button>
-            </div>
-
-            <div class="flex justify-between items-center border-t border-white/5 pt-3">
-                <label class="flex items-center gap-2 text-orange-500 cursor-pointer hover:bg-orange-500/10 px-3 py-1.5 rounded-lg transition">
-                    <i class="fas fa-image text-lg"></i>
-                    <span class="text-sm font-semibold">Foto</span>
-                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
-                </label>
-
-                <button id="publish-btn" onclick="uploadPost()" class="bg-orange-600 hover:bg-orange-500 text-white px-6 py-1.5 rounded-full text-sm font-bold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2">
-                    <span>Publicar</span>
-                    <i class="fas fa-paper-plane text-xs"></i>
-                </button>
             </div>
             
             <div id="upload-progress" class="hidden w-full bg-gray-800 rounded-full h-1 mt-3 overflow-hidden">
@@ -186,17 +224,16 @@
 
         <!-- View Toggles -->
         <div class="flex justify-center gap-4 mb-6 bg-gray-900/50 p-1 rounded-lg mx-auto w-fit border border-gray-800">
-            <button onclick="switchView('feed')" id="btn-view-feed" class="toggle-btn active px-4 py-1.5 rounded-md text-sm font-semibold transition-all flex items-center gap-2">
+            <button onclick="switchView('feed')" id="btn-view-feed" class="toggle-btn active px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 active:scale-95">
                 <i class="fas fa-stream"></i> Feed
             </button>
-            <button onclick="switchView('grid')" id="btn-view-grid" class="toggle-btn px-4 py-1.5 rounded-md text-sm font-semibold transition-all flex items-center gap-2">
-                <i class="fas fa-th"></i> Miniaturas
+            <button onclick="switchView('grid')" id="btn-view-grid" class="toggle-btn px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 active:scale-95">
+                <i class="fas fa-th"></i> Grid
             </button>
         </div>
 
         <!-- Feed Lists -->
         <div id="feed-list-container" class="flex flex-col gap-4 pb-20">
-            <!-- Skeleton -->
             <div class="feed-card p-4 animate-pulse">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="w-10 h-10 bg-gray-700 rounded-full"></div>
@@ -208,16 +245,13 @@
             </div>
         </div>
 
-        <div id="grid-view-container" class="grid-mode-container hidden pb-20">
-            <!-- Grid items will be injected here -->
-        </div>
+        <div id="grid-view-container" class="grid-mode-container hidden pb-20"></div>
 
     </main>
 
     <!-- MODAL VISOR -->
-    <div id="modal" class="fixed inset-0 w-full h-full">
-        <button id="close-modal" class="absolute top-4 right-4 z-[2010] h-10 w-10 flex items-center justify-center rounded-full bg-gray-800/80 text-white hover:bg-red-600 transition backdrop-blur-md"><i class="fas fa-times"></i></button>
-        
+    <div id="modal" class="modal-backdrop">
+        <button id="close-modal" class="absolute top-4 right-4 z-[2010] h-12 w-12 flex items-center justify-center rounded-full bg-gray-800/80 text-white active:scale-90 transition backdrop-blur-md"><i class="fas fa-times text-xl"></i></button>
         <div class="h-full w-full flex items-center justify-center p-4">
             <div class="w-full max-w-4xl flex flex-col items-center max-h-[90vh]">
                 <div class="relative w-full flex-1 flex items-center justify-center bg-black/50 rounded-xl overflow-hidden">
@@ -227,11 +261,50 @@
                     <h3 id="modal-title" class="text-orange-400 font-bold text-xl font-[Poppins]"></h3>
                     <div class="flex justify-center gap-2 my-2 flex-wrap" id="modal-tags"></div>
                     <p id="modal-desc" class="text-gray-300 text-sm"></p>
-                    <div class="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-gray-700">
-                        <img id="modal-user-pic" src="" class="w-6 h-6 rounded-full">
-                        <span id="modal-user-name" class="text-xs text-gray-400"></span>
+                    <div class="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-gray-700 cursor-pointer active:opacity-50 transition" id="modal-user-link">
+                        <img id="modal-user-pic" src="" class="w-8 h-8 rounded-full object-cover">
+                        <span id="modal-user-name" class="text-sm text-gray-400 font-semibold"></span>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR POST -->
+    <div id="edit-modal" class="modal-backdrop">
+        <div class="bg-[#1a1a1c] w-full max-w-md rounded-2xl p-6 m-4 border border-gray-700 shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-4">Editar Publicación</h3>
+            <input type="hidden" id="edit-post-id">
+            
+            <label class="block text-xs text-gray-400 mb-1">Título</label>
+            <input type="text" id="edit-title" class="custom-input mb-3">
+            
+            <label class="block text-xs text-gray-400 mb-1">Texto</label>
+            <textarea id="edit-text" rows="3" class="custom-input mb-3 resize-none"></textarea>
+            
+            <div class="flex gap-2 mb-3">
+                <div class="flex-1">
+                    <label class="block text-xs text-gray-400 mb-1">Tags</label>
+                    <input type="text" id="edit-tags" class="custom-input">
+                </div>
+                <div class="w-2/5">
+                    <label class="block text-xs text-gray-400 mb-1">Categoría</label>
+                    <select id="edit-category" class="custom-input bg-[#1a1a1c]">
+                        <option value="anime">Anime</option>
+                        <option value="furry">Furry</option>
+                        <option value="realismo">Real</option>
+                        <option value="mecas">Mecas</option>
+                        <option value="devils">Devils</option>
+                        <option value="colors">Color</option>
+                        <option value="amateur">Amateur</option>
+                        <option value="tvgames">Games</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeEditModal()" class="flex-1 py-3 rounded-xl border border-gray-600 text-gray-300 active:bg-gray-800 font-semibold">Cancelar</button>
+                <button onclick="saveEditPost()" class="flex-1 py-3 rounded-xl bg-orange-600 text-white font-bold active:bg-orange-500">Guardar</button>
             </div>
         </div>
     </div>
@@ -253,15 +326,7 @@
     </nav>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8",
-            authDomain: "exene-53e6b.firebaseapp.com",
-            databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com",
-            projectId: "exene-53e6b",
-            storageBucket: "exene-53e6b.appspot.com",
-            messagingSenderId: "481369419867",
-            appId: "1:481369419867:web:ac5db24c436344262c8f7e"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
@@ -269,8 +334,6 @@
         let currentUser = null;
         let selectedFile = null;
         const CATBOX_USERHASH = "341adb9d3c2d09d0485aa908c";
-        
-        // Cache para perfiles de usuarios para evitar parpadeos
         const userProfileCache = {};
 
         let deviceID = localStorage.getItem('deviceID');
@@ -300,6 +363,43 @@
             loadFeed();
         });
 
+        // --- FUNCIONES EXPAND/COLLAPSE ---
+        function expandPostArea() {
+            const area = document.getElementById('extra-fields');
+            const text = document.getElementById('post-text');
+            if (!area.classList.contains('expanded')) {
+                area.classList.add('expanded');
+                text.rows = 3; // Expandir textarea
+            }
+        }
+
+        function collapsePostArea() {
+            const area = document.getElementById('extra-fields');
+            const text = document.getElementById('post-text');
+            const title = document.getElementById('post-title');
+            const tags = document.getElementById('post-tags');
+            const cat = document.getElementById('post-category');
+            
+            // Si hay contenido importante, preguntar o no colapsar (opcional, aquí solo colapsamos si está vacío o fuerza)
+            // Limpiamos si se cancela
+            if (!text.value && !title.value && !selectedFile) {
+                area.classList.remove('expanded');
+                text.rows = 1;
+            } else {
+                // Si el usuario dio al botón cancelar explícitamente
+                if(confirm("¿Descartar publicación?")) {
+                    clearSelection();
+                    text.value = '';
+                    title.value = '';
+                    tags.value = '';
+                    cat.selectedIndex = 0;
+                    text.style.height = '';
+                    area.classList.remove('expanded');
+                    text.rows = 1;
+                }
+            }
+        }
+
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
@@ -323,15 +423,14 @@
             const title = document.getElementById('post-title').value.trim();
             const tags = document.getElementById('post-tags').value.trim();
             const category = document.getElementById('post-category').value;
-            
             const btn = document.getElementById('publish-btn');
             const progress = document.getElementById('upload-progress');
 
             if ((!text && !selectedFile)) { alert("Escribe algo o sube una foto."); return; }
-            if (selectedFile && (!title || !tags || !category)) { alert("Si subes imagen, debes añadir Título, Tags y Categoría."); return; }
+            if (selectedFile && (!title || !tags || !category)) { alert("Para imágenes: Título, Tags y Categoría requeridos."); return; }
 
             btn.disabled = true;
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Subiendo...`;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
             progress.classList.remove('hidden');
 
             try {
@@ -341,19 +440,13 @@
                     formData.append('reqtype', 'fileupload');
                     formData.append('userhash', CATBOX_USERHASH);
                     formData.append('fileToUpload', selectedFile);
-                    
-                    const PROXY_URL = "https://corsproxy.io/?";
-                    const TARGET_URL = "https://catbox.moe/user/api.php";
-                    const response = await fetch(PROXY_URL + TARGET_URL, { method: 'POST', body: formData });
-
-                    if (!response.ok) throw new Error("Error subiendo a Catbox");
-                    const responseText = await response.text();
-                    if (responseText.includes('catbox.moe')) imageUrl = responseText.trim();
-                    else throw new Error("Respuesta inesperada");
+                    const response = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData });
+                    if (!response.ok) throw new Error("Error subiendo");
+                    const txt = await response.text();
+                    if (txt.includes('catbox.moe')) imageUrl = txt.trim(); else throw new Error("Error servidor img");
                 }
 
-                const userData = currentUser && !currentUser.isAnonymous ? 
-                    (await db.ref('users/' + currentUser.uid).once('value')).val() : null;
+                const userData = currentUser && !currentUser.isAnonymous ? (await db.ref('users/' + currentUser.uid).once('value')).val() : null;
 
                 const newPost = {
                     text: text,
@@ -362,8 +455,6 @@
                     tags: tags || null,
                     category: category || null,
                     userId: currentUser ? currentUser.uid : 'anon',
-                    // NOTA: Ya no dependemos exclusivamente de esto para la visualización,
-                    // pero lo guardamos como fallback.
                     userName: userData ? userData.username : 'Anónimo',
                     userAvatar: userData ? userData.profilePic : 'https://placehold.co/100x100/333/fff?text=A',
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -372,15 +463,20 @@
 
                 await db.ref('feed_posts').push(newPost);
                 
-                // Limpiar campos
+                // Limpieza exitosa
                 document.getElementById('post-text').value = '';
                 document.getElementById('post-title').value = '';
                 document.getElementById('post-tags').value = '';
                 document.getElementById('post-category').selectedIndex = 0;
                 clearSelection();
                 
+                // Colapsar panel sin preguntar
+                const area = document.getElementById('extra-fields');
+                area.classList.remove('expanded');
+                document.getElementById('post-text').rows = 1;
+                document.getElementById('post-text').style.height = '';
+                
             } catch (error) {
-                console.error(error);
                 alert("Error: " + error.message);
             } finally {
                 btn.disabled = false;
@@ -389,140 +485,116 @@
             }
         }
 
-        // --- LOGIC PARA VISTAS (FEED / GRID) ---
+        function toggleOptionsMenu(postId) {
+            const menu = document.getElementById(`options-menu-${postId}`);
+            document.querySelectorAll('.options-menu').forEach(m => {
+                if (m.id !== `options-menu-${postId}`) m.classList.remove('show');
+            });
+            menu.classList.toggle('show');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.options-trigger')) {
+                document.querySelectorAll('.options-menu').forEach(m => m.classList.remove('show'));
+            }
+        });
+
+        function deletePost(postId) {
+            if (confirm("¿Eliminar publicación?")) {
+                db.ref('feed_posts/' + postId).remove();
+                db.ref('feed_comments/' + postId).remove();
+                db.ref('feed_likes/' + postId).remove();
+            }
+        }
+
+        function openEditModal(postId, title, text, tags, category) {
+            document.getElementById('edit-post-id').value = postId;
+            document.getElementById('edit-title').value = title === 'null' ? '' : title;
+            document.getElementById('edit-text').value = text;
+            document.getElementById('edit-tags').value = tags === 'null' ? '' : tags;
+            const catSelect = document.getElementById('edit-category');
+            if (category && category !== 'null') catSelect.value = category; else catSelect.selectedIndex = 0;
+            document.getElementById('edit-modal').classList.add('visible');
+        }
+
+        function closeEditModal() { document.getElementById('edit-modal').classList.remove('visible'); }
+
+        function saveEditPost() {
+            const postId = document.getElementById('edit-post-id').value;
+            if (!postId) return;
+            const updates = {
+                title: document.getElementById('edit-title').value.trim() || null,
+                text: document.getElementById('edit-text').value.trim() || null,
+                tags: document.getElementById('edit-tags').value.trim() || null,
+                category: document.getElementById('edit-category').value || null
+            };
+            db.ref('feed_posts/' + postId).update(updates).then(() => closeEditModal());
+        }
+
         function switchView(mode) {
             const feedContainer = document.getElementById('feed-list-container');
             const gridContainer = document.getElementById('grid-view-container');
             const btnFeed = document.getElementById('btn-view-feed');
             const btnGrid = document.getElementById('btn-view-grid');
-
             if (mode === 'feed') {
-                feedContainer.classList.remove('hidden');
-                gridContainer.classList.add('hidden');
-                btnFeed.classList.add('active');
-                btnGrid.classList.remove('active');
+                feedContainer.classList.remove('hidden'); gridContainer.classList.add('hidden');
+                btnFeed.classList.add('active'); btnGrid.classList.remove('active');
             } else {
-                feedContainer.classList.add('hidden');
-                gridContainer.classList.remove('hidden');
-                btnFeed.classList.remove('active');
-                btnGrid.classList.add('active');
+                feedContainer.classList.add('hidden'); gridContainer.classList.remove('hidden');
+                btnFeed.classList.remove('active'); btnGrid.classList.add('active');
             }
         }
 
         function loadFeed() {
             const feedContainer = document.getElementById('feed-list-container');
             const gridContainer = document.getElementById('grid-view-container');
-
             db.ref('feed_posts').orderByChild('timestamp').limitToLast(50).on('value', snapshot => {
-                feedContainer.innerHTML = '';
-                gridContainer.innerHTML = '';
-                
-                if(!snapshot.exists()) { 
-                    feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10">Sé el primero en publicar algo.</div>`; 
-                    return; 
-                }
-                
+                feedContainer.innerHTML = ''; gridContainer.innerHTML = '';
+                if(!snapshot.exists()) { feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10">Sé el primero.</div>`; return; }
                 const posts = [];
                 snapshot.forEach(child => { posts.push({ id: child.key, ...child.val() }); });
-                
                 posts.reverse().forEach(post => {
-                    // 1. Renderizar Tarjeta de Feed
-                    const card = createPostCard(post);
-                    feedContainer.appendChild(card);
-                    
-                    // 2. Renderizar Item de Grid (Solo si tiene imagen)
-                    if (post.imageUrl) {
-                        const gridItem = createGridItem(post);
-                        gridContainer.appendChild(gridItem);
-                    }
-                    
-                    // 3. Actualizar Avatar en Vivo
+                    feedContainer.appendChild(createPostCard(post));
+                    if (post.imageUrl) gridContainer.appendChild(createGridItem(post));
                     updateUserAvatarInUI(post.userId);
                 });
             });
         }
 
-        // --- FUNCIÓN CLAVE: Actualiza avatar en tiempo real ---
         function updateUserAvatarInUI(userId) {
-            if (userProfileCache[userId]) {
-                // Si ya tenemos la data en cache, aplicarla inmediatamente
-                applyAvatarToDOM(userId, userProfileCache[userId]);
-            } else {
-                // Si no, buscarla en DB una sola vez
-                db.ref('users/' + userId + '/profilePic').once('value').then(snap => {
-                    const pic = snap.val() || 'https://placehold.co/100x100/333/fff?text=A';
-                    userProfileCache[userId] = pic; // Guardar en cache
-                    applyAvatarToDOM(userId, pic);
-                });
-            }
+            if (userProfileCache[userId]) applyAvatarToDOM(userId, userProfileCache[userId]);
+            else db.ref('users/' + userId + '/profilePic').once('value').then(snap => {
+                const pic = snap.val() || 'https://placehold.co/100x100/333/fff?text=A';
+                userProfileCache[userId] = pic;
+                applyAvatarToDOM(userId, pic);
+            });
         }
 
         function applyAvatarToDOM(userId, picUrl) {
-            // Busca TODAS las imágenes de avatar con la clase específica de este usuario
-            const avatars = document.querySelectorAll(`.user-avatar-${userId}`);
-            avatars.forEach(img => {
-                if(img.src !== picUrl) img.src = picUrl;
-            });
+            document.querySelectorAll(`.user-avatar-${userId}`).forEach(img => { if(img.src !== picUrl) img.src = picUrl; });
         }
 
         function createPostCard(post) {
             const div = document.createElement('div');
             div.className = "feed-card opacity-0 animate-[fadeIn_0.5s_ease-out_forwards]";
-            
-            // Metadata chips
             let metaChips = '';
             if (post.category) metaChips += `<span class="text-[10px] bg-orange-900/50 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30">${post.category}</span>`;
-            if (post.title) metaChips += `<span class="text-[10px] font-bold text-white ml-2">${post.title}</span>`;
+            if (post.title) metaChips += `<span class="text-[10px] font-bold text-white ml-2 truncate max-w-[120px] inline-block align-bottom">${post.title}</span>`;
 
-            const hasImage = post.imageUrl ? 
-                `<div class="mt-2 -mx-4 bg-black relative group cursor-pointer" onclick="openViewer('${post.imageUrl}', '${post.title || ''}', '${post.text || ''}', '${post.userName}', '${post.tags || ''}', '${post.userAvatar}')">
-                    <img src="${post.imageUrl}" class="w-full h-auto max-h-[500px] object-contain" loading="lazy">
-                    <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition pointer-events-none"></div>
-                    <div class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition"><i class="fas fa-expand"></i> Ver</div>
-                 </div>` : '';
-            
+            const isOwner = currentUser && currentUser.uid === post.userId;
+            let optionsBtn = '';
+            if (isOwner) {
+                const safeTitle = (post.title||'').replace(/'/g,"\\'");
+                const safeText = (post.text||'').replace(/'/g,"\\'");
+                const safeTags = (post.tags||'').replace(/'/g,"\\'");
+                optionsBtn = `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 active:text-white p-2 px-3"><i class="fas fa-ellipsis-v options-trigger"></i></button>
+                    <div id="options-menu-${post.id}" class="options-menu"><div class="options-item" onclick="openEditModal('${post.id}', '${safeTitle}', '${safeText}', '${safeTags}', '${post.category||''}')"><i class="fas fa-edit"></i> Editar</div><div class="options-item delete" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>`;
+            }
+
+            const hasImage = post.imageUrl ? `<div class="mt-2 -mx-4 bg-black relative cursor-pointer" onclick="openViewer('${post.imageUrl}', '${(post.title||'').replace(/'/g,"\\'")}', '${(post.text||'').replace(/'/g,"\\'")}', '${post.userName}', '${(post.tags||'').replace(/'/g,"\\'")}', '${post.userAvatar}', '${post.userId}')"><img src="${post.imageUrl}" class="w-full h-auto max-h-[500px] object-contain" loading="lazy"></div>` : '';
             const textContent = post.text ? `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-1">${post.text}</p>` : '';
 
-            div.innerHTML = `
-                <div class="p-4">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex gap-3 items-center">
-                            <!-- CLASE CLAVE: user-avatar-${post.userId} -->
-                            <img src="${post.userAvatar}" class="w-10 h-10 rounded-full object-cover border border-gray-700 user-avatar-${post.userId}">
-                            <div>
-                                <h4 class="font-bold text-gray-200 text-sm hover:underline cursor-pointer">${post.userName}</h4>
-                                <span class="text-xs text-gray-500 block">${timeAgo(post.timestamp)}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center">${metaChips}</div>
-                    </div>
-                    ${textContent}
-                </div>
-                ${hasImage}
-                <div class="px-4 py-3 flex items-center justify-between border-t border-white/5 mt-1">
-                    <div class="flex gap-6">
-                        <button id="like-btn-${post.id}" onclick="toggleLike('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-red-500 transition group">
-                            <i class="far fa-heart text-lg group-hover:scale-110 transition-transform"></i>
-                            <span class="text-xs font-bold" id="likes-count-${post.id}">${post.likes || 0}</span>
-                        </button>
-                        <button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition">
-                            <i class="far fa-comment text-lg"></i>
-                            <span class="text-xs font-bold">Comentar</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="comments-${post.id}" class="hidden px-4 py-3 bg-[#0f0f10] border-t border-white/5">
-                    <div id="comments-list-${post.id}" class="flex flex-col gap-3 mb-3 max-h-60 overflow-y-auto"></div>
-                    <form onsubmit="postComment(event, '${post.id}')" class="flex gap-2 relative">
-                        <input type="text" id="comment-input-${post.id}" class="w-full bg-gray-800 rounded-full px-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-orange-500" placeholder="Escribe un comentario..." required autocomplete="off">
-                        <button type="submit" class="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-orange-600 rounded-full text-white hover:bg-orange-500 transition">
-                            <i class="fas fa-paper-plane text-xs"></i>
-                        </button>
-                    </form>
-                </div>
-            `;
-            
+            div.innerHTML = `<div class="p-4"><div class="flex justify-between items-start mb-2 relative"><div class="flex gap-3 items-center"><a href="profile.html?uid=${post.userId}"><img src="${post.userAvatar}" class="w-10 h-10 rounded-full object-cover border border-gray-700 user-avatar-${post.userId} active:scale-95 transition"></a><div><a href="profile.html?uid=${post.userId}" class="font-bold text-gray-200 text-sm active:text-orange-400 transition block">${post.userName}</a><span class="text-xs text-gray-500 block">${timeAgo(post.timestamp)}</span></div></div><div class="flex items-center gap-3">${metaChips}${optionsBtn}</div></div>${textContent}</div>${hasImage}<div class="px-4 py-3 flex items-center justify-between border-t border-white/5 mt-1"><div class="flex gap-6"><button id="like-btn-${post.id}" onclick="toggleLike('${post.id}')" class="flex items-center gap-2 text-gray-400 active:text-red-500 transition group"><i class="far fa-heart text-lg group-active:scale-125 transition-transform"></i><span class="text-xs font-bold" id="likes-count-${post.id}">${post.likes || 0}</span></button><button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 active:text-blue-400 transition"><i class="far fa-comment text-lg"></i><span class="text-xs font-bold">Comentar</span></button></div></div><div id="comments-${post.id}" class="hidden px-4 py-3 bg-[#0f0f10] border-t border-white/5"><div id="comments-list-${post.id}" class="flex flex-col gap-3 mb-3 max-h-60 overflow-y-auto"></div><form onsubmit="postComment(event, '${post.id}')" class="flex gap-2 relative"><input type="text" id="comment-input-${post.id}" class="w-full bg-gray-800 rounded-full px-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-orange-500" placeholder="Comentario..." required autocomplete="off"><button type="submit" class="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-orange-600 rounded-full text-white active:scale-90 transition"><i class="fas fa-paper-plane text-xs"></i></button></form></div>`;
             checkLikeStatus(post.id);
             return div;
         }
@@ -530,32 +602,21 @@
         function createGridItem(post) {
             const div = document.createElement('div');
             div.className = 'grid-item group';
-            div.onclick = () => openViewer(post.imageUrl, post.title, post.text, post.userName, post.tags, post.userAvatar);
-            div.innerHTML = `
-                <img src="${post.imageUrl}" loading="lazy">
-                <div class="grid-overlay">
-                    <div class="w-full">
-                        <div class="flex justify-between text-white text-[10px] font-bold drop-shadow-md">
-                            <span><i class="fas fa-heart text-xs"></i> ${post.likes || 0}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
+            div.onclick = () => openViewer(post.imageUrl, post.title, post.text, post.userName, post.tags, post.userAvatar, post.userId);
+            div.innerHTML = `<img src="${post.imageUrl}" loading="lazy"><div class="grid-overlay"><div class="w-full"><div class="flex justify-between text-white text-[10px] font-bold drop-shadow-md"><span><i class="fas fa-heart text-xs text-red-500"></i> ${post.likes || 0}</span></div></div></div>`;
             return div;
         }
 
-        // --- VIEWER MODAL ---
-        function openViewer(url, title, desc, user, tags, avatar) {
-            const modal = document.getElementById('modal');
+        function openViewer(url, title, desc, user, tags, avatar, uid) {
             document.getElementById('modal-image').src = url;
-            document.getElementById('modal-title').textContent = title || 'Sin Título';
+            document.getElementById('modal-title').textContent = title || '';
             document.getElementById('modal-desc').textContent = desc || '';
             document.getElementById('modal-user-name').textContent = user;
             document.getElementById('modal-user-pic').src = avatar;
-            
+            document.getElementById('modal-user-link').onclick = () => window.location.href = `profile.html?uid=${uid}`;
             const tagsContainer = document.getElementById('modal-tags');
             tagsContainer.innerHTML = '';
-            if (tags) {
+            if (tags && tags !== 'null') {
                 tags.split(',').forEach(tag => {
                     const span = document.createElement('span');
                     span.className = "text-[10px] bg-gray-800 text-gray-300 px-2 py-1 rounded-full border border-gray-700";
@@ -563,8 +624,7 @@
                     tagsContainer.appendChild(span);
                 });
             }
-
-            modal.classList.add('visible');
+            document.getElementById('modal').classList.add('visible');
             document.body.style.overflow = 'hidden';
         }
 
@@ -573,18 +633,9 @@
             document.body.style.overflow = 'auto';
         });
 
-        // --- SOCIAL LOGIC (LIKES & COMMENTS) ---
         function toggleComments(postId) {
             const section = document.getElementById(`comments-${postId}`);
-            const list = document.getElementById(`comments-list-${postId}`);
-            
-            if (section.classList.contains('hidden')) {
-                section.classList.remove('hidden');
-                loadComments(postId, list);
-            } else {
-                section.classList.add('hidden');
-                db.ref(`feed_comments/${postId}`).off();
-            }
+            if (section.classList.contains('hidden')) { section.classList.remove('hidden'); loadComments(postId, document.getElementById(`comments-list-${postId}`)); } else { section.classList.add('hidden'); db.ref(`feed_comments/${postId}`).off(); }
         }
 
         function postComment(event, postId) {
@@ -592,22 +643,10 @@
             const input = document.getElementById(`comment-input-${postId}`);
             const text = input.value.trim();
             if (!text) return;
-
             const uid = currentUser ? currentUser.uid : 'anon';
-            
             db.ref(`users/${uid}`).once('value').then(snap => {
                 const dbUser = snap.val();
-                const userName = dbUser ? dbUser.username : 'Anónimo';
-                const userAvatar = dbUser ? dbUser.profilePic : 'https://placehold.co/100x100/333/fff?text=A';
-
-                const newComment = {
-                    text: text,
-                    userId: uid,
-                    userName: userName,
-                    userAvatar: userAvatar,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                };
-
+                const newComment = { text: text, userId: uid, userName: dbUser ? dbUser.username : 'Anónimo', userAvatar: dbUser ? dbUser.profilePic : 'https://placehold.co/100x100/333/fff?text=A', timestamp: firebase.database.ServerValue.TIMESTAMP };
                 db.ref(`feed_comments/${postId}`).push(newComment);
                 input.value = '';
             });
@@ -616,22 +655,12 @@
         function loadComments(postId, container) {
             db.ref(`feed_comments/${postId}`).orderByChild('timestamp').on('value', snap => {
                 container.innerHTML = '';
-                if (!snap.exists()) {
-                    container.innerHTML = '<p class="text-xs text-gray-600 text-center py-2">Sé el primero en comentar</p>';
-                    return;
-                }
-                
+                if (!snap.exists()) { container.innerHTML = '<p class="text-xs text-gray-600 text-center py-2">Sé el primero en comentar</p>'; return; }
                 snap.forEach(child => {
-                    const comment = child.val();
+                    const c = child.val();
                     const div = document.createElement('div');
                     div.className = "flex gap-2 items-start";
-                    div.innerHTML = `
-                        <img src="${comment.userAvatar}" class="w-6 h-6 rounded-full object-cover mt-1">
-                        <div class="bg-gray-800 rounded-lg rounded-tl-none px-3 py-2 flex-1">
-                            <p class="text-xs font-bold text-gray-300">${comment.userName}</p>
-                            <p class="text-xs text-gray-400 break-words">${comment.text}</p>
-                        </div>
-                    `;
+                    div.innerHTML = `<img src="${c.userAvatar}" class="w-6 h-6 rounded-full object-cover mt-1"><div class="bg-gray-800 rounded-lg rounded-tl-none px-3 py-2 flex-1"><p class="text-xs font-bold text-gray-300">${c.userName}</p><p class="text-xs text-gray-400 break-words">${c.text}</p></div>`;
                     container.appendChild(div);
                 });
                 container.scrollTop = container.scrollHeight;
@@ -643,15 +672,8 @@
             const likeRef = db.ref(`feed_likes/${postId}/${userId}`);
             const postRef = db.ref(`feed_posts/${postId}/likes`);
             likeRef.once('value', snap => {
-                if (snap.exists()) {
-                    likeRef.remove();
-                    postRef.transaction(c => (c || 1) - 1);
-                    updateLikeBtnUI(postId, false);
-                } else {
-                    likeRef.set(true);
-                    postRef.transaction(c => (c || 0) + 1);
-                    updateLikeBtnUI(postId, true);
-                }
+                if (snap.exists()) { likeRef.remove(); postRef.transaction(c => (c || 1) - 1); } 
+                else { likeRef.set(true); postRef.transaction(c => (c || 0) + 1); }
             });
         }
 
@@ -664,15 +686,8 @@
             const btn = document.getElementById(`like-btn-${postId}`);
             if(!btn) return;
             const icon = btn.querySelector('i');
-            if (isLiked) {
-                icon.classList.remove('far', 'text-gray-400');
-                icon.classList.add('fas', 'text-red-500', 'like-anim');
-                btn.classList.add('text-red-500');
-            } else {
-                icon.classList.remove('fas', 'text-red-500', 'like-anim');
-                icon.classList.add('far');
-                btn.classList.remove('text-red-500');
-            }
+            if (isLiked) { icon.className = 'fas fa-heart text-lg text-red-500 like-anim'; btn.classList.add('text-red-500'); } 
+            else { icon.className = 'far fa-heart text-lg group-active:scale-125 transition-transform'; btn.classList.remove('text-red-500'); }
         }
 
         function timeAgo(timestamp) {

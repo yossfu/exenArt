@@ -34,19 +34,16 @@
 
         .grid-item {
             position: relative; aspect-ratio: 1 / 1; overflow: hidden; background-color: #1a1a1c; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
         .grid-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+        .grid-item:active .grid-image { transform: scale(0.98); }
+        
+        /* Overlay siempre visible para Mobile */
         .grid-overlay {
-            position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%);
+            position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
             display: flex; align-items: flex-end; justify-content: start; 
-            padding: 8px; opacity: 1; 
-        }
-        @media (min-width: 768px) {
-            .grid-overlay { 
-                background: rgba(0, 0, 0, 0.4); justify-content: center; align-items: center; opacity: 0; padding: 0;
-            }
-            .grid-item:hover .grid-overlay { opacity: 1; }
-            .grid-item:hover .grid-image { transform: scale(1.1); }
+            padding: 6px; opacity: 1; 
         }
 
         .avatar-container { position: relative; cursor: pointer; }
@@ -72,6 +69,8 @@
         @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         .viewer-frame { background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); position: relative; overflow: hidden; backdrop-filter: blur(10px); }
+        
+        .verified-badge { color: #3b82f6; margin-left: 4px; font-size: 0.9em; }
     </style>
 </head>
 <body class="antialiased">
@@ -86,20 +85,23 @@
     <header class="profile-header pt-8 pb-4 px-4">
         <div class="max-w-lg mx-auto">
             <div class="flex items-center gap-6 mb-6">
-                <div class="avatar-container flex-shrink-0" onclick="triggerPhotoUpload()">
+                <div class="avatar-container flex-shrink-0" id="avatar-container">
                     <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-gray-700 relative group">
                         <img id="profile-image" src="https://placehold.co/150x150/333/fff?text=..." class="w-full h-full object-cover group-hover:opacity-80 transition">
                         <div id="avatar-loading" class="loading-overlay hidden"><i class="fas fa-spinner fa-spin text-white"></i></div>
                     </div>
-                    <div class="edit-badge"><i class="fas fa-camera"></i></div>
+                    <div id="edit-badge" class="edit-badge hidden"><i class="fas fa-camera"></i></div>
                     <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
                 </div>
 
                 <div class="flex-1">
-                    <h2 id="username-display" class="text-xl font-bold text-white font-[Poppins] mb-1 truncate">...</h2>
-                    <p id="email-display" class="text-xs text-gray-400 mb-3 truncate">...</p>
+                    <div class="flex items-center">
+                        <h2 id="username-display" class="text-xl font-bold text-white font-[Poppins] mb-1 truncate">...</h2>
+                        <i id="admin-verify" class="fas fa-check-circle verified-badge hidden" title="Administrador Verificado"></i>
+                    </div>
+                    <!-- Correo eliminado visualmente -->
                     
-                    <div class="flex gap-8">
+                    <div class="flex gap-8 mt-2">
                         <div class="stat-box">
                             <span id="posts-count" class="text-lg font-bold text-white">-</span>
                             <span class="text-xs text-gray-500">Publicaciones</span>
@@ -112,11 +114,25 @@
                 </div>
             </div>
             
-            <div class="flex gap-2 mb-4">
-                <button onclick="triggerPhotoUpload()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white text-sm font-semibold py-1.5 rounded-lg border border-gray-700 transition">Editar Foto</button>
-                <button onclick="logout()" class="bg-gray-800 hover:bg-red-900/50 text-white px-3 py-1.5 rounded-lg border border-gray-700 transition"><i class="fas fa-sign-out-alt text-red-400"></i></button>
+            <div class="flex gap-2 mb-4" id="profile-actions"></div>
+            
+            <!-- Slogan / Bio Editable -->
+            <div class="text-sm text-gray-300 relative group">
+                <div id="slogan-display-container" class="flex items-center gap-2">
+                    <p id="welcome-msg" class="italic">Bienvenido a mi espacio en exen-E.</p>
+                    <button id="edit-slogan-btn" class="text-gray-500 hover:text-orange-500 hidden p-1" onclick="toggleSloganEdit()">
+                        <i class="fas fa-pen text-xs"></i>
+                    </button>
+                </div>
+                
+                <div id="slogan-edit-container" class="hidden mt-2">
+                    <input type="text" id="slogan-input" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-orange-500 focus:outline-none" maxlength="60" placeholder="Escribe tu frase...">
+                    <div class="flex justify-end gap-2 mt-2">
+                        <button onclick="toggleSloganEdit()" class="text-xs text-gray-400 px-3 py-1">Cancelar</button>
+                        <button onclick="saveSlogan()" class="text-xs bg-orange-600 text-white px-3 py-1 rounded font-bold">Guardar</button>
+                    </div>
+                </div>
             </div>
-            <div class="text-sm text-gray-300"><p>Bienvenido a mi espacio en exen-E.</p></div>
         </div>
     </header>
 
@@ -131,13 +147,13 @@
         
         <div id="no-posts-msg" class="hidden text-center py-12 text-gray-500 text-sm">
             <div class="bg-gray-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-camera text-2xl opacity-50"></i></div>
-            Aún no has publicado nada.
+            <span id="empty-msg">Aún no has publicado nada.</span>
         </div>
     </main>
 
-    <!-- VISOR MODAL ACTUALIZADO -->
+    <!-- VISOR MODAL -->
     <div id="modal" class="fixed inset-0 w-full h-full">
-        <button id="close-modal" class="absolute top-4 right-4 z-[3010] h-10 w-10 flex items-center justify-center rounded-full bg-gray-800/80 text-white hover:bg-red-600 transition backdrop-blur-md"><i class="fas fa-times"></i></button>
+        <button id="close-modal" class="absolute top-4 right-4 z-[3010] h-12 w-12 flex items-center justify-center rounded-full bg-gray-800/80 text-white active:scale-90 transition backdrop-blur-md"><i class="fas fa-times text-xl"></i></button>
         
         <div class="h-full w-full flex items-center justify-center p-4">
             <div class="w-full max-w-4xl flex flex-col items-center max-h-[90vh]">
@@ -165,76 +181,141 @@
         const db = firebase.database();
         const auth = firebase.auth();
         const CATBOX_USERHASH = "341adb9d3c2d09d0485aa908c";
+        
         let currentUser = null;
+        let targetUserId = null;
 
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('page-loader');
+            const urlParams = new URLSearchParams(window.location.search);
+            const uidParam = urlParams.get('uid');
+
             if (user && !user.isAnonymous) {
                 currentUser = user;
+                targetUserId = uidParam || currentUser.uid;
+                setupUIForTargetUser();
                 loadUserProfile();
                 loadUserPosts();
                 loader.style.display = 'none';
             } else { 
-                window.location.href = "login.html"; 
+                if (uidParam) {
+                    firebase.auth().signInAnonymously().then((anon) => {
+                        currentUser = anon.user;
+                        targetUserId = uidParam;
+                        setupUIForTargetUser();
+                        loadUserProfile();
+                        loadUserPosts();
+                        loader.style.display = 'none';
+                    });
+                } else { window.location.href = "login.html"; }
             }
         });
 
+        function setupUIForTargetUser() {
+            const isMyProfile = currentUser && currentUser.uid === targetUserId;
+            const actionsContainer = document.getElementById('profile-actions');
+            const avatarContainer = document.getElementById('avatar-container');
+            const editBadge = document.getElementById('edit-badge');
+            const editSloganBtn = document.getElementById('edit-slogan-btn');
+            const emptyMsg = document.getElementById('empty-msg');
+
+            if (isMyProfile) {
+                actionsContainer.innerHTML = `<button onclick="triggerPhotoUpload()" class="flex-1 bg-gray-800 active:bg-gray-700 text-white text-sm font-semibold py-3 rounded-xl border border-gray-700 transition">Editar Foto</button><button onclick="logout()" class="bg-gray-800 active:bg-red-900/50 text-white px-4 py-3 rounded-xl border border-gray-700 transition"><i class="fas fa-sign-out-alt text-red-400"></i></button>`;
+                avatarContainer.onclick = triggerPhotoUpload;
+                editBadge.classList.remove('hidden');
+                editSloganBtn.classList.remove('hidden'); // Mostrar botón de editar slogan
+                emptyMsg.innerText = "Aún no has publicado nada.";
+            } else {
+                actionsContainer.innerHTML = `<div class="w-full bg-gray-800/50 text-gray-500 text-xs text-center py-3 rounded-xl border border-gray-800">Viendo perfil público</div>`;
+                avatarContainer.onclick = null;
+                avatarContainer.style.cursor = 'default';
+                editBadge.classList.add('hidden');
+                editSloganBtn.classList.add('hidden'); // Ocultar botón de editar slogan
+                emptyMsg.innerText = "Este usuario aún no ha publicado nada.";
+            }
+        }
+
         function loadUserProfile() {
-            db.ref('users/' + currentUser.uid).on('value', snap => {
+            db.ref('users/' + targetUserId).on('value', snap => {
                 const data = snap.val();
                 if (data) {
                     document.getElementById('username-display').innerText = data.username || 'Usuario';
-                    document.getElementById('email-display').innerText = data.email || currentUser.email;
                     document.getElementById('profile-image').src = data.profilePic || 'https://placehold.co/150x150/333/fff?text=U';
+                    
+                    // --- GESTIÓN DE SLOGAN ---
+                    const slogan = data.slogan || "Bienvenido a mi espacio en exen-E.";
+                    document.getElementById('welcome-msg').innerText = slogan;
+                    document.getElementById('slogan-input').value = slogan;
+
+                    // --- VERIFICACIÓN ADMIN SEGURA ---
+                    // Verificamos el correo almacenado en la base de datos, no el del cliente local
+                    // Esto asegura que solo el usuario que tiene este email registrado en DB tenga la palomita
+                    if (data.email === 'ezequiel@exen.com') {
+                        document.getElementById('admin-verify').classList.remove('hidden');
+                    } else {
+                        document.getElementById('admin-verify').classList.add('hidden');
+                    }
                 }
             });
+        }
+
+        // --- LÓGICA EDICIÓN SLOGAN ---
+        function toggleSloganEdit() {
+            const displayDiv = document.getElementById('slogan-display-container');
+            const editDiv = document.getElementById('slogan-edit-container');
+            
+            if (editDiv.classList.contains('hidden')) {
+                displayDiv.classList.add('hidden');
+                editDiv.classList.remove('hidden');
+                document.getElementById('slogan-input').focus();
+            } else {
+                displayDiv.classList.remove('hidden');
+                editDiv.classList.add('hidden');
+            }
+        }
+
+        function saveSlogan() {
+            const newSlogan = document.getElementById('slogan-input').value.trim() || "Bienvenido a mi espacio en exen-E.";
+            
+            if (currentUser && currentUser.uid === targetUserId) {
+                db.ref('users/' + currentUser.uid).update({ slogan: newSlogan })
+                    .then(() => {
+                        toggleSloganEdit(); // Regresar a vista normal
+                    })
+                    .catch(error => alert("Error al guardar: " + error.message));
+            }
         }
 
         function loadUserPosts() {
             const grid = document.getElementById('profile-grid');
             const noPosts = document.getElementById('no-posts-msg');
             
-            db.ref('feed_posts').orderByChild('userId').equalTo(currentUser.uid).limitToLast(50).once('value', snap => {
+            db.ref('feed_posts').orderByChild('userId').equalTo(targetUserId).limitToLast(50).once('value', snap => {
                 grid.innerHTML = '';
-                
                 if (!snap.exists()) {
                     noPosts.classList.remove('hidden');
                     document.getElementById('posts-count').innerText = "0";
                     document.getElementById('likes-received-count').innerText = "0";
                     return;
                 }
-                
                 noPosts.classList.add('hidden');
                 const posts = [];
                 let totalLikes = 0;
-                
                 snap.forEach(child => {
                     const post = child.val(); 
                     post.id = child.key; 
                     posts.push(post);
                     if (post.likes) totalLikes += post.likes;
                 });
-
                 document.getElementById('posts-count').innerText = posts.length;
                 document.getElementById('likes-received-count').innerText = totalLikes;
-                
                 posts.sort((a, b) => b.timestamp - a.timestamp);
-
                 posts.forEach(post => {
-                    if (!post.imageUrl) return; // Solo mostrar posts con imagen en el grid
+                    if (!post.imageUrl) return;
                     const div = document.createElement('div');
                     div.className = "grid-item group";
                     div.onclick = () => openViewer(post.imageUrl, post.title, post.text, post.tags);
-                    
-                    div.innerHTML = `
-                        <img src="${post.imageUrl}" class="grid-image" loading="lazy">
-                        <div class="grid-overlay">
-                            <div class="text-white font-bold flex items-center gap-3 text-xs sm:text-lg drop-shadow-md">
-                                <span class="flex items-center gap-1"><i class="fas fa-heart"></i> ${post.likes || 0}</span>
-                                <span class="flex items-center gap-1"><i class="fas fa-comment"></i> 0</span>
-                            </div>
-                        </div>
-                    `;
+                    div.innerHTML = `<img src="${post.imageUrl}" class="grid-image" loading="lazy"><div class="grid-overlay"><div class="text-white font-bold flex items-center gap-3 text-xs sm:text-lg drop-shadow-md"><span class="flex items-center gap-1"><i class="fas fa-heart text-red-500"></i> ${post.likes || 0}</span></div></div>`;
                     grid.appendChild(div);
                 });
             });
@@ -245,7 +326,6 @@
             document.getElementById('modal-image').src = url;
             document.getElementById('modal-title').textContent = title || '';
             document.getElementById('modal-desc').textContent = desc || '';
-            
             const tagsContainer = document.getElementById('modal-tags');
             tagsContainer.innerHTML = '';
             if (tags) {
@@ -256,7 +336,6 @@
                     tagsContainer.appendChild(span);
                 });
             }
-
             modal.classList.add('visible');
             document.body.style.overflow = 'hidden';
         }
@@ -266,38 +345,29 @@
             document.body.style.overflow = 'auto';
         });
 
-        function triggerPhotoUpload() { document.getElementById('file-input').click(); }
+        function triggerPhotoUpload() { 
+            if (currentUser && currentUser.uid === targetUserId) document.getElementById('file-input').click(); 
+        }
         
         async function handleFileSelect(event) {
             const file = event.target.files[0];
             if (!file || file.size > 5 * 1024 * 1024) { alert("Máx 5MB"); return; }
-            
             document.getElementById('avatar-loading').classList.remove('hidden');
-            
             try {
                 const formData = new FormData();
                 formData.append('reqtype', 'fileupload'); 
                 formData.append('userhash', CATBOX_USERHASH); 
                 formData.append('fileToUpload', file);
-                
                 const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData });
-                
                 if (!res.ok) throw new Error("Error de conexión");
                 const txt = await res.text();
-                
                 if (txt.includes('catbox.moe')) {
                     const newUrl = txt.trim();
                     await db.ref('users/' + currentUser.uid).update({ profilePic: newUrl });
                     document.getElementById('profile-image').src = newUrl;
-                } else {
-                    throw new Error("Respuesta inesperada de Catbox");
-                }
-            } catch (e) { 
-                alert("Error al subir imagen: " + e.message); 
-            } finally { 
-                document.getElementById('avatar-loading').classList.add('hidden'); 
-                event.target.value = ''; 
-            }
+                } else { throw new Error("Respuesta inesperada de Catbox"); }
+            } catch (e) { alert("Error al subir imagen: " + e.message); } 
+            finally { document.getElementById('avatar-loading').classList.add('hidden'); event.target.value = ''; }
         }
 
         function logout() { auth.signOut().then(() => window.location.href = "login.html"); }
