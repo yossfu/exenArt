@@ -67,10 +67,10 @@
             position: fixed; inset: 0; background: #0c0c0c; z-index: 5000; display: flex; align-items: center; justify-content: center;
         }
 
-        #modal { display: none; z-index: 3000; }
+        #modal { display: none; z-index: 3000; background: rgba(0,0,0,0.95); }
         #modal.visible { display: block; animation: modalFadeIn 0.3s forwards; }
         @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal-backdrop-blur { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.4); transform: scale(1.1); z-index: 0; pointer-events: none; }
+        
         .viewer-frame { background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); position: relative; overflow: hidden; backdrop-filter: blur(10px); }
     </style>
 </head>
@@ -135,19 +135,19 @@
         </div>
     </main>
 
-    <!-- VISOR MODAL -->
-    <div id="modal" class="fixed inset-0">
-        <img id="modal-backdrop" src="" class="modal-backdrop-blur" alt="">
-        <button id="close-modal" class="absolute top-4 right-4 z-[3010] h-10 w-10 flex items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 transition backdrop-blur-md"><i class="fas fa-times"></i></button>
+    <!-- VISOR MODAL ACTUALIZADO -->
+    <div id="modal" class="fixed inset-0 w-full h-full">
+        <button id="close-modal" class="absolute top-4 right-4 z-[3010] h-10 w-10 flex items-center justify-center rounded-full bg-gray-800/80 text-white hover:bg-red-600 transition backdrop-blur-md"><i class="fas fa-times"></i></button>
         
-        <div class="h-full w-full overflow-y-auto bg-black/30 relative z-10 flex items-center justify-center p-4">
-            <div class="w-full max-w-4xl flex flex-col items-center">
-                <div class="viewer-frame relative w-full max-h-[85vh] flex items-center justify-center bg-black/50">
-                    <img id="modal-image" src="" class="max-w-full max-h-[85vh] object-contain shadow-2xl">
+        <div class="h-full w-full flex items-center justify-center p-4">
+            <div class="w-full max-w-4xl flex flex-col items-center max-h-[90vh]">
+                <div class="relative w-full flex-1 flex items-center justify-center bg-black/50 rounded-xl overflow-hidden">
+                    <img id="modal-image" src="" class="max-w-full max-h-[80vh] object-contain shadow-2xl">
                 </div>
-                <div class="mt-4 text-center p-4 bg-black/60 rounded-xl backdrop-blur-md border border-white/10 max-w-2xl">
-                    <p id="modal-user" class="text-orange-400 font-bold text-lg"></p>
-                    <p id="modal-desc" class="text-gray-200 mt-1"></p>
+                <div class="mt-4 text-center p-4 bg-black/80 rounded-xl backdrop-blur-md border border-white/10 w-full max-w-2xl">
+                    <h3 id="modal-title" class="text-orange-400 font-bold text-xl font-[Poppins]"></h3>
+                    <div class="flex justify-center gap-2 my-2 flex-wrap" id="modal-tags"></div>
+                    <p id="modal-desc" class="text-gray-300 text-sm"></p>
                 </div>
             </div>
         </div>
@@ -221,17 +221,17 @@
                 posts.sort((a, b) => b.timestamp - a.timestamp);
 
                 posts.forEach(post => {
-                    const imgUrl = post.imageUrl || 'https://placehold.co/300x300/222/666?text=Texto';
+                    if (!post.imageUrl) return; // Solo mostrar posts con imagen en el grid
                     const div = document.createElement('div');
                     div.className = "grid-item group";
-                    div.onclick = () => openViewer(imgUrl, post.userName, post.text);
+                    div.onclick = () => openViewer(post.imageUrl, post.title, post.text, post.tags);
                     
                     div.innerHTML = `
-                        <img src="${imgUrl}" class="grid-image" loading="lazy">
+                        <img src="${post.imageUrl}" class="grid-image" loading="lazy">
                         <div class="grid-overlay">
                             <div class="text-white font-bold flex items-center gap-3 text-xs sm:text-lg drop-shadow-md">
                                 <span class="flex items-center gap-1"><i class="fas fa-heart"></i> ${post.likes || 0}</span>
-                                <span class="flex items-center gap-1"><i class="fas fa-comment"></i> ${post.commentCount || 0}</span>
+                                <span class="flex items-center gap-1"><i class="fas fa-comment"></i> 0</span>
                             </div>
                         </div>
                     `;
@@ -240,15 +240,27 @@
             });
         }
 
-        function openViewer(url, user, desc) {
+        function openViewer(url, title, desc, tags) {
             const modal = document.getElementById('modal');
             document.getElementById('modal-image').src = url;
-            document.getElementById('modal-backdrop').src = url;
-            document.getElementById('modal-user').textContent = user || 'Usuario';
-            document.getElementById('modal-desc').textContent = desc ? desc : '';
+            document.getElementById('modal-title').textContent = title || '';
+            document.getElementById('modal-desc').textContent = desc || '';
+            
+            const tagsContainer = document.getElementById('modal-tags');
+            tagsContainer.innerHTML = '';
+            if (tags) {
+                tags.split(',').forEach(tag => {
+                    const span = document.createElement('span');
+                    span.className = "text-[10px] bg-gray-800 text-gray-300 px-2 py-1 rounded-full border border-gray-700";
+                    span.textContent = '#' + tag.trim();
+                    tagsContainer.appendChild(span);
+                });
+            }
+
             modal.classList.add('visible');
             document.body.style.overflow = 'hidden';
         }
+        
         document.getElementById('close-modal').addEventListener('click', () => {
             document.getElementById('modal').classList.remove('visible');
             document.body.style.overflow = 'auto';
