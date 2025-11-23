@@ -41,8 +41,8 @@
         /* --- ESTILOS DE AUTENTICACIÓN (OVERLAY) --- */
         #auth-overlay {
             position: fixed; inset: 0; z-index: 9999;
-            background-color: #0c0c0c;
-            background-image: radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.1) 0%, transparent 50%);
+            background-color: rgba(12, 12, 12, 0.95); /* Fondo semi-transparente oscuro */
+            backdrop-filter: blur(10px);
             display: none; /* Oculto por defecto, controlado por JS */
             align-items: center; justify-content: center;
             padding: 1rem;
@@ -110,15 +110,14 @@
             position: fixed; inset: 0; background: #0c0c0c; z-index: 5000; display: flex; align-items: center; justify-content: center;
         }
 
+        /* Modal Visor Imagen */
         #modal { display: none; z-index: 3000; background: rgba(0,0,0,0.95); }
         #modal.visible { display: block; animation: modalFadeIn 0.3s forwards; }
         @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
         .viewer-frame { background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); position: relative; overflow: hidden; backdrop-filter: blur(10px); }
-        
         .verified-badge { color: #3b82f6; margin-left: 4px; font-size: 0.9em; }
 
-        /* ESTILOS DEL PANEL DE PUBLICACIÓN (Importados de feed.html) */
+        /* ESTILOS DEL PANEL DE PUBLICACIÓN */
         .upload-card {
             background: linear-gradient(145deg, #1a1a1c, #111112);
             border: 1px solid rgba(249, 115, 22, 0.2);
@@ -126,9 +125,7 @@
             transition: all 0.3s ease;
         }
         #extra-fields {
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
+            max-height: 0; opacity: 0; overflow: hidden;
             transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
         }
         #extra-fields.expanded {
@@ -138,7 +135,15 @@
         .custom-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 12px; border-radius: 8px; font-size: 0.875rem; width: 100%; transition: border-color 0.3s; }
         .custom-input:focus { outline: none; border-color: var(--accent); }
 
-        /* Ocultar contenido principal por defecto */
+        /* MODAL DE COMPARTIR */
+        #share-modal {
+            display: none; position: fixed; inset: 0; z-index: 4000;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            align-items: center; justify-content: center; p-4;
+        }
+        #share-modal.visible { display: flex; animation: fadeIn 0.2s forwards; }
+        @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+
         #app-content { display: none; }
     </style>
 </head>
@@ -153,10 +158,17 @@
     <!-- 2. OVERLAY DE LOGIN / REGISTRO -->
     <div id="auth-overlay">
         <div class="form-card rounded-2xl p-8 relative overflow-hidden">
+            
+            <!-- BOTÓN CERRAR (Solo visible en modo invitado) -->
+            <button id="close-login-btn" onclick="closeLoginOverlay()" class="absolute top-4 right-4 text-gray-400 hover:text-white hidden z-50">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+
             <!-- Header Auth -->
             <div class="text-center mb-8">
                 <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-16 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
                 <h2 class="text-2xl font-bold font-[Poppins] text-white">Bienvenido</h2>
+                <p class="text-xs text-gray-400 mt-2 mb-4 hidden" id="guest-login-msg">Regístrate para interactuar</p>
                 <div class="flex justify-center gap-4 mt-4 text-sm font-semibold">
                     <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1 transition-colors" onclick="switchAuthTab('login')">Iniciar Sesión</button>
                     <button id="tab-register" class="text-gray-400 pb-1 hover:text-white transition-colors" onclick="switchAuthTab('register')">Registrarse</button>
@@ -252,10 +264,10 @@
         </div>
     </div>
 
-    <!-- 3. CONTENIDO PRINCIPAL (Oculto hasta Auth) -->
+    <!-- 3. CONTENIDO PRINCIPAL -->
     <div id="app-content">
         
-        <!-- Loader Interno del Perfil -->
+        <!-- Loader Interno -->
         <div id="page-loader">
             <div class="text-center">
                 <img src="https://files.catbox.moe/ap1lh0.png" class="h-16 w-auto mb-4 animate-pulse mx-auto">
@@ -350,6 +362,20 @@
             </div>
         </div>
 
+        <!-- MODAL DE COMPARTIR -->
+        <div id="share-modal">
+            <div class="bg-[#1a1a1c] rounded-2xl p-6 w-full max-w-sm border border-gray-700 relative">
+                <h3 class="text-white font-bold text-lg mb-4 text-center">Compartir Perfil</h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="share-link-input" class="w-full bg-black/30 border border-gray-600 rounded-lg px-3 py-2 text-gray-300 text-sm focus:outline-none" readonly>
+                    <button onclick="copyLinkFromModal()" class="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg font-bold transition">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <button onclick="closeShareModal()" class="w-full py-2 text-gray-400 hover:text-white text-sm font-semibold">Cerrar</button>
+            </div>
+        </div>
+
         <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around items-center px-2">
             <a href="index.html" class="nav-item flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-th-large text-xl mb-1"></i><span class="text-[10px] font-semibold">Galería</span></a>
             <a href="feed.html" class="nav-item flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-globe-americas text-xl mb-1"></i><span class="text-[10px] font-semibold">Social</span></a>
@@ -366,13 +392,14 @@
         
         let currentUser = null;
         let targetUserId = null;
-        let selectedPostFile = null; // Variable renombrada para evitar conflictos
+        let selectedPostFile = null;
+        let isGuestView = false;
         
         // Variables Auth
         let userDataCache = {};
         let isUploadingAuth = false;
 
-        // --- LÓGICA ANTI-FLASHASO & AUTENTICACIÓN ---
+        // --- LÓGICA ANTI-FLASHASO & AUTENTICACIÓN & MODO INVITADO ---
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('initial-loader');
             const authOverlay = document.getElementById('auth-overlay');
@@ -383,12 +410,12 @@
             const uidParam = urlParams.get('uid');
 
             if (user && !user.isAnonymous) {
-                // 1. USUARIO REGISTRADO -> Mostrar APP
+                // 1. USUARIO LOGUEADO -> Mostrar APP NORMAL
                 currentUser = user;
+                isGuestView = false;
                 targetUserId = uidParam || currentUser.uid;
 
-                // **NUEVO:** Si no hay ?uid= en la URL y estamos viendo nuestro perfil, forzar la URL
-                // Esto permite copiar el link directamente del navegador.
+                // Forzar URL con ID si estamos en nuestro perfil propio para facilitar compartir
                 if (!uidParam && currentUser) {
                     const newUrl = `${window.location.pathname}?uid=${currentUser.uid}`;
                     window.history.replaceState(null, '', newUrl);
@@ -401,20 +428,36 @@
                 setupUIForTargetUser();
                 loadUserProfile();
                 loadUserPosts();
-                pageLoader.style.display = 'none'; // Ocultar loader interno
+                pageLoader.style.display = 'none'; 
             } else {
-                // 2. SIN SESIÓN -> Mostrar LOGIN (Incluso para ver otros perfiles)
+                // 2. NO LOGUEADO (Invitado)
                 currentUser = null;
-                appContent.style.display = 'none';
-                authOverlay.style.display = 'flex';
+                
+                if (uidParam) {
+                    // MODO INVITADO: Viendo perfil específico -> PERMITIR ACCESO
+                    isGuestView = true;
+                    targetUserId = uidParam;
+                    authOverlay.style.display = 'none'; // Ocultar Login
+                    appContent.style.display = 'block'; // Mostrar Contenido
+                    
+                    setupUIForTargetUser();
+                    loadUserProfile();
+                    loadUserPosts();
+                    pageLoader.style.display = 'none';
+                } else {
+                    // MODO CERRADO: Viendo root -> FORZAR LOGIN
+                    isGuestView = false;
+                    appContent.style.display = 'none';
+                    authOverlay.style.display = 'flex';
+                    document.getElementById('close-login-btn').classList.add('hidden'); // No se puede cerrar
+                }
             }
             
-            // 3. Ocultar loader inicial suavemente
             loader.style.opacity = '0';
             setTimeout(() => { loader.style.display = 'none'; }, 500);
         });
 
-        // --- LÓGICA DE AUTH FORMS ---
+        // --- GESTIÓN DE LOGIN/REGISTRO ---
         function switchAuthTab(tab) {
             const loginForm = document.getElementById('login-form');
             const regStep1 = document.getElementById('register-step-1');
@@ -436,6 +479,175 @@
             }
         }
 
+        // Función para forzar Login al Interactuar
+        function triggerLogin() {
+            const overlay = document.getElementById('auth-overlay');
+            const closeBtn = document.getElementById('close-login-btn');
+            const msg = document.getElementById('guest-login-msg');
+            
+            overlay.style.display = 'flex';
+            
+            if (isGuestView) {
+                // Si es modo invitado, mostramos botón X para volver a ver
+                closeBtn.classList.remove('hidden');
+                msg.classList.remove('hidden');
+            } else {
+                closeBtn.classList.add('hidden');
+                msg.classList.add('hidden');
+            }
+        }
+
+        function closeLoginOverlay() {
+            document.getElementById('auth-overlay').style.display = 'none';
+        }
+
+        // --- FUNCIONES UI Y PERFIL ---
+        function setupUIForTargetUser() {
+            const isMyProfile = currentUser && currentUser.uid === targetUserId;
+            const actionsContainer = document.getElementById('profile-actions');
+            const avatarContainer = document.getElementById('avatar-container');
+            const editBadge = document.getElementById('edit-badge');
+            const editSloganBtn = document.getElementById('edit-slogan-btn');
+            const emptyMsg = document.getElementById('empty-msg');
+
+            if (isMyProfile) {
+                // PROPIETARIO: Panel de carga completo + Botones de gestión
+                actionsContainer.innerHTML = `
+                    <div class="flex justify-between items-center mb-3 px-1">
+                         <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Crear Publicación</span>
+                         <div class="flex gap-2">
+                            <button onclick="openShareModal()" class="text-xs bg-gray-800 text-gray-300 h-8 w-8 rounded-lg border border-gray-700 hover:bg-gray-700 transition flex items-center justify-center" title="Compartir">
+                                <i class="fas fa-share-alt"></i>
+                            </button>
+                            <button onclick="logout()" class="text-xs bg-red-500/10 text-red-400 px-3 h-8 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition flex items-center gap-2">
+                                <i class="fas fa-sign-out-alt"></i> Salir
+                            </button>
+                         </div>
+                    </div>
+
+                    <div class="upload-card p-4 rounded-2xl relative">
+                        <div class="flex gap-3 items-center mb-2">
+                            <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0 self-start mt-1">
+                                <img id="post-avatar-preview" src="${currentUser.photoURL || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1 relative">
+                                <textarea id="post-text" rows="1" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" placeholder="¿Qué quieres compartir hoy?" onfocus="expandPostArea()" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                            </div>
+                            <label class="flex items-center justify-center text-orange-500 cursor-pointer active:scale-90 transition p-2 rounded-full bg-gray-800 hover:bg-gray-700 border border-gray-700">
+                                <i class="fas fa-image text-lg"></i>
+                                <input type="file" id="post-file-input" accept="image/*" class="hidden" onchange="handlePostFileSelect(event); expandPostArea()">
+                            </label>
+                        </div>
+                        <div id="preview-container" class="relative hidden mt-3 rounded-xl overflow-hidden border border-gray-700 group">
+                            <img id="image-preview" src="" class="w-full h-auto max-h-64 object-contain bg-black">
+                            <button onclick="clearPostSelection()" class="absolute top-2 right-2 bg-black/60 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center active:scale-90 transition z-10"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div id="extra-fields">
+                            <div class="flex flex-col gap-3">
+                                <input type="text" id="post-title" placeholder="Título de tu obra (Opcional)" class="custom-input font-bold bg-black/20 border-gray-700">
+                                <div class="flex gap-2">
+                                    <input type="text" id="post-tags" placeholder="Tags: anime, arte..." class="custom-input flex-1 bg-black/20 border-gray-700">
+                                    <div class="relative w-2/5">
+                                        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none"><i class="fas fa-list text-sm"></i></div>
+                                        <select id="post-category" class="custom-input bg-black/20 border-gray-700 appearance-none pl-9 text-xs">
+                                            <option value="" disabled selected>Categoría</option>
+                                            <option value="anime">Anime</option>
+                                            <option value="furry">Furry</option>
+                                            <option value="realismo">Realismo</option>
+                                            <option value="mecas">Mecas</option>
+                                            <option value="devils">Devils</option>
+                                            <option value="colors">ColorFull</option>
+                                            <option value="amateur">Amateur</option>
+                                            <option value="tvgames">TV/Games</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3 mt-2 pt-2 border-t border-white/5">
+                                    <button onclick="collapsePostArea()" class="flex-1 py-2 rounded-full text-gray-400 text-sm font-semibold hover:text-white hover:bg-gray-800 transition">Cancelar</button>
+                                    <button id="publish-btn" onclick="uploadPost()" class="bg-orange-600 active:scale-95 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 justify-center flex-[2]"><span>Publicar</span> <i class="fas fa-paper-plane text-xs"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="upload-progress" class="hidden w-full bg-gray-800 rounded-full h-1 mt-3 overflow-hidden"><div class="bg-orange-500 h-1 rounded-full w-1/3 animate-pulse"></div></div>
+                    </div>
+                `;
+                
+                avatarContainer.onclick = triggerPhotoUpload;
+                editBadge.classList.remove('hidden');
+                editSloganBtn.classList.remove('hidden'); 
+                emptyMsg.innerText = "Aún no has publicado nada.";
+                
+                db.ref('users/' + currentUser.uid + '/profilePic').once('value').then(s => {
+                   if(s.val()) document.getElementById('post-avatar-preview').src = s.val(); 
+                });
+
+            } else {
+                // PERFIL PÚBLICO (MODO INVITADO O VISITANTE)
+                actionsContainer.innerHTML = `
+                    <div class="flex justify-between items-center mb-3 px-1">
+                         <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Perfil Público</span>
+                         <div class="flex gap-2">
+                            <button onclick="openShareModal()" class="text-xs bg-gray-800 text-gray-300 h-8 w-8 rounded-lg border border-gray-700 hover:bg-gray-700 transition flex items-center justify-center" title="Compartir">
+                                <i class="fas fa-share-alt"></i>
+                            </button>
+                         </div>
+                    </div>
+                `;
+                avatarContainer.onclick = null;
+                avatarContainer.style.cursor = 'default';
+                editBadge.classList.add('hidden');
+                editSloganBtn.classList.add('hidden'); 
+                emptyMsg.innerText = "Este usuario aún no ha publicado nada.";
+            }
+        }
+
+        // --- GESTIÓN DE COMPARTIR (MODAL) ---
+        function openShareModal() {
+            const modal = document.getElementById('share-modal');
+            const input = document.getElementById('share-link-input');
+            // Asegurar que el link tenga el UID correcto
+            const url = new URL(window.location.href);
+            url.searchParams.set('uid', targetUserId);
+            input.value = url.toString();
+            modal.classList.add('visible');
+        }
+
+        function closeShareModal() {
+            document.getElementById('share-modal').classList.remove('visible');
+        }
+
+        function copyLinkFromModal() {
+            const input = document.getElementById('share-link-input');
+            input.select();
+            input.setSelectionRange(0, 99999); // Móvil
+            navigator.clipboard.writeText(input.value).then(() => {
+                alert("Enlace copiado al portapapeles");
+                closeShareModal();
+            });
+        }
+
+        // --- CARGA DE DATOS ---
+        function loadUserProfile() {
+            db.ref('users/' + targetUserId).on('value', snap => {
+                const data = snap.val();
+                if (data) {
+                    document.getElementById('username-display').innerText = data.username || 'Usuario';
+                    document.getElementById('profile-image').src = data.profilePic || 'https://placehold.co/150x150/333/fff?text=U';
+                    
+                    const slogan = data.slogan || "Bienvenido a mi espacio en exen-E.";
+                    document.getElementById('welcome-msg').innerText = slogan;
+                    document.getElementById('slogan-input').value = slogan;
+
+                    if (data.email === 'ezequiel@exen.com') {
+                        document.getElementById('admin-verify').classList.remove('hidden');
+                    } else {
+                        document.getElementById('admin-verify').classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        // --- AUTH: LOGIN / REGISTER HANDLERS ---
         async function handleAuthFileUpload(event) {
             const file = event.target.files[0];
             if (!file || file.size > 5*1024*1024) { alert("Máx 5MB"); return; }
@@ -530,127 +742,7 @@
             });
         });
 
-        // --- FUNCIONES DE PERFIL Y UI ---
-        function setupUIForTargetUser() {
-            const isMyProfile = currentUser && currentUser.uid === targetUserId;
-            const actionsContainer = document.getElementById('profile-actions');
-            const avatarContainer = document.getElementById('avatar-container');
-            const editBadge = document.getElementById('edit-badge');
-            const editSloganBtn = document.getElementById('edit-slogan-btn');
-            const emptyMsg = document.getElementById('empty-msg');
-
-            if (isMyProfile) {
-                // MODIFICACIÓN: BOTÓN SALIR MOVIDO FUERA DEL PANEL
-                actionsContainer.innerHTML = `
-                    <div class="flex justify-between items-center mb-3 px-1">
-                         <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Crear Publicación</span>
-                         <div class="flex gap-2">
-                            <button onclick="copyProfileLink()" class="text-xs bg-gray-800 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-700 transition flex items-center gap-2" id="copy-btn">
-                                <i class="fas fa-link"></i> Copiar Link
-                            </button>
-                            <button onclick="logout()" class="text-xs bg-red-500/10 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition flex items-center gap-2">
-                                <i class="fas fa-sign-out-alt"></i> Salir
-                            </button>
-                         </div>
-                    </div>
-
-                    <div class="upload-card p-4 rounded-2xl relative">
-                        <div class="flex gap-3 items-center mb-2">
-                            <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0 self-start mt-1">
-                                <img id="post-avatar-preview" src="${currentUser.photoURL || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-full h-full object-cover">
-                            </div>
-                            <div class="flex-1 relative">
-                                <textarea id="post-text" rows="1" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" placeholder="¿Qué quieres compartir hoy?" onfocus="expandPostArea()" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
-                            </div>
-                            <label class="flex items-center justify-center text-orange-500 cursor-pointer active:scale-90 transition p-2 rounded-full bg-gray-800 hover:bg-gray-700 border border-gray-700">
-                                <i class="fas fa-image text-lg"></i>
-                                <input type="file" id="post-file-input" accept="image/*" class="hidden" onchange="handlePostFileSelect(event); expandPostArea()">
-                            </label>
-                        </div>
-                        <div id="preview-container" class="relative hidden mt-3 rounded-xl overflow-hidden border border-gray-700 group">
-                            <img id="image-preview" src="" class="w-full h-auto max-h-64 object-contain bg-black">
-                            <button onclick="clearPostSelection()" class="absolute top-2 right-2 bg-black/60 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center active:scale-90 transition z-10"><i class="fas fa-times"></i></button>
-                        </div>
-                        <div id="extra-fields">
-                            <div class="flex flex-col gap-3">
-                                <input type="text" id="post-title" placeholder="Título de tu obra (Opcional)" class="custom-input font-bold bg-black/20 border-gray-700">
-                                <div class="flex gap-2">
-                                    <input type="text" id="post-tags" placeholder="Tags: anime, arte..." class="custom-input flex-1 bg-black/20 border-gray-700">
-                                    <div class="relative w-2/5">
-                                        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none"><i class="fas fa-list text-sm"></i></div>
-                                        <select id="post-category" class="custom-input bg-black/20 border-gray-700 appearance-none pl-9 text-xs">
-                                            <option value="" disabled selected>Categoría</option>
-                                            <option value="anime">Anime</option>
-                                            <option value="furry">Furry</option>
-                                            <option value="realismo">Realismo</option>
-                                            <option value="mecas">Mecas</option>
-                                            <option value="devils">Devils</option>
-                                            <option value="colors">ColorFull</option>
-                                            <option value="amateur">Amateur</option>
-                                            <option value="tvgames">TV/Games</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="flex gap-3 mt-2 pt-2 border-t border-white/5">
-                                    <button onclick="collapsePostArea()" class="flex-1 py-2 rounded-full text-gray-400 text-sm font-semibold hover:text-white hover:bg-gray-800 transition">Cancelar</button>
-                                    <button id="publish-btn" onclick="uploadPost()" class="bg-orange-600 active:scale-95 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 justify-center flex-[2]"><span>Publicar</span> <i class="fas fa-paper-plane text-xs"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="upload-progress" class="hidden w-full bg-gray-800 rounded-full h-1 mt-3 overflow-hidden"><div class="bg-orange-500 h-1 rounded-full w-1/3 animate-pulse"></div></div>
-                    </div>
-                `;
-                
-                // Mantenemos funcionalidad de cambiar avatar
-                avatarContainer.onclick = triggerPhotoUpload;
-                editBadge.classList.remove('hidden');
-                editSloganBtn.classList.remove('hidden'); 
-                emptyMsg.innerText = "Aún no has publicado nada.";
-                
-                // Cargar imagen actual en el panel de post
-                db.ref('users/' + currentUser.uid + '/profilePic').once('value').then(s => {
-                   if(s.val()) document.getElementById('post-avatar-preview').src = s.val(); 
-                });
-
-            } else {
-                // PERFIL PÚBLICO
-                actionsContainer.innerHTML = `
-                    <div class="flex justify-between items-center mb-3 px-1">
-                         <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Perfil Público</span>
-                         <button onclick="copyProfileLink()" class="text-xs bg-gray-800 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-700 transition flex items-center gap-2" id="copy-btn">
-                            <i class="fas fa-link"></i> Copiar Link
-                        </button>
-                    </div>
-                `;
-                avatarContainer.onclick = null;
-                avatarContainer.style.cursor = 'default';
-                editBadge.classList.add('hidden');
-                editSloganBtn.classList.add('hidden'); 
-                emptyMsg.innerText = "Este usuario aún no ha publicado nada.";
-            }
-        }
-
-        function loadUserProfile() {
-            db.ref('users/' + targetUserId).on('value', snap => {
-                const data = snap.val();
-                if (data) {
-                    document.getElementById('username-display').innerText = data.username || 'Usuario';
-                    document.getElementById('profile-image').src = data.profilePic || 'https://placehold.co/150x150/333/fff?text=U';
-                    
-                    const slogan = data.slogan || "Bienvenido a mi espacio en exen-E.";
-                    document.getElementById('welcome-msg').innerText = slogan;
-                    document.getElementById('slogan-input').value = slogan;
-
-                    if (data.email === 'ezequiel@exen.com') {
-                        document.getElementById('admin-verify').classList.remove('hidden');
-                    } else {
-                        document.getElementById('admin-verify').classList.add('hidden');
-                    }
-                }
-            });
-        }
-
-        // --- FUNCIONES DEL PANEL DE PUBLICACIÓN (Adaptadas de feed.html) ---
+        // --- FUNCIONES DEL PANEL DE PUBLICACIÓN ---
         function expandPostArea() { const area = document.getElementById('extra-fields'); const text = document.getElementById('post-text'); if (!area.classList.contains('expanded')) { area.classList.add('expanded'); text.rows = 3; } }
         
         function collapsePostArea() { 
@@ -715,7 +807,6 @@
                 document.getElementById('post-text').value = ''; document.getElementById('post-title').value = ''; document.getElementById('post-tags').value = ''; document.getElementById('post-category').selectedIndex = 0; clearPostSelection();
                 document.getElementById('extra-fields').classList.remove('expanded'); document.getElementById('post-text').rows = 1;
                 
-                // Recargar posts inmediatamente (aunque el listener lo haría)
                 loadUserPosts();
 
             } catch (error) { alert("Error: " + error.message); } 
@@ -820,21 +911,6 @@
                 } else { throw new Error("Respuesta inesperada de Catbox"); }
             } catch (e) { alert("Error al subir imagen: " + e.message); } 
             finally { document.getElementById('avatar-loading').classList.add('hidden'); event.target.value = ''; }
-        }
-
-        // --- NUEVO: FUNCIÓN COPIAR LINK ---
-        function copyProfileLink() {
-            const url = window.location.href;
-            navigator.clipboard.writeText(url).then(() => {
-                const btn = document.getElementById('copy-btn');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check"></i> Copiado';
-                btn.classList.add('text-green-400', 'border-green-500/30');
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.classList.remove('text-green-400', 'border-green-500/30');
-                }, 2000);
-            }).catch(err => alert("No se pudo copiar el link."));
         }
 
         function logout() { auth.signOut().then(() => window.location.href = "login.html"); }
