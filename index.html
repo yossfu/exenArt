@@ -763,19 +763,25 @@
             </div>
         </div>
 
-        <!-- MODAL CONFIGURACIÓN PERFIL -->
+        <!-- MODAL CONFIGURACIÓN PERFIL (ACTUALIZADO CON SUBIDA DE IMAGEN) -->
         <div id="config-modal">
             <div class="config-card p-6 flex flex-col gap-4">
                 <h3 class="text-xl font-bold text-white mb-2 border-b border-gray-700 pb-2">Configuración</h3>
                 
-                <div>
-                    <label class="text-sm text-gray-400">Cambiar Foto de Perfil (URL)</label>
-                    <input type="url" id="config-photo-input" class="w-full mt-1 rounded bg-black/50 border border-gray-600 p-2 text-white text-sm" placeholder="https://catbox.moe/...">
-                    <p class="text-[10px] text-gray-500 mt-1">Sube a Catbox.moe y pega el link.</p>
+                <!-- Nuevo Selector de Imagen -->
+                <div class="flex flex-col items-center gap-4">
+                    <div class="relative w-24 h-24 group cursor-pointer">
+                        <img id="config-preview-img" src="https://placehold.co/100x100/333/fff?text=Foto" class="w-full h-full rounded-full object-cover border-2 border-gray-600 group-hover:border-orange-500 transition">
+                        <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <i class="fas fa-camera text-white text-xl"></i>
+                        </div>
+                        <input type="file" id="config-file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handleConfigImageSelect(event)">
+                    </div>
+                    <p id="config-upload-status" class="text-xs text-gray-400">Toca para cambiar imagen</p>
                 </div>
 
                 <div class="flex gap-2 mt-4">
-                    <button onclick="updateProfilePic()" class="w-full bg-orange-600 hover:bg-orange-500 text-white rounded py-2 font-bold transition">Guardar</button>
+                    <button id="btn-save-config" onclick="saveNewProfilePic()" class="w-full bg-orange-600 hover:bg-orange-500 text-white rounded py-2 font-bold transition">Guardar</button>
                     <button onclick="closeConfigModal()" class="w-full bg-gray-700 hover:bg-gray-600 text-white rounded py-2 transition">Cancelar</button>
                 </div>
                  <button onclick="logoutUser()" class="w-full mt-2 text-red-400 hover:text-red-300 text-sm underline">Cerrar Sesión</button>
@@ -991,29 +997,87 @@
                     const data = snap.val();
                     const photoUrl = data.profilePic || 'https://placehold.co/100x100/333/fff?text=U';
                     document.getElementById('header-user-img').src = photoUrl;
-                    document.getElementById('config-photo-input').value = data.profilePic || '';
+                    // Ya no usamos input URL, no es necesario setear su valor
                     const nameInput = document.getElementById('name-input');
                     if (nameInput && data.username) nameInput.value = data.username;
                 }
             });
         }
         
+        // Variables para nueva lógica de config
+        let newProfileFile = null;
+
         function openConfigModal() {
             document.getElementById('config-modal').style.display = 'flex';
+            // Cargar imagen actual
+            const currentSrc = document.getElementById('header-user-img').src;
+            document.getElementById('config-preview-img').src = currentSrc;
+            document.getElementById('config-upload-status').innerHTML = 'Toca para cambiar imagen';
+            document.getElementById('btn-save-config').disabled = false;
+            document.getElementById('btn-save-config').innerHTML = 'Guardar';
+            newProfileFile = null;
         }
+
         function closeConfigModal() {
             document.getElementById('config-modal').style.display = 'none';
         }
-        function updateProfilePic() {
-            const newUrl = document.getElementById('config-photo-input').value.trim();
-            if (currentUser && newUrl) {
-                db.ref('users/' + currentUser.uid).update({ profilePic: newUrl })
-                    .then(() => {
+
+        async function handleConfigImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) { alert("Máx 5MB"); return; }
+            
+            newProfileFile = file;
+            document.getElementById('config-preview-img').src = URL.createObjectURL(file);
+            document.getElementById('config-upload-status').innerHTML = '<span class="text-orange-400 font-bold">Imagen seleccionada (No guardada aún)</span>';
+        }
+
+        async function saveNewProfilePic() {
+            if (!newProfileFile) {
+                closeConfigModal(); // Si no cambió nada, solo cierra
+                return;
+            }
+
+            const btn = document.getElementById('btn-save-config');
+            const status = document.getElementById('config-upload-status');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+            status.innerHTML = 'Subiendo a Catbox...';
+
+            try {
+                const formData = new FormData();
+                formData.append('reqtype', 'fileupload');
+                formData.append('userhash', CATBOX_USERHASH);
+                formData.append('fileToUpload', newProfileFile);
+
+                const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData });
+                if (!res.ok) throw new Error("Error de red");
+                
+                const url = await res.text();
+                if (url.includes('catbox.moe')) {
+                    const finalUrl = url.trim();
+                    if (currentUser) {
+                        await db.ref('users/' + currentUser.uid).update({ profilePic: finalUrl });
+                        alert('Foto actualizada correctamente');
                         closeConfigModal();
-                        alert('Foto actualizada');
-                    });
+                    }
+                } else {
+                    throw new Error("Error Catbox API");
+                }
+            } catch (e) {
+                console.error(e);
+                status.innerHTML = '<span class="text-red-500">Error al subir imagen</span>';
+                btn.disabled = false;
+                btn.innerHTML = 'Reintentar';
             }
         }
+
+        function updateProfilePic() {
+            // Esta función queda legacy o puede redirigir a saveNewProfilePic si se llamara
+            saveNewProfilePic();
+        }
+
         function logoutUser() {
             auth.signOut().then(() => {
                 window.location.reload();
@@ -1379,8 +1443,7 @@
                 if (isVerified) {
                     // OFICIAL / ADMIN: Icono Verificado Azul
                     badgeIcon = `<div class="absolute top-2 left-2 z-10 bg-blue-600/90 text-white text-xs p-1.5 rounded-full shadow-md" title="Verificado Oficial"><i class="fas fa-check-circle"></i></div>`;
-                    // Si es galería oficial pura, solo título. Si es feed de admin, mostramos avatar también (opcional, pero el usuario pidió consistencia)
-                    // El usuario pidió: "las imágenes de el usuario administrador... aparecerán con el icono de verificado"
+                    
                     if (item.type === 'feed') {
                          bottomInfo = `
                             <h4 class="truncate font-bold text-white text-sm mb-1">${item.title}</h4>
@@ -1390,7 +1453,7 @@
                             </div>
                         `;
                     } else {
-                        // Galería pura (sin user object embebido usualmente)
+                        // Galería pura
                         bottomInfo = `<h4 class="truncate font-bold text-white text-sm">${item.title}</h4>`;
                     }
                 } else {
