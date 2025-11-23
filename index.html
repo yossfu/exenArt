@@ -53,7 +53,7 @@
             position: fixed; inset: 0; z-index: 9999;
             background-color: #0c0c0c;
             background-image: radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.1) 0%, transparent 50%);
-            display: none;
+            display: none; /* Oculto por defecto */
             align-items: center; justify-content: center;
             padding: 1rem;
             overflow-y: auto;
@@ -94,7 +94,7 @@
             border-radius: 1rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            will-change: transform; /* GPU acceleration */
+            will-change: transform;
         }
         .image-card:hover {
             transform: scale(1.03);
@@ -143,7 +143,7 @@
             to { opacity: 1; }
         }
 
-        /* Fondo difuminado detrás del modal - BLUR AJUSTADO */
+        /* Fondo difuminado */
         .modal-backdrop-blur {
             position: fixed; 
             inset: 0;
@@ -157,7 +157,7 @@
             transition: opacity 0.5s ease;
         }
 
-        /* Contenedor "Visor" para la imagen principal */
+        /* Contenedor "Visor" */
         .viewer-frame {
             background-color: rgba(0, 0, 0, 0.2); 
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -200,7 +200,7 @@
         #image-container .loading-indicator { opacity: 1; transition: opacity 0.5s ease; }
         #image-container.loaded .loading-indicator { opacity: 0; }
 
-        /* --- ESTILOS HERO BANNER (OPTIMIZADO PARA MÓVIL) --- */
+        /* --- ESTILOS HERO BANNER --- */
         .hero-wrapper {
             position: relative;
             width: 100%;
@@ -1026,6 +1026,7 @@
         let fullGalleryCache = []; 
         let usersCache = []; // Cache para usuarios
         let feedCache = [];  // Cache para feed
+        let unifiedGalleryData = []; // Galería + Feed mezclados
         let isLoading = false; 
         let noMoreImages = false; 
         let currentImageId = ''; 
@@ -1150,7 +1151,7 @@
             dots[index].classList.add('active');
         }
 
-        // --- NUEVA FUNCIÓN DE CACHEO DE DATOS ---
+        // --- NUEVA FUNCIÓN DE CACHEO DE DATOS Y FUSIÓN ---
         async function cacheAllDataForSearch() { 
             const searchInput = document.getElementById('search-input'); 
             searchInput.disabled = true; 
@@ -1161,7 +1162,7 @@
             if (snapshot.exists()) { 
                 const allData = []; 
                 snapshot.forEach(child => { allData.push({ id: child.key, type: 'gallery', ...child.val() }); }); 
-                fullGalleryCache = allData.sort((a,b) => b.timestamp - a.timestamp); 
+                fullGalleryCache = allData; // No sort here yet
             } 
 
             // 2. Usuarios
@@ -1178,12 +1179,11 @@
                 const fData = [];
                 feedSnap.forEach(child => { 
                     const post = child.val();
-                    if (post.imageUrl) { // Solo indexar si tiene imagen
-                         // Normalizar para que el modal entienda
+                    if (post.imageUrl) { 
                         fData.push({ 
                             id: child.key, 
                             type: 'feed', 
-                            url: post.imageUrl, // Mapear imageUrl a url
+                            url: post.imageUrl, 
                             thumbnailUrl: post.imageUrl,
                             title: post.title || 'Sin título',
                             desc: post.text,
@@ -1196,6 +1196,10 @@
                 });
                 feedCache = fData;
             }
+
+            // 4. FUSIÓN DE GALERÍAS
+            unifiedGalleryData = [...fullGalleryCache, ...feedCache].sort((a, b) => b.timestamp - a.timestamp);
+            fullGalleryCache.sort((a,b) => b.timestamp - a.timestamp); // Ordenar la oficial también por si acaso
 
             searchInput.disabled = false; 
             searchInput.placeholder = "Buscar perfiles, tags o arte..."; 
@@ -1224,8 +1228,45 @@
         }
         
         function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton'; } }
-        function loadInitialImages() { if (isLoading) return; isLoading = true; const grid = document.getElementById('grid'); generateSkeletons(grid, imagesPerLoad); allImages = fullGalleryCache.slice(0, imagesPerLoad); if (allImages.length > 0) { displaySearchResults(allImages, 'grid'); } else { grid.innerHTML = ''; } isLoading = false; }
-        function loadMoreImages() { if (isLoading || noMoreImages) return; isLoading = true; const loaderContainer = document.getElementById('loader'); loaderContainer.style.display = 'grid'; generateSkeletons(loaderContainer, 3); const currentLoadedCount = allImages.length; const newImages = fullGalleryCache.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); if (newImages.length === 0) { noMoreImages = true; } else { allImages = allImages.concat(newImages); displaySearchResults(newImages, 'grid', true); } loaderContainer.style.display = 'none'; isLoading = false; }
+        
+        // --- MODIFICADO: Cargar desde la galería unificada ---
+        function loadInitialImages() { 
+            if (isLoading) return; 
+            isLoading = true; 
+            const grid = document.getElementById('grid'); 
+            generateSkeletons(grid, imagesPerLoad); 
+            // Ahora usamos unifiedGalleryData para mostrar TODO en el inicio
+            allImages = unifiedGalleryData.slice(0, imagesPerLoad); 
+            if (allImages.length > 0) { 
+                displaySearchResults(allImages, 'grid'); 
+            } else { 
+                grid.innerHTML = ''; 
+            } 
+            isLoading = false; 
+        }
+
+        // --- MODIFICADO: Cargar más desde la galería unificada ---
+        function loadMoreImages() { 
+            if (isLoading || noMoreImages) return; 
+            isLoading = true; 
+            const loaderContainer = document.getElementById('loader'); 
+            loaderContainer.style.display = 'grid'; 
+            generateSkeletons(loaderContainer, 3); 
+            
+            const currentLoadedCount = allImages.length; 
+            // Slice desde unifiedGalleryData
+            const newImages = unifiedGalleryData.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); 
+            
+            if (newImages.length === 0) { 
+                noMoreImages = true; 
+            } else { 
+                allImages = allImages.concat(newImages); 
+                displaySearchResults(newImages, 'grid', true); 
+            } 
+            loaderContainer.style.display = 'none'; 
+            isLoading = false; 
+        }
+
         async function loadTopLikedImages() { const grid = document.getElementById('top-liked-grid'); generateSkeletons(grid, 9); const sortedIds = Object.keys(allReactionCounts).sort((a, b) => (allReactionCounts[b] || 0) - (allReactionCounts[a] || 0)).slice(0, 9); if (sortedIds.length === 0) { grid.innerHTML = '<p class="w-full col-span-3 text-center text-gray-500">Aún no hay imágenes gustadas.</p>'; return; } const images = sortedIds.map(id => fullGalleryCache.find(img => img.id === id)).filter(Boolean); displaySearchResults(images, 'top-liked-grid'); }
         
         function logInteraction(tags, type) {
@@ -1280,7 +1321,7 @@
             displaySearchResults(finalSelection, 'for-you-grid');
         }
 
-        // --- FUNCIÓN DE RENDERIZADO (Actualizada para múltiples tipos) ---
+        // --- FUNCIÓN DE RENDERIZADO (Actualizada para múltiples tipos e iconos) ---
         function displaySearchResults(items, containerId, append = false) { 
             const grid = document.getElementById(containerId); 
             if (!append) grid.innerHTML = ''; 
@@ -1293,12 +1334,12 @@
                 // RENDERIZAR TARJETA DE USUARIO
                 if (item.type === 'user') {
                     const div = document.createElement('div');
-                    div.className = "bg-[#111] border border-gray-800 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 transition group";
+                    div.className = "bg-[#111] border border-gray-800 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 transition group aspect-[2/3]";
                     div.onclick = () => window.location.href = `profile.html?uid=${item.id}`;
                     div.innerHTML = `
-                        <img src="${item.profilePic || 'https://placehold.co/100x100'}" class="w-16 h-16 rounded-full object-cover mb-2 border-2 border-gray-700 group-hover:border-orange-500 transition">
-                        <span class="font-bold text-white text-sm truncate w-full text-center">${item.username}</span>
-                        <span class="text-[10px] text-gray-500 uppercase tracking-wider">Usuario</span>
+                        <img src="${item.profilePic || 'https://placehold.co/100x100'}" class="w-20 h-20 rounded-full object-cover mb-3 border-2 border-gray-700 group-hover:border-orange-500 transition shadow-lg">
+                        <span class="font-bold text-white text-lg truncate w-full text-center">${item.username}</span>
+                        <span class="text-xs text-gray-500 uppercase tracking-wider mt-1 bg-gray-900 px-2 py-1 rounded-full">Usuario</span>
                     `;
                     grid.appendChild(div);
                     return;
@@ -1315,20 +1356,34 @@
                 
                 const isLiked = userReactions[item.id] === 'like'; 
                 const displayUrl = item.thumbnailUrl || item.url; 
-                // Si es feed, puede que no tengamos likes en allReactionCounts (son dbs distintas)
-                // Para simplificar en la búsqueda, mostramos 0 si no está cacheado
                 const reactionCount = allReactionCounts[item.id] || 0; 
                 
-                // Distintivo para feed
-                const feedBadge = item.type === 'feed' ? `<div class="absolute top-2 left-2 bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded-full shadow-md font-bold"><i class="fas fa-users"></i> Com</div>` : '';
+                // --- LÓGICA DE ICONOS Y AVATARES ---
+                let badgeIcon = '';
+                let bottomInfo = '';
+
+                if (item.type === 'gallery') {
+                    // OFICIAL: Icono Verificado
+                    badgeIcon = `<div class="absolute top-2 left-2 z-10 bg-blue-600/90 text-white text-xs p-1.5 rounded-full shadow-md" title="Verificado Oficial"><i class="fas fa-check-circle"></i></div>`;
+                    bottomInfo = `<h4 class="truncate font-bold text-white text-sm">${item.title}</h4>`;
+                } else if (item.type === 'feed') {
+                    // COMUNIDAD: Icono Mundo + Avatar Usuario
+                    badgeIcon = `<div class="absolute top-2 left-2 z-10 bg-green-600/90 text-white text-xs p-1.5 rounded-full shadow-md" title="Comunidad"><i class="fas fa-globe"></i></div>`;
+                    bottomInfo = `
+                        <h4 class="truncate font-bold text-white text-sm mb-1">${item.title}</h4>
+                        <div class="flex items-center gap-2">
+                            <img src="${item.user.avatar}" class="w-5 h-5 rounded-full border border-white/30 object-cover">
+                            <span class="text-[10px] text-gray-300 truncate">${item.user.name}</span>
+                        </div>
+                    `;
+                }
 
                 div.innerHTML = `
                     <img src="${displayUrl}" alt="${item.title}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
-                    ${feedBadge}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/10 pointer-events-none"></div>
+                    ${badgeIcon}
                     <div class="absolute bottom-0 left-0 p-3 pointer-events-none w-full">
-                        <h4 class="truncate font-bold text-white text-sm">${item.title}</h4>
-                        ${item.user ? `<p class="text-[10px] text-gray-400 truncate">Por: ${item.user.name}</p>` : ''}
+                        ${bottomInfo}
                     </div>
                     ${item.type === 'gallery' ? `<button id="grid-like-btn-${item.id}" onclick="toggleReactionFromGrid('${item.id}', event)" class="grid-like-btn absolute top-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm touch-feedback ${isLiked ? 'liked' : ''}"><i class="fas fa-heart text-gray-300"></i><span id="reaction-count-grid-${item.id}">${reactionCount}</span></button>` : ''}
                 `; 
@@ -1418,12 +1473,13 @@
             // Mostrar subtítulo si es de la comunidad
             const subTitle = document.getElementById('modal-subtitle');
             if (img.type === 'feed') {
-                subTitle.textContent = `Arte de la comunidad por ${img.user.name}`;
+                subTitle.innerHTML = `<div class="flex items-center justify-center gap-2 cursor-pointer bg-gray-800/50 py-1 px-3 rounded-full w-fit mx-auto mt-2 border border-gray-700 hover:border-orange-500 transition"><img src="${img.user.avatar}" class="w-6 h-6 rounded-full object-cover"><span class="text-sm text-gray-300">Por: <span class="text-orange-400 font-bold">${img.user.name}</span></span></div>`;
                 subTitle.classList.remove('hidden');
                 subTitle.onclick = () => window.location.href = `profile.html?uid=${img.user.id}`;
-                subTitle.style.cursor = 'pointer';
             } else {
-                subTitle.classList.add('hidden');
+                subTitle.innerHTML = `<div class="flex items-center justify-center gap-2 mt-2 text-blue-400 font-bold text-sm"><i class="fas fa-check-circle"></i> Galería Oficial</div>`;
+                subTitle.classList.remove('hidden');
+                subTitle.onclick = null;
             }
 
             document.getElementById('desc').textContent = img.desc || 'Sin descripción.'; 
