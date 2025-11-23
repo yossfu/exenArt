@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>exen-E | Perfil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        :root { 
+            --accent: #f97316; 
+            --accent-glow: rgba(251, 146, 60, 0.4);
+            --title-font: 'Poppins', sans-serif;
+            --body-font: 'Inter', sans-serif;
+        }
+        body { 
+            font-family: var(--body-font); 
+            background-color: #0c0c0c;
+            background-image: radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.08) 0%, transparent 50%);
+            color: #f3f4f6;
+            padding-bottom: 90px;
+            min-height: 100vh;
+        }
+
+        .profile-header { background: linear-gradient(to bottom, rgba(20, 20, 20, 0.8), transparent); }
+        .stat-box { display: flex; flex-direction: column; align-items: center; }
+
+        .grid-item {
+            position: relative; aspect-ratio: 1 / 1; overflow: hidden; background-color: #1a1a1c; cursor: pointer;
+        }
+        .grid-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+        .grid-overlay {
+            position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%);
+            display: flex; align-items: flex-end; justify-content: start; 
+            padding: 8px; opacity: 1; 
+        }
+        @media (min-width: 768px) {
+            .grid-overlay { 
+                background: rgba(0, 0, 0, 0.4); justify-content: center; align-items: center; opacity: 0; padding: 0;
+            }
+            .grid-item:hover .grid-overlay { opacity: 1; }
+            .grid-item:hover .grid-image { transform: scale(1.1); }
+        }
+
+        .avatar-container { position: relative; cursor: pointer; }
+        .edit-badge {
+            position: absolute; bottom: 0; right: 0; background-color: var(--accent);
+            border: 2px solid #0c0c0c; width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 12px; color: white;
+        }
+        .bottom-nav {
+            background-color: rgba(10, 10, 10, 0.9); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); border-top: 1px solid rgba(55, 65, 81, 0.3);
+        }
+        .nav-item { color: #9ca3af; transition: color 0.25s ease; }
+        .nav-item.active { color: var(--accent); transform: translateY(-4px); }
+        .loading-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+
+        #page-loader {
+            position: fixed; inset: 0; background: #0c0c0c; z-index: 5000; display: flex; align-items: center; justify-content: center;
+        }
+
+        #modal { display: none; z-index: 3000; }
+        #modal.visible { display: block; animation: modalFadeIn 0.3s forwards; }
+        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-backdrop-blur { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.4); transform: scale(1.1); z-index: 0; pointer-events: none; }
+        .viewer-frame { background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); position: relative; overflow: hidden; backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="page-loader">
+        <div class="text-center">
+            <img src="https://files.catbox.moe/ap1lh0.png" class="h-16 w-auto mb-4 animate-pulse mx-auto">
+            <i class="fas fa-spinner fa-spin text-orange-500 text-2xl"></i>
+        </div>
+    </div>
+
+    <header class="profile-header pt-8 pb-4 px-4">
+        <div class="max-w-lg mx-auto">
+            <div class="flex items-center gap-6 mb-6">
+                <div class="avatar-container flex-shrink-0" onclick="triggerPhotoUpload()">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-gray-700 relative group">
+                        <img id="profile-image" src="https://placehold.co/150x150/333/fff?text=..." class="w-full h-full object-cover group-hover:opacity-80 transition">
+                        <div id="avatar-loading" class="loading-overlay hidden"><i class="fas fa-spinner fa-spin text-white"></i></div>
+                    </div>
+                    <div class="edit-badge"><i class="fas fa-camera"></i></div>
+                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                </div>
+
+                <div class="flex-1">
+                    <h2 id="username-display" class="text-xl font-bold text-white font-[Poppins] mb-1 truncate">...</h2>
+                    <p id="email-display" class="text-xs text-gray-400 mb-3 truncate">...</p>
+                    
+                    <div class="flex gap-8">
+                        <div class="stat-box">
+                            <span id="posts-count" class="text-lg font-bold text-white">-</span>
+                            <span class="text-xs text-gray-500">Publicaciones</span>
+                        </div>
+                        <div class="stat-box">
+                            <span id="likes-received-count" class="text-lg font-bold text-white">-</span>
+                            <span class="text-xs text-gray-500">Likes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-2 mb-4">
+                <button onclick="triggerPhotoUpload()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white text-sm font-semibold py-1.5 rounded-lg border border-gray-700 transition">Editar Foto</button>
+                <button onclick="logout()" class="bg-gray-800 hover:bg-red-900/50 text-white px-3 py-1.5 rounded-lg border border-gray-700 transition"><i class="fas fa-sign-out-alt text-red-400"></i></button>
+            </div>
+            <div class="text-sm text-gray-300"><p>Bienvenido a mi espacio en exen-E.</p></div>
+        </div>
+    </header>
+
+    <div class="border-t border-gray-800 mb-2"></div>
+
+    <main class="container mx-auto max-w-lg pb-4">
+        <div class="flex justify-center gap-12 py-2 mb-1 text-gray-500 border-b border-gray-800/50">
+            <button class="text-orange-500 border-b-2 border-orange-500 pb-2 px-2"><i class="fas fa-th text-lg"></i></button>
+        </div>
+
+        <div id="profile-grid" class="grid grid-cols-3 gap-1 sm:gap-2 px-1 sm:px-0"></div>
+        
+        <div id="no-posts-msg" class="hidden text-center py-12 text-gray-500 text-sm">
+            <div class="bg-gray-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-camera text-2xl opacity-50"></i></div>
+            Aún no has publicado nada.
+        </div>
+    </main>
+
+    <!-- VISOR MODAL -->
+    <div id="modal" class="fixed inset-0">
+        <img id="modal-backdrop" src="" class="modal-backdrop-blur" alt="">
+        <button id="close-modal" class="absolute top-4 right-4 z-[3010] h-10 w-10 flex items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 transition backdrop-blur-md"><i class="fas fa-times"></i></button>
+        
+        <div class="h-full w-full overflow-y-auto bg-black/30 relative z-10 flex items-center justify-center p-4">
+            <div class="w-full max-w-4xl flex flex-col items-center">
+                <div class="viewer-frame relative w-full max-h-[85vh] flex items-center justify-center bg-black/50">
+                    <img id="modal-image" src="" class="max-w-full max-h-[85vh] object-contain shadow-2xl">
+                </div>
+                <div class="mt-4 text-center p-4 bg-black/60 rounded-xl backdrop-blur-md border border-white/10 max-w-2xl">
+                    <p id="modal-user" class="text-orange-400 font-bold text-lg"></p>
+                    <p id="modal-desc" class="text-gray-200 mt-1"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around items-center px-2">
+        <a href="index.html" class="nav-item flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-th-large text-xl mb-1"></i><span class="text-[10px] font-semibold">Galería</span></a>
+        <a href="feed.html" class="nav-item flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-globe-americas text-xl mb-1"></i><span class="text-[10px] font-semibold">Social</span></a>
+        <a href="profile.html" class="nav-item active flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-user text-xl mb-1"></i><span class="text-[10px] font-semibold">Perfil</span></a>
+    </nav>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+        const CATBOX_USERHASH = "341adb9d3c2d09d0485aa908c";
+        let currentUser = null;
+
+        auth.onAuthStateChanged(user => {
+            const loader = document.getElementById('page-loader');
+            if (user && !user.isAnonymous) {
+                currentUser = user;
+                loadUserProfile();
+                loadUserPosts();
+                loader.style.display = 'none';
+            } else { 
+                window.location.href = "login.html"; 
+            }
+        });
+
+        function loadUserProfile() {
+            db.ref('users/' + currentUser.uid).on('value', snap => {
+                const data = snap.val();
+                if (data) {
+                    document.getElementById('username-display').innerText = data.username || 'Usuario';
+                    document.getElementById('email-display').innerText = data.email || currentUser.email;
+                    document.getElementById('profile-image').src = data.profilePic || 'https://placehold.co/150x150/333/fff?text=U';
+                }
+            });
+        }
+
+        function loadUserPosts() {
+            const grid = document.getElementById('profile-grid');
+            const noPosts = document.getElementById('no-posts-msg');
+            
+            db.ref('feed_posts').orderByChild('userId').equalTo(currentUser.uid).limitToLast(50).once('value', snap => {
+                grid.innerHTML = '';
+                
+                if (!snap.exists()) {
+                    noPosts.classList.remove('hidden');
+                    document.getElementById('posts-count').innerText = "0";
+                    document.getElementById('likes-received-count').innerText = "0";
+                    return;
+                }
+                
+                noPosts.classList.add('hidden');
+                const posts = [];
+                let totalLikes = 0;
+                
+                snap.forEach(child => {
+                    const post = child.val(); 
+                    post.id = child.key; 
+                    posts.push(post);
+                    if (post.likes) totalLikes += post.likes;
+                });
+
+                document.getElementById('posts-count').innerText = posts.length;
+                document.getElementById('likes-received-count').innerText = totalLikes;
+                
+                posts.sort((a, b) => b.timestamp - a.timestamp);
+
+                posts.forEach(post => {
+                    const imgUrl = post.imageUrl || 'https://placehold.co/300x300/222/666?text=Texto';
+                    const div = document.createElement('div');
+                    div.className = "grid-item group";
+                    div.onclick = () => openViewer(imgUrl, post.userName, post.text);
+                    
+                    div.innerHTML = `
+                        <img src="${imgUrl}" class="grid-image" loading="lazy">
+                        <div class="grid-overlay">
+                            <div class="text-white font-bold flex items-center gap-3 text-xs sm:text-lg drop-shadow-md">
+                                <span class="flex items-center gap-1"><i class="fas fa-heart"></i> ${post.likes || 0}</span>
+                                <span class="flex items-center gap-1"><i class="fas fa-comment"></i> ${post.commentCount || 0}</span>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(div);
+                });
+            });
+        }
+
+        function openViewer(url, user, desc) {
+            const modal = document.getElementById('modal');
+            document.getElementById('modal-image').src = url;
+            document.getElementById('modal-backdrop').src = url;
+            document.getElementById('modal-user').textContent = user || 'Usuario';
+            document.getElementById('modal-desc').textContent = desc ? desc : '';
+            modal.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('modal').classList.remove('visible');
+            document.body.style.overflow = 'auto';
+        });
+
+        function triggerPhotoUpload() { document.getElementById('file-input').click(); }
+        
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file || file.size > 5 * 1024 * 1024) { alert("Máx 5MB"); return; }
+            
+            document.getElementById('avatar-loading').classList.remove('hidden');
+            
+            try {
+                const formData = new FormData();
+                formData.append('reqtype', 'fileupload'); 
+                formData.append('userhash', CATBOX_USERHASH); 
+                formData.append('fileToUpload', file);
+                
+                const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData });
+                
+                if (!res.ok) throw new Error("Error de conexión");
+                const txt = await res.text();
+                
+                if (txt.includes('catbox.moe')) {
+                    const newUrl = txt.trim();
+                    await db.ref('users/' + currentUser.uid).update({ profilePic: newUrl });
+                    document.getElementById('profile-image').src = newUrl;
+                } else {
+                    throw new Error("Respuesta inesperada de Catbox");
+                }
+            } catch (e) { 
+                alert("Error al subir imagen: " + e.message); 
+            } finally { 
+                document.getElementById('avatar-loading').classList.add('hidden'); 
+                event.target.value = ''; 
+            }
+        }
+
+        function logout() { auth.signOut().then(() => window.location.href = "login.html"); }
+    </script>
+</body>
+</html>
