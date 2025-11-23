@@ -29,6 +29,52 @@
             min-height: 100vh;
         }
 
+        /* --- PANTALLA DE CARGA INICIAL --- */
+        #initial-loader {
+            position: fixed; inset: 0; z-index: 10000;
+            background-color: #0c0c0c;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+        .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 10px var(--accent)); animation: pulse 2s infinite; }
+
+        /* --- ESTILOS DE AUTENTICACIÓN (OVERLAY) --- */
+        #auth-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background-color: #0c0c0c;
+            background-image: radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.1) 0%, transparent 50%);
+            display: none; /* Oculto por defecto, controlado por JS */
+            align-items: center; justify-content: center;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .form-card {
+            background: rgba(20, 20, 25, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            width: 100%; max-width: 400px;
+        }
+        .input-field {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 10px rgba(249, 115, 22, 0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:active { transform: scale(0.98); }
+        .hidden-step { display: none; animation: fadeIn 0.5s forwards; }
+        .upload-spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* --- ESTILOS ORIGINALES DE PERFIL --- */
         .profile-header { background: linear-gradient(to bottom, rgba(20, 20, 20, 0.8), transparent); }
         .stat-box { display: flex; flex-direction: column; align-items: center; }
 
@@ -39,7 +85,6 @@
         .grid-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
         .grid-item:active .grid-image { transform: scale(0.98); }
         
-        /* Overlay siempre visible para Mobile */
         .grid-overlay {
             position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
             display: flex; align-items: flex-end; justify-content: start; 
@@ -60,6 +105,7 @@
         .nav-item.active { color: var(--accent); transform: translateY(-4px); }
         .loading-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; border-radius: 50%; }
 
+        /* Loader interno de perfil (cuando se carga data) */
         #page-loader {
             position: fixed; inset: 0; background: #0c0c0c; z-index: 5000; display: flex; align-items: center; justify-content: center;
         }
@@ -71,109 +117,224 @@
         .viewer-frame { background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); position: relative; overflow: hidden; backdrop-filter: blur(10px); }
         
         .verified-badge { color: #3b82f6; margin-left: 4px; font-size: 0.9em; }
+
+        /* Ocultar contenido principal por defecto */
+        #app-content { display: none; }
     </style>
 </head>
 <body class="antialiased">
 
-    <div id="page-loader">
-        <div class="text-center">
-            <img src="https://files.catbox.moe/ap1lh0.png" class="h-16 w-auto mb-4 animate-pulse mx-auto">
-            <i class="fas fa-spinner fa-spin text-orange-500 text-2xl"></i>
-        </div>
+    <!-- 1. PANTALLA DE CARGA INICIAL (Evita flash) -->
+    <div id="initial-loader">
+        <img src="https://files.catbox.moe/ap1lh0.png" class="loader-logo">
+        <i class="fas fa-spinner fa-spin text-orange-500 text-2xl"></i>
     </div>
 
-    <header class="profile-header pt-8 pb-4 px-4">
-        <div class="max-w-lg mx-auto">
-            <div class="flex items-center gap-6 mb-6">
-                <div class="avatar-container flex-shrink-0" id="avatar-container">
-                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-gray-700 relative group">
-                        <img id="profile-image" src="https://placehold.co/150x150/333/fff?text=..." class="w-full h-full object-cover group-hover:opacity-80 transition">
-                        <div id="avatar-loading" class="loading-overlay hidden"><i class="fas fa-spinner fa-spin text-white"></i></div>
-                    </div>
-                    <div id="edit-badge" class="edit-badge hidden"><i class="fas fa-camera"></i></div>
-                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
-                </div>
-
-                <div class="flex-1">
-                    <div class="flex items-center">
-                        <h2 id="username-display" class="text-xl font-bold text-white font-[Poppins] mb-1 truncate">...</h2>
-                        <i id="admin-verify" class="fas fa-check-circle verified-badge hidden" title="Administrador Verificado"></i>
-                    </div>
-                    <!-- Correo eliminado visualmente -->
-                    
-                    <div class="flex gap-8 mt-2">
-                        <div class="stat-box">
-                            <span id="posts-count" class="text-lg font-bold text-white">-</span>
-                            <span class="text-xs text-gray-500">Publicaciones</span>
-                        </div>
-                        <div class="stat-box">
-                            <span id="likes-received-count" class="text-lg font-bold text-white">-</span>
-                            <span class="text-xs text-gray-500">Likes</span>
-                        </div>
-                    </div>
+    <!-- 2. OVERLAY DE LOGIN / REGISTRO -->
+    <div id="auth-overlay">
+        <div class="form-card rounded-2xl p-8 relative overflow-hidden">
+            <!-- Header Auth -->
+            <div class="text-center mb-8">
+                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-16 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
+                <h2 class="text-2xl font-bold font-[Poppins] text-white">Bienvenido</h2>
+                <div class="flex justify-center gap-4 mt-4 text-sm font-semibold">
+                    <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1 transition-colors" onclick="switchAuthTab('login')">Iniciar Sesión</button>
+                    <button id="tab-register" class="text-gray-400 pb-1 hover:text-white transition-colors" onclick="switchAuthTab('register')">Registrarse</button>
                 </div>
             </div>
-            
-            <div class="flex gap-2 mb-4" id="profile-actions"></div>
-            
-            <!-- Slogan / Bio Editable -->
-            <div class="text-sm text-gray-300 relative group">
-                <div id="slogan-display-container" class="flex items-center gap-2">
-                    <p id="welcome-msg" class="italic">Bienvenido a mi espacio en exen-E.</p>
-                    <button id="edit-slogan-btn" class="text-gray-500 hover:text-orange-500 hidden p-1" onclick="toggleSloganEdit()">
-                        <i class="fas fa-pen text-xs"></i>
+
+            <!-- LOGIN FORM -->
+            <form id="login-form" class="flex flex-col gap-4">
+                <div class="space-y-1">
+                    <label class="text-xs text-gray-400 ml-1">Correo Electrónico</label>
+                    <input type="email" id="login-email" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="tu@correo.com" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs text-gray-400 ml-1">Contraseña</label>
+                    <input type="password" id="login-password" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="btn-login-submit" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2 shadow-lg shadow-orange-500/20 flex justify-center items-center gap-2">
+                    <span>Entrar</span>
+                </button>
+                <p id="login-error" class="text-red-400 text-xs text-center mt-2 hidden bg-red-900/20 p-2 rounded border border-red-500/30"></p>
+            </form>
+
+            <!-- REGISTER FORM (Step 1) -->
+            <form id="register-step-1" class="flex flex-col gap-4 hidden-step" style="display: none;">
+                <p class="text-sm text-gray-300 text-center mb-2">Paso 1: Tu Identidad</p>
+                <div class="space-y-1">
+                    <label class="text-xs text-gray-400 ml-1">Nombre de Usuario</label>
+                    <input type="text" id="reg-name" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Como quieres que te llamen" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs text-gray-400 ml-1">Edad</label>
+                    <input type="number" id="reg-age" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Tu edad real" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs text-gray-400 ml-1">Foto de Perfil</label>
+                    <div class="relative w-full">
+                        <input type="file" id="file-upload-auth" accept="image/*" class="hidden" onchange="handleAuthFileUpload(event)">
+                        <label for="file-upload-auth" class="flex items-center gap-3 w-full input-field rounded-lg px-4 py-3 cursor-pointer hover:bg-white/5 transition group">
+                            <div class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0 border border-gray-500 group-hover:border-orange-500 transition">
+                                <img id="auth-preview-img" src="https://placehold.co/100x100/333/fff?text=Foto" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1">
+                                <span class="text-sm text-gray-300 block font-medium">Subir imagen</span>
+                                <span class="text-[10px] text-gray-500 block" id="upload-status">Max 5MB</span>
+                            </div>
+                            <i class="fas fa-camera text-gray-400 group-hover:text-orange-500 transition"></i>
+                        </label>
+                    </div>
+                    <input type="hidden" id="reg-photo-url">
+                </div>
+                <button type="button" id="btn-step-1" onclick="validateAuthStep1()" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2 flex justify-center items-center gap-2">
+                    <span>Continuar</span> <i class="fas fa-arrow-right ml-1"></i>
+                </button>
+                <p id="step1-error" class="text-red-400 text-xs text-center mt-2 hidden"></p>
+            </form>
+
+            <!-- REGISTER FORM (Step 2) -->
+            <form id="register-step-2" class="flex flex-col gap-4 hidden-step" style="display: none;">
+                <div class="flex items-center gap-3 bg-green-900/30 p-3 rounded-lg border border-green-500/30 mb-2">
+                    <div class="bg-green-500 rounded-full p-1"><i class="fas fa-check text-white text-xs"></i></div>
+                    <p class="text-sm text-green-200">Datos verificados.</p>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs text-gray-400 ml-1">Correo Electrónico</label>
+                    <input type="email" id="reg-email" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="tu@correo.com" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs text-gray-400 ml-1">Contraseña</label>
+                    <input type="password" id="reg-password" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Mínimo 6 caracteres" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs text-gray-400 ml-1">Confirmar Contraseña</label>
+                    <input type="password" id="reg-confirm-password" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="Repite tu contraseña" required>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <button type="button" onclick="authBackToStep1()" class="w-1/3 py-3 rounded-lg font-semibold text-gray-400 border border-gray-600 hover:bg-gray-800">Atrás</button>
+                    <button type="submit" id="btn-register-final" class="btn-primary w-2/3 py-3 rounded-lg font-bold text-white shadow-lg shadow-orange-500/20 flex justify-center items-center gap-2">
+                        <span>Finalizar</span>
                     </button>
                 </div>
+                <p id="reg-error" class="text-red-400 text-xs text-center mt-2 hidden bg-red-900/20 p-2 rounded border border-red-500/30"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Edad Registro -->
+    <div id="age-alert-modal" class="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" style="display: none;">
+        <div class="bg-gray-900 border border-red-500/50 rounded-2xl p-6 max-w-sm w-full text-center shadow-[0_0_30px_rgba(239,68,68,0.3)]">
+            <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4 animate-pulse"></i>
+            <h3 class="text-xl font-bold text-white mb-2">Acceso Restringido</h3>
+            <p class="text-gray-300 mb-6">Esta plataforma es para mayores de 18 años. No puedes registrarte si eres menor.</p>
+            <button onclick="document.getElementById('age-alert-modal').style.display='none'" class="w-full py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-semibold transition">Entendido</button>
+        </div>
+    </div>
+
+    <!-- 3. CONTENIDO PRINCIPAL (Oculto hasta Auth) -->
+    <div id="app-content">
+        
+        <!-- Loader Interno del Perfil -->
+        <div id="page-loader">
+            <div class="text-center">
+                <img src="https://files.catbox.moe/ap1lh0.png" class="h-16 w-auto mb-4 animate-pulse mx-auto">
+                <i class="fas fa-spinner fa-spin text-orange-500 text-2xl"></i>
+            </div>
+        </div>
+
+        <header class="profile-header pt-8 pb-4 px-4">
+            <div class="max-w-lg mx-auto">
+                <div class="flex items-center gap-6 mb-6">
+                    <div class="avatar-container flex-shrink-0" id="avatar-container">
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-gray-700 relative group">
+                            <img id="profile-image" src="https://placehold.co/150x150/333/fff?text=..." class="w-full h-full object-cover group-hover:opacity-80 transition">
+                            <div id="avatar-loading" class="loading-overlay hidden"><i class="fas fa-spinner fa-spin text-white"></i></div>
+                        </div>
+                        <div id="edit-badge" class="edit-badge hidden"><i class="fas fa-camera"></i></div>
+                        <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                    </div>
+
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <h2 id="username-display" class="text-xl font-bold text-white font-[Poppins] mb-1 truncate">...</h2>
+                            <i id="admin-verify" class="fas fa-check-circle verified-badge hidden" title="Administrador Verificado"></i>
+                        </div>
+                        
+                        <div class="flex gap-8 mt-2">
+                            <div class="stat-box">
+                                <span id="posts-count" class="text-lg font-bold text-white">-</span>
+                                <span class="text-xs text-gray-500">Publicaciones</span>
+                            </div>
+                            <div class="stat-box">
+                                <span id="likes-received-count" class="text-lg font-bold text-white">-</span>
+                                <span class="text-xs text-gray-500">Likes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
-                <div id="slogan-edit-container" class="hidden mt-2">
-                    <input type="text" id="slogan-input" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-orange-500 focus:outline-none" maxlength="60" placeholder="Escribe tu frase...">
-                    <div class="flex justify-end gap-2 mt-2">
-                        <button onclick="toggleSloganEdit()" class="text-xs text-gray-400 px-3 py-1">Cancelar</button>
-                        <button onclick="saveSlogan()" class="text-xs bg-orange-600 text-white px-3 py-1 rounded font-bold">Guardar</button>
+                <div class="flex gap-2 mb-4" id="profile-actions"></div>
+                
+                <!-- Slogan / Bio Editable -->
+                <div class="text-sm text-gray-300 relative group">
+                    <div id="slogan-display-container" class="flex items-center gap-2">
+                        <p id="welcome-msg" class="italic">Bienvenido a mi espacio en exen-E.</p>
+                        <button id="edit-slogan-btn" class="text-gray-500 hover:text-orange-500 hidden p-1" onclick="toggleSloganEdit()">
+                            <i class="fas fa-pen text-xs"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="slogan-edit-container" class="hidden mt-2">
+                        <input type="text" id="slogan-input" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-orange-500 focus:outline-none" maxlength="60" placeholder="Escribe tu frase...">
+                        <div class="flex justify-end gap-2 mt-2">
+                            <button onclick="toggleSloganEdit()" class="text-xs text-gray-400 px-3 py-1">Cancelar</button>
+                            <button onclick="saveSlogan()" class="text-xs bg-orange-600 text-white px-3 py-1 rounded font-bold">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="border-t border-gray-800 mb-2"></div>
+
+        <main class="container mx-auto max-w-lg pb-4">
+            <div class="flex justify-center gap-12 py-2 mb-1 text-gray-500 border-b border-gray-800/50">
+                <button class="text-orange-500 border-b-2 border-orange-500 pb-2 px-2"><i class="fas fa-th text-lg"></i></button>
+            </div>
+
+            <div id="profile-grid" class="grid grid-cols-3 gap-1 sm:gap-2 px-1 sm:px-0"></div>
+            
+            <div id="no-posts-msg" class="hidden text-center py-12 text-gray-500 text-sm">
+                <div class="bg-gray-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-camera text-2xl opacity-50"></i></div>
+                <span id="empty-msg">Aún no has publicado nada.</span>
+            </div>
+        </main>
+
+        <!-- VISOR MODAL -->
+        <div id="modal" class="fixed inset-0 w-full h-full">
+            <button id="close-modal" class="absolute top-4 right-4 z-[3010] h-12 w-12 flex items-center justify-center rounded-full bg-gray-800/80 text-white active:scale-90 transition backdrop-blur-md"><i class="fas fa-times text-xl"></i></button>
+            
+            <div class="h-full w-full flex items-center justify-center p-4">
+                <div class="w-full max-w-4xl flex flex-col items-center max-h-[90vh]">
+                    <div class="relative w-full flex-1 flex items-center justify-center bg-black/50 rounded-xl overflow-hidden">
+                        <img id="modal-image" src="" class="max-w-full max-h-[80vh] object-contain shadow-2xl">
+                    </div>
+                    <div class="mt-4 text-center p-4 bg-black/80 rounded-xl backdrop-blur-md border border-white/10 w-full max-w-2xl">
+                        <h3 id="modal-title" class="text-orange-400 font-bold text-xl font-[Poppins]"></h3>
+                        <div class="flex justify-center gap-2 my-2 flex-wrap" id="modal-tags"></div>
+                        <p id="modal-desc" class="text-gray-300 text-sm"></p>
                     </div>
                 </div>
             </div>
         </div>
-    </header>
 
-    <div class="border-t border-gray-800 mb-2"></div>
-
-    <main class="container mx-auto max-w-lg pb-4">
-        <div class="flex justify-center gap-12 py-2 mb-1 text-gray-500 border-b border-gray-800/50">
-            <button class="text-orange-500 border-b-2 border-orange-500 pb-2 px-2"><i class="fas fa-th text-lg"></i></button>
-        </div>
-
-        <div id="profile-grid" class="grid grid-cols-3 gap-1 sm:gap-2 px-1 sm:px-0"></div>
-        
-        <div id="no-posts-msg" class="hidden text-center py-12 text-gray-500 text-sm">
-            <div class="bg-gray-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-camera text-2xl opacity-50"></i></div>
-            <span id="empty-msg">Aún no has publicado nada.</span>
-        </div>
-    </main>
-
-    <!-- VISOR MODAL -->
-    <div id="modal" class="fixed inset-0 w-full h-full">
-        <button id="close-modal" class="absolute top-4 right-4 z-[3010] h-12 w-12 flex items-center justify-center rounded-full bg-gray-800/80 text-white active:scale-90 transition backdrop-blur-md"><i class="fas fa-times text-xl"></i></button>
-        
-        <div class="h-full w-full flex items-center justify-center p-4">
-            <div class="w-full max-w-4xl flex flex-col items-center max-h-[90vh]">
-                <div class="relative w-full flex-1 flex items-center justify-center bg-black/50 rounded-xl overflow-hidden">
-                    <img id="modal-image" src="" class="max-w-full max-h-[80vh] object-contain shadow-2xl">
-                </div>
-                <div class="mt-4 text-center p-4 bg-black/80 rounded-xl backdrop-blur-md border border-white/10 w-full max-w-2xl">
-                    <h3 id="modal-title" class="text-orange-400 font-bold text-xl font-[Poppins]"></h3>
-                    <div class="flex justify-center gap-2 my-2 flex-wrap" id="modal-tags"></div>
-                    <p id="modal-desc" class="text-gray-300 text-sm"></p>
-                </div>
-            </div>
-        </div>
+        <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around items-center px-2">
+            <a href="index.html" class="nav-item flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-th-large text-xl mb-1"></i><span class="text-[10px] font-semibold">Galería</span></a>
+            <a href="feed.html" class="nav-item flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-globe-americas text-xl mb-1"></i><span class="text-[10px] font-semibold">Social</span></a>
+            <a href="profile.html" class="nav-item active flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-user text-xl mb-1"></i><span class="text-[10px] font-semibold">Perfil</span></a>
+        </nav>
     </div>
-
-    <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around items-center px-2">
-        <a href="index.html" class="nav-item flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-th-large text-xl mb-1"></i><span class="text-[10px] font-semibold">Galería</span></a>
-        <a href="feed.html" class="nav-item flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-globe-americas text-xl mb-1"></i><span class="text-[10px] font-semibold">Social</span></a>
-        <a href="profile.html" class="nav-item active flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-user text-xl mb-1"></i><span class="text-[10px] font-semibold">Perfil</span></a>
-    </nav>
 
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
@@ -184,33 +345,164 @@
         
         let currentUser = null;
         let targetUserId = null;
+        
+        // Variables Auth
+        let userDataCache = {};
+        let isUploadingAuth = false;
 
+        // --- LÓGICA ANTI-FLASHASO & AUTENTICACIÓN ---
         auth.onAuthStateChanged(user => {
-            const loader = document.getElementById('page-loader');
+            const loader = document.getElementById('initial-loader');
+            const authOverlay = document.getElementById('auth-overlay');
+            const appContent = document.getElementById('app-content');
+            const pageLoader = document.getElementById('page-loader');
+            
             const urlParams = new URLSearchParams(window.location.search);
             const uidParam = urlParams.get('uid');
 
             if (user && !user.isAnonymous) {
+                // 1. USUARIO REGISTRADO -> Mostrar APP
                 currentUser = user;
                 targetUserId = uidParam || currentUser.uid;
+                
+                authOverlay.style.display = 'none';
+                appContent.style.display = 'block';
+                
                 setupUIForTargetUser();
                 loadUserProfile();
                 loadUserPosts();
-                loader.style.display = 'none';
-            } else { 
-                if (uidParam) {
-                    firebase.auth().signInAnonymously().then((anon) => {
-                        currentUser = anon.user;
-                        targetUserId = uidParam;
-                        setupUIForTargetUser();
-                        loadUserProfile();
-                        loadUserPosts();
-                        loader.style.display = 'none';
-                    });
-                } else { window.location.href = "login.html"; }
+                pageLoader.style.display = 'none'; // Ocultar loader interno
+            } else {
+                // 2. SIN SESIÓN -> Mostrar LOGIN (Incluso para ver otros perfiles)
+                currentUser = null;
+                appContent.style.display = 'none';
+                authOverlay.style.display = 'flex';
             }
+            
+            // 3. Ocultar loader inicial suavemente
+            loader.style.opacity = '0';
+            setTimeout(() => { loader.style.display = 'none'; }, 500);
         });
 
+        // --- LÓGICA DE AUTH FORMS (Copiada para funcionalidad completa) ---
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('login-form');
+            const regStep1 = document.getElementById('register-step-1');
+            const regStep2 = document.getElementById('register-step-2');
+            const tabLogin = document.getElementById('tab-login');
+            const tabRegister = document.getElementById('tab-register');
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('reg-error').classList.add('hidden');
+            document.getElementById('step1-error').classList.add('hidden');
+
+            if (tab === 'login') {
+                loginForm.style.display = 'flex'; regStep1.style.display = 'none'; regStep2.style.display = 'none';
+                tabLogin.className = "text-orange-500 border-b-2 border-orange-500 pb-1 transition-colors";
+                tabRegister.className = "text-gray-400 pb-1 hover:text-white transition-colors";
+            } else {
+                loginForm.style.display = 'none'; regStep1.style.display = 'flex'; regStep2.style.display = 'none';
+                tabLogin.className = "text-gray-400 pb-1 hover:text-white transition-colors";
+                tabRegister.className = "text-orange-500 border-b-2 border-orange-500 pb-1 transition-colors";
+            }
+        }
+
+        async function handleAuthFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file || file.size > 5*1024*1024) { alert("Máx 5MB"); return; }
+            const statusEl = document.getElementById('upload-status');
+            const previewImg = document.getElementById('auth-preview-img');
+            const btn = document.getElementById('btn-step-1');
+            
+            isUploadingAuth = true;
+            btn.disabled = true; btn.classList.add('opacity-50');
+            statusEl.innerHTML = '<i class="fas fa-spinner upload-spinner text-orange-500"></i> Subiendo...';
+            previewImg.src = URL.createObjectURL(file);
+
+            try {
+                const formData = new FormData();
+                formData.append('reqtype', 'fileupload'); formData.append('userhash', CATBOX_USERHASH); formData.append('fileToUpload', file);
+                const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData });
+                if (!res.ok) throw new Error("Error red");
+                const url = await res.text();
+                if (url.includes('catbox.moe')) {
+                    document.getElementById('reg-photo-url').value = url.trim();
+                    statusEl.innerHTML = '<span class="text-green-400"><i class="fas fa-check"></i> Listo</span>';
+                } else throw new Error("Error API");
+            } catch (e) { console.error(e); statusEl.innerHTML = '<span class="text-red-400">Error</span>'; } 
+            finally { isUploadingAuth = false; btn.disabled = false; btn.classList.remove('opacity-50'); }
+        }
+
+        async function validateAuthStep1() {
+            const name = document.getElementById('reg-name').value.trim();
+            const age = parseInt(document.getElementById('reg-age').value);
+            const photoUrl = document.getElementById('reg-photo-url').value;
+            const errorEl = document.getElementById('step1-error');
+            const btn = document.getElementById('btn-step-1');
+
+            errorEl.classList.add('hidden');
+            if (!name || !age) { errorEl.textContent = "Completa todos los campos."; errorEl.classList.remove('hidden'); return; }
+            if (!photoUrl && !isUploadingAuth) { errorEl.textContent = "Sube foto de perfil."; errorEl.classList.remove('hidden'); return; }
+            if (isUploadingAuth) return;
+            if (age < 18) { document.getElementById('age-alert-modal').style.display = 'flex'; return; }
+
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner upload-spinner"></i>';
+            const snap = await db.ref('users').orderByChild('username').equalTo(name).once('value');
+            if (snap.exists()) {
+                errorEl.textContent = "Nombre de usuario ocupado."; errorEl.classList.remove('hidden');
+                btn.disabled = false; btn.innerHTML = 'Continuar <i class="fas fa-arrow-right ml-1"></i>';
+                return;
+            }
+            userDataCache = { name, age, photo: photoUrl };
+            document.getElementById('register-step-1').style.display = 'none';
+            document.getElementById('register-step-2').style.display = 'flex';
+            btn.disabled = false;
+        }
+
+        function authBackToStep1() {
+            document.getElementById('register-step-2').style.display = 'none';
+            document.getElementById('register-step-1').style.display = 'flex';
+        }
+
+        // Submit Login
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            const btn = document.getElementById('btn-login-submit');
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner upload-spinner"></i>'; errorEl.classList.add('hidden');
+            auth.signInWithEmailAndPassword(email, pass).catch(err => {
+                btn.disabled = false; btn.innerHTML = '<span>Entrar</span>';
+                errorEl.textContent = "Error: " + err.message; errorEl.classList.remove('hidden');
+            });
+        });
+
+        // Submit Registro
+        document.getElementById('register-step-2').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-password').value;
+            const confirm = document.getElementById('reg-confirm-password').value;
+            const errorEl = document.getElementById('reg-error');
+            const btn = document.getElementById('btn-register-final');
+
+            if (pass !== confirm) { errorEl.textContent = "Contraseñas no coinciden"; errorEl.classList.remove('hidden'); return; }
+            if (pass.length < 6) { errorEl.textContent = "Mínimo 6 caracteres"; errorEl.classList.remove('hidden'); return; }
+
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner upload-spinner"></i>';
+            
+            auth.createUserWithEmailAndPassword(email, pass).then((cred) => {
+                return db.ref('users/' + cred.user.uid).set({
+                    username: userDataCache.name, age: userDataCache.age, profilePic: userDataCache.photo,
+                    email: email, slogan: "Bienvenido a mi espacio en exen-E."
+                });
+            }).catch(err => {
+                btn.disabled = false; btn.innerHTML = '<span>Finalizar</span>';
+                errorEl.textContent = err.message; errorEl.classList.remove('hidden');
+            });
+        });
+
+        // --- FUNCIONES ORIGINALES DE PERFIL ---
         function setupUIForTargetUser() {
             const isMyProfile = currentUser && currentUser.uid === targetUserId;
             const actionsContainer = document.getElementById('profile-actions');
@@ -223,14 +515,14 @@
                 actionsContainer.innerHTML = `<button onclick="triggerPhotoUpload()" class="flex-1 bg-gray-800 active:bg-gray-700 text-white text-sm font-semibold py-3 rounded-xl border border-gray-700 transition">Editar Foto</button><button onclick="logout()" class="bg-gray-800 active:bg-red-900/50 text-white px-4 py-3 rounded-xl border border-gray-700 transition"><i class="fas fa-sign-out-alt text-red-400"></i></button>`;
                 avatarContainer.onclick = triggerPhotoUpload;
                 editBadge.classList.remove('hidden');
-                editSloganBtn.classList.remove('hidden'); // Mostrar botón de editar slogan
+                editSloganBtn.classList.remove('hidden'); 
                 emptyMsg.innerText = "Aún no has publicado nada.";
             } else {
                 actionsContainer.innerHTML = `<div class="w-full bg-gray-800/50 text-gray-500 text-xs text-center py-3 rounded-xl border border-gray-800">Viendo perfil público</div>`;
                 avatarContainer.onclick = null;
                 avatarContainer.style.cursor = 'default';
                 editBadge.classList.add('hidden');
-                editSloganBtn.classList.add('hidden'); // Ocultar botón de editar slogan
+                editSloganBtn.classList.add('hidden'); 
                 emptyMsg.innerText = "Este usuario aún no ha publicado nada.";
             }
         }
@@ -242,14 +534,10 @@
                     document.getElementById('username-display').innerText = data.username || 'Usuario';
                     document.getElementById('profile-image').src = data.profilePic || 'https://placehold.co/150x150/333/fff?text=U';
                     
-                    // --- GESTIÓN DE SLOGAN ---
                     const slogan = data.slogan || "Bienvenido a mi espacio en exen-E.";
                     document.getElementById('welcome-msg').innerText = slogan;
                     document.getElementById('slogan-input').value = slogan;
 
-                    // --- VERIFICACIÓN ADMIN SEGURA ---
-                    // Verificamos el correo almacenado en la base de datos, no el del cliente local
-                    // Esto asegura que solo el usuario que tiene este email registrado en DB tenga la palomita
                     if (data.email === 'ezequiel@exen.com') {
                         document.getElementById('admin-verify').classList.remove('hidden');
                     } else {
@@ -259,29 +547,21 @@
             });
         }
 
-        // --- LÓGICA EDICIÓN SLOGAN ---
         function toggleSloganEdit() {
             const displayDiv = document.getElementById('slogan-display-container');
             const editDiv = document.getElementById('slogan-edit-container');
-            
             if (editDiv.classList.contains('hidden')) {
-                displayDiv.classList.add('hidden');
-                editDiv.classList.remove('hidden');
-                document.getElementById('slogan-input').focus();
+                displayDiv.classList.add('hidden'); editDiv.classList.remove('hidden'); document.getElementById('slogan-input').focus();
             } else {
-                displayDiv.classList.remove('hidden');
-                editDiv.classList.add('hidden');
+                displayDiv.classList.remove('hidden'); editDiv.classList.add('hidden');
             }
         }
 
         function saveSlogan() {
             const newSlogan = document.getElementById('slogan-input').value.trim() || "Bienvenido a mi espacio en exen-E.";
-            
             if (currentUser && currentUser.uid === targetUserId) {
                 db.ref('users/' + currentUser.uid).update({ slogan: newSlogan })
-                    .then(() => {
-                        toggleSloganEdit(); // Regresar a vista normal
-                    })
+                    .then(() => toggleSloganEdit())
                     .catch(error => alert("Error al guardar: " + error.message));
             }
         }
@@ -302,9 +582,7 @@
                 const posts = [];
                 let totalLikes = 0;
                 snap.forEach(child => {
-                    const post = child.val(); 
-                    post.id = child.key; 
-                    posts.push(post);
+                    const post = child.val(); post.id = child.key; posts.push(post);
                     if (post.likes) totalLikes += post.likes;
                 });
                 document.getElementById('posts-count').innerText = posts.length;
@@ -336,13 +614,11 @@
                     tagsContainer.appendChild(span);
                 });
             }
-            modal.classList.add('visible');
-            document.body.style.overflow = 'hidden';
+            modal.classList.add('visible'); document.body.style.overflow = 'hidden';
         }
         
         document.getElementById('close-modal').addEventListener('click', () => {
-            document.getElementById('modal').classList.remove('visible');
-            document.body.style.overflow = 'auto';
+            document.getElementById('modal').classList.remove('visible'); document.body.style.overflow = 'auto';
         });
 
         function triggerPhotoUpload() { 
@@ -355,9 +631,7 @@
             document.getElementById('avatar-loading').classList.remove('hidden');
             try {
                 const formData = new FormData();
-                formData.append('reqtype', 'fileupload'); 
-                formData.append('userhash', CATBOX_USERHASH); 
-                formData.append('fileToUpload', file);
+                formData.append('reqtype', 'fileupload'); formData.append('userhash', CATBOX_USERHASH); formData.append('fileToUpload', file);
                 const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData });
                 if (!res.ok) throw new Error("Error de conexión");
                 const txt = await res.text();
