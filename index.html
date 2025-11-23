@@ -1045,6 +1045,9 @@
         
         // Variable para saber el contexto actual del modal (gallery, feed)
         let currentContext = 'gallery'; 
+        
+        // ID del administrador para verificar publicaciones
+        let adminUserId = null;
 
         document.addEventListener('DOMContentLoaded', () => { 
             const warningOverlay = document.getElementById('warning-overlay'); 
@@ -1058,7 +1061,7 @@
         function rejectWarning() { window.location.href = 'https://www.google.com'; }
         
         async function initializeApp() {
-            await cacheAllDataForSearch(); // Función extendida
+            await cacheAllDataForSearch(); // Función extendida con ordenamiento corregido
             loadHeroBanner(); 
             handleVisitCounter();
             await Promise.all([ fetchUserReactions(), cacheAllReactionCounts(), loadCategoryBanners() ]);
@@ -1151,7 +1154,7 @@
             dots[index].classList.add('active');
         }
 
-        // --- NUEVA FUNCIÓN DE CACHEO DE DATOS Y FUSIÓN ---
+        // --- NUEVA FUNCIÓN DE CACHEO DE DATOS Y FUSIÓN (CON ORDEN CORREGIDO) ---
         async function cacheAllDataForSearch() { 
             const searchInput = document.getElementById('search-input'); 
             searchInput.disabled = true; 
@@ -1165,11 +1168,18 @@
                 fullGalleryCache = allData; // No sort here yet
             } 
 
-            // 2. Usuarios
+            // 2. Usuarios (Identificar Admin)
             const userSnap = await db.ref('users').once('value');
             if (userSnap.exists()) {
                 const uData = [];
-                userSnap.forEach(child => { uData.push({ id: child.key, type: 'user', ...child.val() }); });
+                userSnap.forEach(child => { 
+                    const userData = child.val();
+                    uData.push({ id: child.key, type: 'user', ...userData }); 
+                    // Identificar admin
+                    if (userData.email === 'ezequiel@exen.com') {
+                        adminUserId = child.key;
+                    }
+                });
                 usersCache = uData;
             }
 
@@ -1190,6 +1200,7 @@
                             tags: post.tags ? post.tags.split(',').map(t=>t.trim()) : [],
                             category: post.category,
                             user: { name: post.userName, avatar: post.userAvatar, id: post.userId },
+                            userId: post.userId, // Necesario para verificar admin
                             timestamp: post.timestamp
                         }); 
                     }
@@ -1197,9 +1208,10 @@
                 feedCache = fData;
             }
 
-            // 4. FUSIÓN DE GALERÍAS
-            unifiedGalleryData = [...fullGalleryCache, ...feedCache].sort((a, b) => b.timestamp - a.timestamp);
-            fullGalleryCache.sort((a,b) => b.timestamp - a.timestamp); // Ordenar la oficial también por si acaso
+            // 4. FUSIÓN Y ORDENAMIENTO ESTRICTO (Nuevo -> Viejo)
+            // Usamos (b.timestamp || 0) para asegurar que sea número y evitar errores de orden
+            unifiedGalleryData = [...fullGalleryCache, ...feedCache].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            fullGalleryCache.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
             searchInput.disabled = false; 
             searchInput.placeholder = "Buscar perfiles, tags o arte..."; 
@@ -1229,13 +1241,13 @@
         
         function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton'; } }
         
-        // --- MODIFICADO: Cargar desde la galería unificada ---
+        // --- CARGA INICIAL (unifiedGalleryData ya está ordenada) ---
         function loadInitialImages() { 
             if (isLoading) return; 
             isLoading = true; 
             const grid = document.getElementById('grid'); 
             generateSkeletons(grid, imagesPerLoad); 
-            // Ahora usamos unifiedGalleryData para mostrar TODO en el inicio
+            
             allImages = unifiedGalleryData.slice(0, imagesPerLoad); 
             if (allImages.length > 0) { 
                 displaySearchResults(allImages, 'grid'); 
@@ -1245,7 +1257,7 @@
             isLoading = false; 
         }
 
-        // --- MODIFICADO: Cargar más desde la galería unificada ---
+        // --- CARGAR MÁS (unifiedGalleryData ya está ordenada) ---
         function loadMoreImages() { 
             if (isLoading || noMoreImages) return; 
             isLoading = true; 
@@ -1254,7 +1266,6 @@
             generateSkeletons(loaderContainer, 3); 
             
             const currentLoadedCount = allImages.length; 
-            // Slice desde unifiedGalleryData
             const newImages = unifiedGalleryData.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); 
             
             if (newImages.length === 0) { 
@@ -1321,7 +1332,7 @@
             displaySearchResults(finalSelection, 'for-you-grid');
         }
 
-        // --- FUNCIÓN DE RENDERIZADO (Actualizada para múltiples tipos e iconos) ---
+        // --- FUNCIÓN DE RENDERIZADO (Actualizada: Lógica de Verificado Unificada) ---
         function displaySearchResults(items, containerId, append = false) { 
             const grid = document.getElementById(containerId); 
             if (!append) grid.innerHTML = ''; 
@@ -1358,16 +1369,32 @@
                 const displayUrl = item.thumbnailUrl || item.url; 
                 const reactionCount = allReactionCounts[item.id] || 0; 
                 
-                // --- LÓGICA DE ICONOS Y AVATARES ---
+                // --- LÓGICA DE ICONOS Y VERIFICADO ---
                 let badgeIcon = '';
                 let bottomInfo = '';
 
-                if (item.type === 'gallery') {
-                    // OFICIAL: Icono Verificado
+                // Determinar si es una publicación verificada (Admin)
+                const isVerified = (item.type === 'gallery') || (item.type === 'feed' && item.userId === adminUserId);
+
+                if (isVerified) {
+                    // OFICIAL / ADMIN: Icono Verificado Azul
                     badgeIcon = `<div class="absolute top-2 left-2 z-10 bg-blue-600/90 text-white text-xs p-1.5 rounded-full shadow-md" title="Verificado Oficial"><i class="fas fa-check-circle"></i></div>`;
-                    bottomInfo = `<h4 class="truncate font-bold text-white text-sm">${item.title}</h4>`;
-                } else if (item.type === 'feed') {
-                    // COMUNIDAD: Icono Mundo + Avatar Usuario
+                    // Si es galería oficial pura, solo título. Si es feed de admin, mostramos avatar también (opcional, pero el usuario pidió consistencia)
+                    // El usuario pidió: "las imágenes de el usuario administrador... aparecerán con el icono de verificado"
+                    if (item.type === 'feed') {
+                         bottomInfo = `
+                            <h4 class="truncate font-bold text-white text-sm mb-1">${item.title}</h4>
+                            <div class="flex items-center gap-2">
+                                <img src="${item.user.avatar}" class="w-5 h-5 rounded-full border border-blue-500/50 object-cover">
+                                <span class="text-[10px] text-blue-200 truncate font-bold">${item.user.name}</span>
+                            </div>
+                        `;
+                    } else {
+                        // Galería pura (sin user object embebido usualmente)
+                        bottomInfo = `<h4 class="truncate font-bold text-white text-sm">${item.title}</h4>`;
+                    }
+                } else {
+                    // USUARIO COMUNIDAD: Icono Mundo + Avatar
                     badgeIcon = `<div class="absolute top-2 left-2 z-10 bg-green-600/90 text-white text-xs p-1.5 rounded-full shadow-md" title="Comunidad"><i class="fas fa-globe"></i></div>`;
                     bottomInfo = `
                         <h4 class="truncate font-bold text-white text-sm mb-1">${item.title}</h4>
@@ -1472,14 +1499,18 @@
             
             // Mostrar subtítulo si es de la comunidad
             const subTitle = document.getElementById('modal-subtitle');
-            if (img.type === 'feed') {
+            
+            const isVerified = (img.type === 'gallery') || (img.type === 'feed' && img.userId === adminUserId);
+
+            if (isVerified) {
+                 subTitle.innerHTML = `<div class="flex items-center justify-center gap-2 mt-2 text-blue-400 font-bold text-sm"><i class="fas fa-check-circle"></i> Galería Oficial</div>`;
+                 subTitle.classList.remove('hidden');
+                 subTitle.onclick = null;
+            } else {
+                // Usuario comunidad
                 subTitle.innerHTML = `<div class="flex items-center justify-center gap-2 cursor-pointer bg-gray-800/50 py-1 px-3 rounded-full w-fit mx-auto mt-2 border border-gray-700 hover:border-orange-500 transition"><img src="${img.user.avatar}" class="w-6 h-6 rounded-full object-cover"><span class="text-sm text-gray-300">Por: <span class="text-orange-400 font-bold">${img.user.name}</span></span></div>`;
                 subTitle.classList.remove('hidden');
                 subTitle.onclick = () => window.location.href = `profile.html?uid=${img.user.id}`;
-            } else {
-                subTitle.innerHTML = `<div class="flex items-center justify-center gap-2 mt-2 text-blue-400 font-bold text-sm"><i class="fas fa-check-circle"></i> Galería Oficial</div>`;
-                subTitle.classList.remove('hidden');
-                subTitle.onclick = null;
             }
 
             document.getElementById('desc').textContent = img.desc || 'Sin descripción.'; 
