@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Póster Personalizado - Mi Sitio</title>
+    <title>Póster Personalizado con QR</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -60,7 +60,7 @@
             height: 100%;
             display: block;
             object-fit: cover;
-            filter: brightness(0.7) contrast(1.1); /* Ligeramente más oscura que la referencia, para que el blanco resalte */
+            filter: brightness(0.7) contrast(1.1); /* Ligeramente más oscura que la referencia */
         }
 
         .gradient-overlay {
@@ -68,7 +68,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 80%; /* Más alto para asegurar que el texto inferior tenga buen contraste */
+            height: 80%; /* Más alto para asegurar buen contraste */
             background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 40%, transparent 100%);
             z-index: 1;
             pointer-events: none;
@@ -82,9 +82,9 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; /* Alinear elementos al final del flex container */
-            align-items: flex-start; /* Alinear a la izquierda por defecto */
-            min-height: 100%; /* Ocupa toda la altura disponible */
+            justify-content: flex-end; 
+            align-items: flex-start; 
+            min-height: 100%; 
         }
 
         /* Texto superior "EXEN" */
@@ -99,7 +99,30 @@
             text-transform: uppercase;
             letter-spacing: 1.5px;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
-            z-index: 3; /* Asegurarse de que esté sobre todo */
+            z-index: 3;
+        }
+
+        /* --- NUEVO ESTILO PARA EL QR --- */
+        .qr-watermark {
+            position: absolute;
+            top: 25px;
+            right: 30px; /* Simetría con el logo */
+            width: 70px; /* Tamaño legible */
+            height: 70px;
+            z-index: 10; /* Encima de todo */
+            background-color: rgba(255, 255, 255, 0.95); /* Fondo blanco casi sólido para escaneo */
+            padding: 5px; /* Marco blanco */
+            border-radius: 8px; /* Bordes suaves */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6); /* Sombra para resaltar */
+            object-fit: contain;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0.9; /* Ligeramente transparente para efecto marca de agua */
+        }
+        
+        .qr-watermark:hover {
+            opacity: 1;
+            transform: scale(1.05); /* Pequeño zoom al pasar el mouse */
+            cursor: pointer;
         }
 
         /* Bloque de texto central */
@@ -114,12 +137,12 @@
             line-height: 1.2;
             margin-bottom: 5px;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
-            padding: 0; /* Asegurarse de que no haya padding extra del contenteditable */
+            padding: 0;
             border: none;
             outline: none;
             background: transparent;
-            min-width: 100px; /* Para que el campo editable no colapse */
-            display: inline-block; /* Permitir que ocupe solo el espacio necesario */
+            min-width: 100px;
+            display: inline-block;
         }
         .main-text-block .fixed-small-text {
             font-family: 'Lato', sans-serif;
@@ -134,8 +157,8 @@
         .bold-red-title {
             font-family: 'Oswald', sans-serif;
             font-weight: 700;
-            font-size: 65px; /* Grande y audaz */
-            color: #E60023; /* Rojo exacto de la imagen */
+            font-size: 65px;
+            color: #E60023; /* Rojo exacto */
             line-height: 0.9;
             text-transform: uppercase;
             margin-bottom: 5px;
@@ -144,22 +167,22 @@
          .bold-white-title {
             font-family: 'Oswald', sans-serif;
             font-weight: 700;
-            font-size: 65px; /* Grande y audaz */
-            color: #fff; /* Blanco */
+            font-size: 65px;
+            color: #fff;
             line-height: 0.9;
             text-transform: uppercase;
             margin-bottom: 5px;
             text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
         }
 
-        /* Texto de la galería y la imaginación */
+        /* Texto de la galería */
         .bottom-description {
             font-family: 'Lato', sans-serif;
             font-weight: 300;
             font-size: 14px;
             color: #ccc;
             line-height: 1.5;
-            margin-top: 25px; /* Espacio superior */
+            margin-top: 25px;
             margin-bottom: 10px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
@@ -178,12 +201,12 @@
             color: #fff;
             text-transform: uppercase;
             letter-spacing: 1px;
-            background-color: #E60023; /* Fondo rojo */
+            background-color: #E60023;
             padding: 5px 15px;
             border-radius: 3px;
-            align-self: flex-end; /* Alinear a la derecha dentro del content-area */
-            margin-top: auto; /* Empuja al final del content-area */
-            margin-bottom: 20px; /* Margen inferior */
+            align-self: flex-end;
+            margin-top: auto;
+            margin-bottom: 20px;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
         }
 
@@ -205,7 +228,7 @@
 
         /* Botón de carga */
         .upload-btn {
-            background-color: #333 !important; /* Gris oscuro */
+            background-color: #333 !important;
             color: #fff !important;
             border-radius: 3px;
             padding: 0 20px;
@@ -222,7 +245,7 @@
 <body>
 
     <div class="app-wrapper">
-        <h5 class="center-align title">Generador de Póster Personalizado</h5>
+        <h5 class="center-align title">Generador de Póster</h5>
         
         <div class="file-input center-align">
             <label class="waves-effect waves-light btn upload-btn z-depth-1">
@@ -242,8 +265,11 @@
 
             <span class="brand-logo">EXEN</span>
 
+            <!-- AQUÍ ESTÁ EL CÓDIGO QR NUEVO -->
+            <img src="https://files.catbox.moe/z20q7c.png" alt="QR Code" class="qr-watermark">
+
             <div class="content-area">
-                <!-- Este div vacío empuja el contenido hacia abajo, debajo del brand-logo --><div style="flex-grow: 1;"></div> 
+                <div style="flex-grow: 1;"></div> 
 
                 <div class="main-text-block">
                     <div class="editable-text" contenteditable="true">BAÑOS LIMPIOS</div>
@@ -274,6 +300,7 @@
             // Función para dibujar la imagen en el canvas
             function drawImageOnCanvas(imgSrc) {
                 const img = new Image();
+                img.crossOrigin = "Anonymous"; // Importante para evitar problemas de CORS si se guarda el canvas
                 img.onload = function() {
                     const canvasRatio = canvas.width / canvas.height;
                     const imgRatio = img.width / img.height;
@@ -298,8 +325,8 @@
                 img.src = imgSrc;
             }
 
-            // Cargar la imagen por defecto
-            drawImageOnCanvas('https://i.ibb.co/L5w11fD/black-phone-poster.jpg'); // Puedes cambiar esta URL a una imagen tuya si lo deseas
+            // Cargar imagen por defecto
+            drawImageOnCanvas('https://images.unsplash.com/photo-1535890696255-dd5bcd79e6df?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80');
 
             input.addEventListener('change', function(event) {
                 const file = event.target.files[0];
@@ -312,7 +339,6 @@
                 }
             });
 
-            // Hacer que el campo editable sea editable al hacer doble clic
             document.querySelector('.editable-text').addEventListener('dblclick', function() {
                 this.focus();
             });
