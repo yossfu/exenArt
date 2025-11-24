@@ -74,33 +74,37 @@
         .upload-spinner { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* --- ESTILOS DE PERFIL Y BANNER --- */
+        /* --- ESTILOS DE PERFIL, BANNER Y REDES --- */
+        /* Contenedor del Banner */
         .banner-container {
             position: relative;
             width: 100%;
-            height: 200px; /* Altura del banner similar a Facebook */
+            height: 200px; /* Altura similar a Facebook móvil */
             background-color: #1a1a1c;
             overflow: hidden;
         }
+        @media (min-width: 768px) { .banner-container { height: 300px; } }
+
         .banner-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            width: 100%; height: 100%; object-fit: cover;
         }
         .banner-overlay {
             position: absolute; inset: 0; background: linear-gradient(to top, #0c0c0c 0%, transparent 80%);
+            pointer-events: none;
         }
-        /* Botón para subir banner */
+        /* Botón subir banner */
         .banner-edit-btn {
             position: absolute; bottom: 10px; right: 10px;
             background: rgba(0,0,0,0.6); color: white;
             padding: 6px 12px; border-radius: 8px; font-size: 12px;
             cursor: pointer; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2);
-            transition: all 0.2s; z-index: 20;
+            transition: all 0.2s; z-index: 20; display: flex; align-items: center; gap: 6px;
         }
         .banner-edit-btn:hover { background: rgba(249, 115, 22, 0.8); border-color: var(--accent); }
 
-        .profile-header { position: relative; margin-top: -50px; padding-bottom: 1rem; z-index: 10; } /* Avatar sube sobre el banner */
+        /* Ajuste del Header para superponerse al banner */
+        .profile-header { position: relative; margin-top: -60px; padding-bottom: 1rem; z-index: 10; } 
+
         .stat-box { display: flex; flex-direction: column; align-items: center; }
 
         .grid-item {
@@ -118,10 +122,24 @@
 
         .avatar-container { position: relative; cursor: pointer; }
         .edit-badge {
-            position: absolute; bottom: 0; right: 0; background-color: var(--accent);
-            border: 2px solid #0c0c0c; width: 24px; height: 24px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 12px; color: white;
+            position: absolute; bottom: 5px; right: 5px; background-color: var(--accent);
+            border: 3px solid #0c0c0c; width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 14px; color: white;
         }
+        
+        /* Iconos de Redes Sociales */
+        .social-link {
+            width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #9ca3af; transition: all 0.3s; font-size: 1.1rem; text-decoration: none;
+        }
+        .social-link:hover { transform: translateY(-3px); color: white; border-color: var(--accent); background: rgba(249, 115, 22, 0.1); }
+        .social-link.facebook:hover { color: #1877F2; border-color: #1877F2; background: rgba(24, 119, 242, 0.1); }
+        .social-link.x:hover { color: #fff; border-color: #fff; background: rgba(255,255,255, 0.1); }
+        .social-link.instagram:hover { color: #E1306C; border-color: #E1306C; background: rgba(225, 48, 108, 0.1); }
+        .social-link.youtube:hover { color: #FF0000; border-color: #FF0000; background: rgba(255, 0, 0, 0.1); }
+        .social-link.patreon:hover { color: #FF424D; border-color: #FF424D; background: rgba(255, 66, 77, 0.1); }
+
         .bottom-nav {
             background-color: rgba(10, 10, 10, 0.9); backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px); border-top: 1px solid rgba(55, 65, 81, 0.3);
@@ -169,7 +187,7 @@
         .custom-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 12px; border-radius: 8px; font-size: 0.875rem; width: 100%; transition: border-color 0.3s; }
         .custom-input:focus { outline: none; border-color: var(--accent); }
 
-        /* MODAL DE COMPARTIR Y EDICIÓN DE REDES */
+        /* MODALES GENERALES (COMPARTIR, DETALLES) */
         .custom-modal {
             display: none; position: fixed; inset: 0; z-index: 4000;
             background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
@@ -177,19 +195,6 @@
         }
         .custom-modal.visible { display: flex; animation: fadeIn 0.2s forwards; }
         @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
-
-        /* Redes Sociales Iconos */
-        .social-link {
-            width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            color: #9ca3af; transition: all 0.3s; font-size: 1.1rem;
-        }
-        .social-link:hover { transform: translateY(-3px); color: white; border-color: var(--accent); background: rgba(249, 115, 22, 0.1); }
-        .social-link.facebook:hover { color: #1877F2; border-color: #1877F2; background: rgba(24, 119, 242, 0.1); }
-        .social-link.x:hover { color: #fff; border-color: #fff; background: rgba(255,255,255, 0.1); }
-        .social-link.instagram:hover { color: #E1306C; border-color: #E1306C; background: rgba(225, 48, 108, 0.1); }
-        .social-link.youtube:hover { color: #FF0000; border-color: #FF0000; background: rgba(255, 0, 0, 0.1); }
-        .social-link.patreon:hover { color: #FF424D; border-color: #FF424D; background: rgba(255, 66, 77, 0.1); }
 
         #app-content { display: none; }
     </style>
@@ -318,20 +323,23 @@
             </div>
         </div>
 
-        <!-- ================= NUEVA SECCIÓN DE BANNER ================= -->
+        <!-- ================= NUEVA SECCIÓN DE BANNER (PORTADA) ================= -->
         <div class="banner-container group">
             <img id="profile-banner-img" src="https://placehold.co/800x300/1a1a1c/333?text=Sin+Banner" class="banner-img" alt="Portada">
             <div class="banner-overlay"></div>
+            
             <!-- Botón Editar Banner (Solo dueño) -->
-            <label id="banner-edit-btn" class="banner-edit-btn hidden items-center gap-2">
-                <i class="fas fa-camera"></i> <span>Cambiar Portada</span>
+            <label id="banner-edit-btn" class="banner-edit-btn hidden">
+                <i class="fas fa-camera"></i> <span>Editar Portada</span>
                 <input type="file" id="banner-upload-input" accept="image/*" class="hidden" onchange="handleBannerUpload(event)">
             </label>
+            
+            <!-- Spinner carga banner -->
             <div id="banner-loading" class="hidden absolute inset-0 bg-black/50 flex items-center justify-center z-30">
                 <i class="fas fa-spinner fa-spin text-orange-500 text-3xl"></i>
             </div>
         </div>
-        <!-- ========================================================== -->
+        <!-- ===================================================================== -->
 
         <header class="profile-header pt-0 pb-4 px-4">
             <div class="max-w-lg mx-auto">
@@ -341,17 +349,23 @@
                             <img id="profile-image" src="https://placehold.co/150x150/333/fff?text=..." class="w-full h-full object-cover group-hover:opacity-80 transition">
                             <div id="avatar-loading" class="loading-overlay hidden"><i class="fas fa-spinner fa-spin text-white"></i></div>
                         </div>
-                        <div id="edit-badge" class="edit-badge hidden" style="bottom: 5px; right: 5px; border-width: 3px;"><i class="fas fa-camera"></i></div>
+                        <!-- Badge editar avatar -->
+                        <div id="edit-badge" class="edit-badge hidden"><i class="fas fa-camera"></i></div>
                         <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
                     </div>
 
                     <div class="flex-1 pb-2">
-                        <div class="flex items-center">
-                            <h2 id="username-display" class="text-xl font-bold text-white font-[Poppins] mb-1 truncate text-shadow-md">...</h2>
-                            <i id="admin-verify" class="fas fa-check-circle verified-badge hidden" title="Administrador Verificado"></i>
+                        <div class="flex flex-col">
+                            <div class="flex items-center gap-1">
+                                <h2 id="username-display" class="text-xl font-bold text-white font-[Poppins] truncate text-shadow-md">...</h2>
+                                <i id="admin-verify" class="fas fa-check-circle verified-badge hidden" title="Administrador Verificado"></i>
+                            </div>
+                            <!-- Badge Estado Artista (Nuevo) -->
+                            <div id="user-status-badge" class="hidden inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider w-fit mt-1 border">
+                            </div>
                         </div>
                         
-                        <div class="flex gap-6 mt-1">
+                        <div class="flex gap-6 mt-2">
                             <div class="stat-box">
                                 <span id="posts-count" class="text-lg font-bold text-white leading-none">-</span>
                                 <span class="text-[10px] text-gray-400 uppercase tracking-wide">Posts</span>
@@ -376,7 +390,6 @@
                         </button>
                     </div>
                     
-                    <!-- Editor de slogan -->
                     <div id="slogan-edit-container" class="hidden mt-2">
                         <input type="text" id="slogan-input" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-orange-500 focus:outline-none" maxlength="60" placeholder="Escribe tu frase...">
                         <div class="flex justify-end gap-2 mt-2">
@@ -386,8 +399,8 @@
                     </div>
 
                     <!-- ================= NUEVA SECCIÓN REDES SOCIALES ================= -->
-                    <div id="social-links-container" class="flex flex-wrap gap-3 mt-3 items-center" style="display: none;">
-                        <!-- Se inyectan con JS -->
+                    <div id="social-links-container" class="flex flex-wrap gap-3 mt-3 items-center border-t border-gray-800 pt-3" style="display: none;">
+                        <!-- Se inyectan con JS si existen -->
                     </div>
                     <!-- ================================================================ -->
 
@@ -445,12 +458,28 @@
             </div>
         </div>
 
-        <!-- ================= NUEVO MODAL EDITAR DETALLES (REDES) ================= -->
+        <!-- ================= NUEVO MODAL EDITAR DETALLES (REDES Y ESTADO) ================= -->
         <div id="details-modal" class="custom-modal">
-            <div class="bg-[#1a1a1c] rounded-2xl p-6 w-full max-w-sm border border-gray-700 relative max-h-[90vh] overflow-y-auto">
-                <h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2"><i class="fas fa-link text-orange-500"></i> Editar Enlaces</h3>
-                <p class="text-xs text-gray-400 mb-4">Añade los enlaces completos a tus perfiles.</p>
+            <div class="bg-[#1a1a1c] rounded-2xl p-6 w-full max-w-sm border border-gray-700 relative max-h-[90vh] overflow-y-auto shadow-2xl">
+                <h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2"><i class="fas fa-id-card text-orange-500"></i> Editar Detalles</h3>
                 
+                <!-- 1. ESTADO DEL ARTISTA -->
+                <div class="mb-5 pb-5 border-b border-gray-700">
+                    <label class="text-xs text-gray-400 mb-1 block uppercase font-bold tracking-wider">Estado de Comisiones</label>
+                    <div class="relative">
+                        <select id="artist-status" class="w-full bg-black/30 border border-gray-600 rounded-lg px-3 py-3 text-white text-sm focus:border-orange-500 outline-none appearance-none">
+                            <option value="none">Sin estado (Oculto)</option>
+                            <option value="open">🟢 Comisiones Abiertas</option>
+                            <option value="closed">🔴 Cerrado / Ocupado</option>
+                            <option value="collab">🔵 Busco Colaboraciones</option>
+                            <option value="hiatus">⚪ Hiatus / Descanso</option>
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- 2. REDES SOCIALES -->
+                <p class="text-xs text-gray-400 mb-2 uppercase font-bold tracking-wider">Redes Sociales</p>
                 <div class="flex flex-col gap-3">
                     <div class="relative">
                         <i class="fab fa-facebook absolute left-3 top-3 text-blue-500"></i>
@@ -476,7 +505,7 @@
 
                 <div class="flex gap-2 mt-6">
                     <button onclick="document.getElementById('details-modal').classList.remove('visible')" class="flex-1 py-2 rounded-lg border border-gray-600 text-gray-400 hover:text-white text-sm font-semibold">Cancelar</button>
-                    <button onclick="saveSocialLinks()" class="flex-1 py-2 rounded-lg bg-orange-600 text-white text-sm font-bold shadow-lg shadow-orange-500/20 hover:bg-orange-500">Guardar</button>
+                    <button onclick="saveDetails()" class="flex-1 py-2 rounded-lg bg-orange-600 text-white text-sm font-bold shadow-lg shadow-orange-500/20 hover:bg-orange-500">Guardar</button>
                 </div>
             </div>
         </div>
@@ -601,7 +630,7 @@
 
                 actionsContainer.innerHTML = `
                     <div class="flex justify-between items-center mb-3 px-1">
-                         <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Crear Publicación</span>
+                         <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Gestión</span>
                          <div class="flex gap-2">
                             <button onclick="document.getElementById('details-modal').classList.add('visible')" class="text-xs bg-orange-900/40 text-orange-400 px-3 h-8 rounded-lg border border-orange-500/30 hover:bg-orange-500/20 transition flex items-center gap-2 font-bold">
                                 <i class="fas fa-edit"></i> Editar Detalles
@@ -615,8 +644,8 @@
                          </div>
                     </div>
 
-                    <!-- Panel de Publicación (Sin cambios) -->
-                    <div class="upload-card p-4 rounded-2xl relative">
+                    <!-- Panel de Publicación -->
+                    <div class="upload-card p-4 rounded-2xl relative mb-4">
                         <div class="flex gap-3 items-center mb-2">
                             <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0 self-start mt-1">
                                 <img id="post-avatar-preview" src="${currentUser.photoURL || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-full h-full object-cover">
@@ -710,7 +739,7 @@
             navigator.clipboard.writeText(input.value).then(() => { alert("Enlace copiado"); document.getElementById('share-modal').classList.remove('visible'); });
         }
 
-        // --- CARGA DE DATOS DE PERFIL (MODIFICADA PARA BANNER Y REDES) ---
+        // --- CARGA DE DATOS DE PERFIL (MODIFICADA PARA BANNER, REDES Y ESTADO) ---
         function loadUserProfile() {
             db.ref('users/' + targetUserId).on('value', snap => {
                 const data = snap.val();
@@ -728,7 +757,29 @@
                         document.getElementById('profile-banner-img').src = data.bannerUrl;
                     }
 
-                    // 2. CARGAR REDES SOCIALES (ICONOS)
+                    // 2. CARGAR ESTADO DEL ARTISTA (BADGE)
+                    const statusBadge = document.getElementById('user-status-badge');
+                    if (data.artistStatus && data.artistStatus !== 'none') {
+                        statusBadge.classList.remove('hidden');
+                        let text = "", colorClass = "", borderClass = "";
+                        
+                        if (data.artistStatus === 'open') {
+                            text = "🟢 Comisiones Abiertas"; colorClass = "bg-green-900/40 text-green-400"; borderClass = "border-green-500/30";
+                        } else if (data.artistStatus === 'closed') {
+                            text = "🔴 Cerrado / Ocupado"; colorClass = "bg-red-900/40 text-red-400"; borderClass = "border-red-500/30";
+                        } else if (data.artistStatus === 'collab') {
+                            text = "🔵 Colaboraciones"; colorClass = "bg-blue-900/40 text-blue-400"; borderClass = "border-blue-500/30";
+                        } else if (data.artistStatus === 'hiatus') {
+                            text = "⚪ Hiatus / Descanso"; colorClass = "bg-gray-800 text-gray-400"; borderClass = "border-gray-600";
+                        }
+                        
+                        statusBadge.className = `inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider w-fit mt-1 border ${colorClass} ${borderClass}`;
+                        statusBadge.innerText = text;
+                    } else {
+                        statusBadge.classList.add('hidden');
+                    }
+
+                    // 3. CARGAR REDES SOCIALES (ICONOS)
                     const socialsContainer = document.getElementById('social-links-container');
                     socialsContainer.innerHTML = '';
                     const socials = data.socials || {};
@@ -756,8 +807,9 @@
 
                     socialsContainer.style.display = hasSocials ? 'flex' : 'none';
 
-                    // 3. RELLENAR MODAL DE EDICIÓN SI ES EL DUEÑO
+                    // 4. RELLENAR MODAL DE EDICIÓN SI ES EL DUEÑO
                     if (currentUser && currentUser.uid === targetUserId) {
+                        if(data.artistStatus) document.getElementById('artist-status').value = data.artistStatus;
                         if(socials.facebook) document.getElementById('social-fb').value = socials.facebook;
                         if(socials.x) document.getElementById('social-x').value = socials.x;
                         if(socials.instagram) document.getElementById('social-ig').value = socials.instagram;
@@ -768,24 +820,28 @@
             });
         }
 
-        // --- FUNCIÓN GUARDAR REDES SOCIALES ---
-        function saveSocialLinks() {
+        // --- FUNCIÓN GUARDAR DETALLES (REDES Y ESTADO) ---
+        function saveDetails() {
             if (!currentUser || currentUser.uid !== targetUserId) return;
             
-            const fb = document.getElementById('social-fb').value.trim();
-            const x = document.getElementById('social-x').value.trim();
-            const ig = document.getElementById('social-ig').value.trim();
-            const yt = document.getElementById('social-yt').value.trim();
-            const pt = document.getElementById('social-pt').value.trim();
-
+            const status = document.getElementById('artist-status').value;
             const socialsData = {
-                facebook: fb, x: x, instagram: ig, youtube: yt, patreon: pt
+                facebook: document.getElementById('social-fb').value.trim(),
+                x: document.getElementById('social-x').value.trim(),
+                instagram: document.getElementById('social-ig').value.trim(),
+                youtube: document.getElementById('social-yt').value.trim(),
+                patreon: document.getElementById('social-pt').value.trim()
             };
 
-            db.ref('users/' + currentUser.uid + '/socials').set(socialsData)
+            const updates = {
+                socials: socialsData,
+                artistStatus: status
+            };
+
+            db.ref('users/' + currentUser.uid).update(updates)
                 .then(() => {
                     document.getElementById('details-modal').classList.remove('visible');
-                    alert("Enlaces actualizados");
+                    // alert("Perfil actualizado"); 
                 })
                 .catch(e => alert("Error al guardar: " + e.message));
         }
