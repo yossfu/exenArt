@@ -117,6 +117,34 @@
         .viewer-frame { background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); position: relative; overflow: hidden; backdrop-filter: blur(10px); }
         .verified-badge { color: #3b82f6; margin-left: 4px; font-size: 0.9em; }
 
+        /* Estilos de Navegación del Modal (Nuevos) */
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 3020;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: rgba(31, 41, 55, 0.6);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+        }
+        .nav-arrow:hover { background-color: rgba(31, 41, 55, 0.9); transform: translateY(-50%) scale(1.1); }
+        .nav-arrow:active { transform: translateY(-50%) scale(0.95); }
+        .nav-prev { left: 10px; }
+        .nav-next { right: 10px; }
+        @media (min-width: 768px) {
+            .nav-prev { left: 20px; }
+            .nav-next { right: 20px; }
+        }
+
         /* ESTILOS DEL PANEL DE PUBLICACIÓN */
         .upload-card {
             background: linear-gradient(145deg, #1a1a1c, #111112);
@@ -344,14 +372,18 @@
             </div>
         </main>
 
-        <!-- VISOR MODAL -->
+        <!-- VISOR MODAL (MODIFICADO CON NAVEGACIÓN) -->
         <div id="modal" class="fixed inset-0 w-full h-full">
             <button id="close-modal" class="absolute top-4 right-4 z-[3010] h-12 w-12 flex items-center justify-center rounded-full bg-gray-800/80 text-white active:scale-90 transition backdrop-blur-md"><i class="fas fa-times text-xl"></i></button>
             
+            <!-- Botones de navegación -->
+            <button id="prev-btn" class="nav-arrow nav-prev" onclick="prevImage()"><i class="fas fa-chevron-left"></i></button>
+            <button id="next-btn" class="nav-arrow nav-next" onclick="nextImage()"><i class="fas fa-chevron-right"></i></button>
+
             <div class="h-full w-full flex items-center justify-center p-4">
                 <div class="w-full max-w-4xl flex flex-col items-center max-h-[90vh]">
-                    <div class="relative w-full flex-1 flex items-center justify-center bg-black/50 rounded-xl overflow-hidden">
-                        <img id="modal-image" src="" class="max-w-full max-h-[80vh] object-contain shadow-2xl">
+                    <div class="relative w-full flex-1 flex items-center justify-center bg-black/50 rounded-xl overflow-hidden" id="modal-img-wrapper">
+                        <img id="modal-image" src="" class="max-w-full max-h-[80vh] object-contain shadow-2xl transition-transform duration-300">
                     </div>
                     <div class="mt-4 text-center p-4 bg-black/80 rounded-xl backdrop-blur-md border border-white/10 w-full max-w-2xl">
                         <h3 id="modal-title" class="text-orange-400 font-bold text-xl font-[Poppins]"></h3>
@@ -394,6 +426,12 @@
         let targetUserId = null;
         let selectedPostFile = null;
         let isGuestView = false;
+        
+        // Variables para navegación de galería (NUEVO)
+        let currentUserPosts = [];
+        let currentPostIndex = -1;
+        let touchStartX = 0;
+        let touchEndX = 0;
         
         // Variables Auth
         let userDataCache = {};
@@ -833,6 +871,7 @@
             }
         }
 
+        // --- CARGAR POSTS Y LÓGICA DE NAVEGACIÓN (SWIPE/SLIDE) ---
         function loadUserPosts() {
             const grid = document.getElementById('profile-grid');
             const noPosts = document.getElementById('no-posts-msg');
@@ -843,6 +882,7 @@
                     noPosts.classList.remove('hidden');
                     document.getElementById('posts-count').innerText = "0";
                     document.getElementById('likes-received-count').innerText = "0";
+                    currentUserPosts = []; // Limpiar array
                     return;
                 }
                 noPosts.classList.add('hidden');
@@ -854,38 +894,109 @@
                 });
                 document.getElementById('posts-count').innerText = posts.length;
                 document.getElementById('likes-received-count').innerText = totalLikes;
+                
+                // Ordenar por fecha y guardar en variable global
                 posts.sort((a, b) => b.timestamp - a.timestamp);
-                posts.forEach(post => {
+                currentUserPosts = posts.filter(p => p.imageUrl); // Solo posts con imagen para el visor
+                
+                posts.forEach((post, index) => {
                     if (!post.imageUrl) return;
                     const div = document.createElement('div');
                     div.className = "grid-item group";
-                    div.onclick = () => openViewer(post.imageUrl, post.title, post.text, post.tags);
+                    // Modificamos el onclick para pasar el INDEX
+                    div.onclick = () => openViewer(index);
                     div.innerHTML = `<img src="${post.imageUrl}" class="grid-image" loading="lazy"><div class="grid-overlay"><div class="text-white font-bold flex items-center gap-3 text-xs sm:text-lg drop-shadow-md"><span class="flex items-center gap-1"><i class="fas fa-heart text-red-500"></i> ${post.likes || 0}</span></div></div>`;
                     grid.appendChild(div);
                 });
             });
         }
 
-        function openViewer(url, title, desc, tags) {
+        function openViewer(index) {
+            if (index < 0 || index >= currentUserPosts.length) return;
+            
+            currentPostIndex = index;
+            const post = currentUserPosts[index];
             const modal = document.getElementById('modal');
-            document.getElementById('modal-image').src = url;
-            document.getElementById('modal-title').textContent = title || '';
-            document.getElementById('modal-desc').textContent = desc || '';
+            
+            // Actualizar Contenido
+            document.getElementById('modal-image').src = post.imageUrl;
+            document.getElementById('modal-title').textContent = post.title || '';
+            document.getElementById('modal-desc').textContent = post.text || '';
+            
             const tagsContainer = document.getElementById('modal-tags');
             tagsContainer.innerHTML = '';
-            if (tags) {
-                tags.split(',').forEach(tag => {
+            if (post.tags) {
+                post.tags.split(',').forEach(tag => {
                     const span = document.createElement('span');
                     span.className = "text-[10px] bg-gray-800 text-gray-300 px-2 py-1 rounded-full border border-gray-700";
                     span.textContent = '#' + tag.trim();
                     tagsContainer.appendChild(span);
                 });
             }
-            modal.classList.add('visible'); document.body.style.overflow = 'hidden';
+            
+            // Controlar visibilidad de flechas
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            
+            prevBtn.style.display = currentPostIndex > 0 ? 'flex' : 'none';
+            nextBtn.style.display = currentPostIndex < currentUserPosts.length - 1 ? 'flex' : 'none';
+
+            modal.classList.add('visible'); 
+            document.body.style.overflow = 'hidden';
         }
         
+        function nextImage() {
+            if (currentPostIndex < currentUserPosts.length - 1) {
+                openViewer(currentPostIndex + 1);
+            }
+        }
+
+        function prevImage() {
+            if (currentPostIndex > 0) {
+                openViewer(currentPostIndex - 1);
+            }
+        }
+        
+        // --- MANEJO DE SWIPE TÁCTIL (IGUAL QUE INDEX) ---
+        const modalElement = document.getElementById('modal');
+        const swipeThreshold = 50;
+
+        modalElement.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        modalElement.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            if (Math.abs(deltaX) > swipeThreshold) {
+                if (deltaX < 0) {
+                    // Swipe Izquierda -> Siguiente
+                    nextImage();
+                } else {
+                    // Swipe Derecha -> Anterior
+                    prevImage();
+                }
+            }
+        }
+        
+        // Soporte Teclado
+        document.addEventListener('keydown', (e) => {
+            if (!document.getElementById('modal').classList.contains('visible')) return;
+            if (e.key === 'ArrowRight') nextImage();
+            if (e.key === 'ArrowLeft') prevImage();
+            if (e.key === 'Escape') {
+                document.getElementById('modal').classList.remove('visible'); 
+                document.body.style.overflow = 'auto';
+            }
+        });
+
         document.getElementById('close-modal').addEventListener('click', () => {
-            document.getElementById('modal').classList.remove('visible'); document.body.style.overflow = 'auto';
+            document.getElementById('modal').classList.remove('visible'); 
+            document.body.style.overflow = 'auto';
         });
 
         // --- SUBIDA FOTO PERFIL (AVATAR) ---
