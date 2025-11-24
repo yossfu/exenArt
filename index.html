@@ -51,7 +51,8 @@
         /* --- ESTILOS DE AUTENTICACIÓN (LOGIN/REGISTRO) --- */
         #auth-overlay {
             position: fixed; inset: 0; z-index: 9999;
-            background-color: #0c0c0c;
+            background-color: rgba(12, 12, 12, 0.95); /* Fondo un poco mas transparente */
+            backdrop-filter: blur(5px);
             background-image: radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.1) 0%, transparent 50%);
             display: none; /* Oculto por defecto */
             align-items: center; justify-content: center;
@@ -426,8 +427,8 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.8);
         }
 
-        /* OCULTAR CONTENIDO DE APP HASTA LOGIN */
-        #app-content { display: none; }
+        /* OCULTAR CONTENIDO DE APP HASTA LOGIN (DESACTIVADO PARA MODO INVITADO) */
+        /* #app-content { display: none; } <- Se manejará dinamicamente */ 
 
     </style>
 </head>
@@ -444,11 +445,14 @@
     <!-- ============================================================== -->
     <div id="auth-overlay">
         <div class="form-card rounded-2xl p-8 relative overflow-hidden">
-            
+            <!-- Botón Cerrar (Nuevo para modo invitado) -->
+            <button onclick="document.getElementById('auth-overlay').style.display='none'" class="absolute top-4 right-4 text-gray-400 hover:text-white z-50 p-2"><i class="fas fa-times text-xl"></i></button>
+
             <!-- Header Auth -->
             <div class="text-center mb-8">
                 <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-16 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
                 <h2 class="text-2xl font-bold font-[Poppins] text-white">Bienvenido</h2>
+                <p class="text-gray-400 text-xs mt-2">Inicia sesión para interactuar, dar like y comentar.</p>
                 <div class="flex justify-center gap-4 mt-4 text-sm font-semibold">
                     <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1 transition-colors" onclick="switchAuthTab('login')">Iniciar Sesión</button>
                     <button id="tab-register" class="text-gray-400 pb-1 hover:text-white transition-colors" onclick="switchAuthTab('register')">Registrarse</button>
@@ -549,7 +553,8 @@
     <!-- ============================================== -->
     <!-- === CONTENIDO PRINCIPAL DE LA GALERÍA === -->
     <!-- ============================================== -->
-    <div id="app-content">
+    <!-- NOTA: app-content se muestra siempre, pero se restringe la interacción -->
+    <div id="app-content" style="display: block;">
 
         <!-- OVERLAYS (WARNING +18) -->
         <div id="warning-overlay" class="fixed inset-0 z-[2000] flex flex-col items-center justify-center bg-gray-950/90 p-4 text-center backdrop-blur-sm" style="display: none;">
@@ -568,7 +573,7 @@
             <header class="pt-4 pb-2 flex justify-center relative z-40">
                 <!-- BOTÓN PERFIL USUARIO (Izquierda) -->
                 <div id="user-profile-container">
-                    <div class="user-profile-btn" onclick="openConfigModal()">
+                    <div class="user-profile-btn" onclick="if(requireLogin(event)) openConfigModal()">
                         <img id="header-user-img" src="https://placehold.co/100x100/333/fff?text=U" alt="Perfil">
                     </div>
                 </div>
@@ -615,14 +620,14 @@
                 
                     <div class="dropdown-content" id="categories-dropdown">
                         <div class="categories-horizontal">
-                            <a href="categoria.html?cat=anime" id="cat-btn-anime" class="category-circle cat-anime">Anime</a>
-                            <a href="categoria.html?cat=furry" id="cat-btn-furry" class="category-circle cat-furry">Furry</a>
-                            <a href="categoria.html?cat=realismo" id="cat-btn-realismo" class="category-circle cat-realismo">Realismo</a>
-                            <a href="categoria.html?cat=mecas" id="cat-btn-mecas" class="category-circle cat-mecas">Mecas</a>
-                            <a href="categoria.html?cat=devils" id="cat-btn-devils" class="category-circle cat-devils">Devils</a>
-                            <a href="categoria.html?cat=colors" id="cat-btn-colors" class="category-circle cat-colors">ColorFull</a>
-                            <a href="categoria.html?cat=amateur" id="cat-btn-amateur" class="category-circle cat-amateur">Amateur</a>
-                            <a href="categoria.html?cat=tvgames" id="cat-btn-tvgames" class="category-circle cat-tvgames">TV & Games</a>
+                            <a href="categoria.html?cat=anime" id="cat-btn-anime" class="category-circle cat-anime" onclick="return requireLogin(event)">Anime</a>
+                            <a href="categoria.html?cat=furry" id="cat-btn-furry" class="category-circle cat-furry" onclick="return requireLogin(event)">Furry</a>
+                            <a href="categoria.html?cat=realismo" id="cat-btn-realismo" class="category-circle cat-realismo" onclick="return requireLogin(event)">Realismo</a>
+                            <a href="categoria.html?cat=mecas" id="cat-btn-mecas" class="category-circle cat-mecas" onclick="return requireLogin(event)">Mecas</a>
+                            <a href="categoria.html?cat=devils" id="cat-btn-devils" class="category-circle cat-devils" onclick="return requireLogin(event)">Devils</a>
+                            <a href="categoria.html?cat=colors" id="cat-btn-colors" class="category-circle cat-colors" onclick="return requireLogin(event)">ColorFull</a>
+                            <a href="categoria.html?cat=amateur" id="cat-btn-amateur" class="category-circle cat-amateur" onclick="return requireLogin(event)">Amateur</a>
+                            <a href="categoria.html?cat=tvgames" id="cat-btn-tvgames" class="category-circle cat-tvgames" onclick="return requireLogin(event)">TV & Games</a>
                         </div>
                         <div class="text-center mt-3 text-xs text-gray-400">Desliza para ver más <i class="fas fa-arrow-right ml-1"></i></div>
                     </div>
@@ -646,20 +651,7 @@
                     <div id="top-liked-grid" class="grid grid-cols-3 gap-3 md:gap-4"></div>
                 </section>
 
-                <!-- ================================================================================= -->
-                <!-- === NUEVO BANNER: CREA TU CHICO (Art Design) === -->
-                <!-- ================================================================================= -->
-                <a href="characterDesigner.html" class="promo-banner touch-feedback group">
-                    <div class="promo-banner-bg"></div>
-                    <div class="promo-banner-overlay">
-                        <div class="promo-content">
-                            <span class="promo-tag"><i class="fas fa-magic"></i> Beta</span>
-                            <h3>Crea al chico de <br><span>tus sueños</span></h3>
-                        </div>
-                        <i class="fas fa-chevron-right promo-icon"></i>
-                    </div>
-                </a>
-                <!-- ================================================================================= -->
+                <!-- BANNER ELIMINADO A PETICIÓN -->
                 
                 <div class="decorative-divider"><i class="fas fa-fan decorative-divider-icon"></i></div>
                 <h3 class="section-title mb-6 text-center text-3xl tracking-tight text-orange-400"><i class="fas fa-images"></i> GALERIA</h3>
@@ -797,11 +789,11 @@
                 <i class="fas fa-th-large text-xl mb-1"></i>
                 <span class="text-[10px] font-semibold">Galería</span>
             </a>
-            <a href="feed.html" class="nav-item flex flex-col items-center justify-center text-center px-2 w-1/3 touch-feedback">
+            <a href="feed.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center text-center px-2 w-1/3 touch-feedback">
                 <i class="fas fa-globe-americas text-xl mb-1"></i>
                 <span class="text-[10px] font-semibold">Social</span>
             </a>
-            <a href="profile.html" class="nav-item flex flex-col items-center justify-center text-center px-2 w-1/3 touch-feedback">
+            <a href="profile.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center text-center px-2 w-1/3 touch-feedback">
                 <i class="fas fa-user text-xl mb-1"></i>
                 <span class="text-[10px] font-semibold">Perfil</span>
             </a>
@@ -825,21 +817,23 @@
         let userDataCache = {};
         let isUploadingAuth = false;
 
-        // --- MANEJO DE SESIÓN Y VISTAS ---
+        // --- MANEJO DE SESIÓN Y VISTAS (MODIFICADO PARA MODO INVITADO) ---
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('initial-loader');
             const authOverlay = document.getElementById('auth-overlay');
             const appContent = document.getElementById('app-content');
 
             if (user && !user.isAnonymous) {
+                // USUARIO LOGUEADO
                 currentUser = user;
                 authOverlay.style.display = 'none';
                 appContent.style.display = 'block';
                 loadUserProfile(user.uid);
             } else {
+                // USUARIO NO LOGUEADO (Invitado)
                 currentUser = null;
-                authOverlay.style.display = 'flex';
-                appContent.style.display = 'none';
+                authOverlay.style.display = 'none'; // NO MOSTRAR AUTOMÁTICAMENTE
+                appContent.style.display = 'block'; // PERMITIR VER CONTENIDO
             }
 
             if (loader) {
@@ -847,6 +841,19 @@
                 setTimeout(() => { loader.style.display = 'none'; }, 500);
             }
         });
+
+        // --- FUNCIÓN PARA PROTEGER INTERACCIONES ---
+        function requireLogin(event) {
+            if (!currentUser) {
+                if(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                document.getElementById('auth-overlay').style.display = 'flex';
+                return false;
+            }
+            return true;
+        }
 
         // --- LÓGICA DE LOGIN / REGISTRO (INTEGRADA) ---
         function switchAuthTab(tab) {
@@ -989,7 +996,7 @@
                 });
         });
 
-        // --- CÓDIGO ORIGINAL GALERÍA (SIN MODIFICAR, SOLO ENVUELTO) ---
+        // --- CÓDIGO ORIGINAL GALERÍA ---
 
         function loadUserProfile(uid) {
             db.ref('users/' + uid).on('value', snap => {
@@ -1182,7 +1189,8 @@
             recentImages.forEach((img, index) => {
                 const slide = document.createElement('div');
                 slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
-                slide.setAttribute('onclick', `openModal('${img.id}')`);
+                // GUARD: Protegido con requireLogin
+                slide.setAttribute('onclick', `if(requireLogin(event)) openModal('${img.id}')`);
                 const displayUrl = img.thumbnailUrl || img.url; 
                 slide.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="eager" class="hero-bg-img"><div class="hero-overlay"><div class="hero-content"><span class="text-orange-500 font-bold tracking-wider uppercase mb-1 text-[10px] sm:text-xs block">NUEVO AGREGADO</span><h2 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight mb-2 uppercase drop-shadow-lg truncate">${img.title}</h2><p class="text-gray-300 text-xs sm:text-sm line-clamp-2 mb-4 drop-shadow-md max-w-lg leading-relaxed">${img.desc || 'Sin descripción disponible.'}</p><div class="flex gap-3"><button class="px-4 py-1.5 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition-all text-xs sm:text-sm">Ver Ahora</button><button class="px-4 py-1.5 bg-transparent border border-white text-white rounded-full font-bold hover:bg-white/10 transition-all text-xs sm:text-sm">+ Info</button></div></div></div><div class="hero-floating-card"><img src="${displayUrl}" class="hero-floating-img" alt="Preview Animada"></div>`;
                 container.appendChild(slide);
@@ -1410,7 +1418,8 @@
                 if (item.type === 'user') {
                     const div = document.createElement('div');
                     div.className = "bg-[#111] border border-gray-800 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 transition group aspect-[2/3]";
-                    div.onclick = () => window.location.href = `profile.html?uid=${item.id}`;
+                    // GUARD: Protegido con requireLogin para ir al perfil
+                    div.onclick = (e) => { if(requireLogin(e)) window.location.href = `profile.html?uid=${item.id}`; };
                     div.innerHTML = `
                         <img src="${item.profilePic || 'https://placehold.co/100x100'}" class="w-20 h-20 rounded-full object-cover mb-3 border-2 border-gray-700 group-hover:border-orange-500 transition shadow-lg">
                         <span class="font-bold text-white text-lg truncate w-full text-center">${item.username}</span>
@@ -1426,7 +1435,8 @@
                 let classList = 'image-item-animation group relative aspect-[2/3] overflow-hidden image-card'; 
                 if (isSlider) classList += ' flex-shrink-0 w-[45%] sm:w-[30%] md:w-[22%] cursor-pointer'; 
                 div.className = classList; 
-                div.setAttribute('onclick', `openModal('${item.id}')`); 
+                // GUARD: Protegido con requireLogin
+                div.setAttribute('onclick', `if(requireLogin(event)) openModal('${item.id}')`); 
                 div.style.animationDelay = `${(index * 0.05)}s`; 
                 
                 const isLiked = userReactions[item.id] === 'like'; 
@@ -1482,6 +1492,9 @@
         }
         
         function toggleReactionFromGrid(imageId, event) { 
+            // GUARD: Protegido con requireLogin
+            if(!requireLogin(event)) return;
+            
             event.stopPropagation(); 
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
             const btn = document.getElementById(`grid-like-btn-${imageId}`); 
@@ -1512,6 +1525,9 @@
         }
         
         async function openModal(id) { 
+            // GUARD: Protegido (Doble check)
+            if(!requireLogin()) return;
+
             stopTrackingCurrent();
             document.getElementById('modal-content').scrollTop = 0; 
             setTimeout(() => { document.getElementById('modal-content').scrollTop = 0; }, 10);
@@ -1637,6 +1653,9 @@
         function handleSwipe() { const deltaX = touchEndX - touchStartX; if (Math.abs(deltaX) > swipeThreshold) { if (deltaX < 0) navigateToNext(); else navigateToPrevious(); } }
         
         function handleReaction(type) { 
+            // GUARD:
+            if(!requireLogin()) return;
+
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
             animateReactionOnImage(type); 
             
@@ -1678,6 +1697,9 @@
         }
         
         function postComment() { 
+            // GUARD:
+            if(!requireLogin()) return;
+
             const name = document.getElementById('name-input').value.trim(); 
             const comment = document.getElementById('comment-input').value.trim(); 
             if (!comment || !currentImageId) return; 
