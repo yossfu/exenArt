@@ -53,7 +53,7 @@
         /* --- AUTH OVERLAY --- */
         #auth-overlay {
             position: fixed; inset: 0; z-index: 9999;
-            background-color: rgba(0, 0, 0, 0.98); /* Fondo más oscuro */
+            background-color: rgba(0, 0, 0, 0.98);
             backdrop-filter: blur(5px);
             display: none;
             align-items: center; justify-content: center;
@@ -96,11 +96,11 @@
         .nav-item.active { color: var(--accent); transform: translateY(-4px); }
         .nav-item.active span { font-weight: 700; }
 
-        /* --- VISOR MODAL (FONDO OPACO) --- */
+        /* --- VISOR MODAL --- */
         .modal-backdrop { 
             display: none; 
             position: fixed; inset: 0; 
-            background-color: #000000; /* FONDO NEGRO SÓLIDO */
+            background-color: #000000; 
             z-index: 5000; 
         } 
         .modal-backdrop.visible { display: block; animation: fadeIn 0.3s forwards; }
@@ -309,16 +309,15 @@
                 <div id="hero-slides-container" class="w-full h-full relative"></div>
                 <div id="hero-indicators" class="hero-indicators"></div>
                 <div class="hero-bottom-gradient"></div>
+                <!-- FORMULARIO BUSQUEDA -->
                 <form id="search-form" class="absolute bottom-0 left-0 w-full flex justify-center pb-4 z-50 px-4">
                     <div class="relative w-full max-w-xl">
                         <input type="text" id="search-input" placeholder="Buscar usuarios o arte..." class="w-full rounded-full border-2 border-white/20 bg-black/50 backdrop-blur-md py-3 pl-5 pr-24 text-white transition placeholder:text-gray-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
-                        <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-12 hidden items-center justify-center w-12 text-gray-300 hover:text-orange-500"><i class="fas fa-times text-xl"></i></button>
+                        <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-12 hidden items-center justify-center w-10 text-gray-400 hover:text-white transition"><i class="fas fa-times"></i></button>
                         <button type="submit" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-orange-500 hover:text-orange-400"><i class="fas fa-search text-xl"></i></button>
                     </div>
                 </form>
             </div>
-
-            <!-- SECCIÓN DE CATEGORÍAS ELIMINADA -->
 
             <div id="search-results-container" class="hidden">
                 <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
@@ -336,7 +335,7 @@
                 <!-- SECCIÓN COMUNIDAD -->
                 <section id="community-section" class="mb-12">
                     <div class="flex justify-between items-end mb-4">
-                        <h3 class="font-[Poppins] text-lg font-bold text-white tracking-wide">COMUNIDAD</h3>
+                        <h3 class="font-[Poppins] text-lg font-bold text-white tracking-wide">COMUNIDAD (Top)</h3>
                         <a href="feed.html" class="text-xs text-orange-500 hover:text-orange-300 font-semibold transition">Ver todo</a>
                     </div>
                     
@@ -368,26 +367,16 @@
             </section>
         </main>
         
-        <!-- ======================================================================= -->
-        <!-- VISOR MODAL ESTILO FEED (CORREGIDO) -->
-        <!-- ======================================================================= -->
+        <!-- VISOR MODAL ESTILO FEED -->
         <div id="modal" class="modal-backdrop">
-            <!-- Botón Cerrar -->
             <button id="close-modal" class="fixed top-4 right-4 z-[5010] h-10 w-10 flex items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-times text-lg"></i></button>
 
             <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black transition-all duration-300">
                 
                 <!-- ÁREA IMAGEN -->
                 <div class="image-area relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[45vh] lg:h-full">
-                    <!-- Contenedor de imagen con carga progresiva -->
-                    <div id="image-wrapper" class="w-full h-full flex items-center justify-center relative">
-                        <!-- Se inyecta JS -->
-                    </div>
-                    
-                    <!-- Botón Pantalla Completa -->
+                    <div id="image-wrapper" class="w-full h-full flex items-center justify-center relative"></div>
                     <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-black/60 text-white p-2 rounded-lg backdrop-blur-sm border border-white/10 hover:bg-orange-600 transition"><i class="fas fa-expand"></i></button>
-
-                    <!-- Flechas Navegación -->
                     <button id="prev-image" class="nav-arrow nav-prev"><i class="fas fa-chevron-left"></i></button>
                     <button id="next-image" class="nav-arrow nav-next"><i class="fas fa-chevron-right"></i></button>
                 </div>
@@ -397,7 +386,7 @@
                     
                     <div class="p-4 border-b border-gray-700 flex items-center justify-between bg-[#1a1a1c] flex-shrink-0">
                         <div class="flex items-center gap-3">
-                            <img id="modal-user-avatar" src="https://placehold.co/100x100" class="w-10 h-10 rounded-full object-cover border border-gray-600">
+                            <img id="modal-user-avatar" src="https://placehold.co/100x100" class="w-10 h-10 rounded-full object-cover border border-gray-600 active:scale-95 transition-transform">
                             <div class="leading-tight">
                                 <h4 id="modal-image-title" class="font-bold text-white text-sm line-clamp-1">Título</h4>
                                 <span id="modal-user-name" class="text-[10px] text-gray-500 cursor-pointer hover:text-orange-400 transition">Autor</span>
@@ -413,7 +402,6 @@
                         <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap mb-4"></p>
                         <div id="modal-tags" class="flex flex-wrap gap-2 mb-6 pb-4 border-b border-gray-800"></div>
                         
-                        <!-- Slider Similares -->
                         <div class="mb-6 pb-4 border-b border-gray-800">
                             <h3 class="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wide flex items-center gap-2"><i class="fas fa-th-large"></i> Similares</h3>
                             <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-3 snap-x"></div>
@@ -490,7 +478,6 @@
 
         let currentImageId = ''; 
         let currentContext = 'gallery';
-        // VARIABLES CRÍTICAS PARA EL SWIPE Y PLAYLIST
         let currentPlaylist = []; 
         let currentIndex = -1;
         
@@ -501,10 +488,11 @@
         const searchResultsPerPage = 21; 
         let touchStartX = 0; 
         let touchEndX = 0; 
+        let touchStartY = 0; 
+        let touchEndY = 0; 
         const swipeThreshold = 50;
         let adminUserId = null;
 
-        // Listas globales para playlists
         window.forYouList = [];
         window.communityList = [];
 
@@ -570,33 +558,55 @@
         }
 
         async function cacheAllDataForSearch() { 
+            // 1. Obtener galería oficial
             const snapshot = await db.ref('images').once('value'); 
             if (snapshot.exists()) { 
                 const allData = []; 
                 snapshot.forEach(child => { allData.push({ id: child.key, type: 'gallery', ...child.val() }); }); 
                 fullGalleryCache = allData; 
             } 
+            
+            // 2. Obtener usuarios (CREAR MAPA DE BÚSQUEDA RÁPIDA)
             const userSnap = await db.ref('users').once('value');
+            const userMap = {}; // Mapa para búsqueda O(1)
+            
             if (userSnap.exists()) {
                 const uData = [];
                 userSnap.forEach(child => { 
                     const userData = child.val();
-                    uData.push({ id: child.key, type: 'user', ...userData }); 
-                    if (userData.email === 'ezequiel@exen.com') adminUserId = child.key;
+                    const uid = child.key;
+                    uData.push({ id: uid, type: 'user', ...userData }); 
+                    userMap[uid] = userData; // Guardar en mapa
+                    if (userData.email === 'ezequiel@exen.com') adminUserId = uid;
                 });
                 usersCache = uData;
             }
+
+            // 3. Obtener Feed Social (USAR DATOS DE USUARIO ACTUALIZADOS DEL MAPA)
             const feedSnap = await db.ref('feed_posts').once('value');
             if (feedSnap.exists()) {
                 const fData = [];
                 feedSnap.forEach(child => { 
                     const post = child.val();
                     if (post.imageUrl) { 
+                        // Obtener datos ACTUALES del autor
+                        const author = userMap[post.userId];
+                        const currentAvatar = author ? author.profilePic : (post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U');
+                        const currentName = author ? author.username : (post.userName || 'Usuario');
+                        
                         fData.push({ 
-                            id: child.key, type: 'feed', url: post.imageUrl, thumbnailUrl: post.imageUrl,
-                            title: post.title || 'Sin título', desc: post.text, tags: post.tags ? post.tags.split(',').map(t=>t.trim()) : [],
-                            category: post.category, user: { name: post.userName, avatar: post.userAvatar, id: post.userId },
-                            userId: post.userId, timestamp: post.timestamp
+                            id: child.key, 
+                            type: 'feed', 
+                            url: post.imageUrl, 
+                            thumbnailUrl: post.imageUrl,
+                            title: post.title || 'Sin título', 
+                            desc: post.text, 
+                            tags: post.tags ? post.tags.split(',').map(t=>t.trim()) : [],
+                            category: post.category, 
+                            user: { name: currentName, avatar: currentAvatar, id: post.userId },
+                            userId: post.userId, 
+                            timestamp: post.timestamp, 
+                            likes: post.likes || 0 
                         }); 
                     }
                 });
@@ -626,6 +636,7 @@
         function renderCommunitySection() {
             const container = document.getElementById('community-grid');
             container.innerHTML = '';
+            
             if (!currentUser) {
                 const cta = document.createElement('div');
                 cta.className = "cta-card cursor-pointer group";
@@ -633,14 +644,27 @@
                 cta.innerHTML = `<div class="w-14 h-14 rounded-full bg-orange-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition"><i class="fas fa-user-plus text-2xl text-orange-500"></i></div><h4 class="text-white font-bold text-lg mb-1">¡Únete!</h4><p class="text-gray-400 text-xs mb-4 leading-relaxed">Comparte tu arte, recibe likes y conecta con otros.</p><span class="text-xs font-bold text-orange-400 bg-orange-900/30 px-4 py-2 rounded-full border border-orange-500/30 group-hover:bg-orange-500 group-hover:text-white transition">Crear Cuenta</span>`;
                 container.appendChild(cta);
             }
-            const recentFeed = feedCache.slice(0, 12);
-            window.communityList = recentFeed; // Guardar para playlist
-            recentFeed.forEach(post => {
+
+            let sortedFeed = [...feedCache].sort((a, b) => (b.likes || 0) - (a.likes || 0));
+            let userPostCounts = {};
+            let filteredFeed = [];
+            
+            for (let post of sortedFeed) {
+                let uid = post.userId;
+                if (!userPostCounts[uid]) userPostCounts[uid] = 0;
+                if (userPostCounts[uid] < 3) { filteredFeed.push(post); userPostCounts[uid]++; }
+                if (filteredFeed.length >= 20) break;
+            }
+
+            window.communityList = filteredFeed;
+
+            filteredFeed.forEach(post => {
                 const card = document.createElement('div');
                 card.className = "relative min-w-[160px] w-[160px] h-[220px] rounded-xl overflow-hidden flex-shrink-0 snap-start cursor-pointer group border border-gray-800 hover:border-orange-500/50 transition-all";
-                const profileUrl = `profile.html?uid=${post.userId}`;
                 card.onclick = (e) => { e.stopPropagation(); if(requireLogin(e)) openModal(post.id, 'community'); };
-                card.innerHTML = `<img src="${post.thumbnailUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 group-hover:opacity-60" loading="lazy"><div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div><div class="absolute bottom-3 left-3 right-3"><div class="flex items-center gap-2 user-link transition hover:opacity-80"><img src="${post.user.avatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full border border-orange-500 object-cover"><div class="overflow-hidden"><p class="text-white text-xs font-bold truncate">${post.user.name}</p><p class="text-[10px] text-gray-400 truncate">Ver perfil</p></div></div></div>`;
+                const likeBadge = post.likes > 0 ? `<div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 text-[10px] text-white"><i class="fas fa-heart text-xs text-red-500"></i> ${post.likes}</div>` : '';
+
+                card.innerHTML = `<img src="${post.thumbnailUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 group-hover:opacity-60" loading="lazy"><div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>${likeBadge}<div class="absolute bottom-3 left-3 right-3"><div class="flex items-center gap-2 user-link transition hover:opacity-80"><img src="${post.user.avatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full border border-orange-500 object-cover"><div class="overflow-hidden"><p class="text-white text-xs font-bold truncate">${post.user.name}</p><p class="text-[10px] text-gray-400 truncate">Ver perfil</p></div></div></div>`;
                 container.appendChild(card);
             });
         }
@@ -659,7 +683,7 @@
             let candidates = scoredImages.slice(0, 40).map(item => item.img);
             for (let i = Math.min(candidates.length, 10) - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [candidates[i], candidates[j]] = [candidates[j], candidates[i]]; }
             const finalSelection = candidates.slice(0, 6);
-            window.forYouList = finalSelection; // Guardar para playlist
+            window.forYouList = finalSelection;
             displaySearchResults(finalSelection, 'for-you-grid', false, 'foryou');
         }
 
@@ -737,136 +761,73 @@
             }); 
         }
 
-        // --- VISOR MODAL (CORREGIDO Y MEJORADO) ---
         async function openModal(id, context) {
             if(!requireLogin()) return;
-            
-            // 1. ESTABLECER LISTA DE REPRODUCCIÓN (CRÍTICO PARA EL SWIPE)
             if(context === 'main') currentPlaylist = unifiedGalleryData; 
             else if(context === 'foryou') currentPlaylist = window.forYouList;
             else if(context === 'community') currentPlaylist = window.communityList;
             else if(context === 'search') currentPlaylist = currentSearchResults;
-            else currentPlaylist = unifiedGalleryData; // Fallback
-
-            // 2. Buscar índice en la lista establecida
+            else currentPlaylist = unifiedGalleryData; 
+            
             currentIndex = currentPlaylist.findIndex(i => i.id === id);
-            if(currentIndex === -1) {
-                // Si no se encuentra (raro), fallback a buscar en la galería completa
-                currentPlaylist = unifiedGalleryData;
-                currentIndex = currentPlaylist.findIndex(i => i.id === id);
-            }
-            if(currentIndex === -1) return; // Error, no existe la imagen
+            if(currentIndex === -1) { currentPlaylist = unifiedGalleryData; currentIndex = currentPlaylist.findIndex(i => i.id === id); }
+            if(currentIndex === -1) return; 
 
             let img = currentPlaylist[currentIndex];
-            currentImageId = id; 
-            currentContext = img.type;
-            
+            currentImageId = id; currentContext = img.type;
             updateModalContent(img);
-            
-            document.getElementById('modal').classList.add('visible'); 
-            document.body.style.overflow = 'hidden';
+            document.getElementById('modal').classList.add('visible'); document.body.style.overflow = 'hidden';
         }
 
         function updateModalContent(img) {
-            // Datos básicos
             document.getElementById('modal-image-title').textContent = img.title;
             document.getElementById('modal-desc').textContent = img.desc || 'Sin descripción.';
-            
+            const avatarEl = document.getElementById('modal-user-avatar');
+            const nameEl = document.getElementById('modal-user-name');
+
             if (img.type === 'gallery') {
-                document.getElementById('modal-user-name').textContent = "Galería Oficial";
-                document.getElementById('modal-user-avatar').src = "https://files.catbox.moe/ap1lh0.png";
-                document.getElementById('modal-user-name').onclick = null;
+                nameEl.textContent = "Galería Oficial"; avatarEl.src = "https://files.catbox.moe/ap1lh0.png";
+                nameEl.onclick = null; nameEl.style.cursor = 'default'; avatarEl.onclick = null; avatarEl.style.cursor = 'default';
             } else {
-                document.getElementById('modal-user-name').textContent = img.user.name;
-                document.getElementById('modal-user-avatar').src = img.user.avatar;
-                document.getElementById('modal-user-name').onclick = () => window.location.href = `profile.html?uid=${img.userId}`;
+                nameEl.textContent = img.user.name; avatarEl.src = img.user.avatar;
+                const goToProfile = () => window.location.href = `profile.html?uid=${img.userId}`;
+                nameEl.onclick = goToProfile; nameEl.style.cursor = 'pointer'; avatarEl.onclick = goToProfile; avatarEl.style.cursor = 'pointer';
             }
 
-            // Tags
-            const tagsContainer = document.getElementById('modal-tags');
-            tagsContainer.innerHTML = '';
-            if (img.tags && img.tags.length > 0) {
-                img.tags.forEach(t => { tagsContainer.innerHTML += `<span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600 text-gray-300">#${t}</span>`; });
-            }
+            const tagsContainer = document.getElementById('modal-tags'); tagsContainer.innerHTML = '';
+            if (img.tags && img.tags.length > 0) { img.tags.forEach(t => { tagsContainer.innerHTML += `<span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600 text-gray-300">#${t}</span>`; }); }
 
-            // Lógica de Carga de Imagen (Baja -> Alta)
-            const imageWrapper = document.getElementById('image-wrapper');
-            imageWrapper.innerHTML = ''; // Limpiar anterior
-            
-            const thumbImg = document.createElement('img');
-            thumbImg.src = img.thumbnailUrl || img.url;
-            thumbImg.className = "progressive-image thumbnail-img";
-            
-            const fullImg = new Image();
-            fullImg.src = img.url;
-            fullImg.className = "progressive-image full-res-img";
-            fullImg.onload = () => {
-                fullImg.classList.add('loaded');
-                // Opcional: remover thumb despues de la transición para ahorrar memoria
-                setTimeout(() => { if(thumbImg.parentNode) thumbImg.remove(); }, 600);
-            };
+            const imageWrapper = document.getElementById('image-wrapper'); imageWrapper.innerHTML = '';
+            const thumbImg = document.createElement('img'); thumbImg.src = img.thumbnailUrl || img.url; thumbImg.className = "progressive-image thumbnail-img";
+            const fullImg = new Image(); fullImg.src = img.url; fullImg.className = "progressive-image full-res-img";
+            fullImg.onload = () => { fullImg.classList.add('loaded'); setTimeout(() => { if(thumbImg.parentNode) thumbImg.remove(); }, 600); };
+            imageWrapper.appendChild(thumbImg); imageWrapper.appendChild(fullImg);
 
-            imageWrapper.appendChild(thumbImg);
-            imageWrapper.appendChild(fullImg);
-
-            // Likes y Comentarios
             const modalLikeBtn = document.getElementById('modal-like-btn');
             modalLikeBtn.onclick = () => toggleReactionInModal(img.id);
             updateModalLikeUI(img.id);
-            
             loadSimilarImagesInSlider(img.tags || []);
             loadComments(img.id, currentContext);
 
-            // Actualizar flechas
             document.getElementById('prev-image').style.display = currentIndex > 0 ? 'flex' : 'none';
             document.getElementById('next-image').style.display = currentIndex < currentPlaylist.length - 1 ? 'flex' : 'none';
         }
 
-        function navigateToNext() {
-             if(currentIndex < currentPlaylist.length - 1) {
-                 currentIndex++;
-                 updateModalContent(currentPlaylist[currentIndex]);
-             }
-        }
-        function navigateToPrevious() {
-             if(currentIndex > 0) {
-                 currentIndex--;
-                 updateModalContent(currentPlaylist[currentIndex]);
-             }
-        }
+        function navigateToNext() { if(currentIndex < currentPlaylist.length - 1) { currentIndex++; updateModalContent(currentPlaylist[currentIndex]); } }
+        function navigateToPrevious() { if(currentIndex > 0) { currentIndex--; updateModalContent(currentPlaylist[currentIndex]); } }
         
-        // --- SWIPE LOGIC ---
         const imageArea = document.querySelector('.image-area');
-        imageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
-        imageArea.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }, {passive: true});
-
-        function handleSwipe() { 
-            const deltaX = touchEndX - touchStartX; 
-            if (Math.abs(deltaX) > swipeThreshold) { 
-                if (deltaX < 0) navigateToNext(); 
-                else navigateToPrevious();        
-            } 
-        }
-
-        function toggleFullScreen() {
-            document.getElementById('modal').classList.toggle('fullscreen-mode');
-        }
+        imageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
+        imageArea.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; touchEndY = e.changedTouches[0].screenY; handleSwipe(); }, {passive: true});
+        function handleSwipe() { const deltaX = touchEndX - touchStartX; const deltaY = touchEndY - touchStartY; if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > Math.abs(deltaY)) { if (deltaX < 0) navigateToNext(); else navigateToPrevious(); } else if (Math.abs(deltaY) > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX)) { if (deltaY > 0) closeModal(); } }
+        function toggleFullScreen() { document.getElementById('modal').classList.toggle('fullscreen-mode'); }
 
         function toggleReactionInModal(id) {
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
             const ref = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
-            
             ref.once('value', s => {
-                if(s.exists()) { 
-                    if(currentContext === 'feed') { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } 
-                    else { ref.remove(); }
-                } else { 
-                    if(currentContext === 'feed') { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } 
-                    else { ref.set('like'); }
-                }
+                if(s.exists()) { if(currentContext === 'feed') { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } else { ref.remove(); } } 
+                else { if(currentContext === 'feed') { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } else { ref.set('like'); } }
             });
         }
 
@@ -874,64 +835,35 @@
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
             const modalLikeBtn = document.getElementById('modal-like-btn');
             const modalLikeCount = document.getElementById('modal-like-count');
-            
             const refStatus = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
             refStatus.on('value', s => {
                  if((currentContext === 'feed' && s.exists()) || (currentContext !== 'feed' && s.val() === 'like')) {
-                     modalLikeBtn.classList.add('text-red-500', 'border-red-500/50', 'bg-red-500/10');
-                     modalLikeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim";
+                     modalLikeBtn.classList.add('text-red-500', 'border-red-500/50', 'bg-red-500/10'); modalLikeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim";
                  } else {
-                     modalLikeBtn.classList.remove('text-red-500', 'border-red-500/50', 'bg-red-500/10');
-                     modalLikeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400";
+                     modalLikeBtn.classList.remove('text-red-500', 'border-red-500/50', 'bg-red-500/10'); modalLikeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400";
                  }
             });
-
-            if(currentContext === 'feed') {
-                db.ref(`feed_posts/${id}/likes`).on('value', s => modalLikeCount.innerText = s.val() || 0);
-            } else {
-                 db.ref(`reactions/${id}`).on('value', s => {
-                     let count = 0; const val = s.val(); if(val) Object.values(val).forEach(v => { if(v === 'like') count++; });
-                     modalLikeCount.innerText = count;
-                 });
-            }
+            if(currentContext === 'feed') { db.ref(`feed_posts/${id}/likes`).on('value', s => modalLikeCount.innerText = s.val() || 0); } 
+            else { db.ref(`reactions/${id}`).on('value', s => { let count = 0; const val = s.val(); if(val) Object.values(val).forEach(v => { if(v === 'like') count++; }); modalLikeCount.innerText = count; }); }
         }
 
         function loadSimilarImagesInSlider(tags) {
-            const container = document.getElementById('similar-grid');
-            container.innerHTML = '';
+            const container = document.getElementById('similar-grid'); container.innerHTML = '';
             if (!tags || tags.length === 0) return;
-            
             const candidates = unifiedGalleryData.filter(img => img.id !== currentImageId);
-            const scored = candidates.map(img => {
-                const imgTags = Array.isArray(img.tags) ? img.tags : [];
-                const common = imgTags.filter(tag => tags.includes(tag));
-                return { image: img, score: common.length };
-            }).filter(i => i.score > 0);
-            
+            const scored = candidates.map(img => { const imgTags = Array.isArray(img.tags) ? img.tags : []; const common = imgTags.filter(tag => tags.includes(tag)); return { image: img, score: common.length }; }).filter(i => i.score > 0);
             scored.sort((a, b) => b.score - a.score);
-            const similar = scored.slice(0, 10).map(i => i.image);
-            
-            similar.forEach(img => {
-                const div = document.createElement('div');
-                div.className = "similar-card cursor-pointer group";
-                div.onclick = () => openModal(img.id, 'main'); // Se abre en contexto main al ser relacionado
-                div.innerHTML = `<img src="${img.thumbnailUrl || img.url}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
-                container.appendChild(div);
-            });
+            scored.slice(0, 10).forEach(i => { const div = document.createElement('div'); div.className = "similar-card cursor-pointer group"; div.onclick = () => openModal(i.image.id, 'main'); div.innerHTML = `<img src="${i.image.thumbnailUrl || i.image.url}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`; container.appendChild(div); });
         }
 
         function loadComments(id, context) { 
             let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; 
-            const container = document.getElementById('comments');
-            db.ref(path).off(); 
-            
+            const container = document.getElementById('comments'); db.ref(path).off(); 
             db.ref(path).orderByChild('timestamp').on('value', snap => { 
                 container.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500 text-xs py-4">Sé el primero en comentar.</p>' : ''; 
-                const comments = []; 
-                snap.forEach(child => comments.push(child.val())); 
+                const comments = []; snap.forEach(child => comments.push(child.val())); 
                 comments.reverse().forEach(c => { 
-                    const div = document.createElement('div'); 
-                    div.className = "flex gap-2 items-start text-sm animate-enter";
+                    const div = document.createElement('div'); div.className = "flex gap-2 items-start text-sm animate-enter";
                     div.innerHTML = `<img src="${c.userAvatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full mt-1 border border-gray-700 object-cover"><div class="bg-[#222] p-3 rounded-2xl rounded-tl-none border border-white/5 w-full"><span class="font-bold text-gray-300 block text-xs mb-1">${c.userName || c.name || 'Anónimo'}</span><span class="text-gray-200 leading-snug block break-words">${c.text || ''}</span></div>`; 
                     container.appendChild(div); 
                 }); 
@@ -939,75 +871,49 @@
         }
 
         document.getElementById('comment-form').addEventListener('submit', (e) => {
-             e.preventDefault();
-             const input = document.getElementById('comment-input');
-             const text = input.value.trim();
-             if(!text) return;
-             
+             e.preventDefault(); const input = document.getElementById('comment-input'); const text = input.value.trim(); if(!text) return;
              const path = currentContext === 'feed' ? `feed_comments/${currentImageId}` : `comments/${currentImageId}`;
              const finalUserName = (currentUser && userDataCache.username) ? userDataCache.username : (currentUser?.displayName || 'Anónimo');
              const finalUserAvatar = (currentUser && userDataCache.profilePic) ? userDataCache.profilePic : 'https://placehold.co/100x100';
-             
-             const c = { 
-                 text: text, 
-                 userId: currentUser ? currentUser.uid : 'anon', 
-                 userName: finalUserName,
-                 name: finalUserName,
-                 userAvatar: finalUserAvatar, 
-                 timestamp: Date.now() 
-             };
-             
-             db.ref(path).push(c); 
-             input.value = '';
+             const c = { text: text, userId: currentUser ? currentUser.uid : 'anon', userName: finalUserName, name: finalUserName, userAvatar: finalUserAvatar, timestamp: Date.now() };
+             db.ref(path).push(c); input.value = '';
         });
 
-        function closeModal() { 
-            document.getElementById('modal').classList.remove('visible'); 
-            document.getElementById('modal').classList.remove('fullscreen-mode'); 
-            document.body.style.overflow = 'auto'; 
-        }
+        function closeModal() { const modal = document.getElementById('modal'); if (modal.classList.contains('fullscreen-mode')) toggleFullScreen(); else { modal.classList.remove('visible'); document.body.style.overflow = 'auto'; } }
         
-        // --- BUSQUEDA GLOBAL ---
         function executeSearch(query) { 
-            document.getElementById('main-content-sections').classList.add('hidden'); 
-            document.getElementById('gallery').classList.add('hidden'); 
-            document.getElementById('search-results-container').classList.remove('hidden'); 
+            document.getElementById('main-content-sections').classList.add('hidden'); document.getElementById('gallery').classList.add('hidden'); document.getElementById('search-results-container').classList.remove('hidden'); 
+            document.getElementById('clear-search-btn').classList.remove('hidden'); document.getElementById('clear-search-btn').classList.add('flex');
             const matchedUsers = usersCache.filter(u => (u.username && normalize(u.username).includes(query))); 
             const matchedGallery = fullGalleryCache.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.categories && i.categories.some(c => normalize(c).includes(query)))); 
             const matchedFeed = feedCache.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.category && normalize(i.category).includes(query)) || (i.user && i.user.name && normalize(i.user.name).includes(query))); 
-            currentSearchResults = [...matchedUsers, ...matchedGallery, ...matchedFeed]; 
-            displaySearchResultsPage(1); 
+            currentSearchResults = [...matchedUsers, ...matchedGallery, ...matchedFeed]; displaySearchResultsPage(1); 
         }
+        
         function displaySearchResultsPage(page) { searchCurrentPage = page; const start = (page - 1) * searchResultsPerPage; const items = currentSearchResults.slice(start, start + searchResultsPerPage); displaySearchResults(items, 'search-results-grid', false, 'search'); renderPaginationControls(); }
         function renderPaginationControls(){ const container = document.getElementById('search-pagination'); const total = Math.ceil(currentSearchResults.length / searchResultsPerPage); container.innerHTML = ''; if (total <= 1) return; container.innerHTML = `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-gray-700 rounded-md" ${searchCurrentPage === 1 ? 'disabled' : ''}>Anterior</button><span>Página ${searchCurrentPage} de ${total}</span><button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-gray-700 rounded-md" ${searchCurrentPage === total ? 'disabled' : ''}>Siguiente</button>`; }
-        function resetSearchView(){ document.getElementById('search-input').value = ''; document.getElementById('search-results-container').classList.add('hidden'); document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden'); }
+        
+        function resetSearchView(){ document.getElementById('search-input').value = ''; document.getElementById('search-results-container').classList.add('hidden'); document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden'); const clearBtn = document.getElementById('clear-search-btn'); clearBtn.classList.add('hidden'); clearBtn.classList.remove('flex'); }
         
         function setupEventListeners() { 
             document.getElementById('close-modal').addEventListener('click', closeModal);
             document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); executeSearch(normalize(document.getElementById('search-input').value)); });
             document.getElementById('clear-search-btn').addEventListener('click', resetSearchView);
-            const obs = new IntersectionObserver(e => { if(e[0].isIntersecting) loadMoreImages(); });
-            obs.observe(document.getElementById('load-more-trigger'));
-            
-            // Listeners navegación modal botones
-            document.getElementById('next-image').onclick = navigateToNext;
-            document.getElementById('prev-image').onclick = navigateToPrevious;
+            const obs = new IntersectionObserver(e => { if(e[0].isIntersecting) loadMoreImages(); }); obs.observe(document.getElementById('load-more-trigger'));
+            document.getElementById('next-image').onclick = navigateToNext; document.getElementById('prev-image').onclick = navigateToPrevious;
         }
         function setupIntersectionObserver() {} 
 
-        // Funciones helpers
         function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton'; } }
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
         function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } document.getElementById('auth-overlay').style.display = 'flex'; return false; } return true; }
         function switchAuthTab(tab) { const l = document.getElementById('login-form'), r1 = document.getElementById('register-step-1'), r2 = document.getElementById('register-step-2'); if(tab==='login'){l.style.display='flex';r1.style.display='none';r2.style.display='none';}else{l.style.display='none';r1.style.display='flex';r2.style.display='none';} }
         function toggleReactionFromGrid(imageId, event) { if(!requireLogin(event)) return; event.stopPropagation(); toggleReactionInModal(imageId); }
         
-        // Handlers Auth
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value).catch(err=>document.getElementById('login-error').textContent=err.message); });
         async function validateAuthStep1() { document.getElementById('register-step-1').style.display='none'; document.getElementById('register-step-2').style.display='flex'; }
         document.getElementById('register-step-2').addEventListener('submit', (e) => { e.preventDefault(); auth.createUserWithEmailAndPassword(document.getElementById('reg-email').value, document.getElementById('reg-password').value).then(c => db.ref('users/'+c.user.uid).set({username:document.getElementById('reg-name').value})).then(()=>location.reload()); });
 
-        // Perfil Helpers
         function loadUserProfile(uid) { db.ref('users/' + uid).on('value', snap => { if (snap.exists()) { const data = snap.val(); document.getElementById('header-user-img').src = data.profilePic || 'https://placehold.co/100x100/333/fff?text=U'; userDataCache = data; } }); }
         let newProfileFile = null;
         function openConfigModal() { document.getElementById('config-modal').style.display = 'flex'; document.getElementById('config-preview-img').src = document.getElementById('header-user-img').src; document.getElementById('config-upload-status').innerHTML = 'Toca para cambiar imagen'; document.getElementById('btn-save-config').disabled = false; document.getElementById('btn-save-config').innerHTML = 'Guardar'; newProfileFile = null; }
