@@ -37,6 +37,7 @@
                               radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
             color: #f3f4f6;
             padding-bottom: 80px;
+            overscroll-behavior-y: none;
         }
 
         /* --- PANTALLA DE CARGA INICIAL --- */
@@ -52,7 +53,7 @@
         /* --- AUTH OVERLAY --- */
         #auth-overlay {
             position: fixed; inset: 0; z-index: 9999;
-            background-color: rgba(12, 12, 12, 0.95);
+            background-color: rgba(0, 0, 0, 0.98); /* Fondo más oscuro */
             backdrop-filter: blur(5px);
             display: none;
             align-items: center; justify-content: center;
@@ -95,8 +96,13 @@
         .nav-item.active { color: var(--accent); transform: translateY(-4px); }
         .nav-item.active span { font-weight: 700; }
 
-        /* --- VISOR MODAL ESTILO FEED --- */
-        .modal-backdrop { display: none; position: fixed; inset: 0; background-color: #000; z-index: 5000; } 
+        /* --- VISOR MODAL (FONDO OPACO) --- */
+        .modal-backdrop { 
+            display: none; 
+            position: fixed; inset: 0; 
+            background-color: #000000; /* FONDO NEGRO SÓLIDO */
+            z-index: 5000; 
+        } 
         .modal-backdrop.visible { display: block; animation: fadeIn 0.3s forwards; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -110,11 +116,14 @@
         }
         .similar-card:hover { transform: scale(1.05); border-color: var(--accent); z-index: 10; }
         .similar-card img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Scrollbars */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #1a1a1c; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
+        /* Animaciones */
         .like-anim { animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes likeBounce { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
@@ -126,6 +135,17 @@
         }
         .nav-arrow:hover { background: rgba(249, 115, 22, 0.8); }
         .nav-prev { left: 10px; } .nav-next { right: 10px; }
+
+        /* Carga Progresiva */
+        .progressive-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; transition: opacity 0.5s ease; }
+        .thumbnail-img { filter: blur(10px); transform: scale(1.02); z-index: 1; }
+        .full-res-img { opacity: 0; z-index: 2; }
+        .full-res-img.loaded { opacity: 1; }
+
+        /* Pantalla Completa */
+        .fullscreen-mode .info-panel { display: none !important; }
+        .fullscreen-mode .image-area { width: 100% !important; height: 100vh !important; }
+        .fullscreen-mode #close-modal { position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.5); }
 
         /* --- UTILS --- */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -191,33 +211,11 @@
             cursor: pointer; z-index: 50; transition: transform 0.2s;
         }
         
-        #config-modal { display: none; position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); align-items: center; justify-content: center; }
+        #config-modal { display: none; position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); align-items: center; justify-content: center; }
         .config-card { background: #1a1a1a; border: 1px solid #333; border-radius: 16px; padding: 1.5rem; width: 90%; max-width: 350px; }
         
         #scrollToTopBtn { opacity: 0; visibility: hidden; transform: translateY(20px); transition: all 0.3s; }
         #scrollToTopBtn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
-
-        /* --- CLASES DE CARGA DE IMAGEN (PROGRESSIVE LOADING) --- */
-        #image-container .progressive-image {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;
-        }
-        .full-res-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            clip-path: inset(0 100% 0 0);
-            transition: clip-path 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        #image-container.loaded .full-res-container {
-            clip-path: inset(0 0 0 0);
-        }
-        #image-container .loading-indicator { opacity: 1; transition: opacity 0.5s ease; }
-        #image-container.loaded .loading-indicator { opacity: 0; }
-        
-        /* FULLSCREEN MODE */
-        .fullscreen-mode .info-panel { display: none; }
-        .fullscreen-mode .image-area { width: 100% !important; height: 100vh !important; }
-        .fullscreen-mode .nav-arrow { position: fixed; }
-        .fullscreen-mode #close-modal { position: fixed; z-index: 6000; }
-
     </style>
 </head>
 <body class="antialiased">
@@ -320,7 +318,7 @@
                 </form>
             </div>
 
-            <!-- CATEGORÍAS REMOVIDAS A PETICIÓN -->
+            <!-- SECCIÓN DE CATEGORÍAS ELIMINADA -->
 
             <div id="search-results-container" class="hidden">
                 <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
@@ -341,7 +339,9 @@
                         <h3 class="font-[Poppins] text-lg font-bold text-white tracking-wide">COMUNIDAD</h3>
                         <a href="feed.html" class="text-xs text-orange-500 hover:text-orange-300 font-semibold transition">Ver todo</a>
                     </div>
-                    <div id="community-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"></div>
+                    
+                    <div id="community-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+                    </div>
                 </section>
 
                 <div class="pt-2">
@@ -353,7 +353,6 @@
                 <div id="error-message" class="rounded-lg bg-red-900/50 p-4 text-center text-red-300" style="display: none;"></div>
                 <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
                 
-                <!-- GATE DE REGISTRO (SCROLL BLOQUEADO) -->
                 <div id="gallery-register-gate">
                     <div class="max-w-md mx-auto bg-[#1a1a1c] border border-orange-500/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-600 to-orange-400"></div>
@@ -370,35 +369,32 @@
         </main>
         
         <!-- ======================================================================= -->
-        <!-- VISOR MODAL ESTILO FEED (ACTUALIZADO CON SLIDER SIMILAR, SWIPE Y FULLSCREEN) -->
+        <!-- VISOR MODAL ESTILO FEED (CORREGIDO) -->
         <!-- ======================================================================= -->
         <div id="modal" class="modal-backdrop">
-            <!-- Botón Cerrar (Fijo) -->
+            <!-- Botón Cerrar -->
             <button id="close-modal" class="fixed top-4 right-4 z-[5010] h-10 w-10 flex items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-times text-lg"></i></button>
 
-            <!-- Contenedor Principal (Split View) -->
             <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black transition-all duration-300">
                 
-                <!-- ÁREA IMAGEN (Flexible) -->
+                <!-- ÁREA IMAGEN -->
                 <div class="image-area relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[45vh] lg:h-full">
-                    
-                    <!-- Contenedor de la imagen con carga progresiva -->
-                    <div id="image-container" class="relative w-full h-full flex items-center justify-center">
-                        <!-- Imagen Real se inyecta aqui -->
+                    <!-- Contenedor de imagen con carga progresiva -->
+                    <div id="image-wrapper" class="w-full h-full flex items-center justify-center relative">
+                        <!-- Se inyecta JS -->
                     </div>
                     
-                    <!-- Botón Fullscreen -->
-                    <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-black/60 text-white p-2 rounded-lg backdrop-blur-sm border border-white/10 hover:bg-orange-600 transition touch-feedback"><i class="fas fa-expand"></i></button>
+                    <!-- Botón Pantalla Completa -->
+                    <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-black/60 text-white p-2 rounded-lg backdrop-blur-sm border border-white/10 hover:bg-orange-600 transition"><i class="fas fa-expand"></i></button>
 
                     <!-- Flechas Navegación -->
                     <button id="prev-image" class="nav-arrow nav-prev"><i class="fas fa-chevron-left"></i></button>
                     <button id="next-image" class="nav-arrow nav-next"><i class="fas fa-chevron-right"></i></button>
                 </div>
 
-                <!-- ÁREA DETALLES (Scrollable, Estilo Panel Lateral) -->
+                <!-- ÁREA DETALLES -->
                 <div class="info-panel w-full lg:w-[400px] lg:h-full bg-[#161618] border-l border-gray-800 flex flex-col h-[55vh] z-30 relative shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
                     
-                    <!-- Header Post -->
                     <div class="p-4 border-b border-gray-700 flex items-center justify-between bg-[#1a1a1c] flex-shrink-0">
                         <div class="flex items-center gap-3">
                             <img id="modal-user-avatar" src="https://placehold.co/100x100" class="w-10 h-10 rounded-full object-cover border border-gray-600">
@@ -407,35 +403,28 @@
                                 <span id="modal-user-name" class="text-[10px] text-gray-500 cursor-pointer hover:text-orange-400 transition">Autor</span>
                             </div>
                         </div>
-                        <!-- Botón Like -->
                         <button id="modal-like-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 border border-gray-700 hover:bg-gray-800 transition group">
                             <i class="far fa-heart text-lg group-active:scale-125 transition-transform text-gray-400"></i>
                             <span id="modal-like-count" class="text-xs font-bold text-white">0</span>
                         </button>
                     </div>
 
-                    <!-- Info Scrollable -->
                     <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#161618]">
                         <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap mb-4"></p>
-                        
                         <div id="modal-tags" class="flex flex-wrap gap-2 mb-6 pb-4 border-b border-gray-800"></div>
                         
-                        <!-- SECCIÓN SIMILARES (SLIDER) -->
+                        <!-- Slider Similares -->
                         <div class="mb-6 pb-4 border-b border-gray-800">
                             <h3 class="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wide flex items-center gap-2"><i class="fas fa-th-large"></i> Similares</h3>
-                            <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-3 snap-x">
-                                <!-- Las imágenes similares se inyectan aquí con formato vertical -->
-                            </div>
+                            <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-3 snap-x"></div>
                         </div>
 
-                        <!-- SECCIÓN COMENTARIOS -->
                         <div>
                             <h4 class="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wide flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h4>
                             <div id="comments" class="flex flex-col gap-3 pb-4"></div>
                         </div>
                     </div>
 
-                    <!-- Input Comentario -->
                     <div class="p-3 bg-[#1a1a1c] border-t border-gray-700 flex-shrink-0">
                         <form id="comment-form" class="flex gap-2 relative">
                             <input type="text" id="comment-input" class="w-full bg-black/50 border border-gray-700 rounded-full px-4 py-3 text-sm text-white focus:border-orange-500 focus:outline-none pr-12 transition-colors" placeholder="Escribe un comentario..." autocomplete="off">
@@ -500,7 +489,11 @@
         const MAX_GUEST_LOADS = 1;
 
         let currentImageId = ''; 
-        let currentContext = 'gallery'; 
+        let currentContext = 'gallery';
+        // VARIABLES CRÍTICAS PARA EL SWIPE Y PLAYLIST
+        let currentPlaylist = []; 
+        let currentIndex = -1;
+        
         let userReactions = {}; 
         let allReactionCounts = {}; 
         let currentSearchResults = []; 
@@ -510,6 +503,10 @@
         let touchEndX = 0; 
         const swipeThreshold = 50;
         let adminUserId = null;
+
+        // Listas globales para playlists
+        window.forYouList = [];
+        window.communityList = [];
 
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('initial-loader');
@@ -637,11 +634,12 @@
                 container.appendChild(cta);
             }
             const recentFeed = feedCache.slice(0, 12);
+            window.communityList = recentFeed; // Guardar para playlist
             recentFeed.forEach(post => {
                 const card = document.createElement('div');
                 card.className = "relative min-w-[160px] w-[160px] h-[220px] rounded-xl overflow-hidden flex-shrink-0 snap-start cursor-pointer group border border-gray-800 hover:border-orange-500/50 transition-all";
                 const profileUrl = `profile.html?uid=${post.userId}`;
-                card.onclick = (e) => { e.stopPropagation(); if(requireLogin(e)) window.location.href = profileUrl; };
+                card.onclick = (e) => { e.stopPropagation(); if(requireLogin(e)) openModal(post.id, 'community'); };
                 card.innerHTML = `<img src="${post.thumbnailUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 group-hover:opacity-60" loading="lazy"><div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div><div class="absolute bottom-3 left-3 right-3"><div class="flex items-center gap-2 user-link transition hover:opacity-80"><img src="${post.user.avatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full border border-orange-500 object-cover"><div class="overflow-hidden"><p class="text-white text-xs font-bold truncate">${post.user.name}</p><p class="text-[10px] text-gray-400 truncate">Ver perfil</p></div></div></div>`;
                 container.appendChild(card);
             });
@@ -661,14 +659,15 @@
             let candidates = scoredImages.slice(0, 40).map(item => item.img);
             for (let i = Math.min(candidates.length, 10) - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [candidates[i], candidates[j]] = [candidates[j], candidates[i]]; }
             const finalSelection = candidates.slice(0, 6);
-            displaySearchResults(finalSelection, 'for-you-grid');
+            window.forYouList = finalSelection; // Guardar para playlist
+            displaySearchResults(finalSelection, 'for-you-grid', false, 'foryou');
         }
 
         function loadInitialImages() { 
             if (isLoading) return; isLoading = true; 
             const grid = document.getElementById('grid'); generateSkeletons(grid, imagesPerLoad); 
             allImages = unifiedGalleryData.slice(0, imagesPerLoad); 
-            if (allImages.length > 0) displaySearchResults(allImages, 'grid'); else grid.innerHTML = ''; 
+            if (allImages.length > 0) displaySearchResults(allImages, 'grid', false, 'main'); else grid.innerHTML = ''; 
             isLoading = false; 
         }
 
@@ -680,7 +679,7 @@
             const currentLoadedCount = allImages.length; 
             const newImages = unifiedGalleryData.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); 
             if (newImages.length === 0) { noMoreImages = true; } 
-            else { allImages = allImages.concat(newImages); displaySearchResults(newImages, 'grid', true); scrollLoadCount++; } 
+            else { allImages = allImages.concat(newImages); displaySearchResults(newImages, 'grid', true, 'main'); scrollLoadCount++; } 
             loaderContainer.style.display = 'none'; isLoading = false; 
         }
 
@@ -694,7 +693,7 @@
             recentImages.forEach((img, index) => {
                 const slide = document.createElement('div');
                 slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
-                slide.setAttribute('onclick', `if(requireLogin(event)) openModal('${img.id}')`);
+                slide.setAttribute('onclick', `if(requireLogin(event)) openModal('${img.id}', 'main')`);
                 const displayUrl = img.thumbnailUrl || img.url; const loadMode = index === 0 ? 'eager' : 'lazy';
                 slide.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="${loadMode}" class="hero-bg-img"><div class="hero-overlay"><div class="hero-content"><span class="text-orange-500 font-bold tracking-wider uppercase mb-1 text-[10px] sm:text-xs block">DESTACADO</span><h2 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight mb-2 uppercase drop-shadow-lg truncate">${img.title}</h2><p class="text-gray-300 text-xs sm:text-sm line-clamp-2 mb-4 drop-shadow-md max-w-lg leading-relaxed">${img.desc || 'Sin descripción disponible.'}</p><div class="flex gap-3"><button class="px-4 py-1.5 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition-all text-xs sm:text-sm">Ver Ahora</button></div></div></div><div class="hero-floating-card"><img src="${displayUrl}" class="hero-floating-img"></div>`;
                 container.appendChild(slide);
@@ -708,7 +707,7 @@
         function startHeroInterval() { if (heroInterval) clearInterval(heroInterval); heroInterval = setInterval(() => { const slides = document.querySelectorAll('.hero-slide'); if(slides.length === 0) return; let current = 0; slides.forEach((s, i) => { if(s.classList.contains('active')) current = i; }); const next = (current + 1) % slides.length; manualSlide(next); }, 6000); }
         function manualSlide(index) { const slides = document.querySelectorAll('.hero-slide'); const dots = document.querySelectorAll('.hero-dot'); if (!slides.length) return; slides.forEach(s => s.classList.remove('active')); dots.forEach(d => d.classList.remove('active')); slides[index].classList.add('active'); dots[index].classList.add('active'); }
 
-        function displaySearchResults(items, containerId, append = false) { 
+        function displaySearchResults(items, containerId, append = false, sourceContext = 'search') { 
             const grid = document.getElementById(containerId); 
             if (!append) grid.innerHTML = ''; 
             if (items.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron resultados.</div>`; return; } 
@@ -725,7 +724,7 @@
                 if (!item.url) return;
                 const div = document.createElement('div'); 
                 div.className = 'image-item-animation group relative aspect-[2/3] overflow-hidden image-card'; 
-                div.setAttribute('onclick', `if(requireLogin(event)) openModal('${item.id}')`); 
+                div.setAttribute('onclick', `if(requireLogin(event)) openModal('${item.id}', '${sourceContext}')`); 
                 div.style.animationDelay = `${(index * 0.05)}s`; 
                 const isLiked = userReactions[item.id] === 'like'; 
                 const displayUrl = item.thumbnailUrl || item.url; 
@@ -738,16 +737,41 @@
             }); 
         }
 
-        // --- VISOR MODAL (CON SWIPE Y CARGA PROGRESIVA) ---
-        async function openModal(id) {
+        // --- VISOR MODAL (CORREGIDO Y MEJORADO) ---
+        async function openModal(id, context) {
             if(!requireLogin()) return;
-            let img = fullGalleryCache.find(i => i.id === id) || feedCache.find(i => i.id === id);
-            if (!img) return;
-            currentImageId = id; currentContext = img.type;
             
-            // Llenar datos básicos
+            // 1. ESTABLECER LISTA DE REPRODUCCIÓN (CRÍTICO PARA EL SWIPE)
+            if(context === 'main') currentPlaylist = unifiedGalleryData; 
+            else if(context === 'foryou') currentPlaylist = window.forYouList;
+            else if(context === 'community') currentPlaylist = window.communityList;
+            else if(context === 'search') currentPlaylist = currentSearchResults;
+            else currentPlaylist = unifiedGalleryData; // Fallback
+
+            // 2. Buscar índice en la lista establecida
+            currentIndex = currentPlaylist.findIndex(i => i.id === id);
+            if(currentIndex === -1) {
+                // Si no se encuentra (raro), fallback a buscar en la galería completa
+                currentPlaylist = unifiedGalleryData;
+                currentIndex = currentPlaylist.findIndex(i => i.id === id);
+            }
+            if(currentIndex === -1) return; // Error, no existe la imagen
+
+            let img = currentPlaylist[currentIndex];
+            currentImageId = id; 
+            currentContext = img.type;
+            
+            updateModalContent(img);
+            
+            document.getElementById('modal').classList.add('visible'); 
+            document.body.style.overflow = 'hidden';
+        }
+
+        function updateModalContent(img) {
+            // Datos básicos
             document.getElementById('modal-image-title').textContent = img.title;
             document.getElementById('modal-desc').textContent = img.desc || 'Sin descripción.';
+            
             if (img.type === 'gallery') {
                 document.getElementById('modal-user-name').textContent = "Galería Oficial";
                 document.getElementById('modal-user-avatar').src = "https://files.catbox.moe/ap1lh0.png";
@@ -765,68 +789,68 @@
                 img.tags.forEach(t => { tagsContainer.innerHTML += `<span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600 text-gray-300">#${t}</span>`; });
             }
 
-            // CARGA PROGRESIVA DE IMAGEN (BAJA -> ALTA CALIDAD)
-            const imageContainer = document.getElementById('image-container');
-            imageContainer.innerHTML = ''; 
-            imageContainer.classList.remove('loaded');
+            // Lógica de Carga de Imagen (Baja -> Alta)
+            const imageWrapper = document.getElementById('image-wrapper');
+            imageWrapper.innerHTML = ''; // Limpiar anterior
             
-            // 1. Loader
-            const loadingIndicator = document.createElement('div');
-            loadingIndicator.className = 'loading-indicator absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900/70 text-white px-4 py-2 rounded-full font-semibold z-10';
-            loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Cargando calidad...';
+            const thumbImg = document.createElement('img');
+            thumbImg.src = img.thumbnailUrl || img.url;
+            thumbImg.className = "progressive-image thumbnail-img";
             
-            // 2. Imagen Miniatura (Baja Calidad - Se ve al instante)
-            const thumbnailEl = document.createElement('img');
-            thumbnailEl.src = img.thumbnailUrl || img.url; 
-            thumbnailEl.className = 'progressive-image thumbnail-img blur-sm scale-105 transition-all duration-700'; // Blur inicial
-            
-            // 3. Contenedor e Imagen Alta Calidad (Oculta al inicio)
-            const fullResContainer = document.createElement('div');
-            fullResContainer.className = 'full-res-container';
-            const fullResEl = document.createElement('img');
-            fullResEl.className = 'progressive-image'; // Alta calidad
-            const sweepLine = document.createElement('div');
-            sweepLine.className = 'sweep-line';
-            
-            fullResContainer.append(fullResEl, sweepLine);
-            imageContainer.append(thumbnailEl, fullResContainer, loadingIndicator);
-            
-            // 4. Lógica de Carga en 2o Plano
-            const fullImageLoader = new Image();
-            fullImageLoader.src = img.url;
-            fullImageLoader.onload = () => {
-                fullResEl.src = fullImageLoader.src;
-                imageContainer.classList.add('loaded'); // Activa animación CSS de clip-path
-                thumbnailEl.classList.remove('blur-sm', 'scale-105'); // Quita blur a miniatura
-                setTimeout(() => loadingIndicator.remove(), 1000);
+            const fullImg = new Image();
+            fullImg.src = img.url;
+            fullImg.className = "progressive-image full-res-img";
+            fullImg.onload = () => {
+                fullImg.classList.add('loaded');
+                // Opcional: remover thumb despues de la transición para ahorrar memoria
+                setTimeout(() => { if(thumbImg.parentNode) thumbImg.remove(); }, 600);
             };
-            fullImageLoader.onerror = () => {
-                imageContainer.classList.add('loaded'); // Muestra lo que haya si falla
-                loadingIndicator.remove();
-            }
 
-            // Likes
+            imageWrapper.appendChild(thumbImg);
+            imageWrapper.appendChild(fullImg);
+
+            // Likes y Comentarios
             const modalLikeBtn = document.getElementById('modal-like-btn');
             modalLikeBtn.onclick = () => toggleReactionInModal(img.id);
             updateModalLikeUI(img.id);
-
-            // Similares y Comentarios
+            
             loadSimilarImagesInSlider(img.tags || []);
             loadComments(img.id, currentContext);
-            
-            document.getElementById('modal').classList.add('visible'); 
-            document.body.style.overflow = 'hidden';
-            
-            // SWIPE LISTENERS EN LA IMAGEN
-            const modalImageArea = document.querySelector('.image-area');
-            modalImageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
-            modalImageArea.addEventListener('touchend', e => {
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            }, {passive: true});
+
+            // Actualizar flechas
+            document.getElementById('prev-image').style.display = currentIndex > 0 ? 'flex' : 'none';
+            document.getElementById('next-image').style.display = currentIndex < currentPlaylist.length - 1 ? 'flex' : 'none';
+        }
+
+        function navigateToNext() {
+             if(currentIndex < currentPlaylist.length - 1) {
+                 currentIndex++;
+                 updateModalContent(currentPlaylist[currentIndex]);
+             }
+        }
+        function navigateToPrevious() {
+             if(currentIndex > 0) {
+                 currentIndex--;
+                 updateModalContent(currentPlaylist[currentIndex]);
+             }
         }
         
-        // --- FUNCIÓN PANTALLA COMPLETA ---
+        // --- SWIPE LOGIC ---
+        const imageArea = document.querySelector('.image-area');
+        imageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+        imageArea.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, {passive: true});
+
+        function handleSwipe() { 
+            const deltaX = touchEndX - touchStartX; 
+            if (Math.abs(deltaX) > swipeThreshold) { 
+                if (deltaX < 0) navigateToNext(); 
+                else navigateToPrevious();        
+            } 
+        }
+
         function toggleFullScreen() {
             document.getElementById('modal').classList.toggle('fullscreen-mode');
         }
@@ -890,7 +914,7 @@
             similar.forEach(img => {
                 const div = document.createElement('div');
                 div.className = "similar-card cursor-pointer group";
-                div.onclick = () => openModal(img.id);
+                div.onclick = () => openModal(img.id, 'main'); // Se abre en contexto main al ser relacionado
                 div.innerHTML = `<img src="${img.thumbnailUrl || img.url}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
                 container.appendChild(div);
             });
@@ -939,29 +963,10 @@
 
         function closeModal() { 
             document.getElementById('modal').classList.remove('visible'); 
-            document.getElementById('modal').classList.remove('fullscreen-mode'); // Reset fullscreen
+            document.getElementById('modal').classList.remove('fullscreen-mode'); 
             document.body.style.overflow = 'auto'; 
         }
         
-        function findNextImageIndex(currId) { return unifiedGalleryData.findIndex(i => i.id === currId); }
-        function navigateToNext() {
-             const idx = findNextImageIndex(currentImageId);
-             if(idx !== -1 && idx < unifiedGalleryData.length - 1) openModal(unifiedGalleryData[idx+1].id);
-        };
-        function navigateToPrevious() {
-             const idx = findNextImageIndex(currentImageId);
-             if(idx > 0) openModal(unifiedGalleryData[idx-1].id);
-        };
-        
-        // --- FUNCIÓN SWIPE ---
-        function handleSwipe() { 
-            const deltaX = touchEndX - touchStartX; 
-            if (Math.abs(deltaX) > swipeThreshold) { 
-                if (deltaX < 0) navigateToNext(); // Swipe Izquierda -> Siguiente
-                else navigateToPrevious();        // Swipe Derecha -> Anterior
-            } 
-        }
-
         // --- BUSQUEDA GLOBAL ---
         function executeSearch(query) { 
             document.getElementById('main-content-sections').classList.add('hidden'); 
@@ -973,7 +978,7 @@
             currentSearchResults = [...matchedUsers, ...matchedGallery, ...matchedFeed]; 
             displaySearchResultsPage(1); 
         }
-        function displaySearchResultsPage(page) { searchCurrentPage = page; const start = (page - 1) * searchResultsPerPage; const items = currentSearchResults.slice(start, start + searchResultsPerPage); displaySearchResults(items, 'search-results-grid'); renderPaginationControls(); }
+        function displaySearchResultsPage(page) { searchCurrentPage = page; const start = (page - 1) * searchResultsPerPage; const items = currentSearchResults.slice(start, start + searchResultsPerPage); displaySearchResults(items, 'search-results-grid', false, 'search'); renderPaginationControls(); }
         function renderPaginationControls(){ const container = document.getElementById('search-pagination'); const total = Math.ceil(currentSearchResults.length / searchResultsPerPage); container.innerHTML = ''; if (total <= 1) return; container.innerHTML = `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-gray-700 rounded-md" ${searchCurrentPage === 1 ? 'disabled' : ''}>Anterior</button><span>Página ${searchCurrentPage} de ${total}</span><button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-gray-700 rounded-md" ${searchCurrentPage === total ? 'disabled' : ''}>Siguiente</button>`; }
         function resetSearchView(){ document.getElementById('search-input').value = ''; document.getElementById('search-results-container').classList.add('hidden'); document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden'); }
         
