@@ -166,36 +166,6 @@
         .hero-dot { width: 5px; height: 5px; border-radius: 50%; background-color: rgba(255,255,255,0.3); transition: all 0.3s; }
         .hero-dot.active { background-color: var(--accent); width: 16px; border-radius: 3px; }
 
-        /* CATEGORÍAS */
-        .menu-btn {
-            padding: 12px 28px; background: linear-gradient(135deg, #f97316, #ea580c); color: white;
-            font-family: var(--title-font); font-size: 16px; font-weight: bold; border: none; border-radius: 50px;
-            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3); display: flex; align-items: center; gap: 8px;
-        }
-        .dropdown { position: relative; display: inline-block; width: 100%; max-width: 400px; }
-        .dropdown-content {
-            display: none; position: absolute; top: 65px; left: 50%; transform: translateX(-50%);
-            background: rgba(20, 20, 25, 0.95); padding: 20px 15px; border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px);
-            border: 1px solid rgba(249, 115, 22, 0.2); width: 90vw; max-width: 500px; z-index: 34;
-        }
-        .dropdown-content.show { display: block; animation: fadeIn 0.3s ease; }
-        .categories-horizontal { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
-        .category-circle {
-            width: 90px; height: 90px; min-width: 90px; border-radius: 50%; display: flex; align-items: center;
-            justify-content: center; color: white; font-weight: 700; font-size: 12px; text-transform: uppercase;
-            border: 2px solid rgba(255,255,255,0.2); background-size: cover; background-position: center;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
-        }
-        .cat-anime { background-image: linear-gradient(135deg, #ff7eb3, #ff6a8c); }
-        .cat-furry { background-image: linear-gradient(135deg, #a8e6cf, #66bb6a); } 
-        .cat-realismo { background-image: linear-gradient(135deg, #90caf9, #42a5f5); }
-        .cat-mecas { background-image: linear-gradient(135deg, #b39ddb, #7e57c2); }
-        .cat-devils { background-image: linear-gradient(135deg, #ef5350, #b71c1c); } 
-        .cat-colors { background-image: linear-gradient(135deg, #ffd54f, #ffb300); } 
-        .cat-amateur { background-image: linear-gradient(135deg, #ff8a65, #f4511e); } 
-        .cat-tvgames { background-image: linear-gradient(135deg, #81d4fa, #29b6f6); }
-
         /* CTA BANNER (Comunidad) */
         .cta-card {
             min-width: 220px; width: 220px; height: 300px;
@@ -226,6 +196,28 @@
         
         #scrollToTopBtn { opacity: 0; visibility: hidden; transform: translateY(20px); transition: all 0.3s; }
         #scrollToTopBtn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+
+        /* --- CLASES DE CARGA DE IMAGEN (PROGRESSIVE LOADING) --- */
+        #image-container .progressive-image {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;
+        }
+        .full-res-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            clip-path: inset(0 100% 0 0);
+            transition: clip-path 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        #image-container.loaded .full-res-container {
+            clip-path: inset(0 0 0 0);
+        }
+        #image-container .loading-indicator { opacity: 1; transition: opacity 0.5s ease; }
+        #image-container.loaded .loading-indicator { opacity: 0; }
+        
+        /* FULLSCREEN MODE */
+        .fullscreen-mode .info-panel { display: none; }
+        .fullscreen-mode .image-area { width: 100% !important; height: 100vh !important; }
+        .fullscreen-mode .nav-arrow { position: fixed; }
+        .fullscreen-mode #close-modal { position: fixed; z-index: 6000; }
+
     </style>
 </head>
 <body class="antialiased">
@@ -328,27 +320,7 @@
                 </form>
             </div>
 
-            <!-- CATEGORÍAS -->
-            <div class="flex justify-center mb-8 relative z-30">
-                <div class="dropdown">
-                    <button class="menu-btn w-full justify-center sm:w-auto" id="categories-toggle">
-                        Categorías <i class="fas fa-chevron-down text-xs ml-1 transition-transform duration-300" id="cat-arrow"></i>
-                    </button>
-                    <div class="dropdown-content" id="categories-dropdown">
-                        <div class="categories-horizontal">
-                            <a href="categoria.html?cat=anime" class="category-circle cat-anime" id="cat-btn-anime">Anime</a>
-                            <a href="categoria.html?cat=furry" class="category-circle cat-furry" id="cat-btn-furry">Furry</a>
-                            <a href="categoria.html?cat=realismo" class="category-circle cat-realismo" id="cat-btn-realismo">Realismo</a>
-                            <a href="categoria.html?cat=mecas" class="category-circle cat-mecas" id="cat-btn-mecas">Mecas</a>
-                            <a href="categoria.html?cat=devils" class="category-circle cat-devils" id="cat-btn-devils">Devils</a>
-                            <a href="categoria.html?cat=colors" class="category-circle cat-colors" id="cat-btn-colors">ColorFull</a>
-                            <a href="categoria.html?cat=amateur" class="category-circle cat-amateur" id="cat-btn-amateur">Amateur</a>
-                            <a href="categoria.html?cat=tvgames" class="category-circle cat-tvgames" id="cat-btn-tvgames">TV & Games</a>
-                        </div>
-                        <div class="text-center mt-3 text-xs text-gray-400">Desliza para ver más <i class="fas fa-arrow-right ml-1"></i></div>
-                    </div>
-                </div>
-            </div>
+            <!-- CATEGORÍAS REMOVIDAS A PETICIÓN -->
 
             <div id="search-results-container" class="hidden">
                 <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
@@ -357,23 +329,19 @@
 
             <div id="main-content-sections">
                 
-                <!-- SECCIÓN PARA TI (REDUCIDA) -->
+                <!-- SECCIÓN PARA TI -->
                 <section id="for-you-section" class="mb-10">
                     <h3 class="font-[Poppins] text-lg font-bold text-white mb-4 tracking-wide">PARA TI</h3>
                     <div id="for-you-grid" class="grid grid-cols-3 gap-3 md:gap-4"></div>
                 </section>
                 
-                <!-- SECCIÓN COMUNIDAD (REEMPLAZA POPULARES) -->
+                <!-- SECCIÓN COMUNIDAD -->
                 <section id="community-section" class="mb-12">
                     <div class="flex justify-between items-end mb-4">
                         <h3 class="font-[Poppins] text-lg font-bold text-white tracking-wide">COMUNIDAD</h3>
                         <a href="feed.html" class="text-xs text-orange-500 hover:text-orange-300 font-semibold transition">Ver todo</a>
                     </div>
-                    
-                    <!-- Contenedor Horizontal de la comunidad -->
-                    <div id="community-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
-                        <!-- CTA PARA NO LOGUEADOS (Inyectado por JS si aplica) -->
-                    </div>
+                    <div id="community-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"></div>
                 </section>
 
                 <div class="pt-2">
@@ -402,7 +370,7 @@
         </main>
         
         <!-- ======================================================================= -->
-        <!-- VISOR MODAL ESTILO FEED (ACTUALIZADO CON SLIDER SIMILAR) -->
+        <!-- VISOR MODAL ESTILO FEED (ACTUALIZADO CON SLIDER SIMILAR, SWIPE Y FULLSCREEN) -->
         <!-- ======================================================================= -->
         <div id="modal" class="modal-backdrop">
             <!-- Botón Cerrar (Fijo) -->
@@ -413,9 +381,15 @@
                 
                 <!-- ÁREA IMAGEN (Flexible) -->
                 <div class="image-area relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[45vh] lg:h-full">
-                    <!-- Imagen Real -->
-                    <img id="modal-image" src="" class="max-w-full max-h-full object-contain w-auto h-auto transition-transform duration-300" alt="Visor">
                     
+                    <!-- Contenedor de la imagen con carga progresiva -->
+                    <div id="image-container" class="relative w-full h-full flex items-center justify-center">
+                        <!-- Imagen Real se inyecta aqui -->
+                    </div>
+                    
+                    <!-- Botón Fullscreen -->
+                    <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-black/60 text-white p-2 rounded-lg backdrop-blur-sm border border-white/10 hover:bg-orange-600 transition touch-feedback"><i class="fas fa-expand"></i></button>
+
                     <!-- Flechas Navegación -->
                     <button id="prev-image" class="nav-arrow nav-prev"><i class="fas fa-chevron-left"></i></button>
                     <button id="next-image" class="nav-arrow nav-next"><i class="fas fa-chevron-right"></i></button>
@@ -537,7 +511,6 @@
         const swipeThreshold = 50;
         let adminUserId = null;
 
-        // --- AUTH & INIT ---
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('initial-loader');
             const authOverlay = document.getElementById('auth-overlay');
@@ -579,7 +552,7 @@
             await cacheAllDataForSearch(); 
             loadHeroBanner(); 
             handleVisitCounter();
-            await Promise.all([ fetchUserReactions(), cacheAllReactionCounts(), loadCategoryBanners() ]);
+            await Promise.all([ fetchUserReactions(), cacheAllReactionCounts() ]);
             loadInitialImages();
             loadForYouImages(); 
             renderCommunitySection(); 
@@ -599,14 +572,6 @@
             });
         }
 
-        async function loadCategoryBanners() {
-            const bannersSnap = await db.ref('categoryBanners').once('value');
-            if (!bannersSnap.exists()) return;
-            const banners = bannersSnap.val();
-            for (const key in banners) { const element = document.getElementById(`cat-btn-${key}`); if (element && banners[key]) element.style.backgroundImage = `url('${banners[key]}')`; }
-        }
-
-        // --- DATA CACHING ---
         async function cacheAllDataForSearch() { 
             const snapshot = await db.ref('images').once('value'); 
             if (snapshot.exists()) { 
@@ -661,7 +626,6 @@
             allReactionCounts = counts; 
         }
 
-        // --- RENDERIZADO ---
         function renderCommunitySection() {
             const container = document.getElementById('community-grid');
             container.innerHTML = '';
@@ -720,7 +684,6 @@
             loaderContainer.style.display = 'none'; isLoading = false; 
         }
 
-        // --- HERO BANNER ---
         function loadHeroBanner() {
             const recentImages = fullGalleryCache.slice(0, 4);
             const container = document.getElementById('hero-slides-container');
@@ -770,24 +733,21 @@
                 const isVerified = (item.type === 'gallery') || (item.type === 'feed' && item.userId === adminUserId);
                 let badgeIcon = isVerified ? `<div class="absolute top-2 left-2 z-10 bg-blue-600/90 text-white text-xs p-1.5 rounded-full shadow-md"><i class="fas fa-check-circle"></i></div>` : `<div class="absolute top-2 left-2 z-10 bg-green-600/90 text-white text-xs p-1.5 rounded-full shadow-md"><i class="fas fa-globe"></i></div>`;
                 let bottomInfo = isVerified ? `<h4 class="truncate font-bold text-white text-sm">${item.title}</h4>` : `<h4 class="truncate font-bold text-white text-sm mb-1">${item.title}</h4><div class="flex items-center gap-2"><img src="${item.user.avatar}" class="w-5 h-5 rounded-full border border-white/30 object-cover"><span class="text-[10px] text-gray-300 truncate">${item.user.name}</span></div>`;
-                div.innerHTML = `<img src="${displayUrl}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/10 pointer-events-none"></div>${badgeIcon}<div class="absolute bottom-0 left-0 p-3 pointer-events-none w-full">${bottomInfo}</div>${item.type === 'gallery' ? `<button id="grid-like-btn-${item.id}" onclick="toggleReactionFromGrid('${item.id}', event)" class="absolute top-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm touch-feedback ${isLiked ? 'liked' : ''}"><i class="fas fa-heart text-gray-300"></i><span id="reaction-count-grid-${item.id}">${reactionCount}</span></button>` : ''}`; 
+                div.innerHTML = `<img src="${displayUrl}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/10 pointer-events-none"></div>${badgeIcon}<div class="absolute bottom-0 left-0 p-3 pointer-events-none w-full">${bottomInfo}</div><button id="grid-like-btn-${item.id}" onclick="toggleReactionFromGrid('${item.id}', event)" class="absolute top-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm touch-feedback ${isLiked ? 'liked' : ''}"><i class="fas fa-heart text-gray-300"></i><span id="reaction-count-grid-${item.id}">${reactionCount}</span></button>`; 
                 grid.appendChild(div); 
             }); 
         }
 
-        // --- VISOR MODAL (NUEVA LÓGICA) ---
+        // --- VISOR MODAL (CON SWIPE Y CARGA PROGRESIVA) ---
         async function openModal(id) {
             if(!requireLogin()) return;
             let img = fullGalleryCache.find(i => i.id === id) || feedCache.find(i => i.id === id);
             if (!img) return;
             currentImageId = id; currentContext = img.type;
             
-            // Llenar datos en el nuevo diseño
-            document.getElementById('modal-image').src = img.url;
+            // Llenar datos básicos
             document.getElementById('modal-image-title').textContent = img.title;
             document.getElementById('modal-desc').textContent = img.desc || 'Sin descripción.';
-            
-            // Usuario
             if (img.type === 'gallery') {
                 document.getElementById('modal-user-name').textContent = "Galería Oficial";
                 document.getElementById('modal-user-avatar').src = "https://files.catbox.moe/ap1lh0.png";
@@ -802,26 +762,73 @@
             const tagsContainer = document.getElementById('modal-tags');
             tagsContainer.innerHTML = '';
             if (img.tags && img.tags.length > 0) {
-                img.tags.forEach(t => {
-                    tagsContainer.innerHTML += `<span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600 text-gray-300">#${t}</span>`;
-                });
+                img.tags.forEach(t => { tagsContainer.innerHTML += `<span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600 text-gray-300">#${t}</span>`; });
+            }
+
+            // CARGA PROGRESIVA DE IMAGEN (BAJA -> ALTA CALIDAD)
+            const imageContainer = document.getElementById('image-container');
+            imageContainer.innerHTML = ''; 
+            imageContainer.classList.remove('loaded');
+            
+            // 1. Loader
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'loading-indicator absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900/70 text-white px-4 py-2 rounded-full font-semibold z-10';
+            loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Cargando calidad...';
+            
+            // 2. Imagen Miniatura (Baja Calidad - Se ve al instante)
+            const thumbnailEl = document.createElement('img');
+            thumbnailEl.src = img.thumbnailUrl || img.url; 
+            thumbnailEl.className = 'progressive-image thumbnail-img blur-sm scale-105 transition-all duration-700'; // Blur inicial
+            
+            // 3. Contenedor e Imagen Alta Calidad (Oculta al inicio)
+            const fullResContainer = document.createElement('div');
+            fullResContainer.className = 'full-res-container';
+            const fullResEl = document.createElement('img');
+            fullResEl.className = 'progressive-image'; // Alta calidad
+            const sweepLine = document.createElement('div');
+            sweepLine.className = 'sweep-line';
+            
+            fullResContainer.append(fullResEl, sweepLine);
+            imageContainer.append(thumbnailEl, fullResContainer, loadingIndicator);
+            
+            // 4. Lógica de Carga en 2o Plano
+            const fullImageLoader = new Image();
+            fullImageLoader.src = img.url;
+            fullImageLoader.onload = () => {
+                fullResEl.src = fullImageLoader.src;
+                imageContainer.classList.add('loaded'); // Activa animación CSS de clip-path
+                thumbnailEl.classList.remove('blur-sm', 'scale-105'); // Quita blur a miniatura
+                setTimeout(() => loadingIndicator.remove(), 1000);
+            };
+            fullImageLoader.onerror = () => {
+                imageContainer.classList.add('loaded'); // Muestra lo que haya si falla
+                loadingIndicator.remove();
             }
 
             // Likes
             const modalLikeBtn = document.getElementById('modal-like-btn');
-            const modalLikeCount = document.getElementById('modal-like-count');
-            
             modalLikeBtn.onclick = () => toggleReactionInModal(img.id);
             updateModalLikeUI(img.id);
 
-            // Cargar Similares (Slider)
+            // Similares y Comentarios
             loadSimilarImagesInSlider(img.tags || []);
-            
-            // Cargar Comentarios
             loadComments(img.id, currentContext);
             
             document.getElementById('modal').classList.add('visible'); 
             document.body.style.overflow = 'hidden';
+            
+            // SWIPE LISTENERS EN LA IMAGEN
+            const modalImageArea = document.querySelector('.image-area');
+            modalImageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+            modalImageArea.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }, {passive: true});
+        }
+        
+        // --- FUNCIÓN PANTALLA COMPLETA ---
+        function toggleFullScreen() {
+            document.getElementById('modal').classList.toggle('fullscreen-mode');
         }
 
         function toggleReactionInModal(id) {
@@ -830,20 +837,11 @@
             
             ref.once('value', s => {
                 if(s.exists()) { 
-                    if(currentContext === 'feed') {
-                         ref.remove(); 
-                         db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1);
-                    } else {
-                         ref.remove();
-                         // En galería la cuenta se recalcula en base a hijos
-                    }
+                    if(currentContext === 'feed') { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } 
+                    else { ref.remove(); }
                 } else { 
-                    if(currentContext === 'feed') {
-                         ref.set(true); 
-                         db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1);
-                    } else {
-                         ref.set('like');
-                    }
+                    if(currentContext === 'feed') { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } 
+                    else { ref.set('like'); }
                 }
             });
         }
@@ -853,7 +851,6 @@
             const modalLikeBtn = document.getElementById('modal-like-btn');
             const modalLikeCount = document.getElementById('modal-like-count');
             
-            // Listener para estado (Rojo/Gris)
             const refStatus = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
             refStatus.on('value', s => {
                  if((currentContext === 'feed' && s.exists()) || (currentContext !== 'feed' && s.val() === 'like')) {
@@ -865,14 +862,11 @@
                  }
             });
 
-            // Listener para cuenta
             if(currentContext === 'feed') {
                 db.ref(`feed_posts/${id}/likes`).on('value', s => modalLikeCount.innerText = s.val() || 0);
             } else {
                  db.ref(`reactions/${id}`).on('value', s => {
-                     let count = 0; 
-                     const val = s.val();
-                     if(val) Object.values(val).forEach(v => { if(v === 'like') count++; });
+                     let count = 0; const val = s.val(); if(val) Object.values(val).forEach(v => { if(v === 'like') count++; });
                      modalLikeCount.innerText = count;
                  });
             }
@@ -883,7 +877,6 @@
             container.innerHTML = '';
             if (!tags || tags.length === 0) return;
             
-            // Buscar en ambos caches
             const candidates = unifiedGalleryData.filter(img => img.id !== currentImageId);
             const scored = candidates.map(img => {
                 const imgTags = Array.isArray(img.tags) ? img.tags : [];
@@ -906,7 +899,6 @@
         function loadComments(id, context) { 
             let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; 
             const container = document.getElementById('comments');
-            // Limpiar listener anterior si es necesario (mejor si se gestiona globalmente, pero básico aquí)
             db.ref(path).off(); 
             
             db.ref(path).orderByChild('timestamp').on('value', snap => { 
@@ -936,7 +928,7 @@
                  text: text, 
                  userId: currentUser ? currentUser.uid : 'anon', 
                  userName: finalUserName,
-                 name: finalUserName, // Compatibilidad con galería antigua
+                 name: finalUserName,
                  userAvatar: finalUserAvatar, 
                  timestamp: Date.now() 
              };
@@ -945,18 +937,30 @@
              input.value = '';
         });
 
-        function closeModal() { document.getElementById('modal').classList.remove('visible'); document.body.style.overflow = 'auto'; }
+        function closeModal() { 
+            document.getElementById('modal').classList.remove('visible'); 
+            document.getElementById('modal').classList.remove('fullscreen-mode'); // Reset fullscreen
+            document.body.style.overflow = 'auto'; 
+        }
         
-        // --- NAVEGACIÓN VISOR ---
         function findNextImageIndex(currId) { return unifiedGalleryData.findIndex(i => i.id === currId); }
-        document.getElementById('next-image').onclick = () => {
+        function navigateToNext() {
              const idx = findNextImageIndex(currentImageId);
              if(idx !== -1 && idx < unifiedGalleryData.length - 1) openModal(unifiedGalleryData[idx+1].id);
         };
-        document.getElementById('prev-image').onclick = () => {
+        function navigateToPrevious() {
              const idx = findNextImageIndex(currentImageId);
              if(idx > 0) openModal(unifiedGalleryData[idx-1].id);
         };
+        
+        // --- FUNCIÓN SWIPE ---
+        function handleSwipe() { 
+            const deltaX = touchEndX - touchStartX; 
+            if (Math.abs(deltaX) > swipeThreshold) { 
+                if (deltaX < 0) navigateToNext(); // Swipe Izquierda -> Siguiente
+                else navigateToPrevious();        // Swipe Derecha -> Anterior
+            } 
+        }
 
         // --- BUSQUEDA GLOBAL ---
         function executeSearch(query) { 
@@ -979,6 +983,10 @@
             document.getElementById('clear-search-btn').addEventListener('click', resetSearchView);
             const obs = new IntersectionObserver(e => { if(e[0].isIntersecting) loadMoreImages(); });
             obs.observe(document.getElementById('load-more-trigger'));
+            
+            // Listeners navegación modal botones
+            document.getElementById('next-image').onclick = navigateToNext;
+            document.getElementById('prev-image').onclick = navigateToPrevious;
         }
         function setupIntersectionObserver() {} 
 
@@ -987,7 +995,7 @@
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
         function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } document.getElementById('auth-overlay').style.display = 'flex'; return false; } return true; }
         function switchAuthTab(tab) { const l = document.getElementById('login-form'), r1 = document.getElementById('register-step-1'), r2 = document.getElementById('register-step-2'); if(tab==='login'){l.style.display='flex';r1.style.display='none';r2.style.display='none';}else{l.style.display='none';r1.style.display='flex';r2.style.display='none';} }
-        function toggleReactionFromGrid(imageId, event) { if(!requireLogin(event)) return; event.stopPropagation(); toggleReactionInModal(imageId); } // Reutilizar logica si es posible o mantener separada
+        function toggleReactionFromGrid(imageId, event) { if(!requireLogin(event)) return; event.stopPropagation(); toggleReactionInModal(imageId); }
         
         // Handlers Auth
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value).catch(err=>document.getElementById('login-error').textContent=err.message); });
