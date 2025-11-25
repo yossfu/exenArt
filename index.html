@@ -95,19 +95,37 @@
         .nav-item.active { color: var(--accent); transform: translateY(-4px); }
         .nav-item.active span { font-weight: 700; }
 
-        /* MODAL VISOR */
-        #modal { display: none; background-color: #000; z-index: 2000; }
-        #modal.visible { display: block; animation: modalFadeIn 0.4s ease-out forwards; }
-        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal-backdrop-blur {
-            position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover;
-            filter: blur(15px) brightness(0.5) saturate(1.1); transform: scale(1.1); z-index: 0; pointer-events: none;
+        /* --- VISOR MODAL ESTILO FEED --- */
+        .modal-backdrop { display: none; position: fixed; inset: 0; background-color: #000; z-index: 5000; } 
+        .modal-backdrop.visible { display: block; animation: fadeIn 0.3s forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Similar Slider Styles */
+        .similar-card {
+            min-width: 110px; width: 110px; aspect-ratio: 2/3;
+            border-radius: 0.75rem; overflow: hidden; position: relative;
+            flex-shrink: 0; scroll-snap-align: start;
+            border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s;
+            background-color: #1a1a1c;
         }
-        .viewer-frame {
-            background-color: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px; box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.8); position: relative;
-            overflow: hidden; width: 100%; max-width: 100%; backdrop-filter: blur(0px); 
+        .similar-card:hover { transform: scale(1.05); border-color: var(--accent); z-index: 10; }
+        .similar-card img { width: 100%; height: 100%; object-fit: cover; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1a1a1c; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        .like-anim { animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes likeBounce { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+        .nav-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); border-radius: 50%;
+            color: white; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.2s;
         }
+        .nav-arrow:hover { background: rgba(249, 115, 22, 0.8); }
+        .nav-prev { left: 10px; } .nav-next { right: 10px; }
 
         /* --- UTILS --- */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -205,12 +223,6 @@
         
         #config-modal { display: none; position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); align-items: center; justify-content: center; }
         .config-card { background: #1a1a1a; border: 1px solid #333; border-radius: 16px; padding: 1.5rem; width: 90%; max-width: 350px; }
-        
-        /* REACCIONES */
-        #reaction-circle-container.open .reaction-circle-item { opacity: 1; transform: scale(1) var(--transform-pos); }
-        .reaction-circle-item { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform: scale(0); opacity: 0; }
-        .punch-animation { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; animation: punch 0.5s ease-out forwards; pointer-events: none; z-index: 50; }
-        @keyframes punch { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
         
         #scrollToTopBtn { opacity: 0; visibility: hidden; transform: translateY(20px); transition: all 0.3s; }
         #scrollToTopBtn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
@@ -324,14 +336,14 @@
                     </button>
                     <div class="dropdown-content" id="categories-dropdown">
                         <div class="categories-horizontal">
-                            <a href="categoria.html?cat=anime" class="category-circle cat-anime">Anime</a>
-                            <a href="categoria.html?cat=furry" class="category-circle cat-furry">Furry</a>
-                            <a href="categoria.html?cat=realismo" class="category-circle cat-realismo">Realismo</a>
-                            <a href="categoria.html?cat=mecas" class="category-circle cat-mecas">Mecas</a>
-                            <a href="categoria.html?cat=devils" class="category-circle cat-devils">Devils</a>
-                            <a href="categoria.html?cat=colors" class="category-circle cat-colors">ColorFull</a>
-                            <a href="categoria.html?cat=amateur" class="category-circle cat-amateur">Amateur</a>
-                            <a href="categoria.html?cat=tvgames" class="category-circle cat-tvgames">TV & Games</a>
+                            <a href="categoria.html?cat=anime" class="category-circle cat-anime" id="cat-btn-anime">Anime</a>
+                            <a href="categoria.html?cat=furry" class="category-circle cat-furry" id="cat-btn-furry">Furry</a>
+                            <a href="categoria.html?cat=realismo" class="category-circle cat-realismo" id="cat-btn-realismo">Realismo</a>
+                            <a href="categoria.html?cat=mecas" class="category-circle cat-mecas" id="cat-btn-mecas">Mecas</a>
+                            <a href="categoria.html?cat=devils" class="category-circle cat-devils" id="cat-btn-devils">Devils</a>
+                            <a href="categoria.html?cat=colors" class="category-circle cat-colors" id="cat-btn-colors">ColorFull</a>
+                            <a href="categoria.html?cat=amateur" class="category-circle cat-amateur" id="cat-btn-amateur">Amateur</a>
+                            <a href="categoria.html?cat=tvgames" class="category-circle cat-tvgames" id="cat-btn-tvgames">TV & Games</a>
                         </div>
                         <div class="text-center mt-3 text-xs text-gray-400">Desliza para ver más <i class="fas fa-arrow-right ml-1"></i></div>
                     </div>
@@ -389,42 +401,72 @@
             </section>
         </main>
         
-        <!-- MODAL VISOR -->
-        <div id="modal" class="fixed inset-0">
-            <img id="modal-backdrop" src="" class="modal-backdrop-blur" alt="">
-            <div class="absolute top-4 right-4 z-[2010] flex gap-3">
-                 <button id="close-modal" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-800/80 text-gray-300 hover:bg-gray-700 hover:text-white transition border border-gray-700 shadow-lg backdrop-blur-md"><i class="fas fa-times text-lg"></i></button>
-            </div>
-            <button id="prev-image" class="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-[2010] h-14 w-14 flex items-center justify-center rounded-full bg-gray-800/50 hover:bg-gray-700 text-white transition backdrop-blur-sm border border-gray-700/50"><i class="fas fa-chevron-left text-xl"></i></button>
-            <button id="next-image" class="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-[2010] h-14 w-14 flex items-center justify-center rounded-full bg-gray-800/50 hover:bg-gray-700 text-white transition backdrop-blur-sm border border-gray-700/50"><i class="fas fa-chevron-right text-xl"></i></button>
+        <!-- ======================================================================= -->
+        <!-- VISOR MODAL ESTILO FEED (ACTUALIZADO CON SLIDER SIMILAR) -->
+        <!-- ======================================================================= -->
+        <div id="modal" class="modal-backdrop">
+            <!-- Botón Cerrar (Fijo) -->
+            <button id="close-modal" class="fixed top-4 right-4 z-[5010] h-10 w-10 flex items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-times text-lg"></i></button>
 
-            <div id="modal-content" class="h-full w-full overflow-y-auto bg-black/30 relative z-10 backdrop-blur-none">
-                <div class="container mx-auto flex min-h-full max-w-5xl flex-col items-center justify-center px-2 py-12 md:px-6">
-                    <div class="w-full text-center mb-4 md:mb-6">
-                        <h2 id="title" class="font-bold text-2xl md:text-3xl text-white tracking-tight font-[Poppins] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"></h2>
-                        <p id="modal-subtitle" class="text-sm text-orange-400 mt-1 font-semibold hidden"></p>
-                    </div>
-                    <div id="image-container" class="viewer-frame relative w-full bg-[#111]/50 aspect-[2/3] md:aspect-auto md:min-h-[80vh] flex items-center justify-center rounded-xl border border-white/10 shadow-2xl overflow-hidden backdrop-blur-md"></div>
-                    <div class="w-full max-w-3xl mt-8 flex flex-col gap-6">
-                        <div class="relative z-20 flex justify-center">
-                            <div id="reaction-circle-container" class="relative">
-                                <div class="relative flex items-center justify-center">
-                                    <div id="reaction-bg" class="absolute inset-[-30px] rounded-full bg-gray-900/90 transition-transform duration-300 scale-0 -z-10 border border-gray-700"></div>
-                                    <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="like">❤️</span></div>
-                                    <div class="reaction-circle-item absolute" style="--transform-pos: translateX(-45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="hot">🔥</span></div>
-                                    <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(-70px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="wow">😯</span></div>
-                                    <div class="reaction-circle-item absolute" style="--transform-pos: translateX(45px) translateY(-55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="laugh">😂</span></div>
-                                    <div class="reaction-circle-item absolute" style="--transform-pos: translateX(65px) translateY(-10px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sad">😢</span></div>
-                                    <div class="reaction-circle-item absolute" style="--transform-pos: translateX(0px) translateY(55px);"><span class="reaction cursor-pointer text-4xl transition hover:scale-125" data-type="sexy">🫦</span></div>
-                                    <button id="like-btn" class="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg transition-transform active:scale-95"><i class="fas fa-heart text-3xl"></i></button>
-                                </div>
+            <!-- Contenedor Principal (Split View) -->
+            <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black transition-all duration-300">
+                
+                <!-- ÁREA IMAGEN (Flexible) -->
+                <div class="image-area relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[45vh] lg:h-full">
+                    <!-- Imagen Real -->
+                    <img id="modal-image" src="" class="max-w-full max-h-full object-contain w-auto h-auto transition-transform duration-300" alt="Visor">
+                    
+                    <!-- Flechas Navegación -->
+                    <button id="prev-image" class="nav-arrow nav-prev"><i class="fas fa-chevron-left"></i></button>
+                    <button id="next-image" class="nav-arrow nav-next"><i class="fas fa-chevron-right"></i></button>
+                </div>
+
+                <!-- ÁREA DETALLES (Scrollable, Estilo Panel Lateral) -->
+                <div class="info-panel w-full lg:w-[400px] lg:h-full bg-[#161618] border-l border-gray-800 flex flex-col h-[55vh] z-30 relative shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                    
+                    <!-- Header Post -->
+                    <div class="p-4 border-b border-gray-700 flex items-center justify-between bg-[#1a1a1c] flex-shrink-0">
+                        <div class="flex items-center gap-3">
+                            <img id="modal-user-avatar" src="https://placehold.co/100x100" class="w-10 h-10 rounded-full object-cover border border-gray-600">
+                            <div class="leading-tight">
+                                <h4 id="modal-image-title" class="font-bold text-white text-sm line-clamp-1">Título</h4>
+                                <span id="modal-user-name" class="text-[10px] text-gray-500 cursor-pointer hover:text-orange-400 transition">Autor</span>
                             </div>
                         </div>
-                        <div id="reaction-counts-container" class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-gray-200 font-medium drop-shadow-md"></div>
-                        <div class="bg-black/60 border border-white/10 rounded-xl p-5 text-center backdrop-blur-md"><p id="desc" class="text-gray-200 leading-relaxed"></p></div>
-                        <section id="similar-section" class="w-full pt-4 border-t border-white/10"><h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-images"></i> Relacionados</h3><div id="similar-grid" class="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"></div></section>
-                        <section id="comments-section" class="w-full pt-4"><h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h3><form id="comment-form" class="mb-6 flex flex-col gap-3 rounded-xl bg-black/60 border border-white/10 p-4 sm:flex-row backdrop-blur-md"><input type="text" id="name-input" placeholder="Nombre" class="w-full rounded-lg border border-gray-600 bg-black/50 px-4 py-3 text-white sm:w-1/3 focus:border-orange-500 focus:outline-none"><input type="text" id="comment-input" placeholder="Comentario..." class="flex-grow rounded-lg border border-gray-600 bg-black/50 px-4 py-3 text-white focus:border-orange-500 focus:outline-none"><button type="submit" id="comment-btn" class="rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white hover:bg-orange-500"><i class="fas fa-paper-plane"></i></button></form><div id="comments" class="flex flex-col gap-4"></div></section>
-                        <div class="h-20"></div>
+                        <!-- Botón Like -->
+                        <button id="modal-like-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 border border-gray-700 hover:bg-gray-800 transition group">
+                            <i class="far fa-heart text-lg group-active:scale-125 transition-transform text-gray-400"></i>
+                            <span id="modal-like-count" class="text-xs font-bold text-white">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Info Scrollable -->
+                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#161618]">
+                        <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap mb-4"></p>
+                        
+                        <div id="modal-tags" class="flex flex-wrap gap-2 mb-6 pb-4 border-b border-gray-800"></div>
+                        
+                        <!-- SECCIÓN SIMILARES (SLIDER) -->
+                        <div class="mb-6 pb-4 border-b border-gray-800">
+                            <h3 class="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wide flex items-center gap-2"><i class="fas fa-th-large"></i> Similares</h3>
+                            <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-3 snap-x">
+                                <!-- Las imágenes similares se inyectan aquí con formato vertical -->
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN COMENTARIOS -->
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wide flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h4>
+                            <div id="comments" class="flex flex-col gap-3 pb-4"></div>
+                        </div>
+                    </div>
+
+                    <!-- Input Comentario -->
+                    <div class="p-3 bg-[#1a1a1c] border-t border-gray-700 flex-shrink-0">
+                        <form id="comment-form" class="flex gap-2 relative">
+                            <input type="text" id="comment-input" class="w-full bg-black/50 border border-gray-700 rounded-full px-4 py-3 text-sm text-white focus:border-orange-500 focus:outline-none pr-12 transition-colors" placeholder="Escribe un comentario..." autocomplete="off">
+                            <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 transition transform active:scale-90"><i class="fas fa-paper-plane"></i></button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -472,7 +514,6 @@
         let userDataCache = {};
         let isUploadingAuth = false;
         
-        // SCROLL CONTROL VARS
         const imagesPerLoad = 21; 
         let allImages = []; 
         let fullGalleryCache = []; 
@@ -481,13 +522,11 @@
         let unifiedGalleryData = []; 
         let isLoading = false; 
         let noMoreImages = false; 
-        
-        // Infinite Scroll Logic Vars
         let scrollLoadCount = 0;
-        const MAX_GUEST_LOADS = 1; // Cuántas veces carga el invitado antes de bloqueo
+        const MAX_GUEST_LOADS = 1;
 
         let currentImageId = ''; 
-        let currentImageIndex = -1;
+        let currentContext = 'gallery'; 
         let userReactions = {}; 
         let allReactionCounts = {}; 
         let currentSearchResults = []; 
@@ -496,9 +535,6 @@
         let touchStartX = 0; 
         let touchEndX = 0; 
         const swipeThreshold = 50;
-        let viewStartTime = 0;
-        let currentViewingId = null;
-        let currentContext = 'gallery'; 
         let adminUserId = null;
 
         // --- AUTH & INIT ---
@@ -520,11 +556,9 @@
             }
 
             if (loader) { loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 500); }
-            
             if(feedCache.length > 0) renderCommunitySection();
         });
 
-        // *** CORRECCIÓN CARGA INFINITA DEL LOGO ***
         setTimeout(() => {
             const loader = document.getElementById('initial-loader');
             if (loader && loader.style.display !== 'none') {
@@ -546,11 +580,9 @@
             loadHeroBanner(); 
             handleVisitCounter();
             await Promise.all([ fetchUserReactions(), cacheAllReactionCounts(), loadCategoryBanners() ]);
-            
             loadInitialImages();
             loadForYouImages(); 
             renderCommunitySection(); 
-            
             setupIntersectionObserver();
             setupEventListeners();
         }
@@ -576,14 +608,12 @@
 
         // --- DATA CACHING ---
         async function cacheAllDataForSearch() { 
-            // Galería
             const snapshot = await db.ref('images').once('value'); 
             if (snapshot.exists()) { 
                 const allData = []; 
                 snapshot.forEach(child => { allData.push({ id: child.key, type: 'gallery', ...child.val() }); }); 
                 fullGalleryCache = allData; 
             } 
-            // Usuarios
             const userSnap = await db.ref('users').once('value');
             if (userSnap.exists()) {
                 const uData = [];
@@ -594,7 +624,6 @@
                 });
                 usersCache = uData;
             }
-            // Feed
             const feedSnap = await db.ref('feed_posts').once('value');
             if (feedSnap.exists()) {
                 const fData = [];
@@ -632,53 +661,28 @@
             allReactionCounts = counts; 
         }
 
-        // --- RENDERIZADO DE SECCIONES ---
-
-        // 1. COMUNIDAD (Reemplaza Populares)
+        // --- RENDERIZADO ---
         function renderCommunitySection() {
             const container = document.getElementById('community-grid');
             container.innerHTML = '';
-
             if (!currentUser) {
                 const cta = document.createElement('div');
                 cta.className = "cta-card cursor-pointer group";
                 cta.onclick = () => { document.getElementById('auth-overlay').style.display='flex'; switchAuthTab('register'); };
-                cta.innerHTML = `
-                    <div class="w-14 h-14 rounded-full bg-orange-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition"><i class="fas fa-user-plus text-2xl text-orange-500"></i></div>
-                    <h4 class="text-white font-bold text-lg mb-1">¡Únete!</h4>
-                    <p class="text-gray-400 text-xs mb-4 leading-relaxed">Comparte tu arte, recibe likes y conecta con otros.</p>
-                    <span class="text-xs font-bold text-orange-400 bg-orange-900/30 px-4 py-2 rounded-full border border-orange-500/30 group-hover:bg-orange-500 group-hover:text-white transition">Crear Cuenta</span>
-                `;
+                cta.innerHTML = `<div class="w-14 h-14 rounded-full bg-orange-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition"><i class="fas fa-user-plus text-2xl text-orange-500"></i></div><h4 class="text-white font-bold text-lg mb-1">¡Únete!</h4><p class="text-gray-400 text-xs mb-4 leading-relaxed">Comparte tu arte, recibe likes y conecta con otros.</p><span class="text-xs font-bold text-orange-400 bg-orange-900/30 px-4 py-2 rounded-full border border-orange-500/30 group-hover:bg-orange-500 group-hover:text-white transition">Crear Cuenta</span>`;
                 container.appendChild(cta);
             }
-
             const recentFeed = feedCache.slice(0, 12);
             recentFeed.forEach(post => {
                 const card = document.createElement('div');
                 card.className = "relative min-w-[160px] w-[160px] h-[220px] rounded-xl overflow-hidden flex-shrink-0 snap-start cursor-pointer group border border-gray-800 hover:border-orange-500/50 transition-all";
                 const profileUrl = `profile.html?uid=${post.userId}`;
-                
-                // PROTECCIÓN: CUALQUIER CLICK REQUIERE LOGIN
-                card.onclick = (e) => {
-                    e.stopPropagation();
-                    if(requireLogin(e)) window.location.href = profileUrl;
-                };
-
-                card.innerHTML = `
-                    <img src="${post.thumbnailUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 group-hover:opacity-60" loading="lazy">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
-                    <div class="absolute bottom-3 left-3 right-3">
-                        <div class="flex items-center gap-2 user-link transition hover:opacity-80">
-                            <img src="${post.user.avatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full border border-orange-500 object-cover">
-                            <div class="overflow-hidden"><p class="text-white text-xs font-bold truncate">${post.user.name}</p><p class="text-[10px] text-gray-400 truncate">Ver perfil</p></div>
-                        </div>
-                    </div>
-                `;
+                card.onclick = (e) => { e.stopPropagation(); if(requireLogin(e)) window.location.href = profileUrl; };
+                card.innerHTML = `<img src="${post.thumbnailUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 group-hover:opacity-60" loading="lazy"><div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div><div class="absolute bottom-3 left-3 right-3"><div class="flex items-center gap-2 user-link transition hover:opacity-80"><img src="${post.user.avatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full border border-orange-500 object-cover"><div class="overflow-hidden"><p class="text-white text-xs font-bold truncate">${post.user.name}</p><p class="text-[10px] text-gray-400 truncate">Ver perfil</p></div></div></div>`;
                 container.appendChild(card);
             });
         }
 
-        // 2. PARA TI (Reducido)
         async function loadForYouImages() {
             const grid = document.getElementById('for-you-grid');
             generateSkeletons(grid, 6);
@@ -691,123 +695,70 @@
             });
             scoredImages.sort((a, b) => b.score - a.score);
             let candidates = scoredImages.slice(0, 40).map(item => item.img);
-            for (let i = Math.min(candidates.length, 10) - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
-            }
+            for (let i = Math.min(candidates.length, 10) - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [candidates[i], candidates[j]] = [candidates[j], candidates[i]]; }
             const finalSelection = candidates.slice(0, 6);
             displaySearchResults(finalSelection, 'for-you-grid');
         }
 
-        // 3. GALERÍA & SCROLLING
         function loadInitialImages() { 
-            if (isLoading) return; 
-            isLoading = true; 
-            const grid = document.getElementById('grid'); 
-            generateSkeletons(grid, imagesPerLoad); 
+            if (isLoading) return; isLoading = true; 
+            const grid = document.getElementById('grid'); generateSkeletons(grid, imagesPerLoad); 
             allImages = unifiedGalleryData.slice(0, imagesPerLoad); 
-            if (allImages.length > 0) displaySearchResults(allImages, 'grid'); 
-            else grid.innerHTML = ''; 
+            if (allImages.length > 0) displaySearchResults(allImages, 'grid'); else grid.innerHTML = ''; 
             isLoading = false; 
         }
 
         function loadMoreImages() { 
             if (isLoading || noMoreImages) return; 
-            if (!currentUser) {
-                if (scrollLoadCount >= MAX_GUEST_LOADS) {
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('gallery-register-gate').style.display = 'block';
-                    noMoreImages = true; 
-                    return;
-                }
-            }
+            if (!currentUser && scrollLoadCount >= MAX_GUEST_LOADS) { document.getElementById('loader').style.display = 'none'; document.getElementById('gallery-register-gate').style.display = 'block'; noMoreImages = true; return; }
             isLoading = true; 
-            const loaderContainer = document.getElementById('loader'); 
-            loaderContainer.style.display = 'grid'; 
-            generateSkeletons(loaderContainer, 3); 
+            const loaderContainer = document.getElementById('loader'); loaderContainer.style.display = 'grid'; generateSkeletons(loaderContainer, 3); 
             const currentLoadedCount = allImages.length; 
             const newImages = unifiedGalleryData.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); 
             if (newImages.length === 0) { noMoreImages = true; } 
             else { allImages = allImages.concat(newImages); displaySearchResults(newImages, 'grid', true); scrollLoadCount++; } 
-            loaderContainer.style.display = 'none'; 
-            isLoading = false; 
+            loaderContainer.style.display = 'none'; isLoading = false; 
         }
 
-        // --- HERO BANNER LOGIC ---
+        // --- HERO BANNER ---
         function loadHeroBanner() {
             const recentImages = fullGalleryCache.slice(0, 4);
             const container = document.getElementById('hero-slides-container');
             const indicatorsContainer = document.getElementById('hero-indicators');
             const heroWrapper = document.getElementById('hero-wrapper');
             if (recentImages.length === 0) return;
-            heroWrapper.style.display = 'block';
-            container.innerHTML = '';
-            indicatorsContainer.innerHTML = '';
+            heroWrapper.style.display = 'block'; container.innerHTML = ''; indicatorsContainer.innerHTML = '';
             recentImages.forEach((img, index) => {
                 const slide = document.createElement('div');
                 slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
                 slide.setAttribute('onclick', `if(requireLogin(event)) openModal('${img.id}')`);
-                const displayUrl = img.thumbnailUrl || img.url; 
-                const loadMode = index === 0 ? 'eager' : 'lazy';
+                const displayUrl = img.thumbnailUrl || img.url; const loadMode = index === 0 ? 'eager' : 'lazy';
                 slide.innerHTML = `<img src="${displayUrl}" alt="${img.title}" loading="${loadMode}" class="hero-bg-img"><div class="hero-overlay"><div class="hero-content"><span class="text-orange-500 font-bold tracking-wider uppercase mb-1 text-[10px] sm:text-xs block">DESTACADO</span><h2 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight mb-2 uppercase drop-shadow-lg truncate">${img.title}</h2><p class="text-gray-300 text-xs sm:text-sm line-clamp-2 mb-4 drop-shadow-md max-w-lg leading-relaxed">${img.desc || 'Sin descripción disponible.'}</p><div class="flex gap-3"><button class="px-4 py-1.5 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition-all text-xs sm:text-sm">Ver Ahora</button></div></div></div><div class="hero-floating-card"><img src="${displayUrl}" class="hero-floating-img"></div>`;
                 container.appendChild(slide);
-                const dot = document.createElement('div');
-                dot.className = `hero-dot ${index === 0 ? 'active' : ''}`;
+                const dot = document.createElement('div'); dot.className = `hero-dot ${index === 0 ? 'active' : ''}`;
                 dot.addEventListener('click', (e) => { e.stopPropagation(); manualSlide(index); });
                 indicatorsContainer.appendChild(dot);
             });
             startHeroInterval();
         }
-        
         let heroInterval;
-        function startHeroInterval() {
-            if (heroInterval) clearInterval(heroInterval);
-            heroInterval = setInterval(() => {
-                const slides = document.querySelectorAll('.hero-slide');
-                if(slides.length === 0) return;
-                let current = 0;
-                slides.forEach((s, i) => { if(s.classList.contains('active')) current = i; });
-                const next = (current + 1) % slides.length;
-                manualSlide(next);
-            }, 6000);
-        }
-        function manualSlide(index) {
-            const slides = document.querySelectorAll('.hero-slide');
-            const dots = document.querySelectorAll('.hero-dot');
-            if (!slides.length) return;
-            slides.forEach(s => s.classList.remove('active'));
-            dots.forEach(d => d.classList.remove('active'));
-            slides[index].classList.add('active');
-            dots[index].classList.add('active');
-        }
+        function startHeroInterval() { if (heroInterval) clearInterval(heroInterval); heroInterval = setInterval(() => { const slides = document.querySelectorAll('.hero-slide'); if(slides.length === 0) return; let current = 0; slides.forEach((s, i) => { if(s.classList.contains('active')) current = i; }); const next = (current + 1) % slides.length; manualSlide(next); }, 6000); }
+        function manualSlide(index) { const slides = document.querySelectorAll('.hero-slide'); const dots = document.querySelectorAll('.hero-dot'); if (!slides.length) return; slides.forEach(s => s.classList.remove('active')); dots.forEach(d => d.classList.remove('active')); slides[index].classList.add('active'); dots[index].classList.add('active'); }
 
-        // --- RENDERIZADO GENÉRICO (Usuarios + Imágenes) ---
         function displaySearchResults(items, containerId, append = false) { 
             const grid = document.getElementById(containerId); 
             if (!append) grid.innerHTML = ''; 
             if (items.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron resultados.</div>`; return; } 
             items.forEach((item, index) => { 
                 if (!item) return;
-                
-                // --- RENDERIZADO DE USUARIO ---
                 if (item.type === 'user') {
                     const div = document.createElement('div');
                     div.className = "bg-[#111] border border-gray-800 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 transition group aspect-[2/3] relative overflow-hidden";
-                    
-                    // PROTECCIÓN: CLICK EN USUARIO REQUIERE LOGIN
                     div.onclick = (e) => { if(requireLogin(e)) window.location.href = `profile.html?uid=${item.id}`; };
-                    
-                    div.innerHTML = `
-                        <div class="absolute top-2 right-2 bg-orange-500/20 text-orange-500 p-1 rounded-md"><i class="fas fa-user"></i></div>
-                        <img src="${item.profilePic || 'https://placehold.co/100x100'}" class="w-20 h-20 rounded-full object-cover mb-3 border-2 border-gray-700 group-hover:border-orange-500 transition shadow-lg">
-                        <span class="font-bold text-white text-lg truncate w-full text-center">${item.username}</span>
-                        <span class="text-xs text-gray-500 uppercase tracking-wider mt-1 bg-gray-900 px-2 py-1 rounded-full">Ver Perfil</span>
-                    `;
+                    div.innerHTML = `<div class="absolute top-2 right-2 bg-orange-500/20 text-orange-500 p-1 rounded-md"><i class="fas fa-user"></i></div><img src="${item.profilePic || 'https://placehold.co/100x100'}" class="w-20 h-20 rounded-full object-cover mb-3 border-2 border-gray-700 group-hover:border-orange-500 transition shadow-lg"><span class="font-bold text-white text-lg truncate w-full text-center">${item.username}</span><span class="text-xs text-gray-500 uppercase tracking-wider mt-1 bg-gray-900 px-2 py-1 rounded-full">Ver Perfil</span>`;
                     grid.appendChild(div);
                     return;
                 }
-
-                // --- RENDERIZADO DE IMAGEN ---
                 if (!item.url) return;
                 const div = document.createElement('div'); 
                 div.className = 'image-item-animation group relative aspect-[2/3] overflow-hidden image-card'; 
@@ -824,85 +775,200 @@
             }); 
         }
 
-        // --- HELPERS ---
-        function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton'; } }
-        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
-        function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } document.getElementById('auth-overlay').style.display = 'flex'; return false; } return true; }
-        function switchAuthTab(tab) { const l = document.getElementById('login-form'), r1 = document.getElementById('register-step-1'), r2 = document.getElementById('register-step-2'); if(tab==='login'){l.style.display='flex';r1.style.display='none';r2.style.display='none';}else{l.style.display='none';r1.style.display='flex';r2.style.display='none';} }
-        
-        // --- AUTH HANDLERS ---
-        document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value).catch(err=>document.getElementById('login-error').textContent=err.message); });
-        async function validateAuthStep1() { document.getElementById('register-step-1').style.display='none'; document.getElementById('register-step-2').style.display='flex'; }
-        document.getElementById('register-step-2').addEventListener('submit', (e) => { e.preventDefault(); auth.createUserWithEmailAndPassword(document.getElementById('reg-email').value, document.getElementById('reg-password').value).then(c => db.ref('users/'+c.user.uid).set({username:document.getElementById('reg-name').value})).then(()=>location.reload()); });
-
-        // --- MODAL & INTERACTION ---
+        // --- VISOR MODAL (NUEVA LÓGICA) ---
         async function openModal(id) {
             if(!requireLogin()) return;
             let img = fullGalleryCache.find(i => i.id === id) || feedCache.find(i => i.id === id);
             if (!img) return;
             currentImageId = id; currentContext = img.type;
-            document.getElementById('modal-backdrop').src = img.thumbnailUrl || img.url;
-            document.getElementById('title').textContent = img.title;
-            document.getElementById('desc').textContent = img.desc || 'Sin descripción.';
             
-            // SUBTÍTULO CON LINK A PERFIL PROTEGIDO
-            const subTitle = document.getElementById('modal-subtitle');
-            const isVerified = (img.type === 'gallery') || (img.type === 'feed' && img.userId === adminUserId);
-            if (isVerified) {
-                 subTitle.innerHTML = `<div class="flex items-center justify-center gap-2 mt-2 text-blue-400 font-bold text-sm"><i class="fas fa-check-circle"></i> Galería Oficial</div>`;
-                 subTitle.classList.remove('hidden');
-                 subTitle.onclick = null;
+            // Llenar datos en el nuevo diseño
+            document.getElementById('modal-image').src = img.url;
+            document.getElementById('modal-image-title').textContent = img.title;
+            document.getElementById('modal-desc').textContent = img.desc || 'Sin descripción.';
+            
+            // Usuario
+            if (img.type === 'gallery') {
+                document.getElementById('modal-user-name').textContent = "Galería Oficial";
+                document.getElementById('modal-user-avatar').src = "https://files.catbox.moe/ap1lh0.png";
+                document.getElementById('modal-user-name').onclick = null;
             } else {
-                subTitle.innerHTML = `<div class="flex items-center justify-center gap-2 cursor-pointer bg-gray-800/50 py-1 px-3 rounded-full w-fit mx-auto mt-2 border border-gray-700 hover:border-orange-500 transition"><img src="${img.user.avatar}" class="w-6 h-6 rounded-full object-cover"><span class="text-sm text-gray-300">Por: <span class="text-orange-400 font-bold">${img.user.name}</span></span></div>`;
-                subTitle.classList.remove('hidden');
-                // Protección aquí también
-                subTitle.onclick = (e) => { if(requireLogin(e)) window.location.href = `profile.html?uid=${img.user.id}`; };
+                document.getElementById('modal-user-name').textContent = img.user.name;
+                document.getElementById('modal-user-avatar').src = img.user.avatar;
+                document.getElementById('modal-user-name').onclick = () => window.location.href = `profile.html?uid=${img.userId}`;
             }
 
-            document.getElementById('image-container').innerHTML = `<img src="${img.url}" class="max-h-full max-w-full object-contain">`;
-            loadLikes(id, currentContext); loadComments(id, currentContext); loadSimilarImages(img.tags || []);
-            document.getElementById('modal').classList.add('visible'); document.body.style.overflow = 'hidden';
+            // Tags
+            const tagsContainer = document.getElementById('modal-tags');
+            tagsContainer.innerHTML = '';
+            if (img.tags && img.tags.length > 0) {
+                img.tags.forEach(t => {
+                    tagsContainer.innerHTML += `<span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600 text-gray-300">#${t}</span>`;
+                });
+            }
+
+            // Likes
+            const modalLikeBtn = document.getElementById('modal-like-btn');
+            const modalLikeCount = document.getElementById('modal-like-count');
+            
+            modalLikeBtn.onclick = () => toggleReactionInModal(img.id);
+            updateModalLikeUI(img.id);
+
+            // Cargar Similares (Slider)
+            loadSimilarImagesInSlider(img.tags || []);
+            
+            // Cargar Comentarios
+            loadComments(img.id, currentContext);
+            
+            document.getElementById('modal').classList.add('visible'); 
+            document.body.style.overflow = 'hidden';
         }
-        function closeModal() { document.getElementById('modal').classList.remove('visible'); document.body.style.overflow = 'auto'; }
-        
-        function toggleReactionFromGrid(imageId, event) { 
-            if(!requireLogin(event)) return;
-            event.stopPropagation(); 
+
+        function toggleReactionInModal(id) {
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
-            const btn = document.getElementById(`grid-like-btn-${imageId}`); 
-            const countEl = document.getElementById(`reaction-count-grid-${imageId}`); 
-            const reactionsRef = db.ref(`reactions/${imageId}/${userId}`); 
-            reactionsRef.once('value', snap => { 
-                if (snap.val() === 'like') { reactionsRef.remove(); btn.classList.remove('liked'); delete userReactions[imageId]; const newCount = Math.max(0, (allReactionCounts[imageId] || 1) - 1); allReactionCounts[imageId] = newCount; countEl.textContent = newCount; } 
-                else { reactionsRef.set('like'); btn.classList.add('liked'); userReactions[imageId] = 'like'; const newCount = (allReactionCounts[imageId] || 0) + 1; allReactionCounts[imageId] = newCount; countEl.textContent = newCount; } 
+            const ref = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
+            
+            ref.once('value', s => {
+                if(s.exists()) { 
+                    if(currentContext === 'feed') {
+                         ref.remove(); 
+                         db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1);
+                    } else {
+                         ref.remove();
+                         // En galería la cuenta se recalcula en base a hijos
+                    }
+                } else { 
+                    if(currentContext === 'feed') {
+                         ref.set(true); 
+                         db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1);
+                    } else {
+                         ref.set('like');
+                    }
+                }
+            });
+        }
+
+        function updateModalLikeUI(id) {
+            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
+            const modalLikeBtn = document.getElementById('modal-like-btn');
+            const modalLikeCount = document.getElementById('modal-like-count');
+            
+            // Listener para estado (Rojo/Gris)
+            const refStatus = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
+            refStatus.on('value', s => {
+                 if((currentContext === 'feed' && s.exists()) || (currentContext !== 'feed' && s.val() === 'like')) {
+                     modalLikeBtn.classList.add('text-red-500', 'border-red-500/50', 'bg-red-500/10');
+                     modalLikeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim";
+                 } else {
+                     modalLikeBtn.classList.remove('text-red-500', 'border-red-500/50', 'bg-red-500/10');
+                     modalLikeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400";
+                 }
+            });
+
+            // Listener para cuenta
+            if(currentContext === 'feed') {
+                db.ref(`feed_posts/${id}/likes`).on('value', s => modalLikeCount.innerText = s.val() || 0);
+            } else {
+                 db.ref(`reactions/${id}`).on('value', s => {
+                     let count = 0; 
+                     const val = s.val();
+                     if(val) Object.values(val).forEach(v => { if(v === 'like') count++; });
+                     modalLikeCount.innerText = count;
+                 });
+            }
+        }
+
+        function loadSimilarImagesInSlider(tags) {
+            const container = document.getElementById('similar-grid');
+            container.innerHTML = '';
+            if (!tags || tags.length === 0) return;
+            
+            // Buscar en ambos caches
+            const candidates = unifiedGalleryData.filter(img => img.id !== currentImageId);
+            const scored = candidates.map(img => {
+                const imgTags = Array.isArray(img.tags) ? img.tags : [];
+                const common = imgTags.filter(tag => tags.includes(tag));
+                return { image: img, score: common.length };
+            }).filter(i => i.score > 0);
+            
+            scored.sort((a, b) => b.score - a.score);
+            const similar = scored.slice(0, 10).map(i => i.image);
+            
+            similar.forEach(img => {
+                const div = document.createElement('div');
+                div.className = "similar-card cursor-pointer group";
+                div.onclick = () => openModal(img.id);
+                div.innerHTML = `<img src="${img.thumbnailUrl || img.url}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function loadComments(id, context) { 
+            let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; 
+            const container = document.getElementById('comments');
+            // Limpiar listener anterior si es necesario (mejor si se gestiona globalmente, pero básico aquí)
+            db.ref(path).off(); 
+            
+            db.ref(path).orderByChild('timestamp').on('value', snap => { 
+                container.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500 text-xs py-4">Sé el primero en comentar.</p>' : ''; 
+                const comments = []; 
+                snap.forEach(child => comments.push(child.val())); 
+                comments.reverse().forEach(c => { 
+                    const div = document.createElement('div'); 
+                    div.className = "flex gap-2 items-start text-sm animate-enter";
+                    div.innerHTML = `<img src="${c.userAvatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full mt-1 border border-gray-700 object-cover"><div class="bg-[#222] p-3 rounded-2xl rounded-tl-none border border-white/5 w-full"><span class="font-bold text-gray-300 block text-xs mb-1">${c.userName || c.name || 'Anónimo'}</span><span class="text-gray-200 leading-snug block break-words">${c.text || ''}</span></div>`; 
+                    container.appendChild(div); 
+                }); 
             }); 
         }
 
-        // --- FUNCIONES DE LIKES/COMENTARIOS/BUSQUEDA ---
-        function loadLikes(id, context) { if(context === 'feed') { db.ref(`feed_likes/${id}`).on('value', snap => { document.getElementById('reaction-counts-container').innerHTML = `<span class="flex items-center gap-1">❤️ <span class="font-bold">${snap.numChildren()}</span></span>`; }); } else { db.ref(`reactions/${id}`).on('value', snap => { const reactions = snap.val() || {}; const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 }; Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; }); document.getElementById('reaction-counts-container').innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join(''); }); } }
-        function loadComments(id, context) { let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; db.ref(path).orderByChild('timestamp').on('value', snap => { const container = document.getElementById('comments'); container.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500">Sé el primero en comentar.</p>' : ''; const comments = []; snap.forEach(child => comments.push(child.val())); comments.reverse().forEach(c => { const div = document.createElement('div'); const initial = c.name ? c.name.charAt(0).toUpperCase() : 'A'; div.innerHTML = `<div class="flex gap-3"><div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-400 font-bold text-white">${initial}</div><div class="flex-grow min-w-0"><div class="rounded-2xl rounded-tl-none bg-gray-800 p-3"><p class="font-bold text-orange-400">${c.name || 'Anónimo'}</p><p class="text-gray-300 break-words">${c.text || ''}</p></div><small class="pl-2 pt-1 text-xs text-gray-500">${new Date(c.timestamp).toLocaleString()}</small></div></div>`; container.appendChild(div); }); }); }
-        function loadSimilarImages(tags) { const grid = document.getElementById('similar-grid'); grid.innerHTML = ''; if (!tags || tags.length === 0) return; const candidates = fullGalleryCache.filter(img => img.id !== currentImageId && Array.isArray(img.tags)); const scored = candidates.map(img => { const common = img.tags.filter(tag => tags.includes(tag)); return { image: img, score: common.length }; }).filter(i => i.score > 0); scored.sort((a, b) => b.score - a.score); const similar = scored.slice(0, 10).map(i => i.image); if(similar.length > 0) displaySearchResults(similar, 'similar-grid'); }
+        document.getElementById('comment-form').addEventListener('submit', (e) => {
+             e.preventDefault();
+             const input = document.getElementById('comment-input');
+             const text = input.value.trim();
+             if(!text) return;
+             
+             const path = currentContext === 'feed' ? `feed_comments/${currentImageId}` : `comments/${currentImageId}`;
+             const finalUserName = (currentUser && userDataCache.username) ? userDataCache.username : (currentUser?.displayName || 'Anónimo');
+             const finalUserAvatar = (currentUser && userDataCache.profilePic) ? userDataCache.profilePic : 'https://placehold.co/100x100';
+             
+             const c = { 
+                 text: text, 
+                 userId: currentUser ? currentUser.uid : 'anon', 
+                 userName: finalUserName,
+                 name: finalUserName, // Compatibilidad con galería antigua
+                 userAvatar: finalUserAvatar, 
+                 timestamp: Date.now() 
+             };
+             
+             db.ref(path).push(c); 
+             input.value = '';
+        });
+
+        function closeModal() { document.getElementById('modal').classList.remove('visible'); document.body.style.overflow = 'auto'; }
         
-        // --- BUSQUEDA GLOBAL (Usuarios + Imágenes) ---
+        // --- NAVEGACIÓN VISOR ---
+        function findNextImageIndex(currId) { return unifiedGalleryData.findIndex(i => i.id === currId); }
+        document.getElementById('next-image').onclick = () => {
+             const idx = findNextImageIndex(currentImageId);
+             if(idx !== -1 && idx < unifiedGalleryData.length - 1) openModal(unifiedGalleryData[idx+1].id);
+        };
+        document.getElementById('prev-image').onclick = () => {
+             const idx = findNextImageIndex(currentImageId);
+             if(idx > 0) openModal(unifiedGalleryData[idx-1].id);
+        };
+
+        // --- BUSQUEDA GLOBAL ---
         function executeSearch(query) { 
             document.getElementById('main-content-sections').classList.add('hidden'); 
             document.getElementById('gallery').classList.add('hidden'); 
             document.getElementById('search-results-container').classList.remove('hidden'); 
-            
-            // 1. Buscar Usuarios
             const matchedUsers = usersCache.filter(u => (u.username && normalize(u.username).includes(query))); 
-            
-            // 2. Buscar Imágenes Galería
             const matchedGallery = fullGalleryCache.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.categories && i.categories.some(c => normalize(c).includes(query)))); 
-            
-            // 3. Buscar Imágenes Feed
             const matchedFeed = feedCache.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.category && normalize(i.category).includes(query)) || (i.user && i.user.name && normalize(i.user.name).includes(query))); 
-            
-            // Combinar: Usuarios primero, luego el resto
             currentSearchResults = [...matchedUsers, ...matchedGallery, ...matchedFeed]; 
             displaySearchResultsPage(1); 
         }
-        
         function displaySearchResultsPage(page) { searchCurrentPage = page; const start = (page - 1) * searchResultsPerPage; const items = currentSearchResults.slice(start, start + searchResultsPerPage); displaySearchResults(items, 'search-results-grid'); renderPaginationControls(); }
         function renderPaginationControls(){ const container = document.getElementById('search-pagination'); const total = Math.ceil(currentSearchResults.length / searchResultsPerPage); container.innerHTML = ''; if (total <= 1) return; container.innerHTML = `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-gray-700 rounded-md" ${searchCurrentPage === 1 ? 'disabled' : ''}>Anterior</button><span>Página ${searchCurrentPage} de ${total}</span><button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-gray-700 rounded-md" ${searchCurrentPage === total ? 'disabled' : ''}>Siguiente</button>`; }
         function resetSearchView(){ document.getElementById('search-input').value = ''; document.getElementById('search-results-container').classList.add('hidden'); document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden'); }
@@ -916,8 +982,20 @@
         }
         function setupIntersectionObserver() {} 
 
-        // Funciones perfil
-        function loadUserProfile(uid) { db.ref('users/' + uid).on('value', snap => { if (snap.exists()) { const data = snap.val(); document.getElementById('header-user-img').src = data.profilePic || 'https://placehold.co/100x100/333/fff?text=U'; } }); }
+        // Funciones helpers
+        function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton'; } }
+        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
+        function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } document.getElementById('auth-overlay').style.display = 'flex'; return false; } return true; }
+        function switchAuthTab(tab) { const l = document.getElementById('login-form'), r1 = document.getElementById('register-step-1'), r2 = document.getElementById('register-step-2'); if(tab==='login'){l.style.display='flex';r1.style.display='none';r2.style.display='none';}else{l.style.display='none';r1.style.display='flex';r2.style.display='none';} }
+        function toggleReactionFromGrid(imageId, event) { if(!requireLogin(event)) return; event.stopPropagation(); toggleReactionInModal(imageId); } // Reutilizar logica si es posible o mantener separada
+        
+        // Handlers Auth
+        document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value).catch(err=>document.getElementById('login-error').textContent=err.message); });
+        async function validateAuthStep1() { document.getElementById('register-step-1').style.display='none'; document.getElementById('register-step-2').style.display='flex'; }
+        document.getElementById('register-step-2').addEventListener('submit', (e) => { e.preventDefault(); auth.createUserWithEmailAndPassword(document.getElementById('reg-email').value, document.getElementById('reg-password').value).then(c => db.ref('users/'+c.user.uid).set({username:document.getElementById('reg-name').value})).then(()=>location.reload()); });
+
+        // Perfil Helpers
+        function loadUserProfile(uid) { db.ref('users/' + uid).on('value', snap => { if (snap.exists()) { const data = snap.val(); document.getElementById('header-user-img').src = data.profilePic || 'https://placehold.co/100x100/333/fff?text=U'; userDataCache = data; } }); }
         let newProfileFile = null;
         function openConfigModal() { document.getElementById('config-modal').style.display = 'flex'; document.getElementById('config-preview-img').src = document.getElementById('header-user-img').src; document.getElementById('config-upload-status').innerHTML = 'Toca para cambiar imagen'; document.getElementById('btn-save-config').disabled = false; document.getElementById('btn-save-config').innerHTML = 'Guardar'; newProfileFile = null; }
         function closeConfigModal() { document.getElementById('config-modal').style.display = 'none'; }
