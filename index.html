@@ -129,7 +129,7 @@
         
         .hero-bg-img {
             width: 100%; height: 100%; object-fit: cover; transform: scale(1); filter: brightness(0.5) blur(2px);
-            will-change: transform; /* Optimización */
+            will-change: transform;
         }
         .hero-slide.active .hero-bg-img { animation: slowZoom 20s linear infinite alternate; }
         @keyframes slowZoom { 0% { transform: scale(1); } 100% { transform: scale(1.2); } }
@@ -231,7 +231,7 @@
             <div class="text-center mb-8">
                 <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-16 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
                 <h2 class="text-2xl font-bold font-[Poppins] text-white">Bienvenido</h2>
-                <p class="text-gray-400 text-xs mt-2">Inicia sesión para interactuar al máximo.</p>
+                <p class="text-gray-400 text-xs mt-2">Inicia sesión para interactuar y ver perfiles.</p>
                 <div class="flex justify-center gap-4 mt-4 text-sm font-semibold">
                     <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1 transition-colors" onclick="switchAuthTab('login')">Iniciar Sesión</button>
                     <button id="tab-register" class="text-gray-400 pb-1 hover:text-white transition-colors" onclick="switchAuthTab('register')">Registrarse</button>
@@ -309,7 +309,7 @@
                 <div class="hero-bottom-gradient"></div>
                 <form id="search-form" class="absolute bottom-0 left-0 w-full flex justify-center pb-4 z-50 px-4">
                     <div class="relative w-full max-w-xl">
-                        <input type="text" id="search-input" placeholder="Buscar perfiles, tags o arte..." class="w-full rounded-full border-2 border-white/20 bg-black/50 backdrop-blur-md py-3 pl-5 pr-24 text-white transition placeholder:text-gray-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
+                        <input type="text" id="search-input" placeholder="Buscar usuarios o arte..." class="w-full rounded-full border-2 border-white/20 bg-black/50 backdrop-blur-md py-3 pl-5 pr-24 text-white transition placeholder:text-gray-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
                         <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-12 hidden items-center justify-center w-12 text-gray-300 hover:text-orange-500"><i class="fas fa-times text-xl"></i></button>
                         <button type="submit" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-orange-500 hover:text-orange-400"><i class="fas fa-search text-xl"></i></button>
                     </div>
@@ -530,9 +530,8 @@
             if (loader && loader.style.display !== 'none') {
                 loader.style.opacity = '0';
                 setTimeout(() => { loader.style.display = 'none'; }, 500);
-                console.warn("Loader forzado a ocultarse por tiempo de espera.");
             }
-        }, 3500); // A los 3.5 segundos se oculta sí o sí.
+        }, 3500); 
 
         document.addEventListener('DOMContentLoaded', () => { 
             const warningOverlay = document.getElementById('warning-overlay'); 
@@ -577,12 +576,14 @@
 
         // --- DATA CACHING ---
         async function cacheAllDataForSearch() { 
+            // Galería
             const snapshot = await db.ref('images').once('value'); 
             if (snapshot.exists()) { 
                 const allData = []; 
                 snapshot.forEach(child => { allData.push({ id: child.key, type: 'gallery', ...child.val() }); }); 
                 fullGalleryCache = allData; 
             } 
+            // Usuarios
             const userSnap = await db.ref('users').once('value');
             if (userSnap.exists()) {
                 const uData = [];
@@ -593,6 +594,7 @@
                 });
                 usersCache = uData;
             }
+            // Feed
             const feedSnap = await db.ref('feed_posts').once('value');
             if (feedSnap.exists()) {
                 const fData = [];
@@ -655,10 +657,13 @@
                 const card = document.createElement('div');
                 card.className = "relative min-w-[160px] w-[160px] h-[220px] rounded-xl overflow-hidden flex-shrink-0 snap-start cursor-pointer group border border-gray-800 hover:border-orange-500/50 transition-all";
                 const profileUrl = `profile.html?uid=${post.userId}`;
+                
+                // PROTECCIÓN: CUALQUIER CLICK REQUIERE LOGIN
                 card.onclick = (e) => {
-                    if(e.target.closest('.user-link')) { e.stopPropagation(); window.location.href = profileUrl; return; }
-                    window.location.href = profileUrl;
+                    e.stopPropagation();
+                    if(requireLogin(e)) window.location.href = profileUrl;
                 };
+
                 card.innerHTML = `
                     <img src="${post.thumbnailUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 group-hover:opacity-60" loading="lazy">
                     <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
@@ -776,21 +781,34 @@
             dots[index].classList.add('active');
         }
 
-        // --- RENDERIZADO GENÉRICO ---
+        // --- RENDERIZADO GENÉRICO (Usuarios + Imágenes) ---
         function displaySearchResults(items, containerId, append = false) { 
             const grid = document.getElementById(containerId); 
             if (!append) grid.innerHTML = ''; 
             if (items.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No se encontraron resultados.</div>`; return; } 
             items.forEach((item, index) => { 
-                if (!item || !item.url) return;
+                if (!item) return;
+                
+                // --- RENDERIZADO DE USUARIO ---
                 if (item.type === 'user') {
                     const div = document.createElement('div');
-                    div.className = "bg-[#111] border border-gray-800 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 transition group aspect-[2/3]";
+                    div.className = "bg-[#111] border border-gray-800 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 transition group aspect-[2/3] relative overflow-hidden";
+                    
+                    // PROTECCIÓN: CLICK EN USUARIO REQUIERE LOGIN
                     div.onclick = (e) => { if(requireLogin(e)) window.location.href = `profile.html?uid=${item.id}`; };
-                    div.innerHTML = `<img src="${item.profilePic || 'https://placehold.co/100x100'}" class="w-20 h-20 rounded-full object-cover mb-3 border-2 border-gray-700 group-hover:border-orange-500 transition shadow-lg"><span class="font-bold text-white text-lg truncate w-full text-center">${item.username}</span><span class="text-xs text-gray-500 uppercase tracking-wider mt-1 bg-gray-900 px-2 py-1 rounded-full">Usuario</span>`;
+                    
+                    div.innerHTML = `
+                        <div class="absolute top-2 right-2 bg-orange-500/20 text-orange-500 p-1 rounded-md"><i class="fas fa-user"></i></div>
+                        <img src="${item.profilePic || 'https://placehold.co/100x100'}" class="w-20 h-20 rounded-full object-cover mb-3 border-2 border-gray-700 group-hover:border-orange-500 transition shadow-lg">
+                        <span class="font-bold text-white text-lg truncate w-full text-center">${item.username}</span>
+                        <span class="text-xs text-gray-500 uppercase tracking-wider mt-1 bg-gray-900 px-2 py-1 rounded-full">Ver Perfil</span>
+                    `;
                     grid.appendChild(div);
                     return;
                 }
+
+                // --- RENDERIZADO DE IMAGEN ---
+                if (!item.url) return;
                 const div = document.createElement('div'); 
                 div.className = 'image-item-animation group relative aspect-[2/3] overflow-hidden image-card'; 
                 div.setAttribute('onclick', `if(requireLogin(event)) openModal('${item.id}')`); 
@@ -826,6 +844,21 @@
             document.getElementById('modal-backdrop').src = img.thumbnailUrl || img.url;
             document.getElementById('title').textContent = img.title;
             document.getElementById('desc').textContent = img.desc || 'Sin descripción.';
+            
+            // SUBTÍTULO CON LINK A PERFIL PROTEGIDO
+            const subTitle = document.getElementById('modal-subtitle');
+            const isVerified = (img.type === 'gallery') || (img.type === 'feed' && img.userId === adminUserId);
+            if (isVerified) {
+                 subTitle.innerHTML = `<div class="flex items-center justify-center gap-2 mt-2 text-blue-400 font-bold text-sm"><i class="fas fa-check-circle"></i> Galería Oficial</div>`;
+                 subTitle.classList.remove('hidden');
+                 subTitle.onclick = null;
+            } else {
+                subTitle.innerHTML = `<div class="flex items-center justify-center gap-2 cursor-pointer bg-gray-800/50 py-1 px-3 rounded-full w-fit mx-auto mt-2 border border-gray-700 hover:border-orange-500 transition"><img src="${img.user.avatar}" class="w-6 h-6 rounded-full object-cover"><span class="text-sm text-gray-300">Por: <span class="text-orange-400 font-bold">${img.user.name}</span></span></div>`;
+                subTitle.classList.remove('hidden');
+                // Protección aquí también
+                subTitle.onclick = (e) => { if(requireLogin(e)) window.location.href = `profile.html?uid=${img.user.id}`; };
+            }
+
             document.getElementById('image-container').innerHTML = `<img src="${img.url}" class="max-h-full max-w-full object-contain">`;
             loadLikes(id, currentContext); loadComments(id, currentContext); loadSimilarImages(img.tags || []);
             document.getElementById('modal').classList.add('visible'); document.body.style.overflow = 'hidden';
@@ -845,11 +878,31 @@
             }); 
         }
 
-        // --- FUNCIONES DE LIKES/COMENTARIOS/BUSQUEDA REUTILIZADAS ---
+        // --- FUNCIONES DE LIKES/COMENTARIOS/BUSQUEDA ---
         function loadLikes(id, context) { if(context === 'feed') { db.ref(`feed_likes/${id}`).on('value', snap => { document.getElementById('reaction-counts-container').innerHTML = `<span class="flex items-center gap-1">❤️ <span class="font-bold">${snap.numChildren()}</span></span>`; }); } else { db.ref(`reactions/${id}`).on('value', snap => { const reactions = snap.val() || {}; const counts = { hot: 0, like: 0, wow: 0, sexy: 0, laugh: 0, sad: 0 }; Object.values(reactions).forEach(type => { if(counts[type] !== undefined) counts[type]++; }); document.getElementById('reaction-counts-container').innerHTML = Object.entries(counts).map(([type, count]) => `<span class="flex items-center gap-1">${{like:'❤️',hot:'🔥',wow:'😯',laugh:'😂',sad:'😢',sexy:'🫦'}[type]} <span class="font-bold">${count}</span></span>`).join(''); }); } }
         function loadComments(id, context) { let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; db.ref(path).orderByChild('timestamp').on('value', snap => { const container = document.getElementById('comments'); container.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500">Sé el primero en comentar.</p>' : ''; const comments = []; snap.forEach(child => comments.push(child.val())); comments.reverse().forEach(c => { const div = document.createElement('div'); const initial = c.name ? c.name.charAt(0).toUpperCase() : 'A'; div.innerHTML = `<div class="flex gap-3"><div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-400 font-bold text-white">${initial}</div><div class="flex-grow min-w-0"><div class="rounded-2xl rounded-tl-none bg-gray-800 p-3"><p class="font-bold text-orange-400">${c.name || 'Anónimo'}</p><p class="text-gray-300 break-words">${c.text || ''}</p></div><small class="pl-2 pt-1 text-xs text-gray-500">${new Date(c.timestamp).toLocaleString()}</small></div></div>`; container.appendChild(div); }); }); }
         function loadSimilarImages(tags) { const grid = document.getElementById('similar-grid'); grid.innerHTML = ''; if (!tags || tags.length === 0) return; const candidates = fullGalleryCache.filter(img => img.id !== currentImageId && Array.isArray(img.tags)); const scored = candidates.map(img => { const common = img.tags.filter(tag => tags.includes(tag)); return { image: img, score: common.length }; }).filter(i => i.score > 0); scored.sort((a, b) => b.score - a.score); const similar = scored.slice(0, 10).map(i => i.image); if(similar.length > 0) displaySearchResults(similar, 'similar-grid'); }
-        function executeSearch(query) { document.getElementById('main-content-sections').classList.add('hidden'); document.getElementById('gallery').classList.add('hidden'); document.getElementById('search-results-container').classList.remove('hidden'); const matchedUsers = usersCache.filter(u => (u.username && normalize(u.username).includes(query))); const matchedGallery = fullGalleryCache.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.categories && i.categories.some(c => normalize(c).includes(query)))); const matchedFeed = feedCache.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.category && normalize(i.category).includes(query)) || (i.user && i.user.name && normalize(i.user.name).includes(query))); currentSearchResults = [...matchedUsers, ...matchedGallery, ...matchedFeed]; displaySearchResultsPage(1); }
+        
+        // --- BUSQUEDA GLOBAL (Usuarios + Imágenes) ---
+        function executeSearch(query) { 
+            document.getElementById('main-content-sections').classList.add('hidden'); 
+            document.getElementById('gallery').classList.add('hidden'); 
+            document.getElementById('search-results-container').classList.remove('hidden'); 
+            
+            // 1. Buscar Usuarios
+            const matchedUsers = usersCache.filter(u => (u.username && normalize(u.username).includes(query))); 
+            
+            // 2. Buscar Imágenes Galería
+            const matchedGallery = fullGalleryCache.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.categories && i.categories.some(c => normalize(c).includes(query)))); 
+            
+            // 3. Buscar Imágenes Feed
+            const matchedFeed = feedCache.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.category && normalize(i.category).includes(query)) || (i.user && i.user.name && normalize(i.user.name).includes(query))); 
+            
+            // Combinar: Usuarios primero, luego el resto
+            currentSearchResults = [...matchedUsers, ...matchedGallery, ...matchedFeed]; 
+            displaySearchResultsPage(1); 
+        }
+        
         function displaySearchResultsPage(page) { searchCurrentPage = page; const start = (page - 1) * searchResultsPerPage; const items = currentSearchResults.slice(start, start + searchResultsPerPage); displaySearchResults(items, 'search-results-grid'); renderPaginationControls(); }
         function renderPaginationControls(){ const container = document.getElementById('search-pagination'); const total = Math.ceil(currentSearchResults.length / searchResultsPerPage); container.innerHTML = ''; if (total <= 1) return; container.innerHTML = `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-gray-700 rounded-md" ${searchCurrentPage === 1 ? 'disabled' : ''}>Anterior</button><span>Página ${searchCurrentPage} de ${total}</span><button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-gray-700 rounded-md" ${searchCurrentPage === total ? 'disabled' : ''}>Siguiente</button>`; }
         function resetSearchView(){ document.getElementById('search-input').value = ''; document.getElementById('search-results-container').classList.add('hidden'); document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden'); }
