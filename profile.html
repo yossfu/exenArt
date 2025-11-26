@@ -2,7 +2,7 @@
 <html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
     <title>exen-E | Perfil</title>
     
     <!-- Tailwind CSS -->
@@ -29,13 +29,14 @@
             --body-font: 'Inter', sans-serif;
         }
         
-        /* Ajustes Globales */
+        /* Ajustes Globales & Móvil */
         html, body {
             overflow-x: hidden;
             width: 100%;
             background-color: var(--bg-dark);
             overscroll-behavior-y: none;
             -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
         body { 
             font-family: var(--body-font); 
@@ -53,7 +54,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        /* Loaders */
+        /* UI Elements */
         #initial-loader { position: fixed; inset: 0; z-index: 10000; background-color: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); animation: pulse 2s infinite; }
         #page-loader { position: fixed; inset: 0; background: var(--bg-dark); z-index: 5000; display: flex; align-items: center; justify-content: center; }
@@ -66,7 +67,7 @@
         .btn-primary { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3); transition: transform 0.2s; }
         .btn-primary:active { transform: scale(0.97); }
 
-        /* Banner & Perfil */
+        /* Banner & Profile */
         .banner-container { position: relative; width: 100%; height: 180px; background-color: #18181b; overflow: hidden; }
         @media (min-width: 768px) { .banner-container { height: 280px; } }
         .banner-img { width: 100%; height: 100%; object-fit: cover; }
@@ -82,124 +83,78 @@
         }
         
         .profile-header { position: relative; margin-top: -65px; padding-bottom: 0.5rem; z-index: 10; }
-        .stat-box { display: flex; flex-direction: column; align-items: center; }
         .avatar-container { position: relative; cursor: pointer; transition: transform 0.2s; }
         .avatar-container:active { transform: scale(0.96); }
         .edit-badge { position: absolute; bottom: 2px; right: 2px; background-color: var(--accent); border: 3px solid var(--bg-dark); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); }
-
-        /* Socials */
         .social-link { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #9ca3af; transition: all 0.2s; font-size: 1.2rem; text-decoration: none; }
         .social-link:active { transform: translateY(2px); }
         .social-link:hover { color: white; border-color: var(--accent); }
 
-        /* Tabs */
+        /* Tabs & Grid */
         .profile-tabs { display: flex; justify-content: center; gap: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
         .tab-btn { color: #71717a; padding: 12px 24px; border-bottom: 2px solid transparent; transition: all 0.3s; font-size: 1.1rem; }
         .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-        /* Grid */
         .grid-item { position: relative; aspect-ratio: 1 / 1; overflow: hidden; background-color: #18181b; cursor: pointer; border-radius: 4px; }
         .grid-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
         .grid-item:active .grid-image { transform: scale(0.96); opacity: 0.8; }
         .grid-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 40%); display: flex; align-items: flex-end; padding: 6px; }
 
-        /* Colecciones */
+        /* Collections */
         .collection-card { position: relative; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; background: #18181b; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s; }
         .collection-card:active { transform: scale(0.96); }
         .collection-cover { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
         .collection-info { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0) 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 12px; }
         
-        /* Panel Publicación */
+        /* Post Panel */
         .upload-card { background: linear-gradient(145deg, #18181b, #121212); border: 1px solid rgba(249, 115, 22, 0.15); }
-        
-        #extra-fields { 
-            max-height: 0; opacity: 0; overflow: hidden; 
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease; 
-        }
-        /* CRÍTICO: Permite que el selector salga del contenedor al expandirse */
-        #extra-fields.expanded-visible { 
-            max-height: 800px; 
-            opacity: 1; 
-            margin-top: 12px; 
-            padding-top: 12px; 
-            border-top: 1px solid var(--border-color);
-            overflow: visible !important; 
-        }
-        
-        .custom-input { 
-            background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); 
-            color: white; padding: 12px 14px; border-radius: 10px; 
-            font-size: 0.95rem; width: 100%; transition: all 0.3s; 
-        }
+        #extra-fields { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease; }
+        #extra-fields.expanded-visible { max-height: 800px; opacity: 1; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); overflow: visible !important; }
+        .custom-input { background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; transition: all 0.3s; }
         .custom-input:focus { outline: none; border-color: var(--accent); background: rgba(0,0,0,0.4); }
-
-        /* === CUSTOM DROPDOWNS === */
-        .custom-select-container { position: relative; width: 100%; }
-        .custom-select-trigger {
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid var(--border-color);
-            display: flex; justify-content: space-between; align-items: center;
-            width: 100%; padding: 12px 14px; border-radius: 10px;
-            color: #9ca3af; cursor: pointer; transition: all 0.2s; 
-            font-size: 0.9rem; min-height: 44px;
-        }
-        .custom-select-trigger:active, .custom-select-trigger.active { border-color: var(--accent); color: white; background: rgba(0,0,0,0.4); }
-        .custom-select-trigger span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; }
         
-        .custom-select-options {
-            position: absolute; top: calc(100% + 8px); left: 0; right: 0;
-            background: #1c1c1f; border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px; z-index: 50;
-            max-height: 0; overflow: hidden; opacity: 0;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
-            transform-origin: top center; transform: scaleY(0.95);
-        }
-        .custom-select-options.show { 
-            max-height: 300px; opacity: 1; overflow-y: auto; 
-            transform: scaleY(1);
-        }
-        .option-item {
-            padding: 14px 16px; cursor: pointer; color: #d1d5db; font-size: 0.9rem;
-            border-bottom: 1px solid rgba(255,255,255,0.03); 
-            display: flex; align-items: center; gap: 10px;
-        }
+        /* Tags Input Readonly Style */
+        .tags-readonly { background: rgba(0,0,0,0.4); cursor: not-allowed; border-style: dashed; opacity: 0.8; }
+        .tags-readonly:focus { border-color: var(--border-color); }
+        
+        .tag-status-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); z-index: 10; font-size: 14px; }
+        .status-loading { color: #fb923c; animation: spin 1s linear infinite; }
+        .status-success { color: #4ade80; }
+        .status-error { color: #ef4444; }
+        .status-lock { color: #6b7280; }
+        @keyframes spin { 100% { transform: translateY(-50%) rotate(360deg); } }
+
+        /* Dropdowns */
+        .custom-select-container { position: relative; width: 100%; }
+        .custom-select-trigger { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; border-radius: 10px; color: #9ca3af; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; min-height: 44px; }
+        .custom-select-trigger:active, .custom-select-trigger.active { border-color: var(--accent); color: white; background: rgba(0,0,0,0.4); }
+        .custom-select-options { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #1c1c1f; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; z-index: 50; max-height: 0; overflow: hidden; opacity: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8); transform-origin: top center; transform: scaleY(0.95); }
+        .custom-select-options.show { max-height: 300px; opacity: 1; overflow-y: auto; transform: scaleY(1); }
+        .option-item { padding: 14px 16px; cursor: pointer; color: #d1d5db; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; align-items: center; gap: 10px; }
         .option-item:last-child { border-bottom: none; }
         .option-item:active { background: rgba(249, 115, 22, 0.2); color: white; }
-        .option-item.special-option { color: #fb923c; font-weight: 600; background: rgba(251, 146, 60, 0.05); }
         
-        /* === VISOR MODAL & PANTALLA COMPLETA === */
+        /* Viewer */
         .modal-backdrop { display: none; position: fixed; inset: 0; background-color: #000; z-index: 7000; } 
         .modal-backdrop.visible { display: block; animation: fadeIn 0.3s forwards; }
-        @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
-        
-        /* Reglas Críticas para Fullscreen */
         .fullscreen-mode .info-panel { display: none !important; }
         .fullscreen-mode .image-area { width: 100% !important; height: 100vh !important; flex: none !important; }
-        
-        .nav-arrow {
-            position: absolute; top: 50%; transform: translateY(-50%); z-index: 20;
-            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); border-radius: 50%;
-            color: white; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; 
-            transition: all 0.2s; font-size: 1.2rem;
-        }
+        .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 20; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); border-radius: 50%; color: white; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s; font-size: 1.2rem; }
         .nav-arrow:active { background: var(--accent); }
         .nav-prev { left: 15px; } .nav-next { right: 15px; }
         
-        .bottom-nav { 
-            background-color: rgba(9, 9, 11, 0.95); 
-            backdrop-filter: blur(16px); 
-            border-top: 1px solid var(--border-color); 
-            z-index: 3000; 
-            padding-bottom: env(safe-area-inset-bottom);
-        }
+        /* Bottom Nav */
+        .bottom-nav { background-color: rgba(9, 9, 11, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--border-color); z-index: 3000; padding-bottom: env(safe-area-inset-bottom); }
         .nav-item { color: #71717a; transition: all 0.3s ease; }
         .nav-item.active { color: var(--accent); }
 
+        /* Utils & Animations */
         .hidden-step { display: none; }
         #app-content { display: none; }
         @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
+        @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+        @keyframes glowText { 0% { opacity: 0.5; } 50% { opacity: 1; color: #fb923c; } 100% { opacity: 0.5; } }
+        .analyzing-text { animation: glowText 1.5s infinite; font-style: italic; }
+        .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); pointer-events: none; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -208,9 +163,10 @@
     <div id="initial-loader">
         <img src="https://files.catbox.moe/ap1lh0.png" class="loader-logo">
         <i class="fas fa-circle-notch fa-spin text-orange-500 text-3xl"></i>
+        <p id="loader-status" class="text-gray-500 text-xs mt-4 animate-pulse">Cargando recursos...</p>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
+    <!-- TOAST -->
     <div id="toast-container" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[9000] pointer-events-none transition-all duration-300 opacity-0 translate-y-4">
         <div class="bg-zinc-900/95 backdrop-blur-md border border-zinc-700 px-6 py-3 rounded-full text-white font-medium shadow-2xl flex items-center gap-3">
             <i class="fas fa-check-circle text-green-500 text-lg"></i>
@@ -224,18 +180,19 @@
             <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-500/20"><i class="fas fa-exclamation text-red-500 text-2xl"></i></div>
             <h3 class="text-white font-bold text-xl mb-2">Atención</h3>
             <p id="custom-alert-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">Mensaje</p>
-            <button onclick="closeCustomAlert()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold transition">Entendido</button>
+            <button onclick="closeCustomAlert()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold transition active:scale-95">Entendido</button>
         </div>
     </div>
 
     <div id="custom-confirm" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
         <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
             <div class="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4 border border-orange-500/20"><i class="fas fa-question text-orange-500 text-2xl"></i></div>
-            <h3 class="text-white font-bold text-xl mb-2">¿Estás seguro?</h3>
+            <!-- ID para título dinámico -->
+            <h3 id="custom-confirm-title" class="text-white font-bold text-xl mb-2">¿Estás seguro?</h3>
             <p id="custom-confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">¿Continuar?</p>
             <div class="flex gap-3">
-                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-zinc-800 text-gray-300 py-3 rounded-xl font-bold border border-zinc-700">Cancelar</button>
-                <button onclick="closeCustomConfirm(true)" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-bold shadow-lg">Confirmar</button>
+                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-zinc-800 text-gray-300 py-3 rounded-xl font-bold border border-zinc-700 active:scale-95 transition">Cancelar</button>
+                <button onclick="closeCustomConfirm(true)" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">Confirmar</button>
             </div>
         </div>
     </div>
@@ -255,7 +212,7 @@
             <form id="login-form" class="flex flex-col gap-4">
                 <input type="email" id="login-email" class="input-field w-full rounded-xl px-4 py-3.5 text-sm" placeholder="Correo electrónico" required>
                 <input type="password" id="login-password" class="input-field w-full rounded-xl px-4 py-3.5 text-sm" placeholder="Contraseña" required>
-                <button type="submit" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white mt-2 shadow-lg tracking-wide text-sm">ENTRAR</button>
+                <button type="submit" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white mt-2 shadow-lg tracking-wide text-sm active:scale-95 transition">ENTRAR</button>
             </form>
 
             <form id="register-step-1" class="flex flex-col gap-4 hidden-step">
@@ -269,19 +226,19 @@
                     </label>
                 </div>
                 <input type="hidden" id="reg-photo-url">
-                <button type="button" id="btn-step-1" onclick="validateAuthStep1()" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white mt-2">CONTINUAR</button>
+                <button type="button" id="btn-step-1" onclick="validateAuthStep1()" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white mt-2 active:scale-95 transition">CONTINUAR</button>
             </form>
 
             <form id="register-step-2" class="flex flex-col gap-4 hidden-step">
                 <input type="email" id="reg-email" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Correo electrónico" required>
                 <input type="password" id="reg-password" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Contraseña" required>
                 <input type="password" id="reg-confirm-password" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Confirmar contraseña" required>
-                <div class="flex gap-3 mt-2"><button type="button" onclick="authBackToStep1()" class="w-1/3 py-3.5 rounded-xl text-gray-300 border border-zinc-700 font-semibold text-sm">Atrás</button><button type="submit" class="btn-primary w-2/3 py-3.5 rounded-xl font-bold text-white text-sm">FINALIZAR</button></div>
+                <div class="flex gap-3 mt-2"><button type="button" onclick="authBackToStep1()" class="w-1/3 py-3.5 rounded-xl text-gray-300 border border-zinc-700 font-semibold text-sm active:scale-95 transition">Atrás</button><button type="submit" class="btn-primary w-2/3 py-3.5 rounded-xl font-bold text-white text-sm active:scale-95 transition">FINALIZAR</button></div>
             </form>
         </div>
     </div>
 
-    <!-- CONTENIDO APP -->
+    <!-- APP CONTENT -->
     <div id="app-content">
         <div id="page-loader"><img src="https://files.catbox.moe/ap1lh0.png" class="h-16 w-auto animate-pulse"></div>
 
@@ -358,7 +315,7 @@
         <div class="p-4 flex items-center gap-4 bg-zinc-900/80 backdrop-blur-lg border-b border-zinc-800 safe-top">
             <button onclick="closeCollectionDetail()" class="h-10 w-10 flex items-center justify-center rounded-full active:bg-zinc-800 text-white transition"><i class="fas fa-arrow-left"></i></button>
             <h2 id="detail-collection-title" class="text-lg font-bold text-white truncate flex-1">...</h2>
-            <button id="delete-collection-btn" class="hidden text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20 text-xs font-bold flex items-center gap-2" onclick="deleteCurrentCollection()"><i class="fas fa-trash-alt"></i> Eliminar</button>
+            <button id="delete-collection-btn" class="hidden text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20 text-xs font-bold flex items-center gap-2 active:scale-95 transition" onclick="deleteCurrentCollection()"><i class="fas fa-trash-alt"></i> Eliminar</button>
         </div>
         <div class="flex-1 overflow-y-auto p-1 custom-scrollbar">
             <div id="detail-collection-grid" class="grid grid-cols-3 gap-1"></div>
@@ -370,7 +327,6 @@
     <div id="details-modal" class="hidden fixed inset-0 z-[4000] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
         <div class="bg-[#18181b] rounded-2xl p-6 w-full max-w-sm border border-zinc-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 class="text-white font-bold text-lg mb-6 flex items-center gap-3 border-b border-zinc-800 pb-4"><i class="fas fa-id-card text-orange-500"></i> Editar Detalles</h3>
-            
             <div class="mb-6">
                 <label class="text-xs text-gray-400 mb-2 block uppercase font-bold tracking-wider ml-1">Estado del Artista</label>
                 <div class="custom-select-container" id="dropdown-status">
@@ -385,7 +341,6 @@
                     </div>
                 </div>
             </div>
-
             <p class="text-xs text-gray-400 mb-3 uppercase font-bold tracking-wider ml-1">Redes Sociales</p>
             <div class="flex flex-col gap-3">
                 <div class="relative group"><i class="fab fa-facebook absolute left-3 top-1/2 -translate-y-1/2 text-blue-500"></i><input type="url" id="social-fb" placeholder="Facebook" class="custom-input pl-10"></div>
@@ -394,10 +349,9 @@
                 <div class="relative group"><i class="fab fa-youtube absolute left-3 top-1/2 -translate-y-1/2 text-red-500"></i><input type="url" id="social-yt" placeholder="YouTube" class="custom-input pl-10"></div>
                 <div class="relative group"><i class="fab fa-patreon absolute left-3 top-1/2 -translate-y-1/2 text-red-400"></i><input type="url" id="social-pt" placeholder="Patreon" class="custom-input pl-10"></div>
             </div>
-            
             <div class="flex gap-3 mt-8 pt-4 border-t border-zinc-800">
-                <button onclick="document.getElementById('details-modal').classList.add('hidden'); document.getElementById('details-modal').classList.remove('flex')" class="flex-1 py-3 rounded-xl border border-zinc-700 text-gray-400 font-semibold">Cancelar</button>
-                <button onclick="saveDetails()" class="flex-1 py-3 rounded-xl bg-orange-600 text-white font-bold">Guardar</button>
+                <button onclick="document.getElementById('details-modal').classList.add('hidden'); document.getElementById('details-modal').classList.remove('flex')" class="flex-1 py-3 rounded-xl border border-zinc-700 text-gray-400 font-semibold active:scale-95 transition">Cancelar</button>
+                <button onclick="saveDetails()" class="flex-1 py-3 rounded-xl bg-orange-600 text-white font-bold active:scale-95 transition">Guardar</button>
             </div>
         </div>
     </div>
@@ -408,55 +362,41 @@
             <h3 class="text-white font-bold text-lg mb-2">Compartir Perfil</h3>
             <div class="flex gap-2 mb-6 bg-black/40 p-1.5 rounded-xl border border-zinc-700">
                 <input type="text" id="share-link-input" class="w-full bg-transparent px-3 text-gray-300 text-xs outline-none font-mono" readonly>
-                <button onclick="copyLinkFromModal()" class="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-lg"><i class="fas fa-copy"></i></button>
+                <button onclick="copyLinkFromModal()" class="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-lg active:scale-95 transition"><i class="fas fa-copy"></i></button>
             </div>
-            <button onclick="document.getElementById('share-modal').classList.add('hidden'); document.getElementById('share-modal').classList.remove('flex')" class="w-full py-3 text-gray-400 hover:text-white text-sm font-semibold rounded-xl hover:bg-zinc-800">Cerrar</button>
+            <button onclick="document.getElementById('share-modal').classList.add('hidden'); document.getElementById('share-modal').classList.remove('flex')" class="w-full py-3 text-gray-400 hover:text-white text-sm font-semibold rounded-xl hover:bg-zinc-800 active:scale-95 transition">Cerrar</button>
         </div>
     </div>
 
-    <!-- === VISOR DE IMÁGENES (MODAL) === -->
+    <!-- VISOR -->
     <div id="modal" class="modal-backdrop overflow-hidden">
         <button id="close-modal" class="fixed top-4 right-4 z-[8000] h-10 w-10 flex items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-times text-lg"></i></button>
-        
         <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black transition-all duration-300">
-            <!-- Imagen -->
             <div class="image-area relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[55vh] lg:h-full" id="modal-image-area">
                 <img id="modal-image" src="" class="max-w-full max-h-full object-contain w-auto h-auto transition-transform duration-300" alt="Visor">
-                
                 <button id="modal-prev" class="nav-arrow nav-prev" onclick="navigateModal(-1)"><i class="fas fa-chevron-left"></i></button>
                 <button id="modal-next" class="nav-arrow nav-next" onclick="navigateModal(1)"><i class="fas fa-chevron-right"></i></button>
-                
                 <button onclick="toggleFullScreen()" class="absolute bottom-6 right-6 z-20 bg-zinc-800/80 text-white p-2.5 rounded-xl backdrop-blur-md border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-expand text-sm"></i></button>
             </div>
-            
-            <!-- Panel Info -->
             <div class="info-panel w-full lg:w-[420px] lg:h-full bg-[#121214] border-l border-zinc-800 flex flex-col h-[45vh] z-30 relative shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
                 <div class="p-4 border-b border-zinc-800 flex items-center justify-between bg-[#18181b] flex-shrink-0">
                     <div class="flex items-center gap-3">
                         <img id="modal-user-pic" src="" class="w-10 h-10 rounded-full object-cover border border-zinc-600 bg-zinc-700">
-                        <div class="leading-tight">
-                            <h4 id="modal-user-name" class="font-bold text-white text-sm">Usuario</h4>
-                            <span class="text-[10px] text-gray-500 font-medium">Autor</span>
-                        </div>
+                        <div class="leading-tight"><h4 id="modal-user-name" class="font-bold text-white text-sm">Usuario</h4><span class="text-[10px] text-gray-500 font-medium">Autor</span></div>
                     </div>
-                    <button id="modal-like-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800 border border-zinc-700 active:scale-95 transition group">
-                        <i class="far fa-heart text-lg group-active:scale-125 transition-transform text-gray-400"></i>
-                        <span id="modal-likes-count" class="text-xs font-bold text-white">0</span>
-                    </button>
+                    
+                    <div class="flex items-center gap-3">
+                        <!-- NUEVO BOTÓN DE ELIMINAR -->
+                        <button id="modal-delete-btn" class="hidden text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 transition" title="Eliminar"><i class="fas fa-trash-alt text-sm"></i></button>
+                        
+                        <button id="modal-like-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800 border border-zinc-700 active:scale-95 transition group"><i class="far fa-heart text-lg group-active:scale-125 transition-transform text-gray-400"></i><span id="modal-likes-count" class="text-xs font-bold text-white">0</span></button>
+                    </div>
                 </div>
-                
                 <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#121214]">
-                    <div class="mb-5">
-                        <h3 id="modal-title" class="text-xl font-bold text-white mb-2 font-[Poppins] leading-snug"></h3>
-                        <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-light"></p>
-                    </div>
+                    <div class="mb-5"><h3 id="modal-title" class="text-xl font-bold text-white mb-2 font-[Poppins] leading-snug"></h3><p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-light"></p></div>
                     <div id="modal-tags" class="flex flex-wrap gap-2 mb-8 pb-5 border-b border-zinc-800"></div>
-                    <div>
-                        <h4 class="text-[11px] font-bold text-gray-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h4>
-                        <div id="modal-comments-list" class="flex flex-col gap-4 pb-4"></div>
-                    </div>
+                    <div><h4 class="text-[11px] font-bold text-gray-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h4><div id="modal-comments-list" class="flex flex-col gap-4 pb-4"></div></div>
                 </div>
-                
                 <div class="p-3 bg-[#18181b] border-t border-zinc-800 flex-shrink-0 safe-bottom">
                     <form onsubmit="postCommentInModal(event)" class="flex gap-2 relative">
                         <input type="text" id="modal-comment-input" class="w-full bg-zinc-900 border border-zinc-700 rounded-full pl-5 pr-12 py-3 text-sm text-white focus:border-orange-500 focus:outline-none transition-colors" placeholder="Añade un comentario..." autocomplete="off">
@@ -474,22 +414,96 @@
         <a href="profile.html" class="nav-item active flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-user text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Perfil</span></a>
     </nav>
 
+    <!-- SCRIPT DE GRADIO PARA AUTO-TAGGING -->
+    <script type="module">
+        import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
+        const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
+
+        async function resizeImageForApi(file) {
+            if (file.size <= 1024 * 1024) return file;
+            return new Promise((resolve) => {
+                const img = new Image();
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const MAX_SIZE = 800;
+                img.onload = () => {
+                    let w=img.width, h=img.height;
+                    if(w>h){if(w>MAX_SIZE){h*=MAX_SIZE/w;w=MAX_SIZE;}}else{if(h>MAX_SIZE){w*=MAX_SIZE/h;h=MAX_SIZE;}}
+                    canvas.width=w;canvas.height=h;
+                    ctx.drawImage(img,0,0,w,h);
+                    canvas.toBlob(resolve,'image/jpeg',0.85);
+                };
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        window.runAutoTagging = async function(originalFile) {
+            const tagInput = document.getElementById('post-tags');
+            const icon = document.getElementById('tag-status-icon');
+            const publishBtn = document.getElementById('publish-btn');
+            tagInput.value = ""; tagInput.placeholder = "⚡ Conectando a DeepDanbooru...";
+            tagInput.classList.add('analyzing-text', 'border-orange-500');
+            icon.className = "fas fa-circle-notch tag-status-icon status-loading";
+            publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
+            
+            try {
+                const processedFile = await resizeImageForApi(originalFile);
+                const client = await Client.connect("Jossle/deepdanbooru_online_Exen");
+                tagInput.placeholder = "🤖 IA Analizando imagen...";
+                const result = await client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend]);
+                if (result && result.data && result.data[0]) {
+                    tagInput.value = result.data[0];
+                    icon.className = "fas fa-check-circle tag-status-icon status-success";
+                    showToast("¡Etiquetas generadas!");
+                    publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+                } else throw new Error("Respuesta vacía");
+            } catch (error) {
+                console.error("Error Tagging:", error);
+                tagInput.placeholder = "⚠️ Error. Intenta de nuevo.";
+                icon.className = "fas fa-exclamation-triangle tag-status-icon status-error";
+                publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+            } finally { tagInput.classList.remove('analyzing-text', 'border-orange-500'); }
+        }
+    </script>
+
     <script>
+        // --- FIREBASE CONFIG ---
         const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
         const CATBOX_USERHASH = "341adb9d3c2d09d0485aa908c";
-        
+
         let currentUser = null, currentUserData = null, targetUserId = null, selectedPostFile = null;
         let currentViewPosts = [], currentPostIndex = -1, currentCollectionId = null, userDataCache = {};
         let isUploadingAuth = false, touchStartX = 0, touchEndX = 0, confirmCallback = null;
 
+        // --- GLOBAL ERROR HANDLER & SAFETY TIMEOUT ---
+        window.onerror = function(msg, url, line) {
+            console.error("Global Error:", msg);
+            // Si hay un error crítico, quitamos el loader para que el usuario vea algo
+            const loader = document.getElementById('initial-loader');
+            if(loader && loader.style.display !== 'none') {
+                 document.getElementById('loader-status').innerText = "Error de carga. Recarga la página.";
+                 document.getElementById('loader-status').classList.add('text-red-500');
+            }
+        };
+        
+        setTimeout(() => {
+             const loader = document.getElementById('initial-loader');
+             if(loader && getComputedStyle(loader).display !== 'none' && !currentUser) {
+                 document.getElementById('loader-status').innerText = "¿Tarda mucho? Revisa tu conexión.";
+             }
+        }, 8000);
+
+        // --- UTILS ---
         function showToast(msg) {
             const t = document.getElementById('toast-container');
-            document.getElementById('toast-message').innerText = msg;
-            t.classList.remove('opacity-0', 'translate-y-4');
-            setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3000);
+            if(t) {
+                document.getElementById('toast-message').innerText = msg;
+                t.classList.remove('opacity-0', 'translate-y-4');
+                setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3000);
+            }
         }
 
         function showAlert(msg) {
@@ -498,8 +512,9 @@
         }
         function closeCustomAlert() { const el = document.getElementById('custom-alert'); el.classList.add('hidden'); el.classList.remove('flex'); }
 
-        function showConfirm(msg, callback) {
+        function showConfirm(msg, callback, title = "¿Estás seguro?") {
             confirmCallback = callback;
+            document.getElementById('custom-confirm-title').innerText = title;
             document.getElementById('custom-confirm-msg').innerText = msg;
             const el = document.getElementById('custom-confirm'); el.classList.remove('hidden'); el.classList.add('flex');
         }
@@ -508,15 +523,11 @@
             if(result && confirmCallback) confirmCallback(); confirmCallback = null;
         }
 
-        // --- CUSTOM DROPDOWNS ---
         function toggleCustomSelect(id) {
             const el = document.getElementById(id);
             const list = el.querySelector('.custom-select-options');
             const trigger = el.querySelector('.custom-select-trigger');
-            
-            document.querySelectorAll('.custom-select-options.show').forEach(opt => {
-                if(opt !== list) { opt.classList.remove('show'); opt.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); }
-            });
+            document.querySelectorAll('.custom-select-options.show').forEach(opt => { if(opt !== list) { opt.classList.remove('show'); opt.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); } });
             list.classList.toggle('show'); trigger.classList.toggle('active');
         }
 
@@ -531,13 +542,11 @@
 
         window.addEventListener('click', function(e) {
             if (!e.target.closest('.custom-select-container')) {
-                document.querySelectorAll('.custom-select-options.show').forEach(el => {
-                    el.classList.remove('show'); el.parentElement.querySelector('.custom-select-trigger').classList.remove('active');
-                });
+                document.querySelectorAll('.custom-select-options.show').forEach(el => { el.classList.remove('show'); el.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); });
             }
         });
 
-        // --- INIT ---
+        // --- AUTH & INIT ---
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('initial-loader');
             const urlParams = new URLSearchParams(window.location.search);
@@ -563,7 +572,7 @@
                 }
             }
             document.getElementById('page-loader').style.display = 'none';
-            loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 500);
+            if(loader) { loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 500); }
         });
 
         function switchAuthTab(tab) {
@@ -574,6 +583,7 @@
             document.getElementById('tab-register').className = tab==='login'?"text-gray-500 pb-2 hover:text-gray-300 transition-colors":"text-orange-500 border-b-2 border-orange-500 pb-2 transition-colors";
         }
 
+        // --- UI LOGIC ---
         function setupUIForTargetUser() {
             const isMyProfile = currentUser && currentUser.uid === targetUserId;
             const container = document.getElementById('profile-actions');
@@ -590,16 +600,16 @@
                     <div class="flex justify-between items-center mb-4 px-1">
                          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mi Espacio</span>
                          <div class="flex gap-2">
-                            <button onclick="document.getElementById('details-modal').classList.remove('hidden'); document.getElementById('details-modal').classList.add('flex')" class="text-xs bg-zinc-800 text-gray-200 px-3 h-9 rounded-xl border border-zinc-700 hover:bg-zinc-700 transition flex items-center gap-2 font-semibold"><i class="fas fa-edit text-orange-500"></i> Editar Perfil</button>
-                            <button onclick="openShareModal()" class="text-xs bg-zinc-800 text-gray-200 h-9 w-9 rounded-xl border border-zinc-700 hover:bg-zinc-700 flex items-center justify-center"><i class="fas fa-share-alt"></i></button>
-                            <button onclick="logout()" class="text-xs bg-red-500/10 text-red-400 px-3 h-9 rounded-xl border border-red-500/20 hover:bg-red-500/20"><i class="fas fa-sign-out-alt"></i></button>
+                            <button onclick="document.getElementById('details-modal').classList.remove('hidden'); document.getElementById('details-modal').classList.add('flex')" class="text-xs bg-zinc-800 text-gray-200 px-3 h-9 rounded-xl border border-zinc-700 hover:bg-zinc-700 transition flex items-center gap-2 font-semibold active:scale-95"><i class="fas fa-edit text-orange-500"></i> Editar Perfil</button>
+                            <button onclick="openShareModal()" class="text-xs bg-zinc-800 text-gray-200 h-9 w-9 rounded-xl border border-zinc-700 hover:bg-zinc-700 flex items-center justify-center active:scale-95 transition"><i class="fas fa-share-alt"></i></button>
+                            <button onclick="logout()" class="text-xs bg-red-500/10 text-red-400 px-3 h-9 rounded-xl border border-red-500/20 hover:bg-red-500/20 active:scale-95 transition"><i class="fas fa-sign-out-alt"></i></button>
                          </div>
                     </div>
                     
                     <div class="upload-card p-4 sm:p-5 rounded-2xl relative mb-2">
                         <div class="flex gap-4 items-start mb-2">
                             <div class="w-11 h-11 rounded-full overflow-hidden bg-zinc-700 flex-shrink-0 mt-1 border border-zinc-600 shadow-md">
-                                <img id="post-avatar-preview" src="${currentUser.photoURL || 'https://placehold.co/100x100/333/666?text=U'}" class="w-full h-full object-cover">
+                                <img id="post-avatar-preview" src="${(currentUser.photoURL || 'https://placehold.co/100x100/333/666?text=U')}" class="w-full h-full object-cover">
                             </div>
                             <div class="flex-1 relative">
                                 <textarea id="post-text" rows="1" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-3 min-h-[48px]" placeholder="¿Qué estás creando hoy?" onfocus="expandPostArea()" oninput="this.style.height='';this.style.height=this.scrollHeight+'px'"></textarea>
@@ -639,10 +649,15 @@
                                     </div>
                                 </div>
                                 <div id="new-collection-container" class="hidden animate-enter"><input type="text" id="new-collection-name" placeholder="Nombre de la nueva colección..." class="custom-input bg-orange-900/10 border-orange-500/30 text-sm"></div>
-                                <input type="text" id="post-tags" placeholder="Etiquetas..." class="custom-input bg-black/20 border-zinc-700 text-xs">
+                                
+                                <div class="relative">
+                                    <i id="tag-status-icon" class="fas fa-lock tag-status-icon status-lock"></i>
+                                    <input type="text" id="post-tags" placeholder="Las etiquetas se generarán automáticamente..." class="custom-input bg-black/40 border-zinc-700 text-xs pl-8 tags-readonly transition-all duration-500" readonly>
+                                </div>
+
                                 <div class="flex gap-3 mt-4 pt-3 border-t border-white/5">
-                                    <button onclick="collapsePostArea()" class="flex-1 py-3 rounded-xl text-gray-400 text-sm font-semibold hover:bg-zinc-800 transition">Cancelar</button>
-                                    <button id="publish-btn" onclick="uploadPost()" class="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-6 py-3 rounded-xl text-sm font-bold flex-[2] flex items-center justify-center gap-2 shadow-lg"><span>Publicar</span> <i class="fas fa-paper-plane text-xs"></i></button>
+                                    <button onclick="collapsePostArea()" class="flex-1 py-3 rounded-xl text-gray-400 text-sm font-semibold hover:bg-zinc-800 transition active:scale-95">Cancelar</button>
+                                    <button id="publish-btn" onclick="uploadPost()" class="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-6 py-3 rounded-xl text-sm font-bold flex-[2] flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95"><span>Publicar</span> <i class="fas fa-paper-plane text-xs"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -686,6 +701,9 @@
                 document.getElementById('post-text').value = ''; 
                 document.getElementById('post-title').value=''; 
                 document.getElementById('post-tags').value=''; 
+                document.getElementById('tag-status-icon').className = "fas fa-lock tag-status-icon status-lock";
+                document.getElementById('publish-btn').disabled = false;
+                document.getElementById('publish-btn').classList.remove('btn-disabled');
                 selectCustomOption('dropdown-category', '', '<i class="fas fa-tag mr-2 text-xs text-orange-500"></i> Categoría');
                 selectCustomOption('dropdown-collection', '', '<i class="fas fa-folder mr-2 text-xs text-orange-500"></i> Ningún Álbum');
                 document.getElementById('new-collection-name').value = '';
@@ -696,7 +714,33 @@
             else reset();
         }
 
-        function handlePostFileSelect(e) { const f=e.target.files[0]; if(f){selectedPostFile=f; document.getElementById('image-preview').src=URL.createObjectURL(f); document.getElementById('preview-container').classList.remove('hidden');} }
+        function handlePostFileSelect(e) { 
+            const f = e.target.files[0]; 
+            if(f){
+                selectedPostFile = f; 
+                document.getElementById('image-preview').src = URL.createObjectURL(f); 
+                document.getElementById('preview-container').classList.remove('hidden');
+                
+                if(window.runAutoTagging) {
+                    window.runAutoTagging(f);
+                } else {
+                    const tagInput = document.getElementById('post-tags');
+                    tagInput.placeholder = "⌛ Cargando motor de IA...";
+                    let attempts = 0;
+                    const checkInterval = setInterval(() => {
+                        attempts++;
+                        if(window.runAutoTagging) {
+                            clearInterval(checkInterval);
+                            window.runAutoTagging(f);
+                        } else if (attempts > 60) {
+                            clearInterval(checkInterval);
+                            tagInput.placeholder = "Error de carga del script. Recarga.";
+                        }
+                    }, 500);
+                }
+            } 
+        }
+        
         function clearPostSelection() { selectedPostFile=null; document.getElementById('post-file-input').value=""; document.getElementById('preview-container').classList.add('hidden'); }
         
         function loadUserCollectionsSelect() {
@@ -704,7 +748,8 @@
             db.ref('collections/' + currentUser.uid).on('value', snap => {
                 let html = `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '', '<i class=\\'fas fa-folder mr-2 text-xs text-orange-500\\'></i> Ningún Álbum')">Ningún Álbum</div><div class="option-item special-option" onclick="selectCustomOption('dropdown-collection', 'new', '➕ Crear Nueva Colección...')">➕ Crear Nueva Colección...</div>`;
                 snap.forEach(child => { html += `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '${child.key}', '📁 ${child.val().name}')">📁 ${child.val().name}</div>`; });
-                document.getElementById('collection-options-list').innerHTML = html;
+                const el = document.getElementById('collection-options-list');
+                if(el) el.innerHTML = html;
             });
         }
         function toggleCollectionInput() {
@@ -725,7 +770,7 @@
             if (selectedPostFile && (!title || !tags || !category)) return showAlert("Faltan datos (título/tags/categoría).");
             if (colId === 'new' && !newColName) return showAlert("Nombre de colección requerido.");
 
-            const btn = document.getElementById('publish-btn'); btn.disabled = true; btn.style.opacity = '0.5';
+            const btn = document.getElementById('publish-btn'); btn.disabled = true; btn.classList.add('btn-disabled');
             document.getElementById('upload-progress').classList.remove('hidden');
 
             try {
@@ -759,9 +804,10 @@
 
                 collapsePostArea(true); loadUserPosts(); loadUserCollectionsGrid(); showToast("Publicado");
             } catch (e) { showAlert(e.message); } 
-            finally { btn.disabled = false; btn.style.opacity = '1'; document.getElementById('upload-progress').classList.add('hidden'); }
+            finally { btn.disabled = false; btn.classList.remove('btn-disabled'); document.getElementById('upload-progress').classList.add('hidden'); }
         }
 
+        // --- FETCHERS ---
         function loadUserPosts() {
             const grid = document.getElementById('profile-grid'), noMsg = document.getElementById('no-posts-msg');
             db.ref('feed_posts').orderByChild('userId').equalTo(targetUserId).limitToLast(100).once('value', snap => {
@@ -825,10 +871,10 @@
         }
 
         function deleteCurrentCollection() {
-            showConfirm("¿Eliminar colección?", () => {
+            showConfirm("¿Eliminar toda la colección?", () => {
                 db.ref(`collections/${currentUser.uid}/${currentCollectionId}`).remove();
-                closeCollectionDetail(); showToast("Eliminada");
-            });
+                closeCollectionDetail(); showToast("Colección eliminada");
+            }, "Eliminar Álbum");
         }
 
         // --- VIEWER ---
@@ -849,6 +895,16 @@
             document.getElementById('modal-user-name').textContent = post.userName || 'Usuario';
             document.getElementById('modal-user-pic').src = post.userAvatar || 'https://placehold.co/100x100/333/666?text=U';
             
+            // --- LOGICA DE ELIMINADO ---
+            const delBtn = document.getElementById('modal-delete-btn');
+            if (currentUser && currentUser.uid === post.userId) {
+                delBtn.classList.remove('hidden');
+                delBtn.onclick = () => confirmDeletePost(post.id);
+            } else {
+                delBtn.classList.add('hidden');
+                delBtn.onclick = null;
+            }
+
             const tagsDiv = document.getElementById('modal-tags'); tagsDiv.innerHTML = '';
             if (post.tags) post.tags.split(',').forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 text-gray-300 px-2.5 py-1 rounded-full border border-zinc-700 font-medium">#${t.trim()}</span>`; });
 
@@ -871,6 +927,40 @@
             });
             document.getElementById('modal-prev').style.display = currentPostIndex > 0 ? 'flex' : 'none';
             document.getElementById('modal-next').style.display = currentPostIndex < currentViewPosts.length - 1 ? 'flex' : 'none';
+        }
+        
+        // Función para confirmar eliminado con mensaje bonito
+        function confirmDeletePost(postId) {
+            showConfirm(
+                "Esta acción es permanente y no se puede deshacer. ¿Quieres borrar este recuerdo de tu galería?", 
+                () => executeDelete(postId),
+                "¿Eliminar recuerdo?"
+            );
+        }
+
+        // Función para ejecutar eliminado
+        function executeDelete(postId) {
+            // Eliminar Post
+            db.ref('feed_posts/' + postId).remove()
+            .then(() => {
+                // Eliminar Likes asociados
+                db.ref('feed_likes/' + postId).remove();
+                // Eliminar Comentarios asociados
+                db.ref('feed_comments/' + postId).remove();
+                
+                // UI Feedback
+                document.getElementById('modal').classList.remove('visible');
+                document.body.style.overflow = 'auto';
+                showToast("Imagen eliminada correctamente");
+                
+                // Recargar grids
+                loadUserPosts();
+                if(currentCollectionId) loadCollectionPosts(currentCollectionId);
+            })
+            .catch(error => {
+                console.error(error);
+                showAlert("Error al eliminar. Intenta de nuevo.");
+            });
         }
 
         function toggleLikeInViewer(postId) {
@@ -912,6 +1002,7 @@
             document.getElementById('modal').classList.remove('visible'); document.body.style.overflow = 'auto';
         };
 
+        // --- USER PROFILE ---
         function loadUserProfile() {
             db.ref('users/' + targetUserId).on('value', snap => {
                 const d = snap.val(); if(!d) return;
@@ -961,6 +1052,7 @@
             });
         }
 
+        // --- UPLOADS ---
         async function handleBannerUpload(e) {
             const f = e.target.files[0]; if(!f) return;
             document.getElementById('banner-loading').classList.remove('hidden');
@@ -991,14 +1083,23 @@
         }
         function authBackToStep1() { document.getElementById('register-step-2').style.display='none'; document.getElementById('register-step-1').style.display='flex'; }
         
-        document.getElementById('login-form').onsubmit = (e) => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value).catch(e=>showAlert(e.message)); };
+        // --- EVENT LISTENERS ---
+        document.getElementById('login-form').onsubmit = (e) => { 
+            e.preventDefault(); 
+            auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value).catch(e=>showAlert(e.message)); 
+        };
+
         document.getElementById('register-step-2').onsubmit = (e) => { 
-            e.preventDefault(); const p1=document.getElementById('reg-password').value, p2=document.getElementById('reg-confirm-password').value;
-            if(p1!==p2) return showAlert("Contraseñas no coinciden.");
+            e.preventDefault(); 
+            const p1 = document.getElementById('reg-password').value;
+            const p2 = document.getElementById('reg-confirm-password').value;
+            if(p1 !== p2) return showAlert("Contraseñas no coinciden.");
+            
             auth.createUserWithEmailAndPassword(document.getElementById('reg-email').value, p1).then(c => {
                 db.ref('users/'+c.user.uid).set({username:userDataCache.name, age:userDataCache.age, profilePic:userDataCache.photo||null, email:c.user.email, slogan:"..."});
             }).catch(e=>showAlert(e.message));
         };
+
         function openShareModal() {
             const u = new URL(window.location.href); u.searchParams.set('uid', targetUserId);
             document.getElementById('share-link-input').value = u.toString();
