@@ -297,21 +297,23 @@
                         <div class="flex flex-col gap-3">
                             <input type="text" id="post-title" maxlength="30" placeholder="Título (Opcional)" class="custom-input font-bold bg-black/20 border-zinc-700">
                             
-                            <div class="flex gap-2">
-                                <!-- Tags con Auto-Tagging -->
-                                <div class="relative flex-1">
-                                    <i id="tag-status-icon" class="fas fa-lock tag-status-icon status-lock"></i>
-                                    <input type="text" id="post-tags" placeholder="Tags se generan automáticamente..." class="custom-input bg-black/40 border-zinc-700 text-xs pl-8 tags-readonly transition-all duration-500" readonly>
-                                </div>
-                                
-                                <div class="relative w-2/5">
-                                    <select id="post-category" class="custom-input bg-black/40 border-zinc-700 appearance-none pl-3 pr-8 text-xs h-full w-full">
-                                        <option value="" disabled selected>Categoría</option>
-                                        <option value="anime">Anime</option><option value="furry">Furry</option><option value="realismo">Realismo</option>
-                                        <option value="mecas">Mecas</option><option value="devils">Devils</option><option value="colors">ColorFull</option>
-                                        <option value="amateur">Amateur</option><option value="tvgames">TV/Games</option>
-                                    </select>
-                                </div>
+                            <!-- Input de Personaje -->
+                            <input type="text" id="post-character" maxlength="30" placeholder="Nombre del personaje (Opcional)" class="custom-input bg-black/20 border-zinc-700">
+                            
+                            <!-- Tags OCULTOS visualmente pero funcionales -->
+                            <div class="hidden">
+                                <input type="text" id="post-tags" placeholder="Auto-tagging..." readonly>
+                                <i id="tag-status-icon"></i>
+                            </div>
+                            
+                            <!-- Categoría (Full Width) -->
+                            <div class="relative w-full">
+                                <select id="post-category" class="custom-input bg-black/40 border-zinc-700 appearance-none pl-3 pr-8 text-xs h-full w-full">
+                                    <option value="" disabled selected>Categoría</option>
+                                    <option value="anime">Anime</option><option value="furry">Furry</option><option value="realismo">Realismo</option>
+                                    <option value="mecas">Mecas</option><option value="devils">Devils</option><option value="colors">ColorFull</option>
+                                    <option value="amateur">Amateur</option><option value="tvgames">TV/Games</option>
+                                </select>
                             </div>
                             
                             <div class="flex gap-3 mt-2 pt-3 border-t border-white/5">
@@ -389,6 +391,10 @@
                     <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#121214]">
                         <div class="mb-5">
                             <h3 id="modal-title" class="text-xl font-bold text-white mb-2 font-[Poppins] leading-snug"></h3>
+                            <!-- Etiqueta de Personaje en el Visor -->
+                            <div id="modal-character-tag" class="hidden inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider mb-2">
+                                <i class="fas fa-user-tag text-[10px]"></i> <span id="modal-character-name"></span>
+                            </div>
                             <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-light"></p>
                         </div>
                         
@@ -447,20 +453,22 @@
         }
         window.runAutoTagging = async function(originalFile) {
             const tagInput = document.getElementById('post-tags'); const icon = document.getElementById('tag-status-icon'); const publishBtn = document.getElementById('publish-btn');
-            tagInput.value = ""; tagInput.placeholder = "⚡ Conectando a DeepDanbooru..."; tagInput.classList.add('analyzing-text', 'border-orange-500');
-            icon.className = "fas fa-circle-notch tag-status-icon status-loading"; publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
+            // Tags visualmente ocultos, pero se llenan en el value
+            tagInput.value = ""; 
+            publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
+            showToast("IA: Analizando imagen...");
+            
             try {
                 const processedFile = await resizeImageForApi(originalFile);
                 const client = await Client.connect("Jossle/deepdanbooru_online_Exen");
-                tagInput.placeholder = "🤖 IA Analizando imagen...";
                 const result = await client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend]);
                 if (result && result.data && result.data[0]) {
-                    tagInput.value = result.data[0]; icon.className = "fas fa-check-circle tag-status-icon status-success";
-                    showToast("¡Etiquetas generadas!"); publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+                    tagInput.value = result.data[0];
+                    showToast("¡Etiquetas generadas internamente!"); publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
                 } else throw new Error("Respuesta vacía");
             } catch (error) {
-                console.error("Error Tagging:", error); tagInput.placeholder = "⚠️ Error. Intenta de nuevo."; icon.className = "fas fa-exclamation-triangle tag-status-icon status-error"; publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
-            } finally { tagInput.classList.remove('analyzing-text', 'border-orange-500'); }
+                console.error("Error Tagging:", error); showToast("Nota: Error IA, puedes publicar sin tags."); publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+            }
         }
     </script>
 
@@ -603,15 +611,14 @@
         }, { rootMargin: '100px' });
         document.addEventListener('DOMContentLoaded', () => { const t = document.getElementById('load-more-trigger'); if(t) scrollObserver.observe(t); });
 
-        // --- CREAR TARJETA (SIN TAGS, TEXTO COLAPSABLE) ---
+        // --- CREAR TARJETA ---
         function createPostCard(post) {
             const div = document.createElement('div'); div.className = "feed-card opacity-0 animate-enter";
             
-            // Lógica para Texto Colapsable
+            // Texto Colapsable
             let textHtml = '';
             if (post.text) {
                 const fullText = post.text;
-                // Si excede 150 chars, truncar. Max 500 es el límite de input, pero visualmente cortamos antes.
                 if (fullText.length > 150) {
                     const shortText = fullText.substring(0, 150);
                     textHtml = `
@@ -631,7 +638,6 @@
             
             let metaChips = ''; 
             if (post.category) metaChips += `<span class="text-[10px] bg-orange-900/40 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30 uppercase font-bold tracking-wide">${post.category}</span>`;
-            // NOTA: Ya no mostramos tags aquí según instrucciones.
 
             const isOwner = currentUser && currentUser.uid === post.userId;
             let optionsBtn = isOwner ? `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 p-2 hover:text-white"><i class="fas fa-ellipsis-v"></i></button><div id="options-menu-${post.id}" class="options-menu"><div class="options-item text-red-400 hover:bg-red-900/20" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>` : '';
@@ -650,7 +656,7 @@
                     </div>
                     ${post.title ? `<h4 class="font-bold text-white mt-3 text-sm tracking-wide">${post.title}</h4>` : ''}
                     ${textHtml}
-                    <div class="mt-3 flex flex-wrap items-center">${metaChips}</div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">${metaChips}</div>
                 </div>
                 ${post.imageUrl ? `<div class="mt-2 bg-black relative cursor-pointer group overflow-hidden border-t border-b border-zinc-800" onclick="openViewerById('${post.id}')"><img src="${post.imageUrl}" loading="lazy" class="w-full h-auto max-h-[500px] object-contain mx-auto"></div>` : ''}
                 <div class="px-4 py-3 flex items-center gap-6 border-t border-white/5 mt-1 bg-[#1a1a1c]">
@@ -658,9 +664,10 @@
                         <i class="far fa-heart text-lg group-active:scale-125 transition-transform"></i>
                         <span class="text-xs font-bold" id="likes-count-${post.id}">${post.likes || 0}</span>
                     </button>
+                    <!-- BOTÓN DE COMENTARIOS CON CONTADOR -->
                     <button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-white transition active:scale-95">
                         <i class="far fa-comment text-lg"></i>
-                        <span class="text-xs font-bold">Comentar</span>
+                        <span class="text-xs font-bold" id="comments-count-${post.id}">0</span>
                     </button>
                 </div>
                 <div id="comments-${post.id}" class="hidden px-4 py-3 bg-[#0f0f10] border-t border-white/5">
@@ -671,6 +678,7 @@
                     </form>
                 </div>`;
             checkLikeStatus(post.id);
+            checkCommentStatus(post.id); // Nueva función para contador
             return div;
         }
 
@@ -698,8 +706,8 @@
                 clearSelection();
                 document.getElementById('post-text').value = '';
                 document.getElementById('post-title').value = '';
+                document.getElementById('post-character').value = ''; // Limpiar personaje
                 document.getElementById('post-tags').value = '';
-                document.getElementById('tag-status-icon').className = "fas fa-lock tag-status-icon status-lock";
                 document.getElementById('publish-btn').disabled = false;
                 document.getElementById('publish-btn').classList.remove('btn-disabled');
             };
@@ -715,10 +723,6 @@
                 
                 // Trigger Auto-Tagging
                 if(window.runAutoTagging) window.runAutoTagging(selectedFile);
-                else {
-                    const i = document.getElementById('post-tags'); i.placeholder = "⌛ Cargando IA...";
-                    let attempts=0, interval = setInterval(()=>{ attempts++; if(window.runAutoTagging){ clearInterval(interval); window.runAutoTagging(selectedFile); } else if(attempts>60){ clearInterval(interval); i.placeholder="Error script IA"; } }, 500);
-                }
             } 
         }
         function clearSelection() { selectedFile = null; document.getElementById('file-input').value = ''; document.getElementById('preview-container').classList.add('hidden'); }
@@ -726,11 +730,12 @@
         async function uploadPost() {
             const text = document.getElementById('post-text').value.trim();
             const title = document.getElementById('post-title').value.trim();
+            const characterName = document.getElementById('post-character').value.trim(); // NUEVO CAMPO
             const tags = document.getElementById('post-tags').value.trim();
             const category = document.getElementById('post-category').value;
             
             if (!text && !selectedFile) return showAlert("Escribe algo o sube una imagen.");
-            if (selectedFile && (!title || !tags || !category)) return showAlert("Completa título, categoría y espera los tags.");
+            if (selectedFile && (!title || !category)) return showAlert("Completa título y categoría.");
 
             const btn = document.getElementById('publish-btn');
             btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
@@ -752,7 +757,7 @@
                 const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
 
                 const post = {
-                    text, imageUrl, title, tags, category,
+                    text, imageUrl, title, tags, category, characterName,
                     userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0
                 };
@@ -806,6 +811,16 @@
             if (!post) return;
             document.getElementById('modal-image').src = post.imageUrl;
             document.getElementById('modal-title').textContent = post.title || 'Sin Título';
+            
+            // Mostrar etiqueta de Personaje si existe
+            const charTag = document.getElementById('modal-character-tag');
+            if (post.characterName) {
+                charTag.classList.remove('hidden');
+                document.getElementById('modal-character-name').textContent = post.characterName;
+            } else {
+                charTag.classList.add('hidden');
+            }
+
             document.getElementById('modal-desc').innerHTML = (post.text || '').replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
             document.getElementById('modal-user-name').textContent = post.userName;
             document.getElementById('modal-user-pic').src = post.userAvatar;
@@ -820,12 +835,12 @@
             if (post.tags) {
                 tagsBtn.style.display = 'flex';
                 post.tags.split(',').forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 border border-zinc-700 px-2 py-1 rounded-full cursor-pointer hover:border-orange-500 transition" onclick="filterByTagFromModal('${t.trim()}')">#${t.trim()}</span>`; });
-                // CARGAR SIMILARES
-                loadSimilarImagesInSlider(post.tags, post.id);
             } else { 
                 tagsBtn.style.display = 'none';
-                document.getElementById('similar-grid').innerHTML = '<span class="text-xs text-gray-500 italic px-2">Sin etiquetas para buscar similitudes.</span>';
             }
+
+            // CARGAR SIMILARES (Lógica nueva: Prioridad personaje, luego tags)
+            loadSimilarImagesInSlider(post.tags, post.id, post.characterName);
 
             const likeBtn = document.getElementById('modal-like-btn');
             const likesCount = document.getElementById('modal-likes-count');
@@ -849,36 +864,57 @@
             document.getElementById('modal-next').style.display = currentModalIndex < displayedPosts.length-1 ? 'flex' : 'none';
         }
 
-        // --- LÓGICA DE SIMILARES ---
-        function loadSimilarImagesInSlider(tagsString, currentId) {
+        // --- LÓGICA DE SIMILARES ACTUALIZADA ---
+        function loadSimilarImagesInSlider(tagsString, currentId, currentCharacterName) {
             const container = document.getElementById('similar-grid');
             container.innerHTML = '';
-            if (!tagsString) return;
             
-            const tags = tagsString.split(',').map(t => t.trim().toLowerCase());
-            // Buscar en todo el caché de posts
             const candidates = allPostsCache.filter(p => p.id !== currentId && p.imageUrl);
-            
-            const scored = candidates.map(p => {
-                const pTags = (p.tags || '').toLowerCase().split(',').map(t => t.trim());
-                // Calcular coincidencia
-                const common = pTags.filter(t => tags.includes(t));
-                return { post: p, score: common.length };
-            }).filter(item => item.score > 0);
-            
-            // Ordenar por score
-            scored.sort((a, b) => b.score - a.score);
-            
-            if (scored.length === 0) {
+            let finalResults = [];
+            let addedIds = new Set();
+
+            // 1. PRIORIDAD: Mismo Personaje (Max 3)
+            if (currentCharacterName) {
+                const charMatches = candidates.filter(p => 
+                    p.characterName && 
+                    p.characterName.toLowerCase().trim() === currentCharacterName.toLowerCase().trim()
+                ).slice(0, 3);
+                
+                charMatches.forEach(p => {
+                    finalResults.push(p);
+                    addedIds.add(p.id);
+                });
+            }
+
+            // 2. RELLENO: Coincidencia de Tags (para dar variedad)
+            if (tagsString) {
+                const tags = tagsString.split(',').map(t => t.trim().toLowerCase());
+                
+                const tagMatches = candidates
+                    .filter(p => !addedIds.has(p.id)) // Evitar duplicados si ya salió por personaje
+                    .map(p => {
+                        const pTags = (p.tags || '').toLowerCase().split(',').map(t => t.trim());
+                        const common = pTags.filter(t => tags.includes(t));
+                        return { post: p, score: common.length };
+                    })
+                    .filter(item => item.score > 0)
+                    .sort((a, b) => b.score - a.score)
+                    .map(item => item.post);
+
+                // Agregar el resto hasta llenar unos 10 items en total
+                finalResults = finalResults.concat(tagMatches);
+            }
+
+            if (finalResults.length === 0) {
                 container.innerHTML = '<span class="text-xs text-gray-500 italic px-2">No se encontraron imágenes similares.</span>';
                 return;
             }
 
-            scored.slice(0, 10).forEach(item => {
+            finalResults.slice(0, 10).forEach(post => {
                 const div = document.createElement('div');
                 div.className = "similar-card cursor-pointer group";
-                div.onclick = () => openViewerById(item.post.id);
-                div.innerHTML = `<img src="${item.post.imageUrl}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
+                div.onclick = () => openViewerById(post.id);
+                div.innerHTML = `<img src="${post.imageUrl}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
                 container.appendChild(div);
             });
         }
@@ -949,6 +985,19 @@
             });
             db.ref(`feed_posts/${id}/likes`).on('value', s => { const el = document.getElementById(`likes-count-${id}`); if(el) el.innerText = s.val() || 0; });
         }
+        
+        // --- NUEVA FUNCIÓN: CONTADOR DE COMENTARIOS ---
+        function checkCommentStatus(id) {
+             db.ref(`feed_comments/${id}`).on('value', s => {
+                 const count = s.numChildren();
+                 const el = document.getElementById(`comments-count-${id}`);
+                 if(el) {
+                     el.innerText = count || 0;
+                     if(count > 0) el.classList.add('text-white'); else el.classList.remove('text-white');
+                 }
+             });
+        }
+
         function toggleComments(id) {
             const el = document.getElementById(`comments-${id}`);
             if(el.classList.contains('hidden')) {
