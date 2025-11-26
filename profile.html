@@ -386,7 +386,7 @@
                     </div>
                     
                     <div class="flex items-center gap-3">
-                        <!-- NUEVO BOTÓN DE ELIMINAR -->
+                        <!-- BOTÓN DE ELIMINAR -->
                         <button id="modal-delete-btn" class="hidden text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 transition" title="Eliminar"><i class="fas fa-trash-alt text-sm"></i></button>
                         
                         <button id="modal-like-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800 border border-zinc-700 active:scale-95 transition group"><i class="far fa-heart text-lg group-active:scale-125 transition-transform text-gray-400"></i><span id="modal-likes-count" class="text-xs font-bold text-white">0</span></button>
@@ -394,7 +394,16 @@
                 </div>
                 <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#121214]">
                     <div class="mb-5"><h3 id="modal-title" class="text-xl font-bold text-white mb-2 font-[Poppins] leading-snug"></h3><p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-light"></p></div>
-                    <div id="modal-tags" class="flex flex-wrap gap-2 mb-8 pb-5 border-b border-zinc-800"></div>
+                    
+                    <!-- TAGS COLLAPSIBLE AREA -->
+                    <div class="mb-8 border-b border-zinc-800 pb-5">
+                        <button onclick="toggleTags()" id="tags-toggle-btn" class="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 hover:text-orange-500 transition-colors mb-2">
+                            <span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div id="modal-tags" class="hidden flex flex-wrap gap-2 mt-3"></div>
+                    </div>
+                    <!-- END TAGS AREA -->
+
                     <div><h4 class="text-[11px] font-bold text-gray-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h4><div id="modal-comments-list" class="flex flex-col gap-4 pb-4"></div></div>
                 </div>
                 <div class="p-3 bg-[#18181b] border-t border-zinc-800 flex-shrink-0 safe-bottom">
@@ -784,7 +793,10 @@
                 }
 
                 if (selectedPostFile) {
-                    const fd = new FormData(); fd.append('reqtype', 'fileupload'); fd.append('userhash', CATBOX_USERHASH); fd.append('fileToUpload', selectedPostFile);
+                    // COMPRESIÓN SILENCIOSA ANTES DE SUBIR
+                    const fileToUpload = await compressImage(selectedPostFile);
+                    
+                    const fd = new FormData(); fd.append('reqtype', 'fileupload'); fd.append('userhash', CATBOX_USERHASH); fd.append('fileToUpload', fileToUpload);
                     const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", {method:'POST', body:fd});
                     if(!res.ok) throw new Error("Upload falló");
                     const txt = await res.text(); if(!txt.includes('catbox.moe')) throw new Error("API error");
@@ -893,7 +905,19 @@
             document.getElementById('modal-title').textContent = post.title || 'Sin título';
             document.getElementById('modal-desc').innerHTML = (post.text || '').replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline">#$1</span>');
             document.getElementById('modal-user-name').textContent = post.userName || 'Usuario';
-            document.getElementById('modal-user-pic').src = post.userAvatar || 'https://placehold.co/100x100/333/666?text=U';
+            
+            // FOTO DE PERFIL: Primero poner la guardada en el post (rápido), luego intentar actualizar (preciso)
+            const userImgEl = document.getElementById('modal-user-pic');
+            userImgEl.src = post.userAvatar || 'https://placehold.co/100x100/333/666?text=U';
+            
+            if (post.userId) {
+                db.ref('users/' + post.userId).once('value', snapshot => {
+                    const userData = snapshot.val();
+                    if (userData && userData.profilePic) {
+                        userImgEl.src = userData.profilePic;
+                    }
+                });
+            }
             
             // --- LOGICA DE ELIMINADO ---
             const delBtn = document.getElementById('modal-delete-btn');
@@ -905,8 +929,23 @@
                 delBtn.onclick = null;
             }
 
-            const tagsDiv = document.getElementById('modal-tags'); tagsDiv.innerHTML = '';
-            if (post.tags) post.tags.split(',').forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 text-gray-300 px-2.5 py-1 rounded-full border border-zinc-700 font-medium">#${t.trim()}</span>`; });
+            // --- TAGS (CONTRAÍDOS POR DEFECTO) ---
+            const tagsDiv = document.getElementById('modal-tags');
+            const tagsBtn = document.getElementById('tags-toggle-btn');
+            
+            // Resetear estado a contraído
+            tagsDiv.classList.add('hidden');
+            tagsBtn.innerHTML = '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>';
+            
+            tagsDiv.innerHTML = '';
+            if (post.tags && post.tags.trim().length > 0) {
+                post.tags.split(',').forEach(t => { 
+                    if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 text-gray-300 px-2.5 py-1 rounded-full border border-zinc-700 font-medium">#${t.trim()}</span>`; 
+                });
+                tagsBtn.style.display = 'flex'; // Mostrar botón solo si hay tags
+            } else {
+                tagsBtn.style.display = 'none'; // Ocultar botón si no hay tags
+            }
 
             const likeBtn = document.getElementById('modal-like-btn');
             const likesCount = document.getElementById('modal-likes-count');
@@ -929,7 +968,20 @@
             document.getElementById('modal-next').style.display = currentPostIndex < currentViewPosts.length - 1 ? 'flex' : 'none';
         }
         
-        // Función para confirmar eliminado con mensaje bonito
+        // Función nueva para colapsar/expandir tags
+        function toggleTags() {
+            const div = document.getElementById('modal-tags');
+            const btn = document.getElementById('tags-toggle-btn');
+            if (div.classList.contains('hidden')) {
+                div.classList.remove('hidden');
+                btn.innerHTML = '<span>Ocultar etiquetas</span> <i class="fas fa-chevron-up"></i>';
+            } else {
+                div.classList.add('hidden');
+                btn.innerHTML = '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>';
+            }
+        }
+        
+        // Función para confirmar eliminado
         function confirmDeletePost(postId) {
             showConfirm(
                 "Esta acción es permanente y no se puede deshacer. ¿Quieres borrar este recuerdo de tu galería?", 
@@ -940,27 +992,17 @@
 
         // Función para ejecutar eliminado
         function executeDelete(postId) {
-            // Eliminar Post
             db.ref('feed_posts/' + postId).remove()
             .then(() => {
-                // Eliminar Likes asociados
                 db.ref('feed_likes/' + postId).remove();
-                // Eliminar Comentarios asociados
                 db.ref('feed_comments/' + postId).remove();
-                
-                // UI Feedback
                 document.getElementById('modal').classList.remove('visible');
                 document.body.style.overflow = 'auto';
                 showToast("Imagen eliminada correctamente");
-                
-                // Recargar grids
                 loadUserPosts();
                 if(currentCollectionId) loadCollectionPosts(currentCollectionId);
             })
-            .catch(error => {
-                console.error(error);
-                showAlert("Error al eliminar. Intenta de nuevo.");
-            });
+            .catch(error => { console.error(error); showAlert("Error al eliminar."); });
         }
 
         function toggleLikeInViewer(postId) {
@@ -1057,7 +1099,10 @@
             const f = e.target.files[0]; if(!f) return;
             document.getElementById('banner-loading').classList.remove('hidden');
             try {
-                const fd = new FormData(); fd.append('reqtype', 'fileupload'); fd.append('userhash', CATBOX_USERHASH); fd.append('fileToUpload', f);
+                // COMPRESIÓN SILENCIOSA
+                const fileToUpload = await compressImage(f);
+
+                const fd = new FormData(); fd.append('reqtype', 'fileupload'); fd.append('userhash', CATBOX_USERHASH); fd.append('fileToUpload', fileToUpload);
                 const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", {method:'POST', body:fd});
                 const txt = await res.text();
                 if(txt.includes('catbox.moe')) { db.ref('users/'+currentUser.uid).update({bannerUrl:txt.trim()}); showToast("Portada actualizada"); }
@@ -1067,10 +1112,20 @@
              const file = e.target.files[0]; if (!file) return;
              document.getElementById('auth-preview-img').src = URL.createObjectURL(file);
              isUploadingAuth = true; document.getElementById('btn-step-1').disabled=true; document.getElementById('btn-step-1').innerText = "SUBIENDO...";
-             const fd = new FormData(); fd.append('reqtype', 'fileupload'); fd.append('userhash', CATBOX_USERHASH); fd.append('fileToUpload', file);
-             fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", {method:'POST', body:fd})
-             .then(r=>r.text()).then(t=>{ document.getElementById('reg-photo-url').value=t.trim(); isUploadingAuth=false; document.getElementById('btn-step-1').disabled=false; document.getElementById('btn-step-1').innerText = "CONTINUAR"; })
-             .catch(err=>{ console.error(err); showAlert("Error subiendo imagen"); });
+             
+             try {
+                // COMPRESIÓN SILENCIOSA
+                const fileToUpload = await compressImage(file);
+                
+                const fd = new FormData(); fd.append('reqtype', 'fileupload'); fd.append('userhash', CATBOX_USERHASH); fd.append('fileToUpload', fileToUpload);
+                const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", {method:'POST', body:fd});
+                const txt = await res.text();
+                document.getElementById('reg-photo-url').value=txt.trim(); 
+             } catch(err) {
+                 console.error(err); showAlert("Error subiendo imagen");
+             } finally {
+                 isUploadingAuth=false; document.getElementById('btn-step-1').disabled=false; document.getElementById('btn-step-1').innerText = "CONTINUAR";
+             }
         }
         
         function validateAuthStep1() {
@@ -1107,6 +1162,53 @@
         }
         function copyLinkFromModal() { const i = document.getElementById('share-link-input'); i.select(); i.setSelectionRange(0, 99999); navigator.clipboard.writeText(i.value).then(()=>{ document.getElementById('share-modal').classList.add('hidden'); document.getElementById('share-modal').classList.remove('flex'); showToast("Copiado"); }); }
         function logout() { auth.signOut().then(()=>window.location.reload()); }
+
+        // --- COMPRESOR AUTOMÁTICO (<= 150 KB) ---
+        function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const maxSizeKB = 150;
+                // Si ya es pequeña, retornar directo
+                if (file.size / 1024 <= maxSizeKB) { resolve(file); return; }
+
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        let quality = 0.9;
+                        let attempts = 0;
+                        const maxAttempts = 20;
+
+                        const tryCompress = () => {
+                            canvas.toBlob((blob) => {
+                                if (!blob) { reject(new Error("Error en compresión")); return; }
+                                if ((blob.size / 1024) <= maxSizeKB || quality <= 0.1 || attempts >= maxAttempts) {
+                                    // Crear nuevo archivo con el blob comprimido
+                                    const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg", lastModified: Date.now() });
+                                    resolve(newFile);
+                                } else {
+                                    quality -= 0.05;
+                                    attempts++;
+                                    tryCompress(); // Recursión hasta lograr el tamaño
+                                }
+                            }, 'image/jpeg', quality);
+                        };
+                        tryCompress();
+                    };
+                    img.onerror = error => reject(error);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
     </script>
 </body>
 </html>

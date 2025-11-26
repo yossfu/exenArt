@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compresor de Imágenes a 150 KB Max</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        input, button { margin: 10px 0; padding: 10px; width: 100%; }
+        canvas { max-width: 100%; border: 1px solid #ccc; display: none; }
+        #resultado { margin-top: 20px; }
+        .info { color: green; font-weight: bold; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>Compresor de Imágenes a Máx. 150 KB</h1>
+    <p>Sube una imagen. Se comprimirá automáticamente hasta <= 150 KB (mantiene la mejor calidad posible).</p>
+    
+    <input type="file" id="imagen" accept="image/*">
+    <label for="calidadMax">Calidad Máxima Inicial (0.1 - 1.0):</label>
+    <input type="range" id="calidadMax" min="0.1" max="1.0" step="0.1" value="0.9">
+    <span id="valorCalidadMax">0.9</span>
+    
+    <button onclick="comprimirA150KB()">Comprimir a <= 150 KB y Descargar</button>
+    
+    <div id="resultado">
+        <h3>Imagen Original:</h3>
+        <img id="imgOriginal" style="max-width: 100%;">
+        
+        <h3>Imagen Comprimida:</h3>
+        <canvas id="canvasComprimido"></canvas>
+        <p id="tamañoOriginal"></p>
+        <p id="tamañoComprimido"></p>
+        <p id="calidadUsada"></p>
+    </div>
+
+    <script>
+        const inputImagen = document.getElementById('imagen');
+        const sliderCalidad = document.getElementById('calidadMax');
+        const valorCalidad = document.getElementById('valorCalidadMax');
+        const imgOriginal = document.getElementById('imgOriginal');
+        const canvas = document.getElementById('canvasComprimido');
+        const ctx = canvas.getContext('2d');
+        let imagenCargada = null;
+        const TAMANO_MAX_KB = 150;
+
+        // Actualizar valor del slider
+        sliderCalidad.addEventListener('input', function() {
+            valorCalidad.textContent = this.value;
+        });
+
+        // Cargar imagen al seleccionar archivo
+        inputImagen.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagenCargada = new Image();
+                    imagenCargada.onload = function() {
+                        imgOriginal.src = e.target.result;
+                        const tamañoKB = (file.size / 1024).toFixed(2);
+                        document.getElementById('tamañoOriginal').textContent = `Tamaño original: ${tamañoKB} KB`;
+                        if (parseFloat(tamañoKB) <= TAMANO_MAX_KB) {
+                            document.getElementById('tamañoOriginal').className = 'info';
+                            document.getElementById('tamañoOriginal').innerHTML += ' (Ya está por debajo de 150 KB)';
+                        }
+                        canvas.width = imagenCargada.width;
+                        canvas.height = imagenCargada.height;
+                    };
+                    imagenCargada.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function comprimirA150KB() {
+            if (!imagenCargada) {
+                alert('Por favor, sube una imagen primero.');
+                return;
+            }
+
+            let calidadActual = parseFloat(sliderCalidad.value);
+            let dataURL = null;
+            let blob = null;
+            let intentos = 0;
+            const maxIntentos = 20; // Para evitar bucles infinitos
+
+            // Dibujar imagen en canvas una vez
+            ctx.drawImage(imagenCargada, 0, 0, canvas.width, canvas.height);
+
+            // Si el original es dataURL, usarlo como base
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                let dataURLOriginal = e.target.result;
+                let tamañoOriginalKB = (dataURLOriginal.length * 3 / 4 / 1024); // Aprox. tamaño en KB
+
+                if (tamañoOriginalKB <= TAMANO_MAX_KB) {
+                    // Ya es pequeño, descargar original
+                    descargarImagen(dataURLOriginal, 'imagen_original.jpg');
+                    document.getElementById('tamañoComprimido').textContent = `Tamaño final: ${tamañoOriginalKB.toFixed(2)} KB (sin cambios)`;
+                    document.getElementById('calidadUsada').textContent = 'Calidad: N/A';
+                    canvas.style.display = 'block';
+                    return;
+                }
+
+                // Iterar bajando calidad hasta <= 150 KB
+                function intentarComprimir() {
+                    intentos++;
+                    dataURL = canvas.toDataURL('image/jpeg', calidadActual);
+                    blob = dataURLtoBlob(dataURL);
+                    const tamañoKB = (blob.size / 1024);
+
+                    if (tamañoKB <= TAMANO_MAX_KB || intentos >= maxIntentos || calidadActual <= 0.1) {
+                        // Éxito o límite alcanzado
+                        document.getElementById('tamañoComprimido').textContent = `Tamaño final: ${tamañoKB.toFixed(2)} KB`;
+                        document.getElementById('calidadUsada').textContent = `Calidad usada: ${calidadActual.toFixed(1)}`;
+                        if (tamañoKB > TAMANO_MAX_KB) {
+                            document.getElementById('calidadUsada').className = 'warning';
+                            document.getElementById('calidadUsada').innerHTML += ' (No se pudo reducir más)';
+                        }
+                        canvas.style.display = 'block';
+                        descargarImagen(dataURL, 'imagen_150kb.jpg');
+                        return;
+                    }
+
+                    // Bajar calidad (paso más fino)
+                    calidadActual = Math.max(0.1, calidadActual - 0.05);
+                    setTimeout(intentarComprimir, 10); // Pequeño delay para no bloquear UI
+                }
+
+                intentarComprimir();
+            };
+
+            // Leer el archivo original para verificar tamaño
+            const file = inputImagen.files[0];
+            reader.readAsDataURL(file);
+        }
+
+        function descargarImagen(dataURL, nombreArchivo) {
+            const link = document.createElement('a');
+            link.download = nombreArchivo;
+            link.href = dataURL;
+            link.click();
+        }
+
+        // Función auxiliar para convertir dataURL a Blob
+        function dataURLtoBlob(dataURL) {
+            const arr = dataURL.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], { type: mime });
+        }
+    </script>
+</body>
+</html>
