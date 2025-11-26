@@ -28,6 +28,7 @@
             --title-font: 'Poppins', sans-serif;
             --body-font: 'Inter', sans-serif;
             --kofi-color: #29abe0; /* Color oficial Ko-fi */
+            --paypal-color: #00457C; /* Color oficial PayPal */
         }
         
         /* Ajustes Globales & Móvil */
@@ -94,24 +95,21 @@
         .social-link:active { transform: translateY(2px); }
         .social-link:hover { color: white; border-color: var(--accent); }
 
-        /* Botón KO-FI Personalizado */
-        .btn-kofi {
-            background-color: var(--kofi-color);
-            color: white;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            box-shadow: 0 4px 15px rgba(41, 171, 224, 0.3);
+        /* ESTILOS BOTONES DE DONACIÓN CIRCULARES */
+        .donate-btn {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
             transition: transform 0.2s;
-            text-decoration: none;
+            color: white;
             border: 1px solid rgba(255,255,255,0.1);
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .btn-kofi:active { transform: scale(0.95); }
-        .btn-kofi i { font-size: 1.1em; }
+        .donate-btn:active { transform: scale(0.90); }
+        .btn-kofi-circle { background-color: var(--kofi-color); }
+        .btn-paypal-circle { background-color: var(--paypal-color); }
 
         /* Tabs & Grid */
         .profile-tabs { display: flex; justify-content: center; gap: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
@@ -370,13 +368,19 @@
                 </div>
             </div>
             
-            <!-- KO-FI INPUT -->
+            <!-- DONATION INPUTS -->
             <p class="text-xs text-gray-400 mb-2 uppercase font-bold tracking-wider ml-1">Apoyo / Donaciones</p>
-            <div class="mb-6 relative group">
-                <i class="fas fa-coffee absolute left-3 top-1/2 -translate-y-1/2 text-[var(--kofi-color)]"></i>
-                <input type="text" id="kofi-id" placeholder="Tu ID de Ko-fi (ej. usuario123)" class="custom-input pl-10" title="Solo tu nombre de usuario de Ko-fi">
-                <p class="text-[10px] text-gray-500 mt-1 ml-1">Escribe solo lo que va después de ko-fi.com/</p>
+            <div class="flex gap-3 mb-6">
+                <div class="relative group flex-1">
+                    <i class="fas fa-coffee absolute left-3 top-1/2 -translate-y-1/2 text-[var(--kofi-color)]"></i>
+                    <input type="text" id="kofi-id" placeholder="ID Ko-fi" class="custom-input pl-9 text-xs" title="Solo tu usuario de Ko-fi">
+                </div>
+                <div class="relative group flex-1">
+                    <i class="fab fa-paypal absolute left-3 top-1/2 -translate-y-1/2 text-blue-500"></i>
+                    <input type="text" id="paypal-id" placeholder="ID PayPal" class="custom-input pl-9 text-xs" title="ID del botón hospedado (hosted_button_id)">
+                </div>
             </div>
+            <p class="text-[10px] text-gray-500 mt-[-1.2rem] mb-6 ml-1 leading-tight">PayPal: Usa tu "hosted_button_id" generado en botones de donación.</p>
 
             <p class="text-xs text-gray-400 mb-3 uppercase font-bold tracking-wider ml-1">Redes Sociales</p>
             <div class="flex flex-col gap-3">
@@ -719,11 +723,12 @@
                 document.getElementById('edit-slogan-btn').classList.add('hidden');
                 avatarContainer.onclick = null; avatarContainer.style.cursor = 'default';
                 
-                // Botones para perfil ajeno (Ko-fi integrado aquí)
+                // Botones para perfil ajeno (Donaciones + Share)
                 container.innerHTML = `
                     <div class="flex justify-between items-center mb-3 px-1">
                         <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Perfil Público</span>
-                        <div class="flex gap-2" id="visitor-actions">
+                        <div class="flex gap-2 items-center" id="visitor-actions">
+                            <!-- Los botones de donación se inyectarán aquí -->
                             <button onclick="openShareModal()" class="text-xs bg-zinc-800 text-gray-300 h-9 w-9 rounded-xl border border-zinc-700 hover:bg-zinc-700 flex items-center justify-center transition active:scale-95"><i class="fas fa-share-alt"></i></button>
                         </div>
                     </div>`;
@@ -1135,24 +1140,49 @@
                 document.getElementById('welcome-msg').innerText = d.slogan || "Sin descripción...";
                 if(d.bannerUrl) document.getElementById('profile-banner-img').src = d.bannerUrl;
                 
-                // KO-FI BUTTON LOGIC
-                // Buscar el contenedor de acciones de visitante
+                // DONATION LOGIC (VISITOR ACTIONS)
                 const visitorActions = document.getElementById('visitor-actions');
                 
-                // Si existe el contenedor (estamos en perfil de otro) y hay un kofiId
                 if (visitorActions) {
-                    // Limpiar botones Ko-fi anteriores para evitar duplicados si la db se actualiza
-                    const existingKofi = visitorActions.querySelector('.btn-kofi-container');
-                    if (existingKofi) existingKofi.remove();
+                    // Limpiar botones anteriores
+                    const existingDonations = visitorActions.querySelectorAll('.donation-group');
+                    existingDonations.forEach(el => el.remove());
 
-                    if (d.kofiId) {
-                        const kofiBtn = document.createElement('a');
-                        kofiBtn.href = `https://ko-fi.com/${d.kofiId}`;
-                        kofiBtn.target = "_blank";
-                        kofiBtn.className = "btn-kofi-container text-xs bg-[#29abe0] text-white h-9 px-3 rounded-xl border border-white/10 hover:brightness-110 flex items-center gap-2 font-bold transition active:scale-95 no-underline";
-                        kofiBtn.innerHTML = `<i class="fas fa-coffee"></i> <span>Invítame un café</span>`;
-                        // Insertar al principio de las acciones de visitante
-                        visitorActions.insertBefore(kofiBtn, visitorActions.firstChild);
+                    // Verificar si hay métodos de donación
+                    if (d.kofiId || d.paypalId) {
+                        const donationContainer = document.createElement('div');
+                        donationContainer.className = "donation-group flex items-center gap-2 mr-2 border-r border-zinc-700 pr-3";
+                        donationContainer.innerHTML = `<span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Donar:</span>`;
+                        
+                        // Ko-fi Button
+                        if (d.kofiId) {
+                            const kofiBtn = document.createElement('a');
+                            kofiBtn.href = `https://ko-fi.com/${d.kofiId}`;
+                            kofiBtn.target = "_blank";
+                            kofiBtn.className = "donate-btn btn-kofi-circle";
+                            kofiBtn.title = "Invítame un café en Ko-fi";
+                            kofiBtn.innerHTML = `<i class="fas fa-coffee"></i>`;
+                            donationContainer.appendChild(kofiBtn);
+                        }
+
+                        // PayPal Button
+                        if (d.paypalId) {
+                            const ppForm = document.createElement('form');
+                            ppForm.action = "https://www.paypal.com/donate";
+                            ppForm.method = "post";
+                            ppForm.target = "_blank";
+                            ppForm.className = "flex";
+                            ppForm.innerHTML = `
+                                <input type="hidden" name="hosted_button_id" value="${d.paypalId}" />
+                                <button type="submit" class="donate-btn btn-paypal-circle" title="Donar con PayPal">
+                                    <i class="fab fa-paypal"></i>
+                                </button>
+                            `;
+                            donationContainer.appendChild(ppForm);
+                        }
+                        
+                        // Insertar antes del botón de compartir
+                        visitorActions.insertBefore(donationContainer, visitorActions.firstChild);
                     }
                 }
 
@@ -1178,8 +1208,9 @@
                     if(soc.youtube) document.getElementById('social-yt').value = soc.youtube;
                     if(soc.patreon) document.getElementById('social-pt').value = soc.patreon;
                     
-                    // Cargar Ko-fi ID en el input
+                    // Cargar IDs de donación
                     if(d.kofiId) document.getElementById('kofi-id').value = d.kofiId;
+                    if(d.paypalId) document.getElementById('paypal-id').value = d.paypalId;
 
                     if(d.slogan) document.getElementById('slogan-input').value = d.slogan;
                 }
@@ -1196,10 +1227,11 @@
         }
         function saveDetails() {
             const status = document.getElementById('artist-status').value;
-            const kofiId = document.getElementById('kofi-id').value.trim(); // Guardar ID de Ko-fi
+            const kofiId = document.getElementById('kofi-id').value.trim();
+            const paypalId = document.getElementById('paypal-id').value.trim(); // NUEVO
             const socials = { facebook: document.getElementById('social-fb').value.trim(), x: document.getElementById('social-x').value.trim(), instagram: document.getElementById('social-ig').value.trim(), youtube: document.getElementById('social-yt').value.trim(), patreon: document.getElementById('social-pt').value.trim() };
             
-            db.ref('users/'+currentUser.uid).update({socials, artistStatus:status, kofiId: kofiId}).then(()=>{
+            db.ref('users/'+currentUser.uid).update({socials, artistStatus:status, kofiId: kofiId, paypalId: paypalId}).then(()=>{
                 document.getElementById('details-modal').classList.add('hidden'); document.getElementById('details-modal').classList.remove('flex'); showToast("Perfil actualizado");
             });
         }
