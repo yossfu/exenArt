@@ -1,854 +1,111 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
-    <title>exen-E | Comunidad</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Fuentes -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicador de Marca de Agua (Firma) en Imágenes</title>
     <style>
-        :root { 
-            --accent: #f97316; 
-            --accent-glow: rgba(251, 146, 60, 0.4); 
-            --bg-dark: #1f2937; /* gray-800 */
-            --bg-light: #374151; /* gray-700 */
-            --text-color: #f9fafb;
+        @font-face {
+            font-family: 'FirmaFont';
+            src: url('data:font/truetype;base64,[AQUÍ_PEGA_EL_BASE64_DEL_ARCHIVO_pkbbri.ttf]') format('truetype');
         }
-
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-color);
-            -webkit-overflow-scrolling: touch;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
         }
-
-        .dark .post-card {
-            background-color: var(--bg-light);
-            border: 1px solid #4b5563; /* gray-600 */
-            transition: all 0.3s ease;
+        #canvas {
+            border: 1px solid #ccc;
+            margin: 20px auto;
+            display: block;
         }
-        
-        .dark .post-card:hover {
-            box-shadow: 0 4px 15px var(--accent-glow);
+        .controls {
+            margin-bottom: 20px;
         }
-
-        .action-icon {
-            color: #d1d5db; /* gray-400 */
-            transition: color 0.2s ease, transform 0.2s ease;
-        }
-
-        .action-icon:hover {
-            color: var(--accent);
-            transform: scale(1.1);
-        }
-
-        /* Estilo para el botón flotante de nuevo post */
-        .fab {
-            background-color: var(--accent);
-            box-shadow: 0 4px 10px var(--accent-glow);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .fab:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px var(--accent-glow);
-        }
-
-        /* Estilos para el campo de entrada de tags */
-        .tag-input-container {
-            border: 1px solid #4b5563;
-            background-color: #111827; /* gray-900 */
+        #testText {
+            font-family: 'FirmaFont';
+            font-size: 24px;
+            color: red;
+            margin: 20px;
         }
     </style>
 </head>
-<body class="min-h-screen">
-
-    <!-- Mensajes de Alerta -->
-    <div id="messageBox" class="fixed top-4 right-4 z-50 transition-all duration-300 opacity-0 transform translate-y-[-20px]">
-        <!-- Los mensajes se insertan aquí -->
-    </div>
-
-    <!-- Contenedor Principal (Feed) -->
-    <main class="max-w-xl mx-auto py-4 px-2 md:px-0">
-        <h1 class="text-3xl font-extrabold text-white text-center mb-6 pt-4 font-['Poppins']">exen-E Comunidad</h1>
+<body>
+    <h1>Aplicador de Marca de Agua (Firma) en Imágenes</h1>
+    <div class="controls">
+        <label for="imageUpload">Selecciona una imagen:</label><br>
+        <input type="file" id="imageUpload" accept="image/*"><br><br>
         
-        <!-- Estado de Autenticación / Placeholder -->
-        <div id="authStatus" class="text-center text-gray-400 mb-6 p-4 rounded-xl bg-gray-700">
-            Cargando estado de autenticación...
-        </div>
-
-        <!-- Botón para Abrir Modal de Nuevo Post (Flotante) -->
-        <button id="openNewPostModalBtn" onclick="openNewPostModal()" class="fab fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl z-40">
-            <i class="fas fa-plus"></i>
-        </button>
-
-        <!-- Lista de Posts -->
-        <div id="postsContainer" class="space-y-6">
-            <!-- Los posts se cargarán aquí -->
-            <div class="text-center text-gray-500 p-8">Cargando posts...</div>
-        </div>
-
-        <!-- Placeholder para cuando no hay posts -->
-        <div id="noPostsMessage" class="hidden text-center text-gray-500 p-8">
-            Sé el primero en publicar algo. ¡Usa el botón '+'!
-        </div>
-    </main>
-
-    <!-- Modal de Nuevo Post (Añadido Lógica de Tags, Compresión y Límite) -->
-    <div id="newPostModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden items-center justify-center p-4">
-        <div class="bg-gray-800 w-full max-w-lg p-6 rounded-xl shadow-2xl relative">
-            <button onclick="closeNewPostModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-            <h2 class="text-2xl font-semibold text-white mb-4">Crear Nuevo Post</h2>
-
-            <textarea 
-                id="newPostTextarea" 
-                rows="4" 
-                placeholder="¿Qué estás pensando? (Máx 300 caracteres)"
-                class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-orange-500 focus:border-orange-500 text-white resize-none"
-                onkeyup="limitCharacters(this, 300, 'postCharCount')"
-            ></textarea>
-            <div id="postCharCount" class="text-right text-sm text-gray-400 mt-1 mb-3">0/300 Caracteres</div>
-
-            <!-- Tags Input (Autotagger) -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-300 mb-1">Tags (Máx 5)</label>
-                <div id="newPostTagList" class="flex flex-wrap mb-2 min-h-[36px]">
-                    <!-- Tags se insertan aquí -->
-                </div>
-                <input 
-                    type="text" 
-                    id="newPostTagInput" 
-                    placeholder="Añadir Tags (Ej: #musica)"
-                    class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-orange-500 focus:border-orange-500 text-white tag-input-container"
-                    onkeydown="handleTagInput(event)"
-                >
-            </div>
-
-            <!-- Image Input (Autocompresor) -->
-            <div class="mb-4">
-                <label for="newPostImageInput" class="block text-sm font-medium text-gray-300 mb-1">Imagen (Opcional)</label>
-                <input type="file" id="newPostImageInput" accept="image/*" class="w-full text-sm text-gray-400
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-full file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-orange-500 file:text-white
-                    hover:file:bg-orange-600"
-                    onchange="newPostImageInput(this)">
-                
-                <div id="postCompressionLoading" class="hidden text-sm text-orange-500 mt-2">
-                    <i class="fas fa-spinner fa-spin mr-2"></i>Comprimiendo imagen...
-                </div>
-
-                <div id="newPostImageContainer" class="mt-3 hidden relative">
-                    <img id="newPostImagePreview" src="" alt="Vista previa" class="w-full h-auto max-h-64 object-contain rounded-lg border border-gray-600">
-                    <button onclick="document.getElementById('newPostImageInput').value = null; newPostImageInput(document.getElementById('newPostImageInput'))"
-                        class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            </div>
-
-            <button id="submitPostBtn" onclick="submitNewPost()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:opacity-50" disabled>
-                Publicar
-            </button>
-        </div>
+        <label for="signatureText">Texto de la firma:</label><br>
+        <input type="text" id="signatureText" placeholder="Ingresa tu firma aquí"><br><br>
+        
+        <button id="applyButton">Aplicar Firma</button>
     </div>
-
-    <!-- Modal de Comentarios -->
-    <div id="commentsModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden items-center justify-center p-4">
-        <div class="bg-gray-800 w-full max-w-lg h-full md:h-5/6 flex flex-col p-6 rounded-xl shadow-2xl relative">
-            <button onclick="closeCommentsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors z-10">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-            <h2 class="text-2xl font-semibold text-white mb-4 border-b border-gray-700 pb-2">Comentarios</h2>
-            
-            <div id="commentsList" class="flex-grow overflow-y-auto space-y-4 pr-2">
-                <!-- Los comentarios se cargarán aquí -->
-            </div>
-
-            <div class="mt-4 border-t border-gray-700 pt-4">
-                <div class="flex space-x-2">
-                    <input type="text" id="commentInput" placeholder="Escribe un comentario..." class="flex-grow p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-orange-500 focus:border-orange-500 text-white">
-                    <button onclick="submitComment()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Autenticación (Mantenido el original) -->
-    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden items-center justify-center p-4">
-        <div class="bg-gray-800 w-full max-w-sm p-6 rounded-xl shadow-2xl relative">
-            <h2 class="text-2xl font-semibold text-white mb-4 border-b border-gray-700 pb-2 text-center font-['Poppins']">Autenticación</h2>
-
-            <div class="flex justify-around mb-4">
-                <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1" onclick="switchAuthTab('login')">Iniciar Sesión</button>
-                <button id="tab-register" class="text-gray-400 pb-1 hover:text-white" onclick="switchAuthTab('register')">Registro</button>
-            </div>
-
-            <!-- Formulario de Inicio de Sesión -->
-            <div id="login-form" class="flex flex-col space-y-4">
-                <input type="email" id="loginEmail" placeholder="Correo Electrónico" class="p-3 bg-gray-900 border border-gray-700 rounded-lg text-white" required>
-                <input type="password" id="loginPassword" placeholder="Contraseña" class="p-3 bg-gray-900 border border-gray-700 rounded-lg text-white" required>
-                <button onclick="loginUser()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-lg transition-colors">Iniciar Sesión</button>
-            </div>
-
-            <!-- Formulario de Registro - Paso 1 (Credenciales) -->
-            <div id="register-step-1" class="flex-col space-y-4 hidden">
-                <input type="email" id="registerEmail" placeholder="Correo Electrónico" class="p-3 bg-gray-900 border border-gray-700 rounded-lg text-white" required>
-                <input type="password" id="registerPassword" placeholder="Contraseña (Mín. 6 caracteres)" class="p-3 bg-gray-900 border border-gray-700 rounded-lg text-white" required>
-                <button onclick="validateAuthStep1()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-lg transition-colors">Siguiente</button>
-            </div>
-
-            <!-- Formulario de Registro - Paso 2 (Datos de Perfil) -->
-            <div id="register-step-2" class="flex-col space-y-4 hidden">
-                <button onclick="authBackToStep1()" class="text-gray-400 hover:text-white self-start mb-2"><i class="fas fa-arrow-left mr-2"></i>Atrás</button>
-                <input type="text" id="registerUsername" placeholder="Nombre de Usuario" class="p-3 bg-gray-900 border border-gray-700 rounded-lg text-white" required>
-                <button onclick="registerUser()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-lg transition-colors">Registrar</button>
-            </div>
-        </div>
-    </div>
-
-
+    
+    <p id="testText">Texto de prueba con la fuente FirmaFont (debería verse diferente si se carga correctamente).</p>
+    
+    <canvas id="canvas" width="500" height="300"></canvas> <!-- Canvas visible por defecto para depuración -->
+    
+    <a id="downloadLink" style="display: none;" download="imagen_con_firma.png">Descargar Imagen con Firma</a>
+    
     <script>
-        // --- CONFIGURACIÓN E INICIALIZACIÓN ---
-        const firebaseConfig = {
-            // Reemplazar con tu configuración real
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+        // Cargar la fuente al inicio para asegurar disponibilidad
+        document.fonts.load('50px FirmaFont').then(() => {
+            console.log('Fuente FirmaFont cargada al inicio.');
+        }).catch(error => {
+            console.error('Error al precargar la fuente:', error);
+        });
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
-        
-        let currentUser = null;
-        let currentUserData = null;
-        let activePostId = null; // Para comentarios
-        
-        // --- VARIABLES DE ESTADO PARA NUEVO POST (TOMADAS DE PROFILE.HTML) ---
-        let postTags = [];
-        let compressedFile = null;
-        const MAX_TAGS = 5;
+        const imageUpload = document.getElementById('imageUpload');
+        const signatureText = document.getElementById('signatureText');
+        const applyButton = document.getElementById('applyButton');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const downloadLink = document.getElementById('downloadLink');
 
+        applyButton.addEventListener('click', function() {
+            const file = imageUpload.files[0];
+            if (!file) {
+                alert('Por favor, selecciona una imagen primero.');
+                return;
+            }
+            if (!signatureText.value) {
+                alert('Por favor, ingresa el texto de la firma.');
+                return;
+            }
 
-        // --- FUNCIONES DE UTILIDAD GENERAL ---
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
 
-        // Función de compresión/redimensionamiento de imagen (Tomada de profile.html)
-        const compressImage = (file, maxSizeKB) => {
-            return new Promise((resolve, reject) => {
-                if (!file.type.match('image.*')) {
-                    reject(new Error("Archivo no es una imagen."));
-                    return;
-                }
+                    // Dibujar la imagen original
+                    ctx.drawImage(img, 0, 0);
 
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
+                    // Configurar la fuente y el texto
+                    const selectedFont = 'FirmaFont';
+                    const fontSize = 50; // Tamaño de fuente ajustable
+                    ctx.font = `\( {fontSize}px \){selectedFont}`;
+                    console.log('Fuente establecida en canvas:', ctx.font); // Para depuración
 
-                        // Redimensionamiento básico para imágenes muy grandes
-                        const maxDim = 1024;
-                        if (width > maxDim || height > maxDim) {
-                            if (width > height) {
-                                height *= maxDim / width;
-                                width = maxDim;
-                            } else {
-                                width *= maxDim / height;
-                                height = maxDim;
-                            }
-                        }
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Color semi-transparente para marca de agua
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'bottom';
 
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
+                    // Dibujar el texto en la esquina inferior derecha (ajustable)
+                    ctx.fillText(signatureText.value, canvas.width - 20, canvas.height - 20);
 
-                        let quality = 0.9;
-                        let attempts = 0;
-                        const maxAttempts = 20;
-
-                        const tryCompress = () => {
-                            canvas.toBlob((blob) => {
-                                if (!blob) { reject(new Error("Error en compresión")); return; }
-                                // Verificar el tamaño. Si es menor al máximo O la calidad es muy baja O los intentos terminaron
-                                if ((blob.size / 1024) <= maxSizeKB || quality <= 0.1 || attempts >= maxAttempts) {
-                                    // Crear nuevo archivo con el blob comprimido
-                                    // Cambiamos a .jpg para optimizar el formato
-                                    const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg", lastModified: Date.now() });
-                                    resolve(newFile);
-                                } else {
-                                    // Reducir la calidad y reintentar
-                                    quality -= 0.05;
-                                    attempts++;
-                                    tryCompress(); // Recursión hasta lograr el tamaño
-                                }
-                            }, 'image/jpeg', quality);
-                        };
-                        tryCompress();
-                    };
-                    img.onerror = error => reject(error);
+                    // Generar la URL de la imagen resultante
+                    downloadLink.href = canvas.toDataURL('image/png');
+                    downloadLink.style.display = 'block';
+                    downloadLink.textContent = 'Descargar Imagen con Firma';
                 };
-                reader.onerror = error => reject(error);
-            });
-        };
-
-        // Función para limitar caracteres y mostrar el conteo (Tomada/Inferencia de profile.html)
-        function limitCharacters(element, max, counterId) {
-            const text = element.value;
-            const currentLength = text.length;
-            const counter = document.getElementById(counterId);
-
-            if (currentLength > max) {
-                element.value = text.substring(0, max);
-                counter.textContent = `${max}/${max} Caracteres Máximo`;
-                counter.classList.add('text-red-500');
-            } else {
-                counter.textContent = `${currentLength}/${max} Caracteres`;
-                counter.classList.remove('text-red-500');
-            }
-        }
-
-        // Muestra mensajes de feedback
-        function showMessage(msg, type = 'info') {
-            const box = document.getElementById('messageBox');
-            const color = type === 'error' ? 'bg-red-500' : (type === 'success' ? 'bg-green-500' : 'bg-blue-500');
-            
-            const msgElement = document.createElement('div');
-            msgElement.className = `${color} text-white p-3 rounded-lg shadow-md mb-2`;
-            msgElement.textContent = msg;
-
-            box.appendChild(msgElement);
-            box.classList.remove('opacity-0', 'translate-y-[-20px]');
-            box.classList.add('opacity-100', 'translate-y-0');
-
-            setTimeout(() => {
-                box.removeChild(msgElement);
-                if (box.children.length === 0) {
-                    box.classList.remove('opacity-100', 'translate-y-0');
-                    box.classList.add('opacity-0', 'translate-y-[-20px]');
-                }
-            }, 5000);
-        }
-
-        // --- FUNCIONES DE GESTIÓN DE TAGS (AUTOTAGGER DE PROFILE.HTML) ---
-
-        // Actualiza el campo visual de tags y el array
-        function updateTagDisplay() {
-            const tagList = document.getElementById('newPostTagList');
-            tagList.innerHTML = '';
-            postTags.forEach(tag => {
-                const tagElement = document.createElement('span');
-                tagElement.className = 'inline-flex items-center px-3 py-1 mr-2 my-1 text-sm font-medium text-white bg-orange-600 rounded-full cursor-pointer hover:bg-orange-700 transition-colors';
-                tagElement.innerHTML = `${tag} <i class="fas fa-times ml-2" onclick="removeTag('${tag}')"></i>`;
-                tagList.appendChild(tagElement);
-            });
-
-            const tagInput = document.getElementById('newPostTagInput');
-            tagInput.placeholder = postTags.length >= MAX_TAGS ? 'Máximo de 5 tags alcanzado' : 'Añadir Tags (Ej: #musica)';
-            tagInput.disabled = postTags.length >= MAX_TAGS;
-        }
-
-        // Añade un tag
-        function addTag(tagText) {
-            if (postTags.length >= MAX_TAGS) {
-                showMessage("Máximo de 5 tags alcanzado.", 'info');
-                return;
-            }
-
-            let tag = tagText.trim().toLowerCase();
-            if (tag.startsWith('#')) {
-                tag = tag.substring(1);
-            }
-
-            if (tag && !postTags.includes(tag) && tag.length > 1 && tag.length <= 20) {
-                postTags.push(tag);
-                updateTagDisplay();
-            }
-        }
-
-        // Remueve un tag
-        function removeTag(tagText) {
-            postTags = postTags.filter(t => t !== tagText);
-            updateTagDisplay();
-        }
-
-        // Maneja la entrada en el campo de tags (al presionar Enter)
-        function handleTagInput(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // Previene el envío del formulario
-                const input = event.target;
-                const tagValue = input.value.trim();
-
-                if (tagValue) {
-                    addTag(tagValue);
-                    input.value = ''; // Limpiar el input después de añadir
-                }
-            }
-        }
-
-        // --- MODAL Y GESTIÓN DE POSTS ---
-        
-        function openNewPostModal() {
-            if (!currentUser) {
-                showMessage('Debes iniciar sesión para crear un post.', 'info');
-                openAuthModal();
-                return;
-            }
-            document.getElementById('newPostModal').style.display = 'flex';
-            // Asegurar que los límites se muestren correctamente al abrir
-            limitCharacters(document.getElementById('newPostTextarea'), 300, 'postCharCount');
-            document.getElementById('submitPostBtn').disabled = false;
-        }
-
-        function closeNewPostModal() {
-            document.getElementById('newPostModal').style.display = 'none';
-            // Limpiar estado
-            document.getElementById('newPostTextarea').value = '';
-            document.getElementById('newPostImageInput').value = null;
-            document.getElementById('newPostImageContainer').classList.add('hidden');
-            document.getElementById('newPostTagInput').value = '';
-            postTags = [];
-            compressedFile = null;
-            updateTagDisplay();
-        }
-
-        // Maneja la selección de imagen y la comprime (Autocompresor)
-        async function newPostImageInput(input) {
-            const preview = document.getElementById('newPostImagePreview');
-            const imageContainer = document.getElementById('newPostImageContainer');
-            const loading = document.getElementById('postCompressionLoading');
-            const postBtn = document.getElementById('submitPostBtn');
-            const file = input.files[0];
-
-            if (file) {
-                imageContainer.classList.remove('hidden');
-                preview.src = URL.createObjectURL(file); // Mostrar vista previa inmediata
-
-                loading.classList.remove('hidden');
-                postBtn.disabled = true;
-
-                try {
-                    // Usar la función de compresión (400 KB como límite para posts)
-                    compressedFile = await compressImage(file, 400);
-                    postBtn.disabled = false;
-                } catch (error) {
-                    showMessage("Error al procesar la imagen: " + error.message, 'error');
-                    imageContainer.classList.add('hidden');
-                    input.value = null;
-                    compressedFile = null;
-                    postBtn.disabled = false;
-                } finally {
-                    loading.classList.add('hidden');
-                }
-            } else {
-                imageContainer.classList.add('hidden');
-                preview.src = '';
-                compressedFile = null;
-                postBtn.disabled = false;
-            }
-        }
-
-
-        async function submitNewPost() {
-            const text = document.getElementById('newPostTextarea').value.trim();
-            
-            if (!text && !compressedFile) { 
-                showMessage('Escribe algo o sube una imagen.', 'error'); 
-                return; 
-            }
-
-            if (!currentUser) {
-                 showMessage('Error de autenticación. Por favor, inicia sesión de nuevo.', 'error');
-                 return;
-            }
-
-            document.getElementById('submitPostBtn').disabled = true;
-
-            let postImageURL = null;
-
-            if (compressedFile) {
-                // Lógica de subida de imagen a Firebase Storage (Simulada, ya que Storage no está en el snippet)
-                // En un proyecto real, necesitarías la referencia a Firebase Storage (firebase.storage().ref(...))
-                // y usarías el compressedFile para subirlo.
-                // Aquí, para mantener el código ejecutable sin Storage, simulo la URL.
-                
-                // --- SIMULACIÓN DE SUBIDA A STORAGE ---
-                showMessage('Subiendo y procesando imagen...', 'info');
-                // En un caso real:
-                // const snapshot = await firebase.storage().ref(`posts/${Date.now()}_${currentUser.uid}`).put(compressedFile);
-                // postImageURL = await snapshot.ref.getDownloadURL();
-                // --- FIN SIMULACIÓN ---
-
-                // TEMPORAL: Usar un blob URL para simular la imagen subida
-                postImageURL = URL.createObjectURL(compressedFile);
-            }
-            
-            // Preparar el objeto para guardar en Realtime Database
-            const finalUserName = (currentUserData && currentUserData.name) ? currentUserData.name : currentUser.email.split('@')[0];
-            const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
-            
-            const postData = {
-                text: text,
-                imageUrl: postImageURL || null,
-                tags: postTags, // Tags incluidos
-                userId: currentUser.uid,
-                userName: finalUserName,
-                userAvatar: finalUserAvatar,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                likes: 0,
-                commentsCount: 0,
+                img.src = event.target.result;
             };
-
-            // Guardar en Realtime Database
-            await db.ref('posts').push(postData)
-                .then(() => {
-                    showMessage('Post creado exitosamente!', 'success');
-                    closeNewPostModal();
-                })
-                .catch(error => {
-                    showMessage('Error al crear el post: ' + error.message, 'error');
-                });
-            
-            document.getElementById('submitPostBtn').disabled = false;
-        }
-
-        // --- RENDERIZADO DE POSTS ---
-
-        function renderPost(key, post) {
-            const postContainer = document.getElementById('postsContainer');
-            let postElement = document.getElementById(`post-${key}`);
-
-            // Formateo de fecha
-            const date = new Date(post.timestamp);
-            const dateString = date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-            if (!postElement) {
-                postElement = document.createElement('div');
-                postElement.id = `post-${key}`;
-                postElement.className = 'post-card rounded-xl p-4 shadow-lg';
-                postContainer.prepend(postElement); // Posts nuevos arriba
-            }
-
-            // Renderizado de tags (solo para visualización, los tags NO se muestran en el feed en la lógica de profile)
-            // Si el requisito es esconderlos en el visor, nos aseguramos de no incluirlos en el HTML del post.
-            // Para el feed, solo incluiremos la información básica.
-
-            postElement.innerHTML = `
-                <div class="flex items-start space-x-3 mb-3">
-                    <img src="${post.userAvatar}" alt="${post.userName}" class="w-10 h-10 rounded-full object-cover border-2 border-orange-500">
-                    <div>
-                        <p class="font-semibold text-white">${post.userName}</p>
-                        <p class="text-xs text-gray-400">${dateString}</p>
-                    </div>
-                </div>
-                
-                <p class="text-gray-200 mb-3 whitespace-pre-wrap">${post.text}</p>
-                
-                ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Post image" class="rounded-lg mb-3 w-full max-h-96 object-cover border border-gray-700">` : ''}
-
-                <!-- Tags no se muestran en el visor del feed (Cumpliendo el requisito 'se escondan los tags en el visor') -->
-
-                <div class="flex justify-between items-center border-t border-gray-700 pt-3">
-                    <div class="flex space-x-4 text-gray-400">
-                        <button onclick="toggleLike('${key}')" class="action-icon flex items-center space-x-1">
-                            <i class="${post.liked ? 'fas text-red-500' : 'far'} fa-heart"></i>
-                            <span id="likes-count-${key}">${post.likes || 0}</span>
-                        </button>
-                        <button onclick="openCommentsModal('${key}')" class="action-icon flex items-center space-x-1">
-                            <i class="far fa-comment"></i>
-                            <span id="comments-count-${key}">${post.commentsCount || 0}</span>
-                        </button>
-                    </div>
-                    <button class="text-xs text-gray-500 hover:text-orange-500">
-                        Compartir
-                    </button>
-                </div>
-            `;
-            
-            // Si el post no existe, lo quitamos
-            if (!post) {
-                postElement.remove();
-            }
-        }
-        
-        // --- LISTENERS DE REALTIME DATABASE ---
-        
-        db.ref('posts').on('value', (snapshot) => {
-            const postsContainer = document.getElementById('postsContainer');
-            const postsData = snapshot.val();
-            
-            if (!postsData) {
-                postsContainer.innerHTML = '';
-                document.getElementById('noPostsMessage').classList.remove('hidden');
-                return;
-            }
-
-            document.getElementById('noPostsMessage').classList.add('hidden');
-            
-            // Convertir a array y ordenar por timestamp descendente
-            const postsArray = Object.keys(postsData).map(key => ({
-                id: key,
-                ...postsData[key],
-                timestamp: postsData[key].timestamp || 0 // Asegurar valor
-            }));
-
-            postsArray.sort((a, b) => b.timestamp - a.timestamp);
-
-            // Limpiar y re-renderizar
-            postsContainer.innerHTML = '';
-            postsArray.forEach(post => {
-                // Añadir el estado 'liked' basado en el usuario actual (simplificado)
-                post.liked = (post.likedBy && currentUser && post.likedBy[currentUser.uid]);
-                renderPost(post.id, post);
-            });
+            reader.readAsDataURL(file);
         });
-
-        // --- GESTIÓN DE INTERACCIONES ---
-
-        // Función de Like
-        function toggleLike(postId) {
-            if (!currentUser) {
-                showMessage('Debes iniciar sesión para dar like.', 'info');
-                return;
-            }
-            
-            const postRef = db.ref(`posts/${postId}`);
-            const uid = currentUser.uid;
-
-            postRef.transaction((post) => {
-                if (post) {
-                    if (!post.likedBy) {
-                        post.likedBy = {};
-                    }
-                    if (post.likedBy[uid]) {
-                        post.likes = (post.likes || 1) - 1;
-                        post.likedBy[uid] = null; // Eliminar el like
-                    } else {
-                        post.likes = (post.likes || 0) + 1;
-                        post.likedBy[uid] = true; // Añadir el like
-                    }
-                }
-                return post;
-            });
-        }
-
-        // --- GESTIÓN DE COMENTARIOS ---
-
-        function openCommentsModal(postId) {
-            activePostId = postId;
-            document.getElementById('commentsModal').style.display = 'flex';
-            document.getElementById('commentsList').innerHTML = '<div class="text-center text-gray-500 p-4">Cargando comentarios...</div>';
-            loadComments(postId);
-        }
-
-        function closeCommentsModal() {
-            document.getElementById('commentsModal').style.display = 'none';
-            activePostId = null;
-            db.ref(`feed_comments/${activePostId}`).off('value'); // Desactivar listener
-        }
-
-        function loadComments(postId) {
-            const commentsList = document.getElementById('commentsList');
-            // Desactivar listener anterior si existiera (aunque ya lo hacemos al cerrar, mejor prevenir)
-            db.ref(`feed_comments/${postId}`).off('value');
-
-            db.ref(`feed_comments/${postId}`).on('value', (snapshot) => {
-                const commentsData = snapshot.val();
-                commentsList.innerHTML = '';
-                const count = commentsData ? Object.keys(commentsData).length : 0;
-                
-                // Actualizar contador en el post
-                db.ref(`posts/${postId}/commentsCount`).set(count);
-
-                if (!commentsData) {
-                    commentsList.innerHTML = '<div class="text-center text-gray-500 p-4">Sé el primero en comentar.</div>';
-                    return;
-                }
-
-                Object.keys(commentsData).reverse().forEach(key => { // Mostrar más reciente primero
-                    const c = commentsData[key];
-                    const date = new Date(c.timestamp);
-                    const dateString = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString('es-ES');
-
-                    const commentEl = document.createElement('div');
-                    commentEl.className = 'flex items-start space-x-3 p-3 bg-gray-700 rounded-lg';
-                    commentEl.innerHTML = `
-                        <img src="${c.userAvatar}" alt="${c.userName}" class="w-8 h-8 rounded-full object-cover">
-                        <div>
-                            <p class="font-semibold text-white text-sm">${c.userName} <span class="text-xs text-gray-400 font-normal ml-2">${dateString}</span></p>
-                            <p class="text-gray-200">${c.text}</p>
-                        </div>
-                    `;
-                    commentsList.appendChild(commentEl);
-                });
-            });
-        }
-
-        function submitComment() {
-            if (!currentUser) {
-                showMessage('Debes iniciar sesión para comentar.', 'info');
-                return;
-            }
-            if (!activePostId) return;
-
-            const input = document.getElementById('commentInput');
-            const text = input.value.trim();
-
-            if (text === '') {
-                showMessage('El comentario no puede estar vacío.', 'error');
-                return;
-            }
-
-            const id = activePostId;
-            const finalUserName = (currentUserData && currentUserData.name) ? currentUserData.name : currentUser.email.split('@')[0];
-            const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
-            
-            const c = { 
-                text: text, 
-                userId: currentUser?currentUser.uid:'anon', 
-                userName: finalUserName, 
-                userAvatar: finalUserAvatar, 
-                timestamp: firebase.database.ServerValue.TIMESTAMP 
-            }; 
-            
-            db.ref(`feed_comments/${id}`).push(c); 
-            input.value = '';
-        }
-
-        // --- AUTH HELPERS ---
-        function switchAuthTab(t) { 
-            document.getElementById('login-form').style.display = t==='login'?'flex':'none'; 
-            document.getElementById('register-step-1').style.display = t==='login'?'none':'flex'; 
-            document.getElementById('register-step-2').style.display = 'none'; // Asegurar que el paso 2 esté oculto
-            document.getElementById('tab-login').className = t==='login'?"text-orange-500 border-b-2 border-orange-500 pb-1":"text-gray-400 pb-1 hover:text-white"; 
-            document.getElementById('tab-register').className = t==='login'?"text-gray-400 pb-1 hover:text-white":"text-orange-500 border-b-2 border-orange-500 pb-1"; 
-        }
-        function authBackToStep1() { 
-            document.getElementById('register-step-2').style.display='none'; 
-            document.getElementById('register-step-1').style.display='flex'; 
-        }
-        async function validateAuthStep1() { 
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-
-            if (!email || !password || password.length < 6) {
-                showMessage('Por favor, ingresa un email válido y una contraseña de al menos 6 caracteres.', 'error');
-                return;
-            }
-            // Aquí iría una validación más avanzada, por ahora solo mostramos el siguiente paso
-            document.getElementById('register-step-1').style.display='none'; 
-            document.getElementById('register-step-2').style.display='flex'; 
-        }
-        async function openAuthModal() {
-            document.getElementById('authModal').style.display = 'flex';
-            switchAuthTab('login');
-        }
-
-        // Funciones de Autenticación (Mantenidas del original)
-        async function loginUser() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                showMessage('Inicio de sesión exitoso.', 'success');
-                document.getElementById('authModal').style.display = 'none';
-            } catch (error) {
-                showMessage('Error al iniciar sesión: ' + error.message, 'error');
-            }
-        }
-
-        async function registerUser() {
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const username = document.getElementById('registerUsername').value;
-
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const uid = userCredential.user.uid;
-
-                // Crear el perfil inicial en la base de datos
-                await db.ref('users/' + uid).set({
-                    name: username,
-                    email: email,
-                    profilePic: 'https://placehold.co/100x100/333/fff?text=' + username.charAt(0).toUpperCase()
-                });
-                
-                showMessage('Registro y perfil creados exitosamente.', 'success');
-                document.getElementById('authModal').style.display = 'none';
-            } catch (error) {
-                showMessage('Error al registrar: ' + error.message, 'error');
-            }
-        }
-
-        async function logoutUser() {
-            try {
-                await auth.signOut();
-                showMessage('Sesión cerrada.', 'success');
-            } catch (error) {
-                showMessage('Error al cerrar sesión: ' + error.message, 'error');
-            }
-        }
-
-        // --- GESTIÓN DE ESTADO DE AUTENTICACIÓN ---
-
-        auth.onAuthStateChanged(user => {
-            currentUser = user;
-            const statusEl = document.getElementById('authStatus');
-            const newPostBtn = document.getElementById('openNewPostModalBtn');
-
-            if (user) {
-                // Leer datos de perfil
-                db.ref('users/' + user.uid).once('value', (snapshot) => {
-                    currentUserData = snapshot.val();
-                    const userName = currentUserData?.name || user.email.split('@')[0];
-                    statusEl.innerHTML = `
-                        Conectado como: <strong>${userName}</strong> 
-                        <button onclick="logoutUser()" class="ml-4 text-orange-400 hover:text-orange-500 font-bold">
-                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                        </button>`;
-                });
-                newPostBtn.classList.remove('opacity-0', 'pointer-events-none');
-            } else {
-                currentUserData = null;
-                statusEl.innerHTML = `
-                    No has iniciado sesión. 
-                    <button onclick="openAuthModal()" class="ml-2 text-orange-400 hover:text-orange-500 font-bold">
-                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión/Registrar
-                    </button>`;
-                newPostBtn.classList.add('opacity-0', 'pointer-events-none');
-            }
-        });
-
-        // Inicialización de límites al cargar
-        window.onload = () => {
-             // Asegurar que el modal de posts esté limpio al inicio
-             limitCharacters(document.getElementById('newPostTextarea'), 300, 'postCharCount');
-        }
     </script>
 </body>
 </html>
