@@ -2,7 +2,7 @@
 <html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
     <title>exen-E | Comunidad</title>
     
     <!-- Tailwind CSS -->
@@ -10,7 +10,7 @@
     
     <!-- Fuentes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <!-- Firebase -->
@@ -22,6 +22,8 @@
         :root { 
             --accent: #f97316; 
             --accent-glow: rgba(251, 146, 60, 0.4);
+            --bg-dark: #09090b;
+            --border-color: rgba(255, 255, 255, 0.08);
             --title-font: 'Poppins', sans-serif;
             --body-font: 'Inter', sans-serif;
         }
@@ -29,185 +31,241 @@
         html, body {
             overflow-x: hidden;
             width: 100%;
-            background-color: #0c0c0c;
+            background-color: var(--bg-dark);
             overscroll-behavior-y: none;
+            -webkit-tap-highlight-color: transparent;
         }
         body { 
             font-family: var(--body-font); 
-            background-image: radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.08) 0%, transparent 50%);
+            background-image: radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.06) 0%, transparent 50%);
             color: #f3f4f6;
             padding-bottom: 90px; /* Espacio para navbar */
             min-height: 100vh;
         }
 
+        /* Scrollbars */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         /* Loaders & Auth */
         #initial-loader {
             position: fixed; inset: 0; z-index: 10000;
-            background-color: #0c0c0c;
+            background-color: var(--bg-dark);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.5s ease;
         }
-        .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 10px var(--accent)); animation: pulse 2s infinite; }
+        .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
         
         #auth-overlay {
             position: fixed; inset: 0; z-index: 9999;
-            background-color: rgba(12, 12, 12, 0.98);
+            background-color: rgba(9, 9, 11, 0.98);
             backdrop-filter: blur(10px);
             display: none;
             align-items: center; justify-content: center;
-            padding: 1rem;
+            padding: 1.5rem;
             overflow-y: auto;
         }
         .form-card {
-            background: rgba(20, 20, 25, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            background: #18181b;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             width: 100%; max-width: 400px;
         }
         .input-field {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease; color: white;
         }
-        .input-field:focus { border-color: var(--accent); outline: none; }
-        .btn-primary { background: linear-gradient(135deg, #f97316, #ea580c); transition: transform 0.2s; }
-        .btn-primary:active { transform: scale(0.98); }
-        .hidden-step { display: none; animation: fadeIn 0.5s forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .input-field:focus { border-color: var(--accent); outline: none; background: rgba(0,0,0,0.6); }
+        .btn-primary { background: linear-gradient(135deg, #f97316, #ea580c); transition: transform 0.2s; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3); }
+        .btn-primary:active { transform: scale(0.97); }
+        .hidden-step { display: none; }
 
         /* Feed Cards */
         .feed-card {
-            background-color: #161618;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background-color: #18181b;
+            border: 1px solid var(--border-color);
             border-radius: 1rem;
             margin-bottom: 1.5rem;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
             position: relative;
             width: 100%;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .animate-enter { animation: slideUpFade 0.4s ease-out forwards; }
         @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Upload Area */
+        /* Upload Area Mejorado */
         .upload-card {
-            background: linear-gradient(145deg, #1a1a1c, #111112);
-            border: 1px solid rgba(249, 115, 22, 0.2);
+            background: linear-gradient(145deg, #18181b, #121212);
+            border: 1px solid rgba(249, 115, 22, 0.15);
         }
         #extra-fields {
             max-height: 0; opacity: 0; overflow: hidden;
-            transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
         }
         #extra-fields.expanded {
-            max-height: 500px; opacity: 1; margin-top: 12px; padding-top: 12px;
-            border-top: 1px solid rgba(255,255,255,0.05);
+            max-height: 800px; opacity: 1; margin-top: 12px; padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            overflow: visible !important;
         }
+        .custom-input { background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; transition: all 0.3s; }
+        .custom-input:focus { outline: none; border-color: var(--accent); background: rgba(0,0,0,0.4); }
+
+        /* Estilos de Auto-Tagging */
+        .tags-readonly { background: rgba(0,0,0,0.4); cursor: not-allowed; border-style: dashed; opacity: 0.8; }
+        .tags-readonly:focus { border-color: var(--border-color); }
+        .tag-status-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); z-index: 10; font-size: 14px; }
+        .status-loading { color: #fb923c; animation: spin 1s linear infinite; }
+        .status-success { color: #4ade80; }
+        .status-error { color: #ef4444; }
+        .status-lock { color: #6b7280; }
+        @keyframes spin { 100% { transform: translateY(-50%) rotate(360deg); } }
+        @keyframes glowText { 0% { opacity: 0.5; } 50% { opacity: 1; color: #fb923c; } 100% { opacity: 0.5; } }
+        .analyzing-text { animation: glowText 1.5s infinite; font-style: italic; }
+        .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); pointer-events: none; }
 
         /* Grid Mode */
         .grid-mode-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; }
         .grid-item { aspect-ratio: 1/1; overflow: hidden; position: relative; background-color: #222; cursor: pointer; }
         .grid-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-        .grid-item:active img { transform: scale(0.98); }
+        .grid-item:active img { transform: scale(0.96); opacity: 0.8; }
         .grid-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%); display: flex; align-items: flex-end; padding: 4px; opacity: 1; }
 
-        .custom-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 12px; border-radius: 8px; font-size: 0.875rem; width: 100%; }
-        
-        /* Navbar */
-        .bottom-nav { background-color: rgba(10, 10, 10, 0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(55, 65, 81, 0.3); }
-        .nav-item { color: #9ca3af; transition: color 0.25s ease; }
-        .nav-item.active { color: var(--accent); transform: translateY(-4px); }
-        
+        /* Navbar & Botones */
+        .bottom-nav { background-color: rgba(9, 9, 11, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--border-color); z-index: 3000; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { color: #71717a; transition: all 0.3s ease; }
+        .nav-item.active { color: var(--accent); }
+        .toggle-btn { background: transparent; border: 1px solid #333; color: #666; transition: all 0.2s; }
+        .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+        /* Animaciones Feed */
         .like-anim { animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes likeBounce { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
-        /* Modal Visor Estilos Clave */
-        .modal-backdrop { display: none; position: fixed; inset: 0; background-color: #000; z-index: 3000; } 
+        /* Visor Modal */
+        .modal-backdrop { display: none; position: fixed; inset: 0; background-color: #000; z-index: 7000; } 
         .modal-backdrop.visible { display: block; animation: fadeIn 0.3s forwards; }
+        @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
         
-        .toggle-btn { background: transparent; border: 1px solid #333; color: #666; }
-        .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
-        
-        .clickable-tag { color: #fb923c; font-weight: 600; cursor: pointer; }
-        .clickable-tag:hover { text-decoration: underline; }
+        .fullscreen-mode .info-panel { display: none !important; }
+        .fullscreen-mode .image-area { width: 100% !important; height: 100vh !important; flex: none !important; }
+
+        .nav-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 20;
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); border-radius: 50%;
+            color: white; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s;
+        }
+        .nav-arrow:active { background: var(--accent); }
+        .nav-prev { left: 15px; } .nav-next { right: 15px; }
+
+        /* Similar Cards (Visor) */
+        .similar-card {
+            min-width: 90px; width: 90px; aspect-ratio: 1/1;
+            border-radius: 0.5rem; overflow: hidden; position: relative;
+            flex-shrink: 0; scroll-snap-align: start;
+            border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s;
+            background-color: #1a1a1c;
+        }
+        .similar-card:active { transform: scale(0.95); border-color: var(--accent); }
+        .similar-card img { width: 100%; height: 100%; object-fit: cover; }
 
         /* Options Menu */
-        .options-menu { display: none; position: absolute; top: 40px; right: 10px; background: #222; border: 1px solid #333; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 50; min-width: 150px; }
+        .options-menu { display: none; position: absolute; top: 40px; right: 10px; background: #1c1c1f; border: 1px solid #333; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 50; min-width: 150px; }
         .options-menu.show { display: block; animation: popIn 0.2s; }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         .options-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #ccc; font-size: 0.95rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .options-item:last-child { border-bottom: none; }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-        /* Modal Navegación (REUBICADOS) */
-        /* Los botones ahora se posicionan absolutos dentro del contenedor de imagen, no del viewport */
-        .nav-arrow {
-            position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
-            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); border-radius: 50%;
-            color: white; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.2s;
-        }
-        .nav-arrow:hover { background: rgba(249, 115, 22, 0.8); }
-        .nav-prev { left: 10px; } .nav-next { right: 10px; }
-
-        #app-content { display: none; }
-        
-        /* Clase para ocultar panel lateral en fullscreen */
-        .fullscreen-mode .info-panel { display: none; }
-        .fullscreen-mode .image-area { width: 100%; height: 100vh; }
+        /* Select Personalizado en Feed */
+        select.custom-input { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased select-none">
 
     <!-- PANTALLA DE CARGA -->
     <div id="initial-loader">
         <img src="https://files.catbox.moe/ap1lh0.png" class="loader-logo">
-        <i class="fas fa-spinner fa-spin text-orange-500 text-2xl"></i>
+        <i class="fas fa-circle-notch fa-spin text-orange-500 text-2xl"></i>
+        <p id="loader-status" class="text-gray-500 text-xs mt-4 animate-pulse">Cargando comunidad...</p>
+    </div>
+
+    <!-- TOAST (Notificaciones) -->
+    <div id="toast-container" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[9000] pointer-events-none transition-all duration-300 opacity-0 translate-y-4">
+        <div class="bg-zinc-900/95 backdrop-blur-md border border-zinc-700 px-6 py-3 rounded-full text-white font-medium shadow-2xl flex items-center gap-3">
+            <i class="fas fa-check-circle text-green-500 text-lg"></i>
+            <span id="toast-message">Acción completada</span>
+        </div>
+    </div>
+
+    <!-- ALERTAS PERSONALIZADAS -->
+    <div id="custom-alert" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
+            <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-500/20"><i class="fas fa-exclamation text-red-500 text-2xl"></i></div>
+            <h3 class="text-white font-bold text-xl mb-2">Atención</h3>
+            <p id="custom-alert-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">Mensaje</p>
+            <button onclick="closeCustomAlert()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold transition active:scale-95">Entendido</button>
+        </div>
+    </div>
+
+    <div id="custom-confirm" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
+            <div class="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4 border border-orange-500/20"><i class="fas fa-question text-orange-500 text-2xl"></i></div>
+            <h3 id="custom-confirm-title" class="text-white font-bold text-xl mb-2">¿Estás seguro?</h3>
+            <p id="custom-confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">¿Continuar?</p>
+            <div class="flex gap-3">
+                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-zinc-800 text-gray-300 py-3 rounded-xl font-bold border border-zinc-700 active:scale-95 transition">Cancelar</button>
+                <button onclick="closeCustomConfirm(true)" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">Confirmar</button>
+            </div>
+        </div>
     </div>
 
     <!-- LOGIN OVERLAY -->
     <div id="auth-overlay">
         <div class="form-card rounded-2xl p-8 relative overflow-hidden">
             <div class="text-center mb-8">
-                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-16 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
+                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-14 mx-auto mb-4 drop-shadow-[0_0_15px_rgba(249,115,22,0.3)]">
                 <h2 class="text-2xl font-bold font-[Poppins] text-white">Bienvenido</h2>
-                <div class="flex justify-center gap-4 mt-4 text-sm font-semibold">
+                <div class="flex justify-center gap-4 mt-4 text-sm font-semibold border-b border-zinc-800 pb-2">
                     <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1" onclick="switchAuthTab('login')">Iniciar Sesión</button>
-                    <button id="tab-register" class="text-gray-400 pb-1 hover:text-white" onclick="switchAuthTab('register')">Registrarse</button>
+                    <button id="tab-register" class="text-gray-500 pb-1 hover:text-white" onclick="switchAuthTab('register')">Registrarse</button>
                 </div>
             </div>
             <form id="login-form" class="flex flex-col gap-4">
-                <div class="space-y-1"><label class="text-xs text-gray-400 ml-1">Correo</label><input type="email" id="login-email" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="tu@correo.com" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400 ml-1">Contraseña</label><input type="password" id="login-password" class="input-field w-full rounded-lg px-4 py-3 text-white" placeholder="••••••••" required></div>
-                <button type="submit" id="btn-login-submit" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2 shadow-lg">Entrar</button>
-                <p id="login-error" class="text-red-400 text-xs text-center mt-2 hidden"></p>
+                <div class="space-y-1"><label class="text-xs text-gray-400 ml-1">Correo</label><input type="email" id="login-email" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="tu@correo.com" required></div>
+                <div class="space-y-1"><label class="text-xs text-gray-400 ml-1">Contraseña</label><input type="password" id="login-password" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="••••••••" required></div>
+                <button type="submit" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white mt-2 shadow-lg active:scale-95 transition">Entrar</button>
             </form>
-            <form id="register-step-1" class="flex flex-col gap-4 hidden-step" style="display: none;">
+            <form id="register-step-1" class="flex flex-col gap-4 hidden-step">
                 <p class="text-sm text-gray-300 text-center mb-2">Paso 1: Identidad</p>
-                <div class="space-y-1"><label class="text-xs text-gray-400">Usuario</label><input type="text" id="reg-name" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400">Edad</label><input type="number" id="reg-age" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400">Foto</label><div class="relative w-full"><input type="file" id="file-upload-auth" accept="image/*" class="hidden" onchange="handleAuthFileUpload(event)"><label for="file-upload-auth" class="flex items-center gap-3 w-full input-field rounded-lg px-4 py-3 cursor-pointer"><div class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden"><img id="auth-preview-img" src="https://placehold.co/100x100/333/fff?text=Foto" class="w-full h-full object-cover"></div><div class="flex-1"><span class="text-sm text-gray-300 block">Subir imagen</span><span class="text-[10px] text-gray-500 block" id="upload-status">Max 5MB</span></div><i class="fas fa-camera text-gray-400"></i></label></div><input type="hidden" id="reg-photo-url"></div>
-                <button type="button" id="btn-step-1" onclick="validateAuthStep1()" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2">Continuar</button>
-                <p id="step1-error" class="text-red-400 text-xs text-center mt-2 hidden"></p>
+                <input type="text" id="reg-name" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Nombre de Usuario" required>
+                <input type="number" id="reg-age" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Edad" required>
+                <div class="relative w-full"><input type="file" id="file-upload-auth" accept="image/*" class="hidden" onchange="handleAuthFileUpload(event)"><label for="file-upload-auth" class="flex items-center gap-3 w-full input-field rounded-xl px-4 py-3 cursor-pointer hover:bg-zinc-800/50"><div class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-zinc-600"><img id="auth-preview-img" src="https://placehold.co/100x100/333/fff?text=Foto" class="w-full h-full object-cover"></div><div class="flex-1"><span class="text-sm text-gray-300 block">Subir imagen</span></div><i class="fas fa-camera text-gray-400"></i></label></div><input type="hidden" id="reg-photo-url">
+                <button type="button" id="btn-step-1" onclick="validateAuthStep1()" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white mt-2 active:scale-95 transition">Continuar</button>
             </form>
-            <form id="register-step-2" class="flex flex-col gap-4 hidden-step" style="display: none;">
-                <div class="space-y-1"><label class="text-xs text-gray-400">Correo</label><input type="email" id="reg-email" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400">Contraseña</label><input type="password" id="reg-password" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400">Confirmar</label><input type="password" id="reg-confirm-password" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="flex gap-2 mt-2"><button type="button" onclick="authBackToStep1()" class="w-1/3 py-3 rounded-lg text-gray-400 border border-gray-600">Atrás</button><button type="submit" id="btn-register-final" class="btn-primary w-2/3 py-3 rounded-lg font-bold text-white">Finalizar</button></div>
-                <p id="reg-error" class="text-red-400 text-xs text-center mt-2 hidden"></p>
+            <form id="register-step-2" class="flex flex-col gap-4 hidden-step">
+                <input type="email" id="reg-email" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Correo" required>
+                <input type="password" id="reg-password" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Contraseña" required>
+                <input type="password" id="reg-confirm-password" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Confirmar Contraseña" required>
+                <div class="flex gap-2 mt-2"><button type="button" onclick="authBackToStep1()" class="w-1/3 py-3.5 rounded-xl text-gray-400 border border-zinc-700 active:scale-95">Atrás</button><button type="submit" id="btn-register-final" class="btn-primary w-2/3 py-3.5 rounded-xl font-bold text-white active:scale-95">Finalizar</button></div>
             </form>
         </div>
     </div>
 
     <!-- APP CONTENT -->
-    <div id="app-content">
+    <div id="app-content" style="display: none;">
         <!-- Header -->
-        <header class="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex justify-between items-center">
+        <header class="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-8 w-auto">
                 <span class="font-bold text-lg tracking-tight font-[Poppins] text-orange-500">Social</span>
             </div>
-            <a href="profile.html" class="w-9 h-9 rounded-full overflow-hidden border border-gray-600 block relative touch-feedback">
+            <a href="profile.html" class="w-9 h-9 rounded-full overflow-hidden border border-zinc-600 block relative active:scale-90 transition">
                 <img id="current-user-avatar" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
             </a>
         </header>
@@ -218,164 +276,193 @@
             <div class="px-2 sm:px-0">
                 <div class="feed-card upload-card p-4 rounded-2xl mb-4">
                     <div class="flex gap-3 items-center mb-2">
-                        <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0 self-start mt-1">
+                        <div class="w-10 h-10 rounded-full overflow-hidden bg-zinc-700 flex-shrink-0 self-start mt-1 border border-zinc-600">
                             <img id="post-avatar" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-1 relative">
-                            <textarea id="post-text" rows="1" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" placeholder="¿Qué quieres compartir?" onfocus="expandPostArea()" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                            <textarea id="post-text" rows="1" maxlength="500" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" placeholder="¿Qué quieres compartir?" onfocus="expandPostArea()" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
                         </div>
-                        <label class="flex items-center justify-center text-orange-500 cursor-pointer active:scale-90 transition p-2 rounded-full bg-gray-800 hover:bg-gray-700 border border-gray-700">
+                        <label class="flex items-center justify-center text-orange-500 cursor-pointer active:scale-90 transition p-2 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700">
                             <i class="fas fa-image text-lg"></i>
                             <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event); expandPostArea()">
                         </label>
                     </div>
-                    <div id="preview-container" class="relative hidden mt-3 rounded-xl overflow-hidden border border-gray-700 group">
+                    
+                    <div id="preview-container" class="relative hidden mt-3 rounded-xl overflow-hidden border border-zinc-700 group bg-black/40">
                         <img id="image-preview" src="" class="w-full h-auto max-h-64 object-contain bg-black">
-                        <button onclick="clearSelection()" class="absolute top-2 right-2 bg-black/60 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center active:scale-90 transition z-10"><i class="fas fa-times"></i></button>
+                        <button onclick="clearSelection()" class="absolute top-2 right-2 bg-black/60 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center active:scale-90 transition z-10 backdrop-blur-sm"><i class="fas fa-times"></i></button>
                     </div>
+                    
                     <div id="extra-fields">
                         <div class="flex flex-col gap-3">
-                            <input type="text" id="post-title" placeholder="Título (Opcional)" class="custom-input font-bold bg-black/20 border-gray-700">
+                            <input type="text" id="post-title" maxlength="30" placeholder="Título (Opcional)" class="custom-input font-bold bg-black/20 border-zinc-700">
+                            
                             <div class="flex gap-2">
-                                <input type="text" id="post-tags" placeholder="Tags: arte, anime..." class="custom-input flex-1 bg-black/20 border-gray-700">
+                                <!-- Tags con Auto-Tagging -->
+                                <div class="relative flex-1">
+                                    <i id="tag-status-icon" class="fas fa-lock tag-status-icon status-lock"></i>
+                                    <input type="text" id="post-tags" placeholder="Tags se generan automáticamente..." class="custom-input bg-black/40 border-zinc-700 text-xs pl-8 tags-readonly transition-all duration-500" readonly>
+                                </div>
+                                
                                 <div class="relative w-2/5">
-                                    <select id="post-category" class="custom-input bg-black/20 border-gray-700 appearance-none pl-9 text-xs h-full">
+                                    <select id="post-category" class="custom-input bg-black/40 border-zinc-700 appearance-none pl-3 pr-8 text-xs h-full w-full">
                                         <option value="" disabled selected>Categoría</option>
                                         <option value="anime">Anime</option><option value="furry">Furry</option><option value="realismo">Realismo</option>
                                         <option value="mecas">Mecas</option><option value="devils">Devils</option><option value="colors">ColorFull</option>
                                         <option value="amateur">Amateur</option><option value="tvgames">TV/Games</option>
                                     </select>
-                                    <i class="fas fa-list absolute left-3 top-1/2 -translate-y-1/2 text-orange-500 text-xs"></i>
                                 </div>
                             </div>
-                            <div class="flex gap-3 mt-2 pt-2 border-t border-white/5">
-                                <button onclick="collapsePostArea()" class="flex-1 py-2 rounded-full text-gray-400 text-sm font-semibold hover:text-white hover:bg-gray-800">Cancelar</button>
-                                <button id="publish-btn" onclick="uploadPost()" class="bg-orange-600 active:scale-95 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">Publicar</button>
+                            
+                            <div class="flex gap-3 mt-2 pt-3 border-t border-white/5">
+                                <button onclick="collapsePostArea()" class="flex-1 py-2 rounded-xl text-gray-400 text-sm font-semibold hover:bg-zinc-800 transition active:scale-95">Cancelar</button>
+                                <button id="publish-btn" onclick="uploadPost()" class="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg active:scale-95 transition flex-[2]">Publicar</button>
                             </div>
                         </div>
                     </div>
-                    <div id="upload-progress" class="hidden w-full bg-gray-800 rounded-full h-1 mt-3 overflow-hidden"><div class="bg-orange-500 h-1 rounded-full w-1/3 animate-pulse"></div></div>
+                    <div id="upload-progress" class="hidden w-full bg-zinc-800 rounded-full h-1 mt-3 overflow-hidden"><div class="bg-orange-500 h-1 rounded-full w-1/3 animate-pulse"></div></div>
                 </div>
             </div>
 
             <!-- Barra de Filtrado -->
             <div id="filter-bar" class="px-2 sm:px-0 mb-4 hidden animate-fade-in">
-                <div class="bg-orange-900/30 border border-orange-500/30 rounded-lg p-3 flex justify-between items-center">
+                <div class="bg-orange-900/20 border border-orange-500/30 rounded-xl p-3 flex justify-between items-center">
                     <span class="text-xs text-orange-200 font-bold flex items-center gap-2">
-                        <i class="fas fa-filter"></i> Filtrando por: <span id="active-filter-tag" class="bg-orange-500 text-white px-2 py-0.5 rounded">#tag</span>
+                        <i class="fas fa-filter"></i> Filtrando: <span id="active-filter-tag" class="bg-orange-500 text-white px-2 py-0.5 rounded">#tag</span>
                     </span>
-                    <button onclick="clearTagFilter()" class="text-xs text-gray-400 hover:text-white underline">Borrar filtro</button>
+                    <button onclick="clearTagFilter()" class="text-xs text-gray-400 hover:text-white underline">Borrar</button>
                 </div>
             </div>
 
             <!-- Controles -->
             <div class="flex justify-between items-center gap-2 mb-4 px-2 sm:px-0">
-                <div class="flex bg-gray-900/80 p-1 rounded-lg border border-gray-800">
-                    <button onclick="switchView('feed')" id="btn-view-feed" class="toggle-btn active px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-2"><i class="fas fa-stream"></i></button>
-                    <button onclick="switchView('grid')" id="btn-view-grid" class="toggle-btn px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-2"><i class="fas fa-th"></i></button>
+                <div class="flex bg-zinc-900/80 p-1 rounded-xl border border-zinc-800">
+                    <button onclick="switchView('feed')" id="btn-view-feed" class="toggle-btn active px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2"><i class="fas fa-stream"></i></button>
+                    <button onclick="switchView('grid')" id="btn-view-grid" class="toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2"><i class="fas fa-th"></i></button>
                 </div>
                 
                 <div class="relative">
-                    <select id="sort-select" onchange="changeSortOrder(this.value)" class="bg-gray-900/80 text-xs text-gray-300 border border-gray-800 rounded-lg px-3 py-1.5 focus:outline-none focus:border-orange-500 appearance-none pr-8">
-                        <option value="newest">✨ Más Recientes</option>
-                        <option value="oldest">📅 Más Antiguos</option>
-                        <option value="likes">🔥 Más Gustados</option>
+                    <select id="sort-select" onchange="changeSortOrder(this.value)" class="bg-zinc-900/80 text-xs text-gray-300 border border-zinc-800 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-500 appearance-none pr-8">
+                        <option value="newest">✨ Recientes</option>
+                        <option value="oldest">📅 Antiguos</option>
+                        <option value="likes">🔥 Populares</option>
                     </select>
                     <i class="fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 pointer-events-none"></i>
                 </div>
             </div>
 
-            <!-- CONTENEDOR PRINCIPAL DEL FEED -->
-            <div id="feed-list-container" class="flex flex-col gap-4 pb-10 px-2 sm:px-0 min-h-[300px]">
-                <div class="feed-card p-4 animate-pulse h-48 bg-gray-800/50"></div>
-            </div>
-            
+            <!-- FEED & GRID -->
+            <div id="feed-list-container" class="flex flex-col gap-4 pb-10 px-2 sm:px-0 min-h-[300px]"></div>
             <div id="grid-view-container" class="grid-mode-container hidden pb-20 px-0"></div>
             
-            <!-- TRIGGER SCROLL INFINITO -->
             <div id="load-more-trigger" class="h-16 w-full flex justify-center items-center my-4">
                 <div id="scroll-spinner" class="flex flex-col items-center gap-2 opacity-0 transition-opacity duration-300">
                     <i class="fas fa-circle-notch fa-spin text-orange-500 text-2xl"></i>
-                    <span class="text-xs text-gray-500">Cargando más...</span>
                 </div>
             </div>
 
         </main>
 
-        <!-- ======================================================================= -->
-        <!-- VISOR MODAL CORREGIDO (Imagen Real, Full Screen, Nav Fix) -->
-        <!-- ======================================================================= -->
+        <!-- VISOR MODAL MEJORADO -->
         <div id="modal" class="modal-backdrop overflow-hidden">
-            
-            <!-- Botón Cerrar (Fijo) -->
-            <button id="close-modal" class="fixed top-4 right-4 z-[4000] h-10 w-10 flex items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-times text-lg"></i></button>
+            <button id="close-modal" class="fixed top-4 right-4 z-[8000] h-10 w-10 flex items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-times text-lg"></i></button>
 
-            <!-- Contenedor Principal -->
             <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black transition-all duration-300">
-                
-                <!-- ÁREA IMAGEN (Flexible) -->
                 <div class="image-area relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[55vh] lg:h-full" id="modal-image-area">
-                    
-                    <!-- Imagen Real (object-contain para no recortar) -->
-                    <img id="modal-image" src="" class="max-w-full max-h-full object-contain w-auto h-auto" alt="Visor">
-                    
-                    <!-- Flechas Navegación (DENTRO del área de imagen para no tapar textos) -->
+                    <img id="modal-image" src="" class="max-w-full max-h-full object-contain w-auto h-auto transition-transform duration-300">
                     <button id="modal-prev" class="nav-arrow nav-prev" onclick="navigateModal(-1)"><i class="fas fa-chevron-left"></i></button>
                     <button id="modal-next" class="nav-arrow nav-next" onclick="navigateModal(1)"><i class="fas fa-chevron-right"></i></button>
-
-                    <!-- Botón Pantalla Completa (Nuevo) -->
-                    <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-black/60 text-white p-2 rounded-lg backdrop-blur-sm border border-white/10 hover:bg-orange-600 transition"><i class="fas fa-expand"></i></button>
+                    <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-zinc-800/80 text-white p-2.5 rounded-xl backdrop-blur-md border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-expand text-sm"></i></button>
                 </div>
 
-                <!-- ÁREA DETALLES (Scrollable) -->
-                <div class="info-panel w-full lg:w-[400px] lg:h-full bg-[#161618] border-l border-gray-800 flex flex-col h-[45vh] z-30 relative shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-                    
-                    <!-- Header Post -->
-                    <div class="p-4 border-b border-gray-700 flex items-center justify-between bg-[#1a1a1c] flex-shrink-0">
+                <div class="info-panel w-full lg:w-[400px] lg:h-full bg-[#121214] border-l border-zinc-800 flex flex-col h-[45vh] z-30 relative shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+                    <div class="p-4 border-b border-zinc-800 flex items-center justify-between bg-[#18181b] flex-shrink-0">
                         <div class="flex items-center gap-3 cursor-pointer hover:opacity-80" onclick="visitProfileFromModal()">
-                            <img id="modal-user-pic" src="" class="w-10 h-10 rounded-full object-cover border border-gray-600">
-                            <div class="leading-tight">
-                                <h4 id="modal-user-name" class="font-bold text-white text-sm">Usuario</h4>
-                                <span class="text-[10px] text-gray-500">Autor</span>
-                            </div>
+                            <img id="modal-user-pic" src="" class="w-10 h-10 rounded-full object-cover border border-zinc-600 bg-zinc-700">
+                            <div class="leading-tight"><h4 id="modal-user-name" class="font-bold text-white text-sm">Usuario</h4><span class="text-[10px] text-gray-500 font-medium">Autor</span></div>
                         </div>
-                        <!-- Botón Like -->
-                        <button id="modal-like-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 border border-gray-700 hover:bg-gray-800 transition group">
-                            <i class="far fa-heart text-lg group-active:scale-125 transition-transform text-gray-400"></i>
-                            <span id="modal-likes-count" class="text-xs font-bold text-white">0</span>
+                        <button id="modal-like-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 transition group active:scale-95">
+                            <i class="far fa-heart text-lg group-active:scale-125 transition-transform text-gray-400"></i><span id="modal-likes-count" class="text-xs font-bold text-white">0</span>
                         </button>
                     </div>
 
-                    <!-- Info Scrollable -->
-                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#161618]">
-                        <div class="mb-4">
-                            <h3 id="modal-title" class="text-lg font-bold text-white mb-1 font-[Poppins]"></h3>
-                            <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"></p>
+                    <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#121214]">
+                        <div class="mb-5">
+                            <h3 id="modal-title" class="text-xl font-bold text-white mb-2 font-[Poppins] leading-snug"></h3>
+                            <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-light"></p>
                         </div>
-                        <div id="modal-tags" class="flex flex-wrap gap-2 mb-6 pb-4 border-b border-gray-800"></div>
+                        
+                        <!-- Tags Retráctiles -->
+                        <div class="mb-6 border-b border-zinc-800 pb-4">
+                            <button onclick="toggleTags()" id="tags-toggle-btn" class="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 hover:text-orange-500 transition-colors mb-2">
+                                <span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div id="modal-tags" class="hidden flex flex-wrap gap-2 mt-3"></div>
+                        </div>
+
+                        <!-- Imágenes Similares -->
+                        <div class="mb-6 border-b border-zinc-800 pb-4">
+                            <h4 class="text-[11px] font-bold text-gray-500 uppercase mb-3 tracking-widest flex items-center gap-2"><i class="fas fa-th-large"></i> Similares</h4>
+                            <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-3 snap-x no-scrollbar">
+                                <span class="text-xs text-gray-600 italic px-2">Buscando...</span>
+                            </div>
+                        </div>
+
                         <div>
-                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wide">Comentarios</h4>
-                            <div id="modal-comments-list" class="flex flex-col gap-3 pb-4"></div>
+                            <h4 class="text-[11px] font-bold text-gray-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h4>
+                            <div id="modal-comments-list" class="flex flex-col gap-4 pb-4"></div>
                         </div>
                     </div>
 
-                    <!-- Input Comentario -->
-                    <div class="p-3 bg-[#1a1a1c] border-t border-gray-700 flex-shrink-0">
+                    <div class="p-3 bg-[#18181b] border-t border-zinc-800 flex-shrink-0 safe-bottom">
                         <form onsubmit="postCommentInModal(event)" class="flex gap-2 relative">
-                            <input type="text" id="modal-comment-input" class="w-full bg-black/50 border border-gray-700 rounded-full px-4 py-3 text-sm text-white focus:border-orange-500 focus:outline-none pr-12 transition-colors" placeholder="Escribe un comentario..." autocomplete="off">
-                            <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 transition transform active:scale-90"><i class="fas fa-paper-plane"></i></button>
+                            <input type="text" id="modal-comment-input" maxlength="200" class="w-full bg-zinc-900 border border-zinc-700 rounded-full pl-5 pr-12 py-3 text-sm text-white focus:border-orange-500 focus:outline-none transition-colors" placeholder="Comentario..." autocomplete="off">
+                            <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 p-2 active:scale-90 transition"><i class="fas fa-paper-plane text-lg"></i></button>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
 
-        <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-20 justify-around items-center px-2">
-            <a href="index.html" class="nav-item flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-th-large text-xl mb-1"></i><span class="text-[10px] font-semibold">Galería</span></a>
-            <a href="feed.html" class="nav-item active flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-globe-americas text-xl mb-1"></i><span class="text-[10px] font-semibold">Social</span></a>
-            <a href="profile.html" class="nav-item flex flex-col items-center justify-center text-center p-2 w-1/3"><i class="fas fa-user text-xl mb-1"></i><span class="text-[10px] font-semibold">Perfil</span></a>
+        <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-[70px] justify-around items-center px-2 pb-2">
+            <a href="index.html" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-home text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Galería</span></a>
+            <a href="feed.html" class="nav-item active flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-globe-americas text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Social</span></a>
+            <a href="profile.html" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-user text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Perfil</span></a>
         </nav>
     </div>
+
+    <!-- SCRIPT DE GRADIO PARA AUTO-TAGGING -->
+    <script type="module">
+        import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
+        const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
+        async function resizeImageForApi(file) {
+            if (file.size <= 1024 * 1024) return file;
+            return new Promise((resolve) => {
+                const img = new Image(); const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); const MAX_SIZE = 800;
+                img.onload = () => {
+                    let w=img.width, h=img.height; if(w>h){if(w>MAX_SIZE){h*=MAX_SIZE/w;w=MAX_SIZE;}}else{if(h>MAX_SIZE){w*=MAX_SIZE/h;h=MAX_SIZE;}}
+                    canvas.width=w;canvas.height=h; ctx.drawImage(img,0,0,w,h); canvas.toBlob(resolve,'image/jpeg',0.85);
+                }; img.src = URL.createObjectURL(file);
+            });
+        }
+        window.runAutoTagging = async function(originalFile) {
+            const tagInput = document.getElementById('post-tags'); const icon = document.getElementById('tag-status-icon'); const publishBtn = document.getElementById('publish-btn');
+            tagInput.value = ""; tagInput.placeholder = "⚡ Conectando a DeepDanbooru..."; tagInput.classList.add('analyzing-text', 'border-orange-500');
+            icon.className = "fas fa-circle-notch tag-status-icon status-loading"; publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
+            try {
+                const processedFile = await resizeImageForApi(originalFile);
+                const client = await Client.connect("Jossle/deepdanbooru_online_Exen");
+                tagInput.placeholder = "🤖 IA Analizando imagen...";
+                const result = await client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend]);
+                if (result && result.data && result.data[0]) {
+                    tagInput.value = result.data[0]; icon.className = "fas fa-check-circle tag-status-icon status-success";
+                    showToast("¡Etiquetas generadas!"); publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+                } else throw new Error("Respuesta vacía");
+            } catch (error) {
+                console.error("Error Tagging:", error); tagInput.placeholder = "⚠️ Error. Intenta de nuevo."; icon.className = "fas fa-exclamation-triangle tag-status-icon status-error"; publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+            } finally { tagInput.classList.remove('analyzing-text', 'border-orange-500'); }
+        }
+    </script>
 
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
@@ -399,24 +486,43 @@
         let currentFilterTag = null;
         let currentSortOrder = 'newest';
         let currentModalIndex = -1;
-        
-        // Variables Swipe
-        let touchStartX = 0;
-        let touchEndX = 0;
+        let confirmCallback = null;
+        let touchStartX = 0, touchEndX = 0;
+        let isUploadingAuth = false;
+        let authDataCache = {};
+
+        // --- GLOBAL UTILS ---
+        function showToast(msg) {
+            const t = document.getElementById('toast-container');
+            document.getElementById('toast-message').innerText = msg;
+            t.classList.remove('opacity-0', 'translate-y-4');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3000);
+        }
+        function showAlert(msg) {
+            document.getElementById('custom-alert-msg').innerText = msg;
+            document.getElementById('custom-alert').classList.remove('hidden'); document.getElementById('custom-alert').classList.add('flex');
+        }
+        function closeCustomAlert() { document.getElementById('custom-alert').classList.add('hidden'); document.getElementById('custom-alert').classList.remove('flex'); }
+        function showConfirm(msg, callback, title="¿Estás seguro?") {
+            confirmCallback = callback;
+            document.getElementById('custom-confirm-title').innerText = title;
+            document.getElementById('custom-confirm-msg').innerText = msg;
+            document.getElementById('custom-confirm').classList.remove('hidden'); document.getElementById('custom-confirm').classList.add('flex');
+        }
+        function closeCustomConfirm(res) {
+            document.getElementById('custom-confirm').classList.add('hidden'); document.getElementById('custom-confirm').classList.remove('flex');
+            if(res && confirmCallback) confirmCallback(); confirmCallback = null;
+        }
 
         // --- AUTH ---
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('initial-loader');
-            const authOverlay = document.getElementById('auth-overlay');
-            const appContent = document.getElementById('app-content');
-
             if (user && !user.isAnonymous) {
                 currentUser = user;
-                appContent.style.display = 'block'; authOverlay.style.display = 'none';
-                
+                document.getElementById('app-content').style.display = 'block'; 
+                document.getElementById('auth-overlay').style.display = 'none';
                 db.ref('users/' + user.uid).on('value', snap => { 
-                    const d = snap.val(); 
-                    if(d) {
+                    const d = snap.val(); if(d) {
                         currentUserData = d; 
                         if(d.profilePic) { 
                              document.getElementById('current-user-avatar').src = d.profilePic; 
@@ -425,7 +531,7 @@
                     }
                 });
             } else {
-                currentUser = null; appContent.style.display = 'none'; authOverlay.style.display = 'flex';
+                currentUser = null; document.getElementById('app-content').style.display = 'none'; document.getElementById('auth-overlay').style.display = 'flex';
             }
             loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500);
             initFeedListener();
@@ -446,11 +552,7 @@
             let filtered = [...allPostsCache];
             if (currentFilterTag) {
                 const tag = currentFilterTag.toLowerCase();
-                filtered = filtered.filter(p => {
-                    const tags = (p.tags || '').toLowerCase();
-                    const text = (p.text || '').toLowerCase();
-                    return tags.includes(tag) || text.includes('#' + tag);
-                });
+                filtered = filtered.filter(p => (p.tags||'').toLowerCase().includes(tag) || (p.text||'').toLowerCase().includes('#'+tag));
                 document.getElementById('filter-bar').classList.remove('hidden');
                 document.getElementById('active-filter-tag').innerText = '#' + currentFilterTag;
             } else {
@@ -471,7 +573,6 @@
             feedContainer.innerHTML = '';
             gridContainer.innerHTML = '';
             currentRenderIndex = 0;
-
             if (displayedPosts.length === 0) {
                 feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10 flex flex-col items-center"><i class="fas fa-ghost text-4xl mb-2 opacity-50"></i><p>No hay publicaciones aún.</p></div>`;
                 document.getElementById('scroll-spinner').style.opacity = '0';
@@ -482,73 +583,64 @@
 
         function loadMorePosts() {
             if (currentRenderIndex >= displayedPosts.length) { document.getElementById('scroll-spinner').style.opacity = '0'; return; }
-            const feedContainer = document.getElementById('feed-list-container');
-            const gridContainer = document.getElementById('grid-view-container');
-            const spinner = document.getElementById('scroll-spinner');
-            spinner.style.opacity = '1';
-
+            document.getElementById('scroll-spinner').style.opacity = '1';
             const nextIndex = currentRenderIndex + POSTS_PER_PAGE;
             const chunk = displayedPosts.slice(currentRenderIndex, nextIndex);
+            const feedContainer = document.getElementById('feed-list-container');
+            const gridContainer = document.getElementById('grid-view-container');
 
             chunk.forEach(post => {
-                try {
-                    feedContainer.appendChild(createPostCard(post));
-                    if (post.imageUrl) gridContainer.appendChild(createGridItem(post));
-                    updateUserAvatarInUI(post.userId);
-                } catch (err) { console.error("Error renderizando post:", post, err); }
+                feedContainer.appendChild(createPostCard(post));
+                if (post.imageUrl) gridContainer.appendChild(createGridItem(post));
+                updateUserAvatarInUI(post.userId);
             });
-
             currentRenderIndex = nextIndex;
-            if (currentRenderIndex >= displayedPosts.length) spinner.style.opacity = '0';
+            if (currentRenderIndex >= displayedPosts.length) document.getElementById('scroll-spinner').style.opacity = '0';
         }
 
         const scrollObserver = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && currentRenderIndex < displayedPosts.length) {
-                setTimeout(() => loadMorePosts(), 500);
-            }
+            if (entries[0].isIntersecting && currentRenderIndex < displayedPosts.length) setTimeout(() => loadMorePosts(), 500);
         }, { rootMargin: '100px' });
-        document.addEventListener('DOMContentLoaded', () => { const trigger = document.getElementById('load-more-trigger'); if(trigger) scrollObserver.observe(trigger); });
+        document.addEventListener('DOMContentLoaded', () => { const t = document.getElementById('load-more-trigger'); if(t) scrollObserver.observe(t); });
 
-
-        // --- UI HELPERS ---
-        function goToProfile(uid) {
-            window.location.href = `profile.html?uid=${uid}`;
-        }
-
+        // --- CREAR TARJETA (SIN TAGS, TEXTO COLAPSABLE) ---
         function createPostCard(post) {
-            const div = document.createElement('div'); 
-            div.className = "feed-card opacity-0 animate-enter";
+            const div = document.createElement('div'); div.className = "feed-card opacity-0 animate-enter";
             
-            let processedText = '';
+            // Lógica para Texto Colapsable
+            let textHtml = '';
             if (post.text) {
-                processedText = post.text.replace(/#(\w+)/g, '<span class="clickable-tag" onclick="filterByTag(\'$1\')">#$1</span>');
-                processedText = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-2 px-1">${processedText}</p>`;
+                const fullText = post.text;
+                // Si excede 150 chars, truncar. Max 500 es el límite de input, pero visualmente cortamos antes.
+                if (fullText.length > 150) {
+                    const shortText = fullText.substring(0, 150);
+                    textHtml = `
+                        <div class="mt-2">
+                            <p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light" id="text-short-${post.id}">
+                                ${shortText}... <button onclick="expandText('${post.id}')" class="text-orange-500 font-bold hover:underline text-xs ml-1">Ver más</button>
+                            </p>
+                            <p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light hidden" id="text-full-${post.id}">
+                                ${fullText}
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    textHtml = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-2 font-light">${fullText}</p>`;
+                }
             }
-
+            
             let metaChips = ''; 
-            if (post.category) metaChips += `<span class="text-[10px] bg-orange-900/50 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30 mr-2 uppercase font-bold tracking-wide">${post.category}</span>`;
-            if (post.tags) {
-                post.tags.split(',').forEach(t => {
-                    const tag = t.trim();
-                    if(tag) metaChips += `<span class="text-[10px] text-gray-400 hover:text-orange-400 cursor-pointer mr-2 bg-gray-800 px-1.5 py-0.5 rounded" onclick="filterByTag('${tag}')">#${tag}</span>`;
-                });
-            }
+            if (post.category) metaChips += `<span class="text-[10px] bg-orange-900/40 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30 uppercase font-bold tracking-wide">${post.category}</span>`;
+            // NOTA: Ya no mostramos tags aquí según instrucciones.
 
             const isOwner = currentUser && currentUser.uid === post.userId;
             let optionsBtn = isOwner ? `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 p-2 hover:text-white"><i class="fas fa-ellipsis-v"></i></button><div id="options-menu-${post.id}" class="options-menu"><div class="options-item text-red-400 hover:bg-red-900/20" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>` : '';
-
-            let imgHtml = '';
-            if (post.imageUrl) {
-                imgHtml = `<div class="mt-3 -mx-0 sm:-mx-4 bg-black relative cursor-pointer group overflow-hidden border-t border-b border-gray-800" onclick="openViewerById('${post.id}')">
-                    <img src="${post.imageUrl}" loading="lazy" class="w-full h-auto max-h-[500px] object-contain mx-auto transition duration-500" onerror="this.src='https://placehold.co/600x400/222/666?text=Error+Carga'">
-                </div>`;
-            }
 
             div.innerHTML = `
                 <div class="p-4 pb-2">
                     <div class="flex justify-between items-start relative">
                         <div class="flex gap-3 items-center" onclick="goToProfile('${post.userId}')" style="cursor:pointer;">
-                            <img src="${post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-10 h-10 rounded-full object-cover border border-gray-700 user-avatar-${post.userId} transition hover:scale-105">
+                            <img src="${post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-10 h-10 rounded-full object-cover border border-zinc-700 user-avatar-${post.userId} bg-zinc-800">
                             <div class="flex flex-col">
                                 <span class="font-bold text-gray-200 text-sm hover:text-orange-400 transition">${post.userName}</span>
                                 <span class="text-[10px] text-gray-500 font-medium">${timeAgo(post.timestamp)}</span>
@@ -557,16 +649,16 @@
                         ${optionsBtn}
                     </div>
                     ${post.title ? `<h4 class="font-bold text-white mt-3 text-sm tracking-wide">${post.title}</h4>` : ''}
-                    ${processedText}
+                    ${textHtml}
                     <div class="mt-3 flex flex-wrap items-center">${metaChips}</div>
                 </div>
-                ${imgHtml}
+                ${post.imageUrl ? `<div class="mt-2 bg-black relative cursor-pointer group overflow-hidden border-t border-b border-zinc-800" onclick="openViewerById('${post.id}')"><img src="${post.imageUrl}" loading="lazy" class="w-full h-auto max-h-[500px] object-contain mx-auto"></div>` : ''}
                 <div class="px-4 py-3 flex items-center gap-6 border-t border-white/5 mt-1 bg-[#1a1a1c]">
-                    <button id="like-btn-${post.id}" onclick="toggleLike('${post.id}')" class="flex items-center gap-2 text-gray-400 active:text-red-500 hover:text-red-400 transition group">
+                    <button id="like-btn-${post.id}" onclick="toggleLike('${post.id}')" class="flex items-center gap-2 text-gray-400 active:text-red-500 hover:text-red-400 transition group active:scale-95">
                         <i class="far fa-heart text-lg group-active:scale-125 transition-transform"></i>
                         <span class="text-xs font-bold" id="likes-count-${post.id}">${post.likes || 0}</span>
                     </button>
-                    <button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-white transition">
+                    <button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-white transition active:scale-95">
                         <i class="far fa-comment text-lg"></i>
                         <span class="text-xs font-bold">Comentar</span>
                     </button>
@@ -574,237 +666,271 @@
                 <div id="comments-${post.id}" class="hidden px-4 py-3 bg-[#0f0f10] border-t border-white/5">
                     <div id="comments-list-${post.id}" class="flex flex-col gap-3 mb-3 max-h-60 overflow-y-auto custom-scrollbar"></div>
                     <form onsubmit="postComment(event, '${post.id}')" class="flex gap-2 relative">
-                        <input type="text" id="comment-input-${post.id}" class="w-full bg-gray-800 border border-gray-700 rounded-full px-4 py-2.5 text-sm text-white focus:border-orange-500 focus:outline-none pr-10" placeholder="Escribe..." autocomplete="off" required>
-                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2"><i class="fas fa-paper-plane"></i></button>
+                        <input type="text" id="comment-input-${post.id}" maxlength="200" class="w-full bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2.5 text-sm text-white focus:border-orange-500 focus:outline-none pr-10" placeholder="Escribe..." autocomplete="off">
+                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 active:scale-90 transition"><i class="fas fa-paper-plane"></i></button>
                     </form>
                 </div>`;
-            
             checkLikeStatus(post.id);
             return div;
+        }
+
+        function expandText(id) {
+            document.getElementById(`text-short-${id}`).classList.add('hidden');
+            document.getElementById(`text-full-${id}`).classList.remove('hidden');
         }
 
         function createGridItem(post) {
             const div = document.createElement('div'); div.className = 'grid-item group'; 
             div.onclick = () => openViewerById(post.id);
-            div.innerHTML = `<img src="${post.imageUrl}" loading="lazy"><div class="grid-overlay opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-white text-[10px] font-bold"><i class="fas fa-heart text-red-500"></i> ${post.likes || 0}</span></div>`; 
+            div.innerHTML = `<img src="${post.imageUrl}" loading="lazy"><div class="grid-overlay opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-white text-[10px] font-bold drop-shadow-md"><i class="fas fa-heart text-white text-[9px]"></i> ${post.likes || 0}</span></div>`; 
             return div;
         }
 
-        function changeSortOrder(order) { currentSortOrder = order; applyFiltersAndRender(); }
+        // --- UPLOAD LOGIC ---
+        function expandPostArea() { 
+            document.getElementById('extra-fields').classList.add('expanded'); 
+            document.getElementById('post-text').rows = 3; 
+        }
+        function collapsePostArea(force=false) { 
+            const reset = () => {
+                document.getElementById('extra-fields').classList.remove('expanded'); 
+                document.getElementById('post-text').rows = 1;
+                clearSelection();
+                document.getElementById('post-text').value = '';
+                document.getElementById('post-title').value = '';
+                document.getElementById('post-tags').value = '';
+                document.getElementById('tag-status-icon').className = "fas fa-lock tag-status-icon status-lock";
+                document.getElementById('publish-btn').disabled = false;
+                document.getElementById('publish-btn').classList.remove('btn-disabled');
+            };
+            if(force || (!selectedFile && !document.getElementById('post-text').value)) reset();
+            else showConfirm("¿Descartar publicación?", reset);
+        }
         
-        // --- FILTRADO DESDE VISOR ---
-        function filterByTagFromModal(tag) {
-            document.getElementById('modal').classList.remove('visible'); 
-            document.body.style.overflow = 'auto';
-            filterByTag(tag); 
+        function handleFileSelect(e) { 
+            selectedFile = e.target.files[0]; 
+            if(selectedFile) { 
+                document.getElementById('image-preview').src = URL.createObjectURL(selectedFile); 
+                document.getElementById('preview-container').classList.remove('hidden');
+                
+                // Trigger Auto-Tagging
+                if(window.runAutoTagging) window.runAutoTagging(selectedFile);
+                else {
+                    const i = document.getElementById('post-tags'); i.placeholder = "⌛ Cargando IA...";
+                    let attempts=0, interval = setInterval(()=>{ attempts++; if(window.runAutoTagging){ clearInterval(interval); window.runAutoTagging(selectedFile); } else if(attempts>60){ clearInterval(interval); i.placeholder="Error script IA"; } }, 500);
+                }
+            } 
+        }
+        function clearSelection() { selectedFile = null; document.getElementById('file-input').value = ''; document.getElementById('preview-container').classList.add('hidden'); }
+
+        async function uploadPost() {
+            const text = document.getElementById('post-text').value.trim();
+            const title = document.getElementById('post-title').value.trim();
+            const tags = document.getElementById('post-tags').value.trim();
+            const category = document.getElementById('post-category').value;
+            
+            if (!text && !selectedFile) return showAlert("Escribe algo o sube una imagen.");
+            if (selectedFile && (!title || !tags || !category)) return showAlert("Completa título, categoría y espera los tags.");
+
+            const btn = document.getElementById('publish-btn');
+            btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('upload-progress').classList.remove('hidden');
+            
+            try {
+                let imageUrl = null;
+                if (selectedFile) {
+                    // COMPRESIÓN DE IMAGEN
+                    const compressedFile = await compressImage(selectedFile);
+                    const formData = new FormData(); formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', compressedFile);
+                    const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
+                    const txt = await r.text();
+                    if(!r.ok || !txt.includes('catbox.moe')) throw new Error("Error subida imagen");
+                    imageUrl = txt.trim();
+                }
+                
+                const finalUserName = (currentUserData && currentUserData.username) ? currentUserData.username : (currentUser?.displayName || 'Usuario');
+                const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
+
+                const post = {
+                    text, imageUrl, title, tags, category,
+                    userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0
+                };
+                
+                await db.ref('feed_posts').push(post);
+                collapsePostArea(true); showToast("¡Publicado con éxito!");
+            } catch(e) { showAlert("Error: " + e.message); }
+            finally { 
+                btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = 'Publicar'; 
+                document.getElementById('upload-progress').classList.add('hidden'); 
+            }
         }
 
-        function filterByTag(tag) {
-            currentFilterTag = tag.replace('#', '').trim();
-            applyFiltersAndRender();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        // --- COMPRESS IMAGE FUNC ---
+        function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const maxSizeKB = 150;
+                if (file.size / 1024 <= maxSizeKB) { resolve(file); return; }
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = e => {
+                    const img = new Image(); img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width; canvas.height = img.height;
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(img,0,0,img.width,img.height);
+                        let q = 0.9, attempts=0;
+                        const tryC = () => {
+                            canvas.toBlob(blob => {
+                                if(!blob) reject("Error canvas");
+                                if(blob.size/1024 <= maxSizeKB || q<=0.1 || attempts++>20) resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {type:"image/jpeg", lastModified:Date.now()}));
+                                else { q-=0.05; tryC(); }
+                            }, 'image/jpeg', q);
+                        }; tryC();
+                    }; img.onerror=reject;
+                }; reader.onerror=reject;
+            });
         }
-        function clearTagFilter() { currentFilterTag = null; applyFiltersAndRender(); }
 
-        // --- LOGICA VISOR MODAL ---
-        function openViewerById(postId) {
-            currentModalIndex = displayedPosts.findIndex(p => p.id === postId);
+        // --- VIEWER LOGIC MEJORADO (SIMILARES) ---
+        function openViewerById(id) {
+            currentModalIndex = displayedPosts.findIndex(p => p.id === id);
             if (currentModalIndex === -1) return;
             updateModalContent();
-            const modal = document.getElementById('modal');
-            modal.classList.add('visible');
-            // Resetear estado de fullscreen al abrir
-            modal.classList.remove('fullscreen-mode');
+            document.getElementById('modal').classList.add('visible');
+            document.getElementById('modal').classList.remove('fullscreen-mode');
             document.body.style.overflow = 'hidden'; 
-        }
-
-        function toggleFullScreen() {
-            document.getElementById('modal').classList.toggle('fullscreen-mode');
-        }
-
-        function visitProfileFromModal() {
-            const post = displayedPosts[currentModalIndex];
-            if(post && post.userId) goToProfile(post.userId);
         }
 
         function updateModalContent() {
             const post = displayedPosts[currentModalIndex];
-            if (!post || !post.imageUrl) return;
-
+            if (!post) return;
             document.getElementById('modal-image').src = post.imageUrl;
             document.getElementById('modal-title').textContent = post.title || 'Sin Título';
             document.getElementById('modal-desc').innerHTML = (post.text || '').replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
             document.getElementById('modal-user-name').textContent = post.userName;
             document.getElementById('modal-user-pic').src = post.userAvatar;
             
-            const tagsContainer = document.getElementById('modal-tags');
-            tagsContainer.innerHTML = '';
+            // Tags Retráctiles Logic
+            const tagsDiv = document.getElementById('modal-tags');
+            const tagsBtn = document.getElementById('tags-toggle-btn');
+            tagsDiv.classList.add('hidden'); // Siempre iniciar oculto
+            tagsBtn.innerHTML = '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>';
+            tagsDiv.innerHTML = '';
+            
             if (post.tags) {
-                post.tags.split(',').forEach(t => {
-                    if(t.trim()) tagsContainer.innerHTML += `<span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600 cursor-pointer hover:border-orange-500 transition" onclick="filterByTagFromModal('${t.trim()}')">#${t.trim()}</span>`;
-                });
+                tagsBtn.style.display = 'flex';
+                post.tags.split(',').forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 border border-zinc-700 px-2 py-1 rounded-full cursor-pointer hover:border-orange-500 transition" onclick="filterByTagFromModal('${t.trim()}')">#${t.trim()}</span>`; });
+                // CARGAR SIMILARES
+                loadSimilarImagesInSlider(post.tags, post.id);
+            } else { 
+                tagsBtn.style.display = 'none';
+                document.getElementById('similar-grid').innerHTML = '<span class="text-xs text-gray-500 italic px-2">Sin etiquetas para buscar similitudes.</span>';
             }
 
-            const modalLikeBtn = document.getElementById('modal-like-btn');
-            const modalLikesCount = document.getElementById('modal-likes-count');
-            
-            modalLikeBtn.classList.remove('text-red-500', 'border-red-500/50', 'bg-red-500/10');
-            modalLikeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400"; 
-            modalLikeBtn.onclick = () => toggleLike(post.id);
-
+            const likeBtn = document.getElementById('modal-like-btn');
+            const likesCount = document.getElementById('modal-likes-count');
+            likeBtn.onclick = () => toggleLike(post.id);
             const uid = currentUser ? currentUser.uid : deviceID;
+            
             db.ref(`feed_likes/${post.id}/${uid}`).on('value', s => {
-                if(s.exists()) {
-                    modalLikeBtn.classList.add('text-red-500', 'border-red-500/50', 'bg-red-500/10');
-                    modalLikeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim";
-                } else {
-                    modalLikeBtn.classList.remove('text-red-500', 'border-red-500/50', 'bg-red-500/10');
-                    modalLikeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400";
-                }
+                if(s.exists()) { likeBtn.classList.add('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim"; } 
+                else { likeBtn.classList.remove('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400"; }
             });
-            db.ref(`feed_posts/${post.id}/likes`).on('value', s => {
-                modalLikesCount.innerText = s.val() || 0;
-            });
+            db.ref(`feed_posts/${post.id}/likes`).on('value', s => likesCount.innerText = s.val() || 0);
 
-            const commentsList = document.getElementById('modal-comments-list');
-            commentsList.innerHTML = '';
+            const commentsList = document.getElementById('modal-comments-list'); commentsList.innerHTML = '';
             db.ref(`feed_comments/${post.id}`).on('child_added', s => {
                 const c = s.val();
-                const div = document.createElement('div'); 
-                div.className = "flex gap-2 items-start text-sm animate-enter";
-                div.innerHTML = `
-                    <img src="${c.userAvatar}" class="w-8 h-8 rounded-full mt-1 border border-gray-700 object-cover flex-shrink-0 cursor-pointer" onclick="goToProfile('${c.userId}')">
-                    <div class="bg-[#222] p-3 rounded-2xl rounded-tl-none border border-white/5 w-full">
-                        <span class="font-bold text-gray-300 block text-xs mb-1 cursor-pointer hover:text-orange-400 transition" onclick="goToProfile('${c.userId}')">${c.userName}</span>
-                        <span class="text-gray-200 leading-snug block break-words">${c.text}</span>
-                    </div>`;
+                const div = document.createElement('div'); div.className = "flex gap-2 items-start text-sm animate-enter";
+                div.innerHTML = `<img src="${c.userAvatar}" class="w-8 h-8 rounded-full mt-1 border border-zinc-700 object-cover flex-shrink-0 cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800/50 p-3 rounded-2xl rounded-tl-none border border-zinc-700/50 w-full"><span class="font-bold text-gray-300 block text-xs mb-1 cursor-pointer hover:text-orange-400" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 leading-snug font-light">${c.text}</span></div>`;
                 commentsList.appendChild(div);
             });
-
-            document.getElementById('modal-prev').style.display = findPrevImageIndex(currentModalIndex) !== -1 ? 'flex' : 'none';
-            document.getElementById('modal-next').style.display = findNextImageIndex(currentModalIndex) !== -1 ? 'flex' : 'none';
+            document.getElementById('modal-prev').style.display = currentModalIndex > 0 ? 'flex' : 'none';
+            document.getElementById('modal-next').style.display = currentModalIndex < displayedPosts.length-1 ? 'flex' : 'none';
         }
 
-        function postCommentInModal(e) {
-            e.preventDefault();
-            const input = document.getElementById('modal-comment-input');
-            const post = displayedPosts[currentModalIndex];
-            if(!input.value.trim() || !post) return;
-            const finalUserName = (currentUserData && currentUserData.username) ? currentUserData.username : (currentUser?.displayName || 'Anónimo');
-            const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
-            const c = { text: input.value, userId: currentUser?currentUser.uid:'anon', userName: finalUserName, userAvatar: finalUserAvatar, timestamp: Date.now() };
-            db.ref(`feed_comments/${post.id}`).push(c); 
-            input.value = '';
+        // --- LÓGICA DE SIMILARES ---
+        function loadSimilarImagesInSlider(tagsString, currentId) {
+            const container = document.getElementById('similar-grid');
+            container.innerHTML = '';
+            if (!tagsString) return;
+            
+            const tags = tagsString.split(',').map(t => t.trim().toLowerCase());
+            // Buscar en todo el caché de posts
+            const candidates = allPostsCache.filter(p => p.id !== currentId && p.imageUrl);
+            
+            const scored = candidates.map(p => {
+                const pTags = (p.tags || '').toLowerCase().split(',').map(t => t.trim());
+                // Calcular coincidencia
+                const common = pTags.filter(t => tags.includes(t));
+                return { post: p, score: common.length };
+            }).filter(item => item.score > 0);
+            
+            // Ordenar por score
+            scored.sort((a, b) => b.score - a.score);
+            
+            if (scored.length === 0) {
+                container.innerHTML = '<span class="text-xs text-gray-500 italic px-2">No se encontraron imágenes similares.</span>';
+                return;
+            }
+
+            scored.slice(0, 10).forEach(item => {
+                const div = document.createElement('div');
+                div.className = "similar-card cursor-pointer group";
+                div.onclick = () => openViewerById(item.post.id);
+                div.innerHTML = `<img src="${item.post.imageUrl}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
+                container.appendChild(div);
+            });
         }
 
-        function findNextImageIndex(curr) { for (let i = curr + 1; i < displayedPosts.length; i++) if (displayedPosts[i].imageUrl) return i; return -1; }
-        function findPrevImageIndex(curr) { for (let i = curr - 1; i >= 0; i--) if (displayedPosts[i].imageUrl) return i; return -1; }
-        function navigateModal(dir) { 
-            let next = dir === 1 ? findNextImageIndex(currentModalIndex) : findPrevImageIndex(currentModalIndex); 
-            if (next !== -1) { 
-                const prevPost = displayedPosts[currentModalIndex];
-                if(prevPost) {
-                    db.ref(`feed_likes/${prevPost.id}`).off();
-                    db.ref(`feed_posts/${prevPost.id}/likes`).off();
-                    db.ref(`feed_comments/${prevPost.id}`).off();
-                }
-                currentModalIndex = next; 
-                updateModalContent(); 
-            } 
+        function toggleTags() {
+            const div = document.getElementById('modal-tags');
+            const btn = document.getElementById('tags-toggle-btn');
+            if (div.classList.contains('hidden')) { div.classList.remove('hidden'); btn.innerHTML = '<span>Ocultar etiquetas</span> <i class="fas fa-chevron-up"></i>'; } 
+            else { div.classList.add('hidden'); btn.innerHTML = '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>'; }
         }
 
-        // Swipe Logic
-        const modalImageArea = document.getElementById('modal-image-area');
-        modalImageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
-        modalImageArea.addEventListener('touchend', e => {
+        function navigateModal(dir) {
+            const prev = displayedPosts[currentModalIndex];
+            if(prev){ db.ref(`feed_likes/${prev.id}`).off(); db.ref(`feed_posts/${prev.id}/likes`).off(); db.ref(`feed_comments/${prev.id}`).off(); }
+            if (dir===1 && currentModalIndex<displayedPosts.length-1) currentModalIndex++;
+            else if (dir===-1 && currentModalIndex>0) currentModalIndex--;
+            updateModalContent();
+        }
+
+        // Swipe Modal
+        const modalArea = document.getElementById('modal-image-area');
+        modalArea.addEventListener('touchstart', e => touchStartX=e.changedTouches[0].screenX, {passive:true});
+        modalArea.addEventListener('touchend', e => {
             touchEndX = e.changedTouches[0].screenX;
-            if (Math.abs(touchEndX - touchStartX) > 50) { 
-                if (touchEndX < touchStartX) navigateModal(1); 
-                else navigateModal(-1); 
-            }
-        }, {passive: true});
+            if(Math.abs(touchEndX - touchStartX) > 50) { if(touchEndX < touchStartX) navigateModal(1); else navigateModal(-1); }
+        }, {passive:true});
 
-        document.getElementById('close-modal').addEventListener('click', () => {
-            const post = displayedPosts[currentModalIndex];
-            if(post) {
-                db.ref(`feed_likes/${post.id}`).off();
-                db.ref(`feed_posts/${post.id}/likes`).off();
-                db.ref(`feed_comments/${post.id}`).off();
-            }
-            document.getElementById('modal').classList.remove('visible');
-            document.body.style.overflow = 'auto';
-        });
+        document.getElementById('close-modal').onclick = () => {
+            const p = displayedPosts[currentModalIndex]; if(p){ db.ref(`feed_likes/${p.id}`).off(); db.ref(`feed_posts/${p.id}/likes`).off(); db.ref(`feed_comments/${p.id}`).off(); }
+            document.getElementById('modal').classList.remove('visible'); document.body.style.overflow='auto';
+        };
 
-        // --- UTILS ---
+        // --- HELPERS ---
         function switchView(mode) {
-            const feedC = document.getElementById('feed-list-container'); const gridC = document.getElementById('grid-view-container');
-            const btnF = document.getElementById('btn-view-feed'); const btnG = document.getElementById('btn-view-grid');
-            const trigger = document.getElementById('load-more-trigger');
-            if (mode === 'feed') { feedC.classList.remove('hidden'); gridC.classList.add('hidden'); btnF.classList.add('active'); btnG.classList.remove('active'); trigger.style.display = 'flex'; } 
-            else { feedC.classList.add('hidden'); gridC.classList.remove('hidden'); btnF.classList.remove('active'); btnG.classList.add('active'); trigger.style.display = 'flex'; }
+            const f=document.getElementById('feed-list-container'), g=document.getElementById('grid-view-container');
+            const bf=document.getElementById('btn-view-feed'), bg=document.getElementById('btn-view-grid');
+            if(mode==='feed'){ f.classList.remove('hidden'); g.classList.add('hidden'); bf.classList.add('active'); bg.classList.remove('active'); }
+            else{ f.classList.add('hidden'); g.classList.remove('hidden'); bf.classList.remove('active'); bg.classList.add('active'); }
         }
-
-        function toggleOptionsMenu(id) { const menu = document.getElementById(`options-menu-${id}`); document.querySelectorAll('.options-menu').forEach(m => { if(m !== menu) m.classList.remove('show'); }); menu.classList.toggle('show'); }
-        window.onclick = function(event) { if (!event.target.matches('.options-trigger') && !event.target.closest('.options-trigger')) { document.querySelectorAll('.options-menu').forEach(m => m.classList.remove('show')); } }
-        function deletePost(id) { if(confirm("¿Eliminar publicación?")) { db.ref('feed_posts/'+id).remove(); } }
-        function updateUserAvatarInUI(uid) {
-            if(!userProfileCache[uid]) {
-                db.ref(`users/${uid}/profilePic`).once('value', s => {
-                    const url = s.val() || 'https://placehold.co/100x100/333/fff?text=U';
-                    userProfileCache[uid] = url;
-                    document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = url);
-                });
-            } else { document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = userProfileCache[uid]); }
-        }
-        function timeAgo(ts) {
-            if(!ts) return ''; const s = Math.floor((Date.now() - ts)/1000);
-            if(s<60) return 'Hace un momento'; if(s<3600) return Math.floor(s/60)+'m'; if(s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d';
-        }
-
-        // --- UPLOAD POST ---
-        function expandPostArea() { document.getElementById('extra-fields').classList.add('expanded'); document.getElementById('post-text').rows = 3; }
-        function collapsePostArea() { if(!selectedFile && !document.getElementById('post-text').value) { document.getElementById('extra-fields').classList.remove('expanded'); document.getElementById('post-text').rows = 1; } }
-        function handleFileSelect(e) { selectedFile = e.target.files[0]; if(selectedFile) { document.getElementById('image-preview').src = URL.createObjectURL(selectedFile); document.getElementById('preview-container').classList.remove('hidden'); } }
-        function clearSelection() { selectedFile = null; document.getElementById('file-input').value = ''; document.getElementById('preview-container').classList.add('hidden'); }
+        function changeSortOrder(o) { currentSortOrder = o; applyFiltersAndRender(); }
+        function filterByTag(t) { currentFilterTag = t.replace('#','').trim(); applyFiltersAndRender(); window.scrollTo({top:0, behavior:'smooth'}); }
+        function filterByTagFromModal(t) { document.getElementById('close-modal').click(); filterByTag(t); }
+        function clearTagFilter() { currentFilterTag = null; applyFiltersAndRender(); }
+        function goToProfile(uid) { window.location.href = `profile.html?uid=${uid}`; }
+        function toggleFullScreen() { document.getElementById('modal').classList.toggle('fullscreen-mode'); }
+        function toggleOptionsMenu(id) { const m = document.getElementById(`options-menu-${id}`); document.querySelectorAll('.options-menu').forEach(x => {if(x!==m)x.classList.remove('show')}); m.classList.toggle('show'); }
+        window.onclick = e => { if(!e.target.closest('.options-trigger')) document.querySelectorAll('.options-menu').forEach(m=>m.classList.remove('show')); };
         
-        async function uploadPost() {
-            const text = document.getElementById('post-text').value.trim();
-            if (!text && !selectedFile) return alert("Escribe algo o sube foto");
-            
-            const btn = document.getElementById('publish-btn');
-            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            document.getElementById('upload-progress').classList.remove('hidden');
-            
-            let imageUrl = null;
-            if (selectedFile) {
-                const formData = new FormData(); formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', selectedFile);
-                try { const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData }); imageUrl = (await r.text()).trim(); } catch(e) { alert("Error subida"); btn.disabled=false; btn.innerHTML='Publicar'; return; }
-            }
-            
-            const finalUserName = (currentUserData && currentUserData.username) ? currentUserData.username : (currentUser?.displayName || 'Usuario');
-            const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
-
-            const post = {
-                text: text, imageUrl: imageUrl,
-                title: document.getElementById('post-title').value.trim(),
-                tags: document.getElementById('post-tags').value.trim(),
-                category: document.getElementById('post-category').value,
-                userId: currentUser.uid, 
-                userName: finalUserName,
-                userAvatar: finalUserAvatar,
-                timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0
-            };
-            
-            await db.ref('feed_posts').push(post);
-            
-            document.getElementById('post-text').value = ''; document.getElementById('post-title').value = ''; document.getElementById('post-tags').value = ''; 
-            clearSelection(); collapsePostArea();
-            btn.disabled = false; btn.innerHTML = 'Publicar';
-            document.getElementById('upload-progress').classList.add('hidden');
-        }
-
-        // --- LIKES & COMMENTS FEED ---
+        function deletePost(id) { showConfirm("¿Eliminar publicación?", () => db.ref('feed_posts/'+id).remove().then(()=>showToast("Eliminado"))); }
+        
         function toggleLike(id) {
+            if(!currentUser && !deviceID) return showAlert("Inicia sesión para dar like.");
             const uid = currentUser ? currentUser.uid : deviceID;
             const ref = db.ref(`feed_likes/${id}/${uid}`);
             ref.once('value', s => {
@@ -823,7 +949,6 @@
             });
             db.ref(`feed_posts/${id}/likes`).on('value', s => { const el = document.getElementById(`likes-count-${id}`); if(el) el.innerText = s.val() || 0; });
         }
-
         function toggleComments(id) {
             const el = document.getElementById(`comments-${id}`);
             if(el.classList.contains('hidden')) {
@@ -832,27 +957,59 @@
                 db.ref(`feed_comments/${id}`).on('child_added', s => {
                     const c = s.val();
                     const div = document.createElement('div'); div.className = "flex gap-2 items-start text-sm animate-enter";
-                    div.innerHTML = `<img src="${c.userAvatar}" class="w-6 h-6 rounded-full mt-1 border border-gray-700 object-cover cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-gray-800 p-2.5 rounded-2xl rounded-tl-none"><span class="font-bold text-gray-300 block text-xs mb-0.5 cursor-pointer hover:text-orange-400 transition" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200">${c.text}</span></div>`;
+                    div.innerHTML = `<img src="${c.userAvatar}" class="w-6 h-6 rounded-full mt-1 border border-zinc-700 object-cover cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800 p-2.5 rounded-2xl rounded-tl-none"><span class="font-bold text-gray-300 block text-xs mb-0.5 cursor-pointer hover:text-orange-400" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 font-light">${c.text}</span></div>`;
                     document.getElementById(`comments-list-${id}`).appendChild(div);
                 });
-            } else { el.classList.add('hidden'); }
+            } else el.classList.add('hidden');
         }
-
         function postComment(e, id) {
             e.preventDefault(); const input = document.getElementById(`comment-input-${id}`);
             if(!input.value.trim()) return;
-            const finalUserName = (currentUserData && currentUserData.username) ? currentUserData.username : (currentUser?.displayName || 'Anónimo');
-            const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
-            const c = { text: input.value, userId: currentUser?currentUser.uid:'anon', userName: finalUserName, userAvatar: finalUserAvatar, timestamp: Date.now() };
-            db.ref(`feed_comments/${id}`).push(c); input.value = '';
+            const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo');
+            const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U';
+            db.ref(`feed_comments/${id}`).push({ text:input.value, userId:currentUser?currentUser.uid:'anon', userName:uN, userAvatar:uA, timestamp:Date.now() });
+            input.value='';
+        }
+        function updateUserAvatarInUI(uid) {
+            if(!userProfileCache[uid]) db.ref(`users/${uid}/profilePic`).once('value', s => { const url = s.val()||'https://placehold.co/100x100/333/fff?text=U'; userProfileCache[uid]=url; document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = url); });
+            else document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = userProfileCache[uid]);
+        }
+        function timeAgo(ts) {
+            if(!ts) return ''; const s = Math.floor((Date.now()-ts)/1000);
+            if(s<60) return 'Hace un momento'; if(s<3600) return Math.floor(s/60)+'m'; if(s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d';
         }
 
-        // --- AUTH HELPERS ---
-        function switchAuthTab(t) { document.getElementById('login-form').style.display = t==='login'?'flex':'none'; document.getElementById('register-step-1').style.display = t==='login'?'none':'flex'; document.getElementById('tab-login').className = t==='login'?"text-orange-500 border-b-2 border-orange-500 pb-1":"text-gray-400 pb-1 hover:text-white"; document.getElementById('tab-register').className = t==='login'?"text-gray-400 pb-1 hover:text-white":"text-orange-500 border-b-2 border-orange-500 pb-1"; }
+        // --- AUTH ---
+        function switchAuthTab(t) { document.getElementById('login-form').style.display=t==='login'?'flex':'none'; document.getElementById('register-step-1').style.display=t==='login'?'none':'flex'; document.getElementById('register-step-2').style.display='none'; document.getElementById('tab-login').className=t==='login'?"text-orange-500 border-b-2 border-orange-500 pb-1":"text-gray-400 pb-1 hover:text-white"; document.getElementById('tab-register').className=t==='login'?"text-gray-400 pb-1 hover:text-white":"text-orange-500 border-b-2 border-orange-500 pb-1"; }
+        document.getElementById('login-form').onsubmit = e => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value).catch(err=>showAlert(err.message)); };
         function authBackToStep1() { document.getElementById('register-step-2').style.display='none'; document.getElementById('register-step-1').style.display='flex'; }
-        async function validateAuthStep1() { document.getElementById('register-step-1').style.display='none'; document.getElementById('register-step-2').style.display='flex'; }
-        async function handleAuthFileUpload(e) { const f = e.target.files[0]; if(!f) return; document.getElementById('auth-preview-img').src = URL.createObjectURL(f); }
-
+        async function handleAuthFileUpload(e) { 
+            const f = e.target.files[0]; if(!f) return;
+            document.getElementById('auth-preview-img').src = URL.createObjectURL(f);
+            isUploadingAuth=true; document.getElementById('btn-step-1').innerText = "PROCESANDO..."; document.getElementById('btn-step-1').disabled=true;
+            try {
+                const cF = await compressImage(f);
+                const fd = new FormData(); fd.append('reqtype','fileupload'); fd.append('userhash',CATBOX_USERHASH); fd.append('fileToUpload', cF);
+                const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", {method:'POST', body:fd});
+                const t = await r.text();
+                document.getElementById('reg-photo-url').value = t.trim();
+            } catch(e){ showAlert("Error imagen: "+e.message); }
+            finally { isUploadingAuth=false; document.getElementById('btn-step-1').innerText="Continuar"; document.getElementById('btn-step-1').disabled=false; }
+        }
+        function validateAuthStep1() {
+            if(isUploadingAuth) return;
+            const n = document.getElementById('reg-name').value; const a = document.getElementById('reg-age').value;
+            if(!n || !a) return showAlert("Completa nombre y edad.");
+            authDataCache = {name:n, age:a, photo:document.getElementById('reg-photo-url').value};
+            document.getElementById('register-step-1').style.display='none'; document.getElementById('register-step-2').style.display='flex';
+        }
+        document.getElementById('register-step-2').onsubmit = e => {
+            e.preventDefault(); const p1 = document.getElementById('reg-password').value; const p2 = document.getElementById('reg-confirm-password').value;
+            if(p1!==p2) return showAlert("Contraseñas no coinciden.");
+            auth.createUserWithEmailAndPassword(document.getElementById('reg-email').value, p1).then(c => {
+                db.ref('users/'+c.user.uid).set({username:authDataCache.name, age:authDataCache.age, profilePic:authDataCache.photo||null, email:c.user.email, slogan:"..."});
+            }).catch(err=>showAlert(err.message));
+        };
     </script>
 </body>
 </html>
