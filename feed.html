@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- Face API (Procesamiento Gratuito y Local) -->
+    <!-- Face API (Manteniendo tu librería original) -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
     <!-- Firebase -->
@@ -24,26 +24,19 @@
     <style>
         :root { 
             --accent: #f97316; 
-            --accent-glow: rgba(251, 146, 60, 0.4);
             --bg-dark: #09090b;
             --border-color: rgba(255, 255, 255, 0.08);
-            --title-font: 'Poppins', sans-serif;
             --body-font: 'Inter', sans-serif;
         }
         /* Ajustes Globales */
         html, body {
-            overflow-x: hidden;
-            width: 100%;
-            background-color: var(--bg-dark);
-            overscroll-behavior-y: none;
-            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden; width: 100%; background-color: var(--bg-dark);
+            overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent;
         }
         body { 
             font-family: var(--body-font); 
             background-image: radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.06) 0%, transparent 50%);
-            color: #f3f4f6;
-            padding-bottom: 90px; /* Espacio para navbar */
-            min-height: 100vh;
+            color: #f3f4f6; padding-bottom: 90px; min-height: 100vh;
         }
 
         /* Scrollbars */
@@ -54,109 +47,47 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* Loaders & Auth */
-        #initial-loader {
-            position: fixed; inset: 0; z-index: 10000;
-            background-color: var(--bg-dark);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease;
-        }
+        #initial-loader { position: fixed; inset: 0; z-index: 10000; background-color: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
         
-        #auth-overlay {
-            position: fixed; inset: 0; z-index: 9999;
-            background-color: rgba(9, 9, 11, 0.98);
-            backdrop-filter: blur(10px);
-            display: none;
-            align-items: center; justify-content: center;
-            padding: 1.5rem;
-            overflow-y: auto;
-        }
-        .form-card {
-            background: #18181b;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-            width: 100%; max-width: 400px;
-        }
-        .input-field {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-color);
-            transition: all 0.3s ease; color: white;
-        }
+        #auth-overlay { position: fixed; inset: 0; z-index: 9999; background-color: rgba(9, 9, 11, 0.98); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; padding: 1.5rem; overflow-y: auto; }
+        .form-card { background: #18181b; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); width: 100%; max-width: 400px; }
+        .input-field { background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); transition: all 0.3s ease; color: white; }
         .input-field:focus { border-color: var(--accent); outline: none; background: rgba(0,0,0,0.6); }
         .btn-primary { background: linear-gradient(135deg, #f97316, #ea580c); transition: transform 0.2s; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3); }
         .btn-primary:active { transform: scale(0.97); }
         .hidden-step { display: none; }
 
         /* Feed Cards */
-        .feed-card {
-            background-color: #18181b;
-            border: 1px solid var(--border-color);
-            border-radius: 1rem;
-            margin-bottom: 1.5rem;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-            position: relative;
-            width: 100%;
-        }
+        .feed-card { background-color: #18181b; border: 1px solid var(--border-color); border-radius: 1rem; margin-bottom: 1.5rem; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.4); position: relative; width: 100%; }
         .animate-enter { animation: slideUpFade 0.4s ease-out forwards; }
         @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Upload Area Mejorado */
-        .upload-card {
-            background: linear-gradient(145deg, #18181b, #121212);
-            border: 1px solid rgba(249, 115, 22, 0.15);
-        }
-        #extra-fields {
-            max-height: 0; opacity: 0; overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
-        }
-        #extra-fields.expanded {
-            max-height: 800px; opacity: 1; margin-top: 12px; padding-top: 12px;
-            border-top: 1px solid var(--border-color);
-            overflow: visible !important;
-        }
+        /* Upload Area */
+        .upload-card { background: linear-gradient(145deg, #18181b, #121212); border: 1px solid rgba(249, 115, 22, 0.15); }
+        #extra-fields { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease; }
+        #extra-fields.expanded { max-height: 1200px; opacity: 1; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); overflow: visible !important; }
         .custom-input { background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; transition: all 0.3s; }
         .custom-input:focus { outline: none; border-color: var(--accent); background: rgba(0,0,0,0.4); }
 
-        /* Estilos de Auto-Tagging */
+        /* Dropdowns Personalizados */
+        .custom-select-container { position: relative; width: 100%; }
+        .custom-select-trigger { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; border-radius: 10px; color: #9ca3af; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; min-height: 44px; }
+        .custom-select-trigger:active, .custom-select-trigger.active { border-color: var(--accent); color: white; background: rgba(0,0,0,0.4); }
+        .custom-select-options { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #1c1c1f; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; z-index: 50; max-height: 0; overflow: hidden; opacity: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8); transform-origin: top center; transform: scaleY(0.95); }
+        .custom-select-options.show { max-height: 300px; opacity: 1; overflow-y: auto; transform: scaleY(1); }
+        .option-item { padding: 14px 16px; cursor: pointer; color: #d1d5db; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; align-items: center; gap: 10px; }
+        .option-item:active { background: rgba(249, 115, 22, 0.2); color: white; }
+        .special-option { color: var(--accent); font-weight: 600; background: rgba(249, 115, 22, 0.05); }
+
+        /* Auto-Tagging & Suggestions */
         .tags-readonly { background: rgba(0,0,0,0.4); cursor: not-allowed; border-style: dashed; opacity: 0.8; }
-        .tags-readonly:focus { border-color: var(--border-color); }
-        .tag-status-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); z-index: 10; font-size: 14px; }
-        .status-loading { color: #fb923c; animation: spin 1s linear infinite; }
-        .status-success { color: #4ade80; }
-        .status-error { color: #ef4444; }
-        .status-lock { color: #6b7280; }
-        @keyframes spin { 100% { transform: translateY(-50%) rotate(360deg); } }
-        @keyframes glowText { 0% { opacity: 0.5; } 50% { opacity: 1; color: #fb923c; } 100% { opacity: 0.5; } }
-        .analyzing-text { animation: glowText 1.5s infinite; font-style: italic; }
         .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); pointer-events: none; }
 
-        /* SUGERENCIAS DE PERSONAJES (NUEVO) */
-        .suggestions-dropdown {
-            position: absolute;
-            top: 100%; left: 0; right: 0;
-            background: rgba(24, 24, 27, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border-color);
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            z-index: 50;
-            max-height: 200px;
-            overflow-y: auto;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            display: none;
-        }
+        .suggestions-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: rgba(24, 24, 27, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 10px 10px; z-index: 50; max-height: 200px; overflow-y: auto; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); display: none; }
         .suggestions-dropdown.visible { display: block; animation: fadeIn 0.2s ease-out; }
-        .suggestion-item {
-            padding: 10px 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            transition: background 0.2s;
-        }
+        .suggestion-item { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; }
         .suggestion-item:last-child { border-bottom: none; }
         .suggestion-item:hover, .suggestion-item:active { background: rgba(249, 115, 22, 0.1); }
         .suggestion-name { font-weight: 500; color: #e4e4e7; font-size: 0.9rem; }
@@ -170,16 +101,37 @@
         .grid-item:active img { transform: scale(0.96); opacity: 0.8; }
         .grid-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%); display: flex; align-items: flex-end; padding: 4px; opacity: 1; }
 
+        /* COLLAGE CSS (USADO EN PREVIEW Y FEED) */
+        .collage-container { width: 100%; overflow: hidden; position: relative; background-color: #09090b; border: 1px solid var(--border-color); border-radius: 8px; margin-top: 0.5rem; }
+        
+        /* 1 Image */
+        .collage-1 { height: auto; max-height: 500px; display: flex; align-items: center; justify-content: center; background: black; }
+        .collage-1 img { width: 100%; height: auto; max-height: 500px; object-fit: contain; }
+        
+        /* 2 Images (Split Vertical) */
+        .collage-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; height: 300px; }
+        .collage-2 img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* 3 Images (Revista: 1 Izq Grande, 2 Der Apiladas) */
+        .collage-3 { display: grid; grid-template-columns: 1.5fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; height: 350px; }
+        .collage-3 .img-slot-0 { grid-row: 1 / 3; grid-column: 1 / 2; height: 100%; position: relative; }
+        .collage-3 .img-slot-1 { grid-row: 1 / 2; grid-column: 2 / 3; height: 100%; position: relative; }
+        .collage-3 .img-slot-2 { grid-row: 2 / 3; grid-column: 2 / 3; height: 100%; position: relative; }
+        .collage-3 img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        /* Estilos del Preview Grid */
+        #preview-grid-container { display: none; width: 100%; margin-bottom: 15px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+        .preview-remove-btn { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; border: 1px solid rgba(255,255,255,0.3); transition: transform 0.2s; }
+        .preview-remove-btn:hover { background: #ef4444; border-color: #ef4444; }
+        .preview-remove-btn:active { transform: scale(0.9); }
+        .preview-img-wrapper { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
         /* Navbar & Botones */
         .bottom-nav { background-color: rgba(9, 9, 11, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--border-color); z-index: 3000; padding-bottom: env(safe-area-inset-bottom); }
         .nav-item { color: #71717a; transition: all 0.3s ease; }
         .nav-item.active { color: var(--accent); }
         .toggle-btn { background: transparent; border: 1px solid #333; color: #666; transition: all 0.2s; }
         .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
-
-        /* Animaciones Feed */
-        .like-anim { animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes likeBounce { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
         /* Visor Modal */
         .modal-backdrop { display: none; position: fixed; inset: 0; background-color: #000; z-index: 7000; } 
@@ -189,23 +141,17 @@
         .fullscreen-mode .info-panel { display: none !important; }
         .fullscreen-mode .image-area { width: 100% !important; height: 100vh !important; flex: none !important; }
 
-        .nav-arrow {
-            position: absolute; top: 50%; transform: translateY(-50%); z-index: 20;
-            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); border-radius: 50%;
-            color: white; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s;
-        }
+        .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 20; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); border-radius: 50%; color: white; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s; }
         .nav-arrow:active { background: var(--accent); }
         .nav-prev { left: 15px; } .nav-next { right: 15px; }
+        
+        /* Carousel interno del modal */
+        .carousel-dots { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 25; pointer-events: none; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3); transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .dot.active { background: #fff; transform: scale(1.3); }
 
-        /* Similar Cards (Visor) */
-        .similar-card {
-            min-width: 90px; width: 90px; aspect-ratio: 1/1;
-            border-radius: 0.5rem; overflow: hidden; position: relative;
-            flex-shrink: 0; scroll-snap-align: start;
-            border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s;
-            background-color: #1a1a1c;
-        }
+        /* Similar Cards */
+        .similar-card { min-width: 90px; width: 90px; aspect-ratio: 1/1; border-radius: 0.5rem; overflow: hidden; position: relative; flex-shrink: 0; scroll-snap-align: start; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s; background-color: #1a1a1c; }
         .similar-card:active { transform: scale(0.95); border-color: var(--accent); }
         .similar-card img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -215,21 +161,23 @@
         .options-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #ccc; font-size: 0.95rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .options-item:last-child { border-bottom: none; }
         @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        
+        .like-anim { animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes likeBounce { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
-        /* Select Personalizado en Feed */
         select.custom-input { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
     </style>
 </head>
 <body class="antialiased select-none">
 
-    <!-- PANTALLA DE CARGA -->
+    <!-- LOADER -->
     <div id="initial-loader">
         <img src="https://files.catbox.moe/ap1lh0.png" class="loader-logo">
         <i class="fas fa-circle-notch fa-spin text-orange-500 text-2xl"></i>
         <p id="loader-status" class="text-gray-500 text-xs mt-4 animate-pulse">Cargando comunidad...</p>
     </div>
 
-    <!-- TOAST (Notificaciones) -->
+    <!-- TOAST -->
     <div id="toast-container" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[9000] pointer-events-none transition-all duration-300 opacity-0 translate-y-4">
         <div class="bg-zinc-900/95 backdrop-blur-md border border-zinc-700 px-6 py-3 rounded-full text-white font-medium shadow-2xl flex items-center gap-3">
             <i class="fas fa-check-circle text-green-500 text-lg"></i>
@@ -237,7 +185,7 @@
         </div>
     </div>
 
-    <!-- ALERTAS PERSONALIZADAS -->
+    <!-- ALERTAS -->
     <div id="custom-alert" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
         <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
             <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-500/20"><i class="fas fa-exclamation text-red-500 text-2xl"></i></div>
@@ -259,7 +207,7 @@
         </div>
     </div>
 
-    <!-- LOGIN OVERLAY -->
+    <!-- LOGIN -->
     <div id="auth-overlay">
         <div class="form-card rounded-2xl p-8 relative overflow-hidden">
             <div class="text-center mb-8">
@@ -293,7 +241,6 @@
 
     <!-- APP CONTENT -->
     <div id="app-content" style="display: none;">
-        <!-- Header -->
         <header class="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-8 w-auto">
@@ -306,7 +253,7 @@
 
         <main class="container mx-auto max-w-lg px-0 sm:px-4 py-2 overflow-x-hidden">
             
-            <!-- Upload Section -->
+            <!-- UPLOAD CARD MEJORADA -->
             <div class="px-2 sm:px-0">
                 <div class="feed-card upload-card p-4 rounded-2xl mb-4">
                     <div class="flex gap-3 items-center mb-2">
@@ -314,47 +261,67 @@
                             <img id="post-avatar" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-1 relative">
-                            <textarea id="post-text" rows="1" maxlength="500" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" placeholder="¿Qué quieres compartir?" onfocus="expandPostArea()" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                            <textarea id="post-text" rows="1" maxlength="500" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" placeholder="¿Qué estás pensando?" onfocus="expandPostArea()" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
                         </div>
-                        <label class="flex items-center justify-center text-orange-500 cursor-pointer active:scale-90 transition p-2 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700">
-                            <i class="fas fa-image text-lg"></i>
-                            <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event); expandPostArea()">
-                        </label>
                     </div>
                     
-                    <div id="preview-container" class="relative hidden mt-3 rounded-xl overflow-hidden border border-zinc-700 group bg-black/40">
-                        <img id="image-preview" src="" class="w-full h-auto max-h-64 object-contain bg-black">
-                        <button onclick="clearSelection()" class="absolute top-2 right-2 bg-black/60 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center active:scale-90 transition z-10 backdrop-blur-sm"><i class="fas fa-times"></i></button>
+                    <!-- PREVIEW GRID: Se muestra inmediatamente al seleccionar imágenes -->
+                    <div id="preview-grid-container" class="hidden animate-enter bg-black/50 border border-zinc-800 rounded-xl overflow-hidden mb-3">
+                        <!-- El contenido se inyecta por JS -->
                     </div>
                     
                     <div id="extra-fields">
                         <div class="flex flex-col gap-3">
-                            <input type="text" id="post-title" maxlength="30" placeholder="Título (Opcional)" class="custom-input font-bold bg-black/20 border-zinc-700">
                             
-                            <!-- Input de Personaje CON SUGERENCIAS -->
-                            <div class="relative w-full">
-                                <input type="text" id="post-character" maxlength="30" placeholder="Nombre del personaje (Opcional)" class="custom-input bg-black/20 border-zinc-700" autocomplete="off">
-                                <!-- Contenedor de Sugerencias -->
-                                <div id="character-suggestions" class="suggestions-dropdown custom-scrollbar">
-                                    <!-- Se llena dinámicamente con JS -->
+                            <!-- BOTONES ESTILO FACEBOOK -->
+                            <div class="flex items-center gap-2 border-t border-b border-zinc-800 py-2 my-1">
+                                <label class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg hover:bg-zinc-800 cursor-pointer transition active:scale-95 group">
+                                    <i class="fas fa-images text-green-500 text-lg group-hover:scale-110 transition-transform"></i>
+                                    <span class="text-xs font-bold text-gray-400 group-hover:text-white">Fotos (Max 3)</span>
+                                    <!-- INPUT MULTIPLE -->
+                                    <input type="file" id="file-input" accept="image/*" class="hidden" multiple onchange="handleFileSelect(event)">
+                                </label>
+                                <div class="w-[1px] h-6 bg-zinc-800"></div>
+                                <div class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg hover:bg-zinc-800 cursor-pointer transition active:scale-95 group" onclick="toggleCustomSelect('dropdown-collection')">
+                                    <i class="fas fa-folder text-blue-500 text-lg group-hover:scale-110 transition-transform"></i>
+                                    <span class="text-xs font-bold text-gray-400 group-hover:text-white">Álbum</span>
                                 </div>
                             </div>
+
+                            <input type="text" id="post-title" maxlength="30" placeholder="Título (Opcional)" class="custom-input font-bold bg-black/20 border-zinc-700">
                             
-                            <!-- Tags OCULTOS visualmente pero funcionales -->
-                            <div class="hidden">
-                                <input type="text" id="post-tags" placeholder="Auto-tagging..." readonly>
-                                <i id="tag-status-icon"></i>
-                            </div>
-                            
-                            <!-- Categoría (Full Width) -->
+                            <!-- Input Personaje -->
                             <div class="relative w-full">
-                                <select id="post-category" class="custom-input bg-black/40 border-zinc-700 appearance-none pl-3 pr-8 text-xs h-full w-full">
-                                    <option value="" disabled selected>Categoría</option>
-                                    <option value="anime">Anime</option><option value="furry">Furry</option><option value="realismo">Realismo</option>
-                                    <option value="mecas">Mecas</option><option value="devils">Devils</option><option value="colors">ColorFull</option>
-                                    <option value="amateur">Amateur</option><option value="tvgames">TV/Games</option>
-                                </select>
+                                <input type="text" id="post-character" maxlength="30" placeholder="Nombre del personaje (Opcional)" class="custom-input bg-black/20 border-zinc-700" autocomplete="off">
+                                <div id="character-suggestions" class="suggestions-dropdown custom-scrollbar"></div>
                             </div>
+                            
+                            <!-- Categoría y Colección -->
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <div class="relative w-full">
+                                    <select id="post-category" class="custom-input bg-black/40 border-zinc-700 appearance-none pl-3 pr-8 text-xs h-full w-full">
+                                        <option value="" disabled selected>Categoría</option>
+                                        <option value="anime">Anime</option><option value="furry">Furry</option><option value="realismo">Realismo</option>
+                                        <option value="mecas">Mecas</option><option value="devils">Devils</option><option value="colors">ColorFull</option>
+                                        <option value="amateur">Amateur</option><option value="tvgames">TV/Games</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Dropdown Álbum -->
+                                <div class="custom-select-container w-full" id="dropdown-collection">
+                                    <input type="hidden" id="post-collection" value="">
+                                    <button type="button" class="custom-select-trigger" onclick="toggleCustomSelect('dropdown-collection')">
+                                        <span id="display-collection"><i class="fas fa-folder mr-2 text-xs text-orange-500"></i> Álbum</span><i class="fas fa-chevron-down text-xs"></i>
+                                    </button>
+                                    <div id="collection-options-list" class="custom-select-options custom-scrollbar"></div>
+                                </div>
+                            </div>
+
+                            <div id="new-collection-container" class="hidden animate-enter">
+                                <input type="text" id="new-collection-name" maxlength="15" placeholder="Nombre de la nueva colección..." class="custom-input bg-orange-900/10 border-orange-500/30 text-sm focus:bg-orange-900/20">
+                            </div>
+                            
+                            <div class="hidden"><input type="text" id="post-tags" placeholder="Auto-tagging..." readonly><i id="tag-status-icon"></i></div>
                             
                             <div class="flex gap-3 mt-2 pt-3 border-t border-white/5">
                                 <button onclick="collapsePostArea()" class="flex-1 py-2 rounded-xl text-gray-400 text-sm font-semibold hover:bg-zinc-800 transition active:scale-95">Cancelar</button>
@@ -366,57 +333,59 @@
                 </div>
             </div>
 
-            <!-- Barra de Filtrado -->
+            <!-- FILTRO -->
             <div id="filter-bar" class="px-2 sm:px-0 mb-4 hidden animate-fade-in">
                 <div class="bg-orange-900/20 border border-orange-500/30 rounded-xl p-3 flex justify-between items-center">
-                    <span class="text-xs text-orange-200 font-bold flex items-center gap-2">
-                        <i class="fas fa-filter"></i> Filtrando: <span id="active-filter-tag" class="bg-orange-500 text-white px-2 py-0.5 rounded">#tag</span>
-                    </span>
+                    <span class="text-xs text-orange-200 font-bold flex items-center gap-2"><i class="fas fa-filter"></i> Filtrando: <span id="active-filter-tag" class="bg-orange-500 text-white px-2 py-0.5 rounded">#tag</span></span>
                     <button onclick="clearTagFilter()" class="text-xs text-gray-400 hover:text-white underline">Borrar</button>
                 </div>
             </div>
 
-            <!-- Controles -->
+            <!-- CONTROLES -->
             <div class="flex justify-between items-center gap-2 mb-4 px-2 sm:px-0">
                 <div class="flex bg-zinc-900/80 p-1 rounded-xl border border-zinc-800">
                     <button onclick="switchView('feed')" id="btn-view-feed" class="toggle-btn active px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2"><i class="fas fa-stream"></i></button>
                     <button onclick="switchView('grid')" id="btn-view-grid" class="toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2"><i class="fas fa-th"></i></button>
                 </div>
-                
                 <div class="relative">
                     <select id="sort-select" onchange="changeSortOrder(this.value)" class="bg-zinc-900/80 text-xs text-gray-300 border border-zinc-800 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-500 appearance-none pr-8">
-                        <option value="newest">✨ Recientes</option>
-                        <option value="oldest">📅 Antiguos</option>
-                        <option value="likes">🔥 Populares</option>
+                        <option value="newest">✨ Recientes</option><option value="oldest">📅 Antiguos</option><option value="likes">🔥 Populares</option>
                     </select>
                     <i class="fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 pointer-events-none"></i>
                 </div>
             </div>
 
-            <!-- FEED & GRID -->
+            <!-- FEED LIST & GRID -->
             <div id="feed-list-container" class="flex flex-col gap-4 pb-10 px-2 sm:px-0 min-h-[300px]"></div>
             <div id="grid-view-container" class="grid-mode-container hidden pb-20 px-0"></div>
             
             <div id="load-more-trigger" class="h-16 w-full flex justify-center items-center my-4">
-                <div id="scroll-spinner" class="flex flex-col items-center gap-2 opacity-0 transition-opacity duration-300">
-                    <i class="fas fa-circle-notch fa-spin text-orange-500 text-2xl"></i>
-                </div>
+                <div id="scroll-spinner" class="flex flex-col items-center gap-2 opacity-0 transition-opacity duration-300"><i class="fas fa-circle-notch fa-spin text-orange-500 text-2xl"></i></div>
             </div>
-
         </main>
 
-        <!-- VISOR MODAL MEJORADO -->
+        <!-- VISOR (MODAL) -->
         <div id="modal" class="modal-backdrop overflow-hidden">
             <button id="close-modal" class="fixed top-4 right-4 z-[8000] h-10 w-10 flex items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-times text-lg"></i></button>
-
             <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black transition-all duration-300">
                 <div class="image-area relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[55vh] lg:h-full" id="modal-image-area">
                     <img id="modal-image" src="" class="max-w-full max-h-full object-contain w-auto h-auto transition-transform duration-300">
+                    
+                    <!-- Navegación entre POSTS -->
                     <button id="modal-prev" class="nav-arrow nav-prev" onclick="navigateModal(-1)"><i class="fas fa-chevron-left"></i></button>
                     <button id="modal-next" class="nav-arrow nav-next" onclick="navigateModal(1)"><i class="fas fa-chevron-right"></i></button>
+                    
+                    <!-- Navegación interna (Multi-Imagen) -->
+                    <div id="internal-carousel-nav" class="hidden w-full h-full absolute inset-0 pointer-events-none">
+                         <!-- Zonas de toque invisibles para navegar -->
+                         <div onclick="navigateInternalCarousel(-1)" class="pointer-events-auto absolute left-0 top-0 bottom-0 w-[15%] z-10 cursor-pointer hover:bg-white/5 transition"></div>
+                         <div onclick="navigateInternalCarousel(1)" class="pointer-events-auto absolute right-0 top-0 bottom-0 w-[15%] z-10 cursor-pointer hover:bg-white/5 transition"></div>
+                         <!-- Puntos indicadores -->
+                         <div id="carousel-dots" class="carousel-dots"></div>
+                    </div>
+
                     <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-zinc-800/80 text-white p-2.5 rounded-xl backdrop-blur-md border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-expand text-sm"></i></button>
                 </div>
-
                 <div class="info-panel w-full lg:w-[400px] lg:h-full bg-[#121214] border-l border-zinc-800 flex flex-col h-[45vh] z-30 relative shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
                     <div class="p-4 border-b border-zinc-800 flex items-center justify-between bg-[#18181b] flex-shrink-0">
                         <div class="flex items-center gap-3 cursor-pointer hover:opacity-80" onclick="visitProfileFromModal()">
@@ -427,41 +396,24 @@
                             <i class="far fa-heart text-lg group-active:scale-125 transition-transform text-gray-400"></i><span id="modal-likes-count" class="text-xs font-bold text-white">0</span>
                         </button>
                     </div>
-
                     <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#121214]">
                         <div class="mb-5">
                             <h3 id="modal-title" class="text-xl font-bold text-white mb-2 font-[Poppins] leading-snug"></h3>
-                            <!-- Etiqueta de Personaje en el Visor (CLICKEABLE) -->
                             <div id="modal-character-tag-container" class="hidden mb-2">
-                                <button id="modal-character-btn" onclick="" class="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-orange-500/20 transition active:scale-95">
-                                    <i class="fas fa-user-tag text-[10px]"></i> <span id="modal-character-name"></span>
-                                </button>
+                                <button id="modal-character-btn" onclick="" class="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-orange-500/20 transition active:scale-95"><i class="fas fa-user-tag text-[10px]"></i> <span id="modal-character-name"></span></button>
                             </div>
                             <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-light"></p>
                         </div>
-                        
-                        <!-- Tags Retráctiles -->
                         <div class="mb-6 border-b border-zinc-800 pb-4">
-                            <button onclick="toggleTags()" id="tags-toggle-btn" class="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 hover:text-orange-500 transition-colors mb-2">
-                                <span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>
-                            </button>
+                            <button onclick="toggleTags()" id="tags-toggle-btn" class="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 hover:text-orange-500 transition-colors mb-2"><span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i></button>
                             <div id="modal-tags" class="hidden flex flex-wrap gap-2 mt-3"></div>
                         </div>
-
-                        <!-- Imágenes Similares -->
                         <div class="mb-6 border-b border-zinc-800 pb-4">
                             <h4 class="text-[11px] font-bold text-gray-500 uppercase mb-3 tracking-widest flex items-center gap-2"><i class="fas fa-th-large"></i> Similares</h4>
-                            <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-3 snap-x no-scrollbar">
-                                <span class="text-xs text-gray-600 italic px-2">Buscando...</span>
-                            </div>
+                            <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-3 snap-x no-scrollbar"><span class="text-xs text-gray-600 italic px-2">Buscando...</span></div>
                         </div>
-
-                        <div>
-                            <h4 class="text-[11px] font-bold text-gray-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h4>
-                            <div id="modal-comments-list" class="flex flex-col gap-4 pb-4"></div>
-                        </div>
+                        <div><h4 class="text-[11px] font-bold text-gray-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h4><div id="modal-comments-list" class="flex flex-col gap-4 pb-4"></div></div>
                     </div>
-
                     <div class="p-3 bg-[#18181b] border-t border-zinc-800 flex-shrink-0 safe-bottom">
                         <form onsubmit="postCommentInModal(event)" class="flex gap-2 relative">
                             <input type="text" id="modal-comment-input" maxlength="200" class="w-full bg-zinc-900 border border-zinc-700 rounded-full pl-5 pr-12 py-3 text-sm text-white focus:border-orange-500 focus:outline-none transition-colors" placeholder="Comentario..." autocomplete="off">
@@ -479,10 +431,11 @@
         </nav>
     </div>
 
-    <!-- SCRIPT DE GRADIO PARA AUTO-TAGGING -->
+    <!-- SCRIPT DE GRADIO -->
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
         const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
+        
         async function resizeImageForApi(file) {
             if (file.size <= 1024 * 1024) return file;
             return new Promise((resolve) => {
@@ -493,8 +446,9 @@
                 }; img.src = URL.createObjectURL(file);
             });
         }
+        
         window.runAutoTagging = async function(originalFile) {
-            const tagInput = document.getElementById('post-tags'); const icon = document.getElementById('tag-status-icon'); const publishBtn = document.getElementById('publish-btn');
+            const tagInput = document.getElementById('post-tags'); const publishBtn = document.getElementById('publish-btn');
             tagInput.value = ""; 
             publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
             showToast("IA: Analizando imagen...");
@@ -504,10 +458,12 @@
                 const result = await client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend]);
                 if (result && result.data && result.data[0]) {
                     tagInput.value = result.data[0];
-                    showToast("¡Etiquetas generadas internamente!"); publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+                    showToast("¡Etiquetas generadas!"); 
                 } else throw new Error("Respuesta vacía");
             } catch (error) {
-                console.error("Error Tagging:", error); showToast("Nota: Error IA, puedes publicar sin tags."); publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+                console.error("Error Tagging:", error); showToast("Nota: Error IA, puedes publicar sin tags.");
+            } finally {
+                publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
             }
         }
     </script>
@@ -521,8 +477,7 @@
 
         let currentUser = null;
         let currentUserData = null;
-        let selectedFile = null;
-        const userProfileCache = {};
+        let selectedFiles = []; // ARRAY GLOBAL PARA MÚLTIPLES IMÁGENES
         let deviceID = localStorage.getItem('deviceID');
         if (!deviceID) { deviceID = Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('deviceID', deviceID); }
 
@@ -530,20 +485,20 @@
         let displayedPosts = [];
         let currentRenderIndex = 0;
         const POSTS_PER_PAGE = 10;
-        
         let characterStatsCache = {};
-
         let currentFilterTag = null;
-        let currentFilterType = null; // 'tag' o 'character'
-
+        let currentFilterType = null;
         let currentSortOrder = 'newest';
+        
         let currentModalIndex = -1;
+        let currentInternalImageIndex = 0; 
+        
         let confirmCallback = null;
-        let touchStartX = 0, touchEndX = 0;
         let isUploadingAuth = false;
         let authDataCache = {};
+        const userProfileCache = {};
 
-        // --- GLOBAL UTILS ---
+        // --- UTILS ---
         function showToast(msg) {
             const t = document.getElementById('toast-container');
             document.getElementById('toast-message').innerText = msg;
@@ -566,358 +521,6 @@
             if(res && confirmCallback) confirmCallback(); confirmCallback = null;
         }
 
-        // --- FACE API ---
-        const FACE_MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-        let faceModelsLoaded = false;
-        const SHARP_PARAMS = { faceAmount: 0.25, bodyAmount: 0.1, faceThreshold: 10, bodyThreshold: 2 };
-
-        window.addEventListener('load', loadFaceApiModels);
-        async function loadFaceApiModels() {
-            if (faceModelsLoaded) return;
-            try { await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL); faceModelsLoaded = true; } 
-            catch (err) { console.warn("IA Local: Fallback activo.", err); }
-        }
-
-        async function processImageSmartSharpen(fileObj) {
-            if (!faceModelsLoaded) await loadFaceApiModels();
-            return new Promise(async (resolve, reject) => {
-                try {
-                    const img = await faceapi.bufferToImage(fileObj);
-                    const width = img.width, height = img.height;
-                    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                    ctx.drawImage(img, 0, 0);
-                    const bodySharpened = applyUnsharpMask(ctx, img, SHARP_PARAMS.bodyAmount, 2.0, SHARP_PARAMS.bodyThreshold);
-                    let detections = [];
-                    try { detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions()); } catch (e) { }
-                    if (detections.length > 0) {
-                        const faceSharpened = applyUnsharpMask(ctx, img, SHARP_PARAMS.faceAmount, 0.5, SHARP_PARAMS.faceThreshold);
-                        detections.forEach(det => {
-                            const { x, y, width: w, height: h } = det.box;
-                            const pad = Math.floor(w * 0.05);
-                            const startX = Math.max(0, Math.floor(x) - pad), startY = Math.max(0, Math.floor(y) - pad);
-                            const endX = Math.min(width, Math.floor(x + w) + pad), endY = Math.min(height, Math.floor(y + h) + pad);
-                            for (let row = startY; row < endY; row++) {
-                                const rowOffset = row * width;
-                                for (let col = startX; col < endX; col++) {
-                                    const idx = (rowOffset + col) * 4;
-                                    bodySharpened.data[idx] = faceSharpened.data[idx]; bodySharpened.data[idx+1] = faceSharpened.data[idx+1]; bodySharpened.data[idx+2] = faceSharpened.data[idx+2];
-                                }
-                            }
-                        });
-                    }
-                    ctx.putImageData(bodySharpened, 0, 0);
-                    canvas.toBlob((blob) => { if (blob) resolve(new File([blob], fileObj.name, { type: "image/jpeg", lastModified: Date.now() })); else reject(new Error("Error generando blob")); }, 'image/jpeg', 0.95);
-                } catch (error) { console.error("Error silencioso en mejora:", error); resolve(fileObj); }
-            });
-        }
-        function applyUnsharpMask(ctx, imgSource, amount, radius, threshold) {
-            const w = ctx.canvas.width, h = ctx.canvas.height;
-            ctx.filter = 'none'; ctx.clearRect(0,0,w,h); ctx.drawImage(imgSource, 0, 0);
-            const srcData = ctx.getImageData(0, 0, w, h);
-            ctx.clearRect(0,0,w,h); ctx.filter = `blur(${radius}px)`; ctx.drawImage(imgSource, 0, 0);
-            const blurData = ctx.getImageData(0, 0, w, h); ctx.filter = 'none'; 
-            const output = ctx.createImageData(w, h), src = srcData.data, blur = blurData.data, dst = output.data;
-            for (let i = 0; i < src.length; i += 4) {
-                dst[i+3] = src[i+3];
-                for (let c = 0; c < 3; c++) {
-                    const original = src[i+c], blurred = blur[i+c], diff = original - blurred;
-                    if (Math.abs(diff) > threshold) { let val = original + (diff * amount); dst[i+c] = val < 0 ? 0 : (val > 255 ? 255 : val); } else { dst[i+c] = original; }
-                }
-            } return output;
-        }
-
-        // --- AUTH ---
-        auth.onAuthStateChanged(user => {
-            const loader = document.getElementById('initial-loader');
-            if (user && !user.isAnonymous) {
-                currentUser = user;
-                document.getElementById('app-content').style.display = 'block'; 
-                document.getElementById('auth-overlay').style.display = 'none';
-                db.ref('users/' + user.uid).on('value', snap => { 
-                    const d = snap.val(); if(d) {
-                        currentUserData = d; 
-                        if(d.profilePic) { document.getElementById('current-user-avatar').src = d.profilePic; document.getElementById('post-avatar').src = d.profilePic; }
-                    }
-                });
-            } else {
-                currentUser = null; document.getElementById('app-content').style.display = 'none'; document.getElementById('auth-overlay').style.display = 'flex';
-            }
-            loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500);
-            initFeedListener();
-            initCharacterStatsListener();
-        });
-
-        // --- FEED LOGIC (MODIFICADO: SNAPSHOT) ---
-        function initFeedListener() {
-            // USAMOS .once() EN LUGAR DE .on() PARA CARGA ESTÁTICA
-            db.ref('feed_posts').limitToLast(200).once('value', snapshot => {
-                if(!snapshot.exists()) { allPostsCache = []; applyFiltersAndRender(); return; }
-                const tempPosts = [];
-                snapshot.forEach(child => { tempPosts.push({ id: child.key, ...child.val() }); });
-                allPostsCache = tempPosts;
-                applyFiltersAndRender();
-            });
-        }
-
-        function initCharacterStatsListener() {
-            db.ref('stats/characters').on('value', snapshot => {
-                if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; }
-            });
-        }
-
-        function applyFiltersAndRender() {
-            let filtered = [...allPostsCache];
-            const filterBar = document.getElementById('filter-bar');
-            
-            if (currentFilterTag) {
-                const term = currentFilterTag.toLowerCase();
-                if (currentFilterType === 'character') {
-                    // Filtrar por nombre exacto de personaje
-                    filtered = filtered.filter(p => p.characterName && p.characterName.toLowerCase() === term);
-                    document.getElementById('active-filter-tag').innerHTML = `<i class="fas fa-user-tag"></i> ${currentFilterTag}`;
-                } else {
-                    // Filtrar por Tag convencional
-                    filtered = filtered.filter(p => (p.tags||'').toLowerCase().includes(term) || (p.text||'').toLowerCase().includes('#'+term));
-                    document.getElementById('active-filter-tag').innerText = '#' + currentFilterTag;
-                }
-                filterBar.classList.remove('hidden');
-            } else {
-                filterBar.classList.add('hidden');
-            }
-
-            if (currentSortOrder === 'newest') filtered.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            else if (currentSortOrder === 'oldest') filtered.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-            else if (currentSortOrder === 'likes') filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-
-            displayedPosts = filtered;
-            resetFeedView();
-        }
-
-        function resetFeedView() {
-            const feedContainer = document.getElementById('feed-list-container');
-            const gridContainer = document.getElementById('grid-view-container');
-            feedContainer.innerHTML = '';
-            gridContainer.innerHTML = '';
-            currentRenderIndex = 0;
-            if (displayedPosts.length === 0) {
-                feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10 flex flex-col items-center"><i class="fas fa-ghost text-4xl mb-2 opacity-50"></i><p>No hay publicaciones aún.</p></div>`;
-                document.getElementById('scroll-spinner').style.opacity = '0';
-                return;
-            }
-            loadMorePosts();
-        }
-
-        function loadMorePosts() {
-            if (currentRenderIndex >= displayedPosts.length) { document.getElementById('scroll-spinner').style.opacity = '0'; return; }
-            document.getElementById('scroll-spinner').style.opacity = '1';
-            const nextIndex = currentRenderIndex + POSTS_PER_PAGE;
-            const chunk = displayedPosts.slice(currentRenderIndex, nextIndex);
-            const feedContainer = document.getElementById('feed-list-container');
-            const gridContainer = document.getElementById('grid-view-container');
-
-            chunk.forEach(post => {
-                feedContainer.appendChild(createPostCard(post));
-                if (post.imageUrl) gridContainer.appendChild(createGridItem(post));
-                updateUserAvatarInUI(post.userId);
-            });
-            currentRenderIndex = nextIndex;
-            if (currentRenderIndex >= displayedPosts.length) document.getElementById('scroll-spinner').style.opacity = '0';
-        }
-
-        const scrollObserver = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && currentRenderIndex < displayedPosts.length) setTimeout(() => loadMorePosts(), 500);
-        }, { rootMargin: '100px' });
-        document.addEventListener('DOMContentLoaded', () => { const t = document.getElementById('load-more-trigger'); if(t) scrollObserver.observe(t); });
-
-        // --- CREAR TARJETA ---
-        function createPostCard(post) {
-            const div = document.createElement('div'); div.className = "feed-card opacity-0 animate-enter";
-            let textHtml = '';
-            if (post.text) {
-                const fullText = post.text;
-                if (fullText.length > 150) {
-                    const shortText = fullText.substring(0, 150);
-                    textHtml = `<div class="mt-2"><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light" id="text-short-${post.id}">${shortText}... <button onclick="expandText('${post.id}')" class="text-orange-500 font-bold hover:underline text-xs ml-1">Ver más</button></p><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light hidden" id="text-full-${post.id}">${fullText}</p></div>`;
-                } else {
-                    textHtml = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-2 font-light">${fullText}</p>`;
-                }
-            }
-            
-            // Meta chips y PERSONAJE CLICKEABLE
-            let metaHtml = '<div class="mt-3 flex flex-wrap items-center gap-2">';
-            if (post.characterName) {
-                metaHtml += `<button onclick="filterByCharacter('${post.characterName}')" class="text-[10px] bg-indigo-900/40 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/30 uppercase font-bold tracking-wide hover:bg-indigo-500/20 active:scale-95 transition flex items-center gap-1"><i class="fas fa-user-circle"></i> ${post.characterName}</button>`;
-            }
-            if (post.category) {
-                metaHtml += `<span class="text-[10px] bg-orange-900/40 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30 uppercase font-bold tracking-wide">${post.category}</span>`;
-            }
-            metaHtml += '</div>';
-            
-            const isOwner = currentUser && currentUser.uid === post.userId;
-            let optionsBtn = isOwner ? `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 p-2 hover:text-white"><i class="fas fa-ellipsis-v"></i></button><div id="options-menu-${post.id}" class="options-menu"><div class="options-item text-red-400 hover:bg-red-900/20" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>` : '';
-
-            div.innerHTML = `
-                <div class="p-4 pb-2">
-                    <div class="flex justify-between items-start relative">
-                        <div class="flex gap-3 items-center" onclick="goToProfile('${post.userId}')" style="cursor:pointer;">
-                            <img src="${post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-10 h-10 rounded-full object-cover border border-zinc-700 user-avatar-${post.userId} bg-zinc-800">
-                            <div class="flex flex-col">
-                                <span class="font-bold text-gray-200 text-sm hover:text-orange-400 transition">${post.userName}</span>
-                                <span class="text-[10px] text-gray-500 font-medium">${timeAgo(post.timestamp)}</span>
-                            </div>
-                        </div>
-                        ${optionsBtn}
-                    </div>
-                    ${post.title ? `<h4 class="font-bold text-white mt-3 text-sm tracking-wide">${post.title}</h4>` : ''}
-                    ${textHtml}
-                    ${metaHtml}
-                </div>
-                ${post.imageUrl ? `<div class="mt-2 bg-black relative cursor-pointer group overflow-hidden border-t border-b border-zinc-800" onclick="openViewerById('${post.id}')"><img src="${post.imageUrl}" loading="lazy" class="w-full h-auto max-h-[500px] object-contain mx-auto"></div>` : ''}
-                <div class="px-4 py-3 flex items-center gap-6 border-t border-white/5 mt-1 bg-[#1a1a1c]">
-                    <button id="like-btn-${post.id}" onclick="toggleLike('${post.id}')" class="flex items-center gap-2 text-gray-400 active:text-red-500 hover:text-red-400 transition group active:scale-95"><i class="far fa-heart text-lg group-active:scale-125 transition-transform"></i><span class="text-xs font-bold" id="likes-count-${post.id}">${post.likes || 0}</span></button>
-                    <button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-white transition active:scale-95"><i class="far fa-comment text-lg"></i><span class="text-xs font-bold" id="comments-count-${post.id}">0</span></button>
-                </div>
-                <div id="comments-${post.id}" class="hidden px-4 py-3 bg-[#0f0f10] border-t border-white/5"><div id="comments-list-${post.id}" class="flex flex-col gap-3 mb-3 max-h-60 overflow-y-auto custom-scrollbar"></div><form onsubmit="postComment(event, '${post.id}')" class="flex gap-2 relative"><input type="text" id="comment-input-${post.id}" maxlength="200" class="w-full bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2.5 text-sm text-white focus:border-orange-500 focus:outline-none pr-10" placeholder="Escribe..." autocomplete="off"><button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 active:scale-90 transition"><i class="fas fa-paper-plane"></i></button></form></div>`;
-            checkLikeStatus(post.id);
-            checkCommentStatus(post.id);
-            return div;
-        }
-
-        function expandText(id) { document.getElementById(`text-short-${id}`).classList.add('hidden'); document.getElementById(`text-full-${id}`).classList.remove('hidden'); }
-        function createGridItem(post) { const div = document.createElement('div'); div.className = 'grid-item group'; div.onclick = () => openViewerById(post.id); div.innerHTML = `<img src="${post.imageUrl}" loading="lazy"><div class="grid-overlay opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-white text-[10px] font-bold drop-shadow-md"><i class="fas fa-heart text-white text-[9px]"></i> ${post.likes || 0}</span></div>`; return div; }
-
-        // --- UPLOAD LOGIC & SUGGESTIONS ---
-        function expandPostArea() { document.getElementById('extra-fields').classList.add('expanded'); document.getElementById('post-text').rows = 3; }
-        function collapsePostArea(force=false) { 
-            const reset = () => {
-                document.getElementById('extra-fields').classList.remove('expanded'); 
-                document.getElementById('post-text').rows = 1;
-                clearSelection();
-                document.getElementById('post-text').value = '';
-                document.getElementById('post-title').value = '';
-                document.getElementById('post-character').value = ''; 
-                document.getElementById('post-tags').value = '';
-                document.getElementById('character-suggestions').classList.remove('visible'); 
-                document.getElementById('publish-btn').disabled = false;
-                document.getElementById('publish-btn').classList.remove('btn-disabled');
-            };
-            if(force || (!selectedFile && !document.getElementById('post-text').value)) reset();
-            else showConfirm("¿Descartar publicación?", reset);
-        }
-        
-        function handleFileSelect(e) { 
-            selectedFile = e.target.files[0]; 
-            if(selectedFile) { 
-                document.getElementById('image-preview').src = URL.createObjectURL(selectedFile); 
-                document.getElementById('preview-container').classList.remove('hidden');
-                if(window.runAutoTagging) window.runAutoTagging(selectedFile);
-            } 
-        }
-        function clearSelection() { selectedFile = null; document.getElementById('file-input').value = ''; document.getElementById('preview-container').classList.add('hidden'); }
-
-        // --- LÓGICA DE SUGERENCIAS DE PERSONAJES ---
-        const charInput = document.getElementById('post-character');
-        const suggestionsBox = document.getElementById('character-suggestions');
-
-        charInput.addEventListener('input', (e) => {
-            const val = e.target.value.trim().toLowerCase();
-            if (!val) {
-                suggestionsBox.classList.remove('visible');
-                return;
-            }
-            const allChars = Object.entries(characterStatsCache).map(([key, data]) => ({ id: key, name: data.displayName, count: data.count || 0 }));
-            const matches = allChars.filter(c => c.name.toLowerCase().includes(val)).sort((a, b) => b.count - a.count).slice(0, 3);
-
-            if (matches.length > 0) { renderSuggestions(matches); suggestionsBox.classList.add('visible'); } 
-            else { suggestionsBox.classList.remove('visible'); }
-        });
-
-        document.addEventListener('click', (e) => { if (!charInput.contains(e.target) && !suggestionsBox.contains(e.target)) { suggestionsBox.classList.remove('visible'); } });
-
-        function renderSuggestions(matches) {
-            suggestionsBox.innerHTML = '';
-            matches.forEach((match, index) => {
-                const isTop = index === 0; 
-                const countDisplay = formatCount(match.count);
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.onclick = () => selectSuggestion(match.name);
-                div.innerHTML = `<span class="suggestion-name flex items-center gap-2">${match.name}${isTop && match.count > 0 ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}</span><span class="suggestion-meta">${countDisplay} usos</span>`;
-                suggestionsBox.appendChild(div);
-            });
-        }
-
-        function formatCount(num) {
-            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M...';
-            if (num >= 1000) return (num / 1000).toFixed(1) + 'k...';
-            return num;
-        }
-
-        function selectSuggestion(name) { charInput.value = name; suggestionsBox.classList.remove('visible'); }
-
-        async function uploadPost() {
-            const text = document.getElementById('post-text').value.trim();
-            const title = document.getElementById('post-title').value.trim();
-            const characterName = document.getElementById('post-character').value.trim();
-            const tags = document.getElementById('post-tags').value.trim();
-            const category = document.getElementById('post-category').value;
-            
-            if (!text && !selectedFile) return showAlert("Escribe algo o sube una imagen.");
-            if (selectedFile && (!title || !category)) return showAlert("Completa título y categoría.");
-
-            const btn = document.getElementById('publish-btn');
-            const progress = document.getElementById('upload-progress');
-            
-            btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
-            progress.classList.remove('hidden');
-            
-            try {
-                let imageUrl = null;
-                if (selectedFile) {
-                    let processedFile = selectedFile;
-                    try { processedFile = await processImageSmartSharpen(selectedFile); } catch (e) {}
-                    const compressedFile = await compressImage(processedFile);
-                    const formData = new FormData(); 
-                    formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', compressedFile);
-                    const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
-                    const txt = await r.text();
-                    if(!r.ok || !txt.includes('catbox.moe')) throw new Error("Error subida imagen");
-                    imageUrl = txt.trim();
-                }
-                
-                const finalUserName = (currentUserData && currentUserData.username) ? currentUserData.username : (currentUser?.displayName || 'Usuario');
-                const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
-
-                const post = {
-                    text, imageUrl, title, tags, category, characterName,
-                    userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0
-                };
-                
-                await db.ref('feed_posts').push(post);
-
-                if (characterName) {
-                    const normalizedChar = characterName.toLowerCase().replace(/[.#$\[\]]/g, ""); 
-                    const charRef = db.ref(`stats/characters/${normalizedChar}`);
-                    charRef.transaction((currentData) => {
-                        if (currentData === null) { return { count: 1, displayName: characterName }; } 
-                        else { return { count: (currentData.count || 0) + 1, displayName: characterName }; }
-                    });
-                }
-
-                // RECARGAR SOLO PARA EL USUARIO QUE PUBLICÓ PARA VER SUS CAMBIOS
-                initFeedListener(); 
-
-                collapsePostArea(true); showToast("¡Publicado con éxito!");
-            } catch(e) { showAlert("Error: " + e.message); }
-            finally { 
-                btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = 'Publicar'; 
-                progress.classList.add('hidden'); 
-            }
-        }
-
-        // --- COMPRESS IMAGE FUNC ---
         function compressImage(file) {
             return new Promise((resolve, reject) => {
                 const maxSizeKB = 150;
@@ -941,10 +544,420 @@
             });
         }
 
-        // --- VIEWER LOGIC MEJORADO (SIMILARES) ---
+        // --- AUTH & INIT ---
+        auth.onAuthStateChanged(user => {
+            const loader = document.getElementById('initial-loader');
+            if (user && !user.isAnonymous) {
+                currentUser = user;
+                document.getElementById('app-content').style.display = 'block'; 
+                document.getElementById('auth-overlay').style.display = 'none';
+                db.ref('users/' + user.uid).on('value', snap => { 
+                    const d = snap.val(); if(d) {
+                        currentUserData = d; 
+                        if(d.profilePic) { document.getElementById('current-user-avatar').src = d.profilePic; document.getElementById('post-avatar').src = d.profilePic; }
+                    }
+                });
+                loadUserCollectionsSelect();
+            } else {
+                currentUser = null; document.getElementById('app-content').style.display = 'none'; document.getElementById('auth-overlay').style.display = 'flex';
+            }
+            loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500);
+            initFeedListener();
+            initCharacterStatsListener();
+        });
+
+        // --- MANEJO DE ARCHIVOS MÚLTIPLES ---
+        function expandPostArea() { 
+            document.getElementById('extra-fields').classList.add('expanded'); 
+            document.getElementById('post-text').rows = 3; 
+        }
+        
+        function collapsePostArea(force=false) { 
+            const reset = () => {
+                document.getElementById('extra-fields').classList.remove('expanded'); 
+                document.getElementById('post-text').rows = 1;
+                selectedFiles = []; // Limpiar array
+                renderPreviewGrid(); // Limpiar UI
+                
+                document.getElementById('post-text').value = ''; 
+                document.getElementById('post-title').value = '';
+                document.getElementById('post-character').value = ''; 
+                document.getElementById('post-tags').value = '';
+                
+                selectCustomOption('dropdown-collection', '', '<i class="fas fa-folder mr-2 text-xs text-orange-500"></i> Álbum');
+                document.getElementById('new-collection-name').value = '';
+                
+                document.getElementById('character-suggestions').classList.remove('visible'); 
+                document.getElementById('publish-btn').disabled = false; 
+                document.getElementById('publish-btn').classList.remove('btn-disabled');
+            };
+            if(force || (selectedFiles.length === 0 && !document.getElementById('post-text').value)) reset();
+            else showConfirm("¿Descartar publicación?", reset);
+        }
+        
+        // --- FUNCIÓN PRINCIPAL DE SELECCIÓN ---
+        function handleFileSelect(e) {
+            expandPostArea();
+            
+            const newFiles = Array.from(e.target.files);
+            e.target.value = ""; // Limpiar input para permitir reselección
+            
+            if (!newFiles.length) return;
+            
+            let limitReached = false;
+            let addedCount = 0;
+
+            // Agregar respetando límite de 3
+            newFiles.forEach(file => {
+                if (selectedFiles.length < 3) {
+                    selectedFiles.push(file);
+                    addedCount++;
+                } else {
+                    limitReached = true;
+                }
+            });
+
+            if (limitReached) showToast("Máximo 3 imágenes permitidas.");
+
+            renderPreviewGrid(); // Actualizar la grilla visualmente
+            
+            // Auto-tagger solo si hay exactamente 1 imagen
+            if (selectedFiles.length === 1 && window.runAutoTagging && addedCount > 0) {
+                try { window.runAutoTagging(selectedFiles[0]); } catch(e) { console.log("Tagging error", e); }
+            } else if (selectedFiles.length > 1) {
+                document.getElementById('post-tags').value = ""; // Borrar tags si son varias
+            }
+        }
+
+        function renderPreviewGrid() {
+            const container = document.getElementById('preview-grid-container');
+            container.innerHTML = '';
+            
+            if (selectedFiles.length === 0) { 
+                container.classList.add('hidden');
+                return; 
+            }
+            
+            container.classList.remove('hidden');
+            
+            // Crear contenedor de collage según cantidad
+            const collageDiv = document.createElement('div');
+            collageDiv.className = `collage-container collage-${selectedFiles.length}`;
+            
+            selectedFiles.forEach((file, index) => {
+                const url = URL.createObjectURL(file);
+                
+                // Wrapper para imagen + boton borrar
+                const wrapper = document.createElement('div');
+                // Asignar clase de slot (para collage-3)
+                wrapper.className = `preview-img-wrapper img-slot-${index}`;
+                
+                wrapper.innerHTML = `
+                    <img src="${url}" class="w-full h-full object-cover">
+                    <div class="preview-remove-btn" onclick="removeFile(${index})" title="Eliminar foto">
+                        <i class="fas fa-times"></i>
+                    </div>
+                `;
+                collageDiv.appendChild(wrapper);
+            });
+            
+            container.appendChild(collageDiv);
+        }
+        
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderPreviewGrid(); // Re-renderizar todo
+            if(selectedFiles.length === 0) document.getElementById('post-tags').value = "";
+        }
+
+        // --- FEED LOGIC ---
+        function initFeedListener() {
+            db.ref('feed_posts').limitToLast(200).once('value', snapshot => {
+                if(!snapshot.exists()) { allPostsCache = []; applyFiltersAndRender(); return; }
+                const tempPosts = [];
+                snapshot.forEach(child => { tempPosts.push({ id: child.key, ...child.val() }); });
+                allPostsCache = tempPosts;
+                applyFiltersAndRender();
+            });
+        }
+        function initCharacterStatsListener() {
+            db.ref('stats/characters').on('value', snapshot => {
+                if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; }
+            });
+        }
+        function applyFiltersAndRender() {
+            let filtered = [...allPostsCache];
+            const filterBar = document.getElementById('filter-bar');
+            
+            if (currentFilterTag) {
+                const term = currentFilterTag.toLowerCase();
+                if (currentFilterType === 'character') {
+                    filtered = filtered.filter(p => p.characterName && p.characterName.toLowerCase() === term);
+                    document.getElementById('active-filter-tag').innerHTML = `<i class="fas fa-user-tag"></i> ${currentFilterTag}`;
+                } else {
+                    filtered = filtered.filter(p => (p.tags||'').toLowerCase().includes(term) || (p.text||'').toLowerCase().includes('#'+term));
+                    document.getElementById('active-filter-tag').innerText = '#' + currentFilterTag;
+                }
+                filterBar.classList.remove('hidden');
+            } else {
+                filterBar.classList.add('hidden');
+            }
+
+            if (currentSortOrder === 'newest') filtered.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            else if (currentSortOrder === 'oldest') filtered.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            else if (currentSortOrder === 'likes') filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+
+            displayedPosts = filtered;
+            resetFeedView();
+        }
+        function resetFeedView() {
+            const feedContainer = document.getElementById('feed-list-container');
+            const gridContainer = document.getElementById('grid-view-container');
+            feedContainer.innerHTML = ''; gridContainer.innerHTML = ''; currentRenderIndex = 0;
+            if (displayedPosts.length === 0) {
+                feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10 flex flex-col items-center"><i class="fas fa-ghost text-4xl mb-2 opacity-50"></i><p>No hay publicaciones aún.</p></div>`;
+                document.getElementById('scroll-spinner').style.opacity = '0'; return;
+            }
+            loadMorePosts();
+        }
+        function loadMorePosts() {
+            if (currentRenderIndex >= displayedPosts.length) { document.getElementById('scroll-spinner').style.opacity = '0'; return; }
+            document.getElementById('scroll-spinner').style.opacity = '1';
+            const nextIndex = currentRenderIndex + POSTS_PER_PAGE;
+            const chunk = displayedPosts.slice(currentRenderIndex, nextIndex);
+            const feedContainer = document.getElementById('feed-list-container');
+            const gridContainer = document.getElementById('grid-view-container');
+            chunk.forEach(post => {
+                feedContainer.appendChild(createPostCard(post));
+                // Grid solo muestra la primera imagen
+                const displayImg = (post.imageUrls && post.imageUrls.length > 0) ? post.imageUrls[0] : post.imageUrl;
+                if (displayImg) gridContainer.appendChild(createGridItem(post, displayImg));
+                updateUserAvatarInUI(post.userId);
+            });
+            currentRenderIndex = nextIndex;
+            if (currentRenderIndex >= displayedPosts.length) document.getElementById('scroll-spinner').style.opacity = '0';
+        }
+        const scrollObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && currentRenderIndex < displayedPosts.length) setTimeout(() => loadMorePosts(), 500);
+        }, { rootMargin: '100px' });
+        document.addEventListener('DOMContentLoaded', () => { const t = document.getElementById('load-more-trigger'); if(t) scrollObserver.observe(t); });
+
+        // --- RENDER POST CARD (SOPORTE MULTI-IMAGEN) ---
+        function createPostCard(post) {
+            const div = document.createElement('div'); div.className = "feed-card opacity-0 animate-enter";
+            let textHtml = '';
+            if (post.text) {
+                const fullText = post.text;
+                if (fullText.length > 150) {
+                    textHtml = `<div class="mt-2"><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light" id="text-short-${post.id}">${fullText.substring(0, 150)}... <button onclick="expandText('${post.id}')" class="text-orange-500 font-bold hover:underline text-xs ml-1">Ver más</button></p><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light hidden" id="text-full-${post.id}">${fullText}</p></div>`;
+                } else { textHtml = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-2 font-light">${fullText}</p>`; }
+            }
+            
+            let metaHtml = '<div class="mt-3 flex flex-wrap items-center gap-2">';
+            if (post.characterName) metaHtml += `<button onclick="filterByCharacter('${post.characterName}')" class="text-[10px] bg-indigo-900/40 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/30 uppercase font-bold tracking-wide hover:bg-indigo-500/20 active:scale-95 transition flex items-center gap-1"><i class="fas fa-user-circle"></i> ${post.characterName}</button>`;
+            if (post.collectionName) metaHtml += `<span class="text-[10px] bg-zinc-800 text-gray-400 px-2 py-0.5 rounded border border-zinc-700 font-medium"><i class="fas fa-folder text-orange-500 mr-1"></i> ${post.collectionName}</span>`;
+            if (post.category) metaHtml += `<span class="text-[10px] bg-orange-900/40 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30 uppercase font-bold tracking-wide">${post.category}</span>`;
+            metaHtml += '</div>';
+            
+            const isOwner = currentUser && currentUser.uid === post.userId;
+            let optionsBtn = isOwner ? `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 p-2 hover:text-white"><i class="fas fa-ellipsis-v"></i></button><div id="options-menu-${post.id}" class="options-menu"><div class="options-item text-red-400 hover:bg-red-900/20" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>` : '';
+
+            let imagesHtml = '';
+            // Soporte Híbrido: post.imageUrls (Array) o post.imageUrl (String Legacy)
+            const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
+            
+            if (images.length > 0) {
+                if (images.length === 1) {
+                    imagesHtml = `<div class="collage-container collage-1 cursor-pointer" onclick="openViewerById('${post.id}')"><img src="${images[0]}" loading="lazy"></div>`;
+                } else if (images.length === 2) {
+                    imagesHtml = `<div class="collage-container collage-2 cursor-pointer" onclick="openViewerById('${post.id}')"><img src="${images[0]}" loading="lazy"><img src="${images[1]}" loading="lazy"></div>`;
+                } else {
+                    // 3 o más
+                    imagesHtml = `<div class="collage-container collage-3 cursor-pointer" onclick="openViewerById('${post.id}')">
+                        <div class="img-slot-0"><img src="${images[0]}" loading="lazy"></div>
+                        <div class="img-slot-1"><img src="${images[1]}" loading="lazy"></div>
+                        <div class="img-slot-2"><img src="${images[2]}" loading="lazy"></div>
+                    </div>`;
+                }
+            }
+
+            div.innerHTML = `
+                <div class="p-4 pb-2">
+                    <div class="flex justify-between items-start relative">
+                        <div class="flex gap-3 items-center" onclick="goToProfile('${post.userId}')" style="cursor:pointer;">
+                            <img src="${post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-10 h-10 rounded-full object-cover border border-zinc-700 user-avatar-${post.userId} bg-zinc-800">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-200 text-sm hover:text-orange-400 transition">${post.userName}</span>
+                                <span class="text-[10px] text-gray-500 font-medium">${timeAgo(post.timestamp)}</span>
+                            </div>
+                        </div>
+                        ${optionsBtn}
+                    </div>
+                    ${post.title ? `<h4 class="font-bold text-white mt-3 text-sm tracking-wide">${post.title}</h4>` : ''}
+                    ${textHtml}
+                    ${metaHtml}
+                </div>
+                ${imagesHtml}
+                <div class="px-4 py-3 flex items-center gap-6 border-t border-white/5 mt-1 bg-[#1a1a1c]">
+                    <button id="like-btn-${post.id}" onclick="toggleLike('${post.id}')" class="flex items-center gap-2 text-gray-400 active:text-red-500 hover:text-red-400 transition group active:scale-95"><i class="far fa-heart text-lg group-active:scale-125 transition-transform"></i><span class="text-xs font-bold" id="likes-count-${post.id}">${post.likes || 0}</span></button>
+                    <button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-white transition active:scale-95"><i class="far fa-comment text-lg"></i><span class="text-xs font-bold" id="comments-count-${post.id}">0</span></button>
+                </div>
+                <div id="comments-${post.id}" class="hidden px-4 py-3 bg-[#0f0f10] border-t border-white/5"><div id="comments-list-${post.id}" class="flex flex-col gap-3 mb-3 max-h-60 overflow-y-auto custom-scrollbar"></div><form onsubmit="postComment(event, '${post.id}')" class="flex gap-2 relative"><input type="text" id="comment-input-${post.id}" maxlength="200" class="w-full bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2.5 text-sm text-white focus:border-orange-500 focus:outline-none pr-10" placeholder="Escribe..." autocomplete="off"><button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 active:scale-90 transition"><i class="fas fa-paper-plane"></i></button></form></div>`;
+            checkLikeStatus(post.id); checkCommentStatus(post.id);
+            return div;
+        }
+
+        function createGridItem(post, imgUrl) { 
+            const div = document.createElement('div'); div.className = 'grid-item group'; div.onclick = () => openViewerById(post.id); 
+            const multipleIcon = (post.imageUrls && post.imageUrls.length > 1) ? '<i class="fas fa-clone absolute top-2 right-2 text-white drop-shadow-md text-xs"></i>' : '';
+            div.innerHTML = `<img src="${imgUrl}" loading="lazy">${multipleIcon}<div class="grid-overlay opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-white text-[10px] font-bold drop-shadow-md"><i class="fas fa-heart text-white text-[9px]"></i> ${post.likes || 0}</span></div>`; return div; 
+        }
+
+        function expandText(id) { document.getElementById(`text-short-${id}`).classList.add('hidden'); document.getElementById(`text-full-${id}`).classList.remove('hidden'); }
+
+        // --- LÓGICA DE COLECCIONES (ÁLBUMES) - PORTADA DE PROFILE.HTML ---
+        function toggleCustomSelect(id) {
+            const el = document.getElementById(id);
+            const list = el.querySelector('.custom-select-options');
+            const trigger = el.querySelector('.custom-select-trigger');
+            document.querySelectorAll('.custom-select-options.show').forEach(opt => { if(opt !== list) { opt.classList.remove('show'); opt.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); } });
+            list.classList.toggle('show'); trigger.classList.toggle('active');
+        }
+
+        function selectCustomOption(containerId, value, displayText) {
+            const container = document.getElementById(containerId);
+            container.querySelector('input[type="hidden"]').value = value;
+            container.querySelector('.custom-select-trigger span').innerHTML = displayText;
+            container.querySelector('.custom-select-trigger').classList.remove('active');
+            container.querySelector('.custom-select-options').classList.remove('show');
+            if (containerId === 'dropdown-collection') toggleCollectionInput();
+        }
+
+        window.addEventListener('click', function(e) { if (!e.target.closest('.custom-select-container')) { document.querySelectorAll('.custom-select-options.show').forEach(el => { el.classList.remove('show'); el.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); }); } });
+
+        function loadUserCollectionsSelect() {
+            if (!currentUser) return;
+            db.ref('collections/' + currentUser.uid).on('value', snap => {
+                let html = `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '', '<i class=\\'fas fa-folder mr-2 text-xs text-orange-500\\'></i> Álbum')">Ningún Álbum</div><div class="option-item special-option" onclick="selectCustomOption('dropdown-collection', 'new', '➕ Crear Nueva Colección...')">➕ Crear Nueva Colección...</div>`;
+                snap.forEach(child => { html += `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '${child.key}', '📁 ${child.val().name}')">📁 ${child.val().name}</div>`; });
+                const el = document.getElementById('collection-options-list');
+                if(el) el.innerHTML = html;
+            });
+        }
+
+        function toggleCollectionInput() {
+            const val = document.getElementById('post-collection').value;
+            const c = document.getElementById('new-collection-container');
+            if(val === 'new') c.classList.remove('hidden'); else c.classList.add('hidden');
+        }
+
+        async function updateCollectionPreviews(userId, colId, newImgUrl) {
+            if (!colId || colId === 'new' || !newImgUrl) return;
+            const ref = db.ref(`collections/${userId}/${colId}/previews`);
+            await ref.transaction((currentPreviews) => {
+                let list = currentPreviews || [];
+                if (!Array.isArray(list)) list = [];
+                list.unshift(newImgUrl);
+                if (list.length > 4) list = list.slice(0, 4);
+                return list;
+            });
+            db.ref(`collections/${userId}/${colId}/cover`).set(newImgUrl);
+        }
+
+        // --- SUBIDA MULTIPLE (Bucle de Upload) ---
+        async function uploadPost() {
+            const text = document.getElementById('post-text').value.trim();
+            const title = document.getElementById('post-title').value.trim();
+            const characterName = document.getElementById('post-character').value.trim();
+            const tags = document.getElementById('post-tags').value.trim();
+            const category = document.getElementById('post-category').value;
+            let colId = document.getElementById('post-collection').value;
+            const newColName = document.getElementById('new-collection-name').value.trim();
+
+            if (!text && selectedFiles.length === 0) return showAlert("Escribe algo o sube una imagen.");
+            if (selectedFiles.length > 0 && (!title || !category)) return showAlert("Completa título y categoría.");
+            if (colId === 'new' && !newColName) return showAlert("Ponle nombre al nuevo álbum.");
+
+            const btn = document.getElementById('publish-btn');
+            const progress = document.getElementById('upload-progress');
+            
+            btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Subiendo...';
+            progress.classList.remove('hidden');
+            
+            try {
+                // 1. Manejo de Colección
+                let colName = null;
+                if (colId === 'new') {
+                    const ref = db.ref('collections/' + currentUser.uid).push();
+                    colId = ref.key; colName = newColName;
+                    await ref.set({ name: newColName, createdAt: firebase.database.ServerValue.TIMESTAMP, cover: 'pending', previews: [] });
+                } else if (colId) {
+                    const snap = await db.ref(`collections/${currentUser.uid}/${colId}/name`).once('value'); colName = snap.val();
+                }
+
+                // 2. Subida de Imágenes (Loop)
+                let uploadedUrls = [];
+                if (selectedFiles.length > 0) {
+                    for (const file of selectedFiles) {
+                        let processedFile = file;
+                        try { processedFile = await compressImage(file); } catch (e) {}
+                        
+                        const formData = new FormData(); 
+                        formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', processedFile);
+                        
+                        // Usar corsproxy.io para evitar CORS
+                        const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
+                        const txt = await r.text();
+                        
+                        if(!r.ok || !txt.includes('catbox.moe')) throw new Error("Error subida imagen");
+                        uploadedUrls.push(txt.trim());
+                    }
+                }
+                
+                const finalUserName = (currentUserData && currentUserData.username) ? currentUserData.username : (currentUser?.displayName || 'Usuario');
+                const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
+
+                // 3. Crear Post
+                const post = {
+                    text, 
+                    imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null, // Retrocompatibilidad
+                    imageUrls: uploadedUrls, // Nuevo Array
+                    title, tags, category, characterName,
+                    userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0,
+                    collectionId: colId || null, collectionName: colName || null
+                };
+                
+                await db.ref('feed_posts').push(post);
+
+                if (characterName) {
+                    const normalizedChar = characterName.toLowerCase().replace(/[.#$\[\]]/g, ""); 
+                    const charRef = db.ref(`stats/characters/${normalizedChar}`);
+                    charRef.transaction((currentData) => {
+                        if (currentData === null) { return { count: 1, displayName: characterName }; } 
+                        else { return { count: (currentData.count || 0) + 1, displayName: characterName }; }
+                    });
+                }
+
+                // Actualizar colección con la primera imagen
+                if (colId && uploadedUrls.length > 0) {
+                    await updateCollectionPreviews(currentUser.uid, colId, uploadedUrls[0]);
+                }
+
+                initFeedListener(); 
+                collapsePostArea(true); showToast("¡Publicado con éxito!");
+            } catch(e) { showAlert("Error: " + e.message); }
+            finally { 
+                btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = 'Publicar'; 
+                progress.classList.add('hidden'); 
+            }
+        }
+
+        // --- VIEWER LOGIC (MODAL) ---
         function openViewerById(id) {
             currentModalIndex = displayedPosts.findIndex(p => p.id === id);
             if (currentModalIndex === -1) return;
+            currentInternalImageIndex = 0; 
             updateModalContent();
             document.getElementById('modal').classList.add('visible');
             document.getElementById('modal').classList.remove('fullscreen-mode');
@@ -954,18 +967,36 @@
         function updateModalContent() {
             const post = displayedPosts[currentModalIndex];
             if (!post) return;
-            document.getElementById('modal-image').src = post.imageUrl;
-            document.getElementById('modal-title').textContent = post.title || 'Sin Título';
+
+            const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
+            const imgEl = document.getElementById('modal-image');
             
-            // PERSONAJE CLICKEABLE EN MODAL
+            if (images.length > 0) {
+                if (currentInternalImageIndex >= images.length) currentInternalImageIndex = 0;
+                imgEl.src = images[currentInternalImageIndex];
+            } else { imgEl.src = ""; }
+
+            // Lógica Carousel Interno
+            const dotsContainer = document.getElementById('carousel-dots');
+            const navContainer = document.getElementById('internal-carousel-nav');
+            dotsContainer.innerHTML = '';
+            
+            if (images.length > 1) {
+                navContainer.classList.remove('hidden');
+                images.forEach((_, idx) => {
+                    const dot = document.createElement('div');
+                    dot.className = `dot ${idx === currentInternalImageIndex ? 'active' : ''}`;
+                    dotsContainer.appendChild(dot);
+                });
+            } else { navContainer.classList.add('hidden'); }
+
+            document.getElementById('modal-title').textContent = post.title || 'Sin Título';
             const charContainer = document.getElementById('modal-character-tag-container');
             if (post.characterName) {
                 charContainer.classList.remove('hidden');
                 document.getElementById('modal-character-name').textContent = post.characterName;
                 document.getElementById('modal-character-btn').onclick = () => filterByCharacterFromModal(post.characterName);
-            } else {
-                charContainer.classList.add('hidden');
-            }
+            } else { charContainer.classList.add('hidden'); }
             
             document.getElementById('modal-desc').innerHTML = (post.text || '').replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
             document.getElementById('modal-user-name').textContent = post.userName;
@@ -976,20 +1007,16 @@
             tagsDiv.classList.add('hidden'); 
             tagsBtn.innerHTML = '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>';
             tagsDiv.innerHTML = '';
-            
             if (post.tags) {
                 tagsBtn.style.display = 'flex';
                 post.tags.split(',').forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 border border-zinc-700 px-2 py-1 rounded-full cursor-pointer hover:border-orange-500 transition" onclick="filterByTagFromModal('${t.trim()}')">#${t.trim()}</span>`; });
-            } else { 
-                tagsBtn.style.display = 'none';
-            }
+            } else { tagsBtn.style.display = 'none'; }
 
             loadSimilarImagesInSlider(post.tags, post.id, post.characterName);
             const likeBtn = document.getElementById('modal-like-btn');
             const likesCount = document.getElementById('modal-likes-count');
             likeBtn.onclick = () => toggleLike(post.id);
             const uid = currentUser ? currentUser.uid : deviceID;
-            
             db.ref(`feed_likes/${post.id}/${uid}`).on('value', s => {
                 if(s.exists()) { likeBtn.classList.add('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim"; } 
                 else { likeBtn.classList.remove('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400"; }
@@ -1007,10 +1034,21 @@
             document.getElementById('modal-next').style.display = currentModalIndex < displayedPosts.length-1 ? 'flex' : 'none';
         }
 
+        function navigateInternalCarousel(dir) {
+            const post = displayedPosts[currentModalIndex];
+            const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
+            if (images.length <= 1) return;
+            
+            if (dir === 1) { if (currentInternalImageIndex < images.length - 1) currentInternalImageIndex++; else currentInternalImageIndex = 0; } 
+            else { if (currentInternalImageIndex > 0) currentInternalImageIndex--; else currentInternalImageIndex = images.length - 1; }
+            
+            updateModalContent();
+        }
+
         function loadSimilarImagesInSlider(tagsString, currentId, currentCharacterName) {
             const container = document.getElementById('similar-grid');
             container.innerHTML = '';
-            const candidates = allPostsCache.filter(p => p.id !== currentId && p.imageUrl);
+            const candidates = allPostsCache.filter(p => p.id !== currentId && (p.imageUrl || (p.imageUrls && p.imageUrls.length > 0)));
             let finalResults = [];
             let addedIds = new Set();
             if (currentCharacterName) {
@@ -1026,10 +1064,11 @@
                 }).filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.post);
                 finalResults = finalResults.concat(tagMatches);
             }
-            if (finalResults.length === 0) { container.innerHTML = '<span class="text-xs text-gray-500 italic px-2">No se encontraron imágenes similares.</span>'; return; }
+            if (finalResults.length === 0) { container.innerHTML = '<span class="text-xs text-gray-600 italic px-2">No se encontraron imágenes similares.</span>'; return; }
             finalResults.slice(0, 10).forEach(post => {
                 const div = document.createElement('div'); div.className = "similar-card cursor-pointer group"; div.onclick = () => openViewerById(post.id);
-                div.innerHTML = `<img src="${post.imageUrl}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
+                const img = (post.imageUrls && post.imageUrls.length > 0) ? post.imageUrls[0] : post.imageUrl;
+                div.innerHTML = `<img src="${img}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
                 container.appendChild(div);
             });
         }
@@ -1040,26 +1079,43 @@
             if(prev){ db.ref(`feed_likes/${prev.id}`).off(); db.ref(`feed_posts/${prev.id}/likes`).off(); db.ref(`feed_comments/${prev.id}`).off(); }
             if (dir===1 && currentModalIndex<displayedPosts.length-1) currentModalIndex++;
             else if (dir===-1 && currentModalIndex>0) currentModalIndex--;
+            currentInternalImageIndex = 0;
             updateModalContent();
         }
-        const modalArea = document.getElementById('modal-image-area');
-        modalArea.addEventListener('touchstart', e => touchStartX=e.changedTouches[0].screenX, {passive:true});
-        modalArea.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; if(Math.abs(touchEndX - touchStartX) > 50) { if(touchEndX < touchStartX) navigateModal(1); else navigateModal(-1); } }, {passive:true});
-        document.getElementById('close-modal').onclick = () => { const p = displayedPosts[currentModalIndex]; if(p){ db.ref(`feed_likes/${p.id}`).off(); db.ref(`feed_posts/${p.id}/likes`).off(); db.ref(`feed_comments/${p.id}`).off(); } document.getElementById('modal').classList.remove('visible'); document.body.style.overflow='auto'; };
+        
+        // --- SUGGESTIONS LOGIC ---
+        const charInput = document.getElementById('post-character');
+        const suggestionsBox = document.getElementById('character-suggestions');
+        charInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim().toLowerCase();
+            if (!val) { suggestionsBox.classList.remove('visible'); return; }
+            const allChars = Object.entries(characterStatsCache).map(([key, data]) => ({ id: key, name: data.displayName, count: data.count || 0 }));
+            const matches = allChars.filter(c => c.name.toLowerCase().includes(val)).sort((a, b) => b.count - a.count).slice(0, 3);
+            if (matches.length > 0) { renderSuggestions(matches); suggestionsBox.classList.add('visible'); } else { suggestionsBox.classList.remove('visible'); }
+        });
+        document.addEventListener('click', (e) => { if (!charInput.contains(e.target) && !suggestionsBox.contains(e.target)) { suggestionsBox.classList.remove('visible'); } });
+        function renderSuggestions(matches) {
+            suggestionsBox.innerHTML = '';
+            matches.forEach((match, index) => {
+                const isTop = index === 0; const countDisplay = formatCount(match.count);
+                const div = document.createElement('div'); div.className = 'suggestion-item'; div.onclick = () => selectSuggestion(match.name);
+                div.innerHTML = `<span class="suggestion-name flex items-center gap-2">${match.name}${isTop && match.count > 0 ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}</span><span class="suggestion-meta">${countDisplay} usos</span>`;
+                suggestionsBox.appendChild(div);
+            });
+        }
+        function formatCount(num) { if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M...'; if (num >= 1000) return (num / 1000).toFixed(1) + 'k...'; return num; }
+        function selectSuggestion(name) { charInput.value = name; suggestionsBox.classList.remove('visible'); }
 
         // --- HELPERS ---
         function switchView(mode) { const f=document.getElementById('feed-list-container'), g=document.getElementById('grid-view-container'); const bf=document.getElementById('btn-view-feed'), bg=document.getElementById('btn-view-grid'); if(mode==='feed'){ f.classList.remove('hidden'); g.classList.add('hidden'); bf.classList.add('active'); bg.classList.remove('active'); } else{ f.classList.add('hidden'); g.classList.remove('hidden'); bf.classList.remove('active'); bg.classList.add('active'); } }
         function changeSortOrder(o) { currentSortOrder = o; applyFiltersAndRender(); }
-        
-        // FILTRADO DE TAGS Y PERSONAJES
         function filterByTag(t) { currentFilterTag = t.replace('#','').trim(); currentFilterType = 'tag'; applyFiltersAndRender(); window.scrollTo({top:0, behavior:'smooth'}); }
         function filterByCharacter(name) { currentFilterTag = name; currentFilterType = 'character'; applyFiltersAndRender(); window.scrollTo({top:0, behavior:'smooth'}); }
-        
         function filterByTagFromModal(t) { document.getElementById('close-modal').click(); filterByTag(t); }
         function filterByCharacterFromModal(name) { document.getElementById('close-modal').click(); filterByCharacter(name); }
-        
         function clearTagFilter() { currentFilterTag = null; currentFilterType = null; applyFiltersAndRender(); }
         function goToProfile(uid) { window.location.href = `profile.html?uid=${uid}`; }
+        function visitProfileFromModal() { const p = displayedPosts[currentModalIndex]; if(p) goToProfile(p.userId); }
         function toggleFullScreen() { document.getElementById('modal').classList.toggle('fullscreen-mode'); }
         function toggleOptionsMenu(id) { const m = document.getElementById(`options-menu-${id}`); document.querySelectorAll('.options-menu').forEach(x => {if(x!==m)x.classList.remove('show')}); m.classList.toggle('show'); }
         window.onclick = e => { if(!e.target.closest('.options-trigger')) document.querySelectorAll('.options-menu').forEach(m=>m.classList.remove('show')); };
@@ -1069,6 +1125,7 @@
         function checkCommentStatus(id) { db.ref(`feed_comments/${id}`).on('value', s => { const count = s.numChildren(); const el = document.getElementById(`comments-count-${id}`); if(el) { el.innerText = count || 0; if(count > 0) el.classList.add('text-white'); else el.classList.remove('text-white'); } }); }
         function toggleComments(id) { const el = document.getElementById(`comments-${id}`); if(el.classList.contains('hidden')) { el.classList.remove('hidden'); db.ref(`feed_comments/${id}`).off(); document.getElementById(`comments-list-${id}`).innerHTML = ''; db.ref(`feed_comments/${id}`).on('child_added', s => { const c = s.val(); const div = document.createElement('div'); div.className = "flex gap-2 items-start text-sm animate-enter"; div.innerHTML = `<img src="${c.userAvatar}" class="w-6 h-6 rounded-full mt-1 border border-zinc-700 object-cover cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800 p-2.5 rounded-2xl rounded-tl-none"><span class="font-bold text-gray-300 block text-xs mb-0.5 cursor-pointer hover:text-orange-400" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 font-light">${c.text}</span></div>`; document.getElementById(`comments-list-${id}`).appendChild(div); }); } else el.classList.add('hidden'); }
         function postComment(e, id) { e.preventDefault(); const input = document.getElementById(`comment-input-${id}`); if(!input.value.trim()) return; const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; db.ref(`feed_comments/${id}`).push({ text:input.value, userId:currentUser?currentUser.uid:'anon', userName:uN, userAvatar:uA, timestamp:Date.now() }); input.value=''; }
+        function postCommentInModal(e) { e.preventDefault(); const input = document.getElementById('modal-comment-input'); const post = displayedPosts[currentModalIndex]; if(!input.value.trim() || !post) return; const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; db.ref(`feed_comments/${post.id}`).push({ text:input.value, userId:currentUser?currentUser.uid:'anon', userName:uN, userAvatar:uA, timestamp:Date.now() }); input.value=''; }
         function updateUserAvatarInUI(uid) { if(!userProfileCache[uid]) db.ref(`users/${uid}/profilePic`).once('value', s => { const url = s.val()||'https://placehold.co/100x100/333/fff?text=U'; userProfileCache[uid]=url; document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = url); }); else document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = userProfileCache[uid]); }
         function timeAgo(ts) { if(!ts) return ''; const s = Math.floor((Date.now()-ts)/1000); if(s<60) return 'Hace un momento'; if(s<3600) return Math.floor(s/60)+'m'; if(s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; }
 
