@@ -397,7 +397,7 @@
 
             <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black transition-all duration-300">
                 
-                <!-- ÁREA IMAGEN (Corregido: Flexbox centrado sin absolute) -->
+                <!-- ÁREA IMAGEN -->
                 <div id="modal-image-area" class="image-area relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[55vh] lg:h-full">
                     <img id="modal-image" src="" class="max-w-full max-h-full object-contain w-auto h-auto transition-transform duration-300">
                     <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-zinc-800/80 text-white p-2.5 rounded-xl backdrop-blur-md border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-expand text-sm"></i></button>
@@ -502,7 +502,6 @@
         if (!deviceID) { deviceID = Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('deviceID', deviceID); }
         
         let userDataCache = {};
-        let isUploadingAuth = false;
         
         const imagesPerLoad = 21; 
         let allImages = []; 
@@ -525,10 +524,7 @@
         let currentSearchResults = []; 
         let searchCurrentPage = 1; 
         const searchResultsPerPage = 21; 
-        let touchStartX = 0; 
-        let touchEndX = 0; 
-        let touchStartY = 0; 
-        let touchEndY = 0; 
+        let touchStartX = 0, touchEndX = 0, touchStartY = 0, touchEndY = 0; 
         const swipeThreshold = 50;
         let adminUserId = null;
 
@@ -554,7 +550,7 @@
 
             if (loader) { loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 500); }
             if(feedCache.length > 0) renderCommunitySection();
-            if(user) fetchUserReactions().then(() => loadForYouImages()); // Recalcular Para Ti al loguear
+            if(user) fetchUserReactions().then(() => loadForYouImages());
         });
 
         setTimeout(() => {
@@ -581,24 +577,24 @@
             loadInitialImages();
             loadForYouImages(); 
             renderCommunitySection(); 
-            setupIntersectionObserver();
             setupEventListeners();
         }
 
+        // --- OPTIMIZACIÓN: Solo carga una vez (once) en lugar de escuchar siempre (on) ---
         function handleVisitCounter() {
             const visitStatsRef = db.ref('siteStats/totalVisits');
             if (!sessionStorage.getItem('visitCounted')) {
                 visitStatsRef.transaction(currentVisits => (currentVisits || 0) + 1);
                 sessionStorage.setItem('visitCounted', 'true');
             }
-            visitStatsRef.on('value', snapshot => {
+            // Cambiado a .once() para evitar listening constante en main
+            visitStatsRef.once('value', snapshot => {
                 const count = snapshot.val() || 0;
                 document.getElementById('visit-count-display').textContent = count >= 1000 ? (count / 1000).toFixed(1) + 'k' : count;
             });
         }
 
         async function cacheAllDataForSearch() { 
-            // 1. Obtener galería oficial
             const snapshot = await db.ref('images').once('value'); 
             if (snapshot.exists()) { 
                 const allData = []; 
@@ -606,9 +602,8 @@
                 fullGalleryCache = allData; 
             } 
             
-            // 2. Obtener usuarios (CREAR MAPA DE BÚSQUEDA RÁPIDA)
             const userSnap = await db.ref('users').once('value');
-            const userMap = {}; // Mapa para búsqueda O(1)
+            const userMap = {}; 
             
             if (userSnap.exists()) {
                 const uData = [];
@@ -616,20 +611,18 @@
                     const userData = child.val();
                     const uid = child.key;
                     uData.push({ id: uid, type: 'user', ...userData }); 
-                    userMap[uid] = userData; // Guardar en mapa
+                    userMap[uid] = userData; 
                     if (userData.email === 'ezequiel@exen.com') adminUserId = uid;
                 });
                 usersCache = uData;
             }
 
-            // 3. Obtener Feed Social (USAR DATOS DE USUARIO ACTUALIZADOS DEL MAPA)
             const feedSnap = await db.ref('feed_posts').once('value');
             if (feedSnap.exists()) {
                 const fData = [];
                 feedSnap.forEach(child => { 
                     const post = child.val();
                     if (post.imageUrl) { 
-                        // Obtener datos ACTUALES del autor
                         const author = userMap[post.userId];
                         const currentAvatar = author ? author.profilePic : (post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U');
                         const currentName = author ? author.username : (post.userName || 'Usuario');
@@ -660,9 +653,14 @@
         
         async function fetchUserReactions() { 
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
-            const snapshot = await db.ref('reactions').once('value'); 
-            const allReactions = snapshot.val() || {}; 
-            const feedLikesSnap = await db.ref('feed_likes').once('value'); // Obtener también likes del feed
+            
+            // Cargamos ambas rutas para saber si dimos like
+            const [reactionsSnap, feedLikesSnap] = await Promise.all([
+                 db.ref('reactions').once('value'),
+                 db.ref('feed_likes').once('value')
+            ]);
+
+            const allReactions = reactionsSnap.val() || {}; 
             const allFeedLikes = feedLikesSnap.val() || {};
 
             userReactions = {}; 
@@ -670,11 +668,13 @@
             // Likes Galería
             Object.keys(allReactions).forEach(imgId => { if(allReactions[imgId][userId]) userReactions[imgId] = 'like'; });
             
-            // Likes Feed (Convertir a formato compatible)
+            // Likes Feed
             Object.keys(allFeedLikes).forEach(postId => { if(allFeedLikes[postId][userId]) userReactions[postId] = 'like'; });
         }
 
         async function cacheAllReactionCounts() { 
+            // Solo cacheamos reactions de la galería oficial aquí
+            // Los del feed ya vienen en el objeto post.likes
             const reactionsSnap = await db.ref('reactions').once('value'); 
             const reactions = reactionsSnap.val() || {}; 
             const counts = {}; 
@@ -718,15 +718,10 @@
             });
         }
 
-        // --- LÓGICA "PARA TI" BASADA EN INTERACCIONES (LIKES) ---
         async function loadForYouImages() {
             const grid = document.getElementById('for-you-grid');
             generateSkeletons(grid, 6);
-            
-            // 1. Calcular frecuencias de tags basadas en los likes del usuario
             let tagScores = {};
-            
-            // Recorremos todas las imágenes para ver cuáles ha likeado el usuario
             unifiedGalleryData.forEach(img => {
                 if (userReactions[img.id] === 'like') {
                     if (img.tags && Array.isArray(img.tags)) {
@@ -735,40 +730,24 @@
                             tagScores[normTag] = (tagScores[normTag] || 0) + 1;
                         });
                     }
-                    if (img.characterName) {
-                        const normChar = normalize(img.characterName);
-                        tagScores[normChar] = (tagScores[normChar] || 0) + 3; // El personaje pesa más
-                    }
                 }
             });
 
-            // 2. Puntuar imágenes que NO ha likeado aún
             let scoredImages = unifiedGalleryData
-                .filter(img => userReactions[img.id] !== 'like') // Solo sugerir nuevas
+                .filter(img => userReactions[img.id] !== 'like') 
                 .map(img => {
                     let score = 0;
                     if (img.tags && Array.isArray(img.tags)) { 
-                        img.tags.forEach(tag => { 
-                            const normTag = normalize(tag); 
-                            if (tagScores[normTag]) score += tagScores[normTag]; 
-                        }); 
+                        img.tags.forEach(tag => { const normTag = normalize(tag); if (tagScores[normTag]) score += tagScores[normTag]; }); 
                     }
-                    if (img.characterName && tagScores[normalize(img.characterName)]) {
-                         score += tagScores[normalize(img.characterName)] * 2;
-                    }
-                    // Pequeño factor aleatorio para variedad
                     score += Math.random() * 2; 
                     return { img, score };
                 });
 
-            // 3. Ordenar y seleccionar
             scoredImages.sort((a, b) => b.score - a.score);
-            
-            // Tomar top 30 candidatos y barajar un poco para no ser monótono
             let candidates = scoredImages.slice(0, 30).map(item => item.img);
-            if (candidates.length === 0) candidates = unifiedGalleryData.slice(0, 20); // Fallback si no hay likes
+            if (candidates.length === 0) candidates = unifiedGalleryData.slice(0, 20); 
 
-            // Shuffle Fisher-Yates ligero de los top candidates
             for (let i = Math.min(candidates.length, 10) - 1; i > 0; i--) { 
                 const j = Math.floor(Math.random() * (i + 1)); 
                 [candidates[i], candidates[j]] = [candidates[j], candidates[i]]; 
@@ -799,18 +778,12 @@
             loaderContainer.style.display = 'none'; isLoading = false; 
         }
 
-        // --- BANNER SUPERIOR ALEATORIO ---
         function loadHeroBanner() {
-            // Tomar los 20 más recientes para asegurar frescura
             let recentCandidates = fullGalleryCache.slice(0, 20);
-            
-            // Barajar aleatoriamente para mostrar distintos en cada carga
             for (let i = recentCandidates.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [recentCandidates[i], recentCandidates[j]] = [recentCandidates[j], recentCandidates[i]];
             }
-            
-            // Tomar los primeros 5 después de barajar
             const heroImages = recentCandidates.slice(0, 5);
 
             const container = document.getElementById('hero-slides-container');
@@ -857,16 +830,23 @@
                 div.style.animationDelay = `${(index * 0.05)}s`; 
                 const isLiked = userReactions[item.id] === 'like'; 
                 const displayUrl = item.thumbnailUrl || item.url; 
-                const reactionCount = allReactionCounts[item.id] || 0; 
+                
+                // --- FIX LIKES 0: Obtener conteo correcto según tipo ---
+                let reactionCount = 0;
+                if (item.type === 'feed') {
+                    reactionCount = item.likes || 0; // Usar el campo .likes del post
+                } else {
+                    reactionCount = allReactionCounts[item.id] || 0; // Usar el mapa de reactions
+                }
+                
                 const isVerified = (item.type === 'gallery') || (item.type === 'feed' && item.userId === adminUserId);
                 let badgeIcon = isVerified ? `<div class="absolute top-2 left-2 z-10 bg-blue-600/90 text-white text-xs p-1.5 rounded-full shadow-md"><i class="fas fa-check-circle"></i></div>` : `<div class="absolute top-2 left-2 z-10 bg-green-600/90 text-white text-xs p-1.5 rounded-full shadow-md"><i class="fas fa-globe"></i></div>`;
                 let bottomInfo = isVerified ? `<h4 class="truncate font-bold text-white text-sm">${item.title}</h4>` : `<h4 class="truncate font-bold text-white text-sm mb-1">${item.title}</h4><div class="flex items-center gap-2"><img src="${item.user.avatar}" class="w-5 h-5 rounded-full border border-white/30 object-cover"><span class="text-[10px] text-gray-300 truncate">${item.user.name}</span></div>`;
-                div.innerHTML = `<img src="${displayUrl}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/10 pointer-events-none"></div>${badgeIcon}<div class="absolute bottom-0 left-0 p-3 pointer-events-none w-full">${bottomInfo}</div><button id="grid-like-btn-${item.id}" onclick="toggleReactionFromGrid('${item.id}', event)" class="absolute top-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm touch-feedback ${isLiked ? 'liked' : ''}"><i class="fas fa-heart text-gray-300"></i><span id="reaction-count-grid-${item.id}">${reactionCount}</span></button>`; 
+                div.innerHTML = `<img src="${displayUrl}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/10 pointer-events-none"></div>${badgeIcon}<div class="absolute bottom-0 left-0 p-3 pointer-events-none w-full">${bottomInfo}</div><button id="grid-like-btn-${item.id}" onclick="toggleReactionFromGrid('${item.id}', '${item.type}', event)" class="absolute top-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm touch-feedback ${isLiked ? 'liked' : ''}"><i class="fas fa-heart text-gray-300"></i><span id="reaction-count-grid-${item.id}">${reactionCount}</span></button>`; 
                 grid.appendChild(div); 
             }); 
         }
 
-        // --- LÓGICA DE VISOR MODAL (FIXED CENTER) ---
         async function openModal(id, context) {
             if(!requireLogin()) return;
             if(context === 'main') currentPlaylist = unifiedGalleryData; 
@@ -890,23 +870,15 @@
             document.getElementById('modal-desc').textContent = img.desc || 'Sin descripción.';
             const avatarEl = document.getElementById('modal-user-avatar');
             const nameEl = document.getElementById('modal-user-name');
-
-            // --- CORRECCIÓN IMAGEN: Usar un solo elemento IMG centrado ---
             const modalImg = document.getElementById('modal-image');
-            // Cargar primero thumbnail si existe para percepción instantánea
-            modalImg.src = img.thumbnailUrl || img.url;
             
-            // Cargar alta resolución en segundo plano si es diferente
+            modalImg.src = img.thumbnailUrl || img.url;
             if (img.thumbnailUrl && img.thumbnailUrl !== img.url) {
                 const highRes = new Image();
                 highRes.src = img.url;
-                highRes.onload = () => {
-                    // Solo reemplazar si el usuario sigue viendo la misma imagen
-                    if (currentImageId === img.id) modalImg.src = img.url;
-                };
+                highRes.onload = () => { if (currentImageId === img.id) modalImg.src = img.url; };
             }
 
-            // Perfil
             if (img.type === 'gallery') {
                 nameEl.textContent = "Galería Oficial"; avatarEl.src = "https://files.catbox.moe/ap1lh0.png";
                 nameEl.onclick = null; nameEl.style.cursor = 'default'; avatarEl.onclick = null; avatarEl.style.cursor = 'default';
@@ -916,7 +888,6 @@
                 nameEl.onclick = goToProfile; nameEl.style.cursor = 'pointer'; avatarEl.onclick = goToProfile; avatarEl.style.cursor = 'pointer';
             }
 
-            // Etiqueta de Personaje (Nuevo)
             const charTag = document.getElementById('modal-character-tag');
             if (img.characterName) {
                 charTag.classList.remove('hidden');
@@ -925,10 +896,9 @@
                 charTag.classList.add('hidden');
             }
 
-            // Tags Retráctiles (Nuevo)
             const tagsDiv = document.getElementById('modal-tags');
             const tagsBtn = document.getElementById('tags-toggle-btn');
-            tagsDiv.classList.add('hidden'); // Siempre iniciar oculto
+            tagsDiv.classList.add('hidden');
             tagsBtn.innerHTML = '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>';
             tagsDiv.innerHTML = '';
             
@@ -939,20 +909,18 @@
                 tagsBtn.style.display = 'none';
             }
 
-            // Likes
             const modalLikeBtn = document.getElementById('modal-like-btn');
             modalLikeBtn.onclick = () => toggleReactionInModal(img.id);
-            updateModalLikeUI(img.id);
             
-            // Similares Actualizados
-            loadSimilarImagesInSlider(img.tags || [], img.id, img.characterName);
+            // --- OPTIMIZACIÓN: Iniciar Listeners solo al abrir modal ---
+            updateModalLikeUI(img.id);
             loadComments(img.id, currentContext);
+            loadSimilarImagesInSlider(img.tags || [], img.id, img.characterName);
 
             document.getElementById('prev-image').style.display = currentIndex > 0 ? 'flex' : 'none';
             document.getElementById('next-image').style.display = currentIndex < currentPlaylist.length - 1 ? 'flex' : 'none';
         }
 
-        // Lógica de Similares (Prioridad: Personaje -> Tags)
         function loadSimilarImagesInSlider(tags, currentId, currentCharacterName) {
             const container = document.getElementById('similar-grid');
             container.innerHTML = '';
@@ -961,7 +929,6 @@
             let finalResults = [];
             let addedIds = new Set();
 
-            // 1. PRIORIDAD: Mismo Personaje (Max 3)
             if (currentCharacterName) {
                 const charMatches = candidates.filter(p => 
                     p.characterName && 
@@ -974,7 +941,6 @@
                 });
             }
 
-            // 2. RELLENO: Tags
             if (tags && tags.length > 0) {
                 const tagMatches = candidates
                     .filter(p => !addedIds.has(p.id)) 
@@ -998,7 +964,7 @@
             finalResults.slice(0, 10).forEach(post => {
                 const div = document.createElement('div');
                 div.className = "similar-card cursor-pointer group";
-                div.onclick = () => updateModalContent(post); // Navegar directamente
+                div.onclick = () => updateModalContent(post);
                 div.innerHTML = `<img src="${post.thumbnailUrl || post.url}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
                 container.appendChild(div);
             });
@@ -1014,8 +980,7 @@
         function navigateToNext() { if(currentIndex < currentPlaylist.length - 1) { currentIndex++; updateModalContent(currentPlaylist[currentIndex]); } }
         function navigateToPrevious() { if(currentIndex > 0) { currentIndex--; updateModalContent(currentPlaylist[currentIndex]); } }
         
-        // --- TOUCH GESTURES (UPDATED ID) ---
-        const imageArea = document.getElementById('modal-image-area'); // FIXED ID REFERENCE
+        const imageArea = document.getElementById('modal-image-area'); 
         imageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
         imageArea.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; touchEndY = e.changedTouches[0].screenY; handleSwipe(); }, {passive: true});
         
@@ -1024,15 +989,17 @@
 
         function toggleReactionInModal(id) {
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
+            // Detectar contexto correcto para dar like
             const ref = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
+            
             ref.once('value', s => {
                 if(s.exists()) { 
                     if(currentContext === 'feed') { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } else { ref.remove(); }
-                    userReactions[id] = null; // Update local cache
+                    userReactions[id] = null;
                 } 
                 else { 
                     if(currentContext === 'feed') { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } else { ref.set('like'); }
-                    userReactions[id] = 'like'; // Update local cache
+                    userReactions[id] = 'like';
                 }
             });
         }
@@ -1041,22 +1008,38 @@
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
             const modalLikeBtn = document.getElementById('modal-like-btn');
             const modalLikeCount = document.getElementById('modal-like-count');
-            const refStatus = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
             
-            refStatus.on('value', s => {
+            // Limpiar listener anterior para ahorrar memoria
+            const pathLikes = currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`;
+            db.ref(pathLikes).off(); 
+            
+            // Escuchar ESTADO DE MI LIKE
+            db.ref(pathLikes).on('value', s => {
                  if((currentContext === 'feed' && s.exists()) || (currentContext !== 'feed' && s.val() === 'like')) {
                      modalLikeBtn.classList.add('text-red-500', 'border-red-500/50', 'bg-red-500/10'); modalLikeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim";
                  } else {
                      modalLikeBtn.classList.remove('text-red-500', 'border-red-500/50', 'bg-red-500/10'); modalLikeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400";
                  }
             });
-            if(currentContext === 'feed') { db.ref(`feed_posts/${id}/likes`).on('value', s => modalLikeCount.innerText = s.val() || 0); } 
-            else { db.ref(`reactions/${id}`).on('value', s => { let count = 0; const val = s.val(); if(val) Object.values(val).forEach(v => { if(v === 'like') count++; }); modalLikeCount.innerText = count; }); }
+
+            // Escuchar CONTADOR GLOBAL
+            const pathCount = currentContext === 'feed' ? `feed_posts/${id}/likes` : `reactions/${id}`;
+            db.ref(pathCount).off();
+
+            if(currentContext === 'feed') { 
+                db.ref(pathCount).on('value', s => modalLikeCount.innerText = s.val() || 0); 
+            } else { 
+                db.ref(pathCount).on('value', s => { let count = 0; const val = s.val(); if(val) Object.values(val).forEach(v => { if(v === 'like') count++; }); modalLikeCount.innerText = count; }); 
+            }
         }
 
         function loadComments(id, context) { 
             let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; 
-            const container = document.getElementById('comments'); db.ref(path).off(); 
+            const container = document.getElementById('comments'); 
+            
+            // --- OPTIMIZACIÓN: Apagar listener previo ---
+            db.ref(path).off(); 
+            
             db.ref(path).orderByChild('timestamp').on('value', snap => { 
                 container.innerHTML = !snap.exists() ? '<p class="text-center text-gray-500 text-xs py-4">Sé el primero en comentar.</p>' : ''; 
                 const comments = []; snap.forEach(child => comments.push(child.val())); 
@@ -1077,7 +1060,26 @@
              db.ref(path).push(c); input.value = '';
         });
 
-        function closeModal() { const modal = document.getElementById('modal'); if (modal.classList.contains('fullscreen-mode')) toggleFullScreen(); else { modal.classList.remove('visible'); document.body.style.overflow = 'auto'; } }
+        // --- OPTIMIZACIÓN: Limpiar listeners al cerrar modal ---
+        function closeModal() { 
+            const modal = document.getElementById('modal'); 
+            if (modal.classList.contains('fullscreen-mode')) toggleFullScreen(); 
+            else { 
+                modal.classList.remove('visible'); 
+                document.body.style.overflow = 'auto'; 
+                
+                // Desconectar listeners para ahorrar datos
+                if(currentImageId) {
+                    const userId = currentUser ? currentUser.uid : deviceID;
+                    db.ref(`feed_likes/${currentImageId}/${userId}`).off();
+                    db.ref(`reactions/${currentImageId}/${userId}`).off();
+                    db.ref(`feed_posts/${currentImageId}/likes`).off();
+                    db.ref(`reactions/${currentImageId}`).off();
+                    db.ref(`feed_comments/${currentImageId}`).off();
+                    db.ref(`comments/${currentImageId}`).off();
+                }
+            } 
+        }
         
         function executeSearch(query) { 
             document.getElementById('main-content-sections').classList.add('hidden'); document.getElementById('gallery').classList.add('hidden'); document.getElementById('search-results-container').classList.remove('hidden'); 
@@ -1100,19 +1102,36 @@
             const obs = new IntersectionObserver(e => { if(e[0].isIntersecting) loadMoreImages(); }); obs.observe(document.getElementById('load-more-trigger'));
             document.getElementById('next-image').onclick = navigateToNext; document.getElementById('prev-image').onclick = navigateToPrevious;
         }
-        function setupIntersectionObserver() {} 
 
         function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton'; } }
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
         function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } document.getElementById('auth-overlay').style.display = 'flex'; return false; } return true; }
         function switchAuthTab(tab) { const l = document.getElementById('login-form'), r1 = document.getElementById('register-step-1'), r2 = document.getElementById('register-step-2'); if(tab==='login'){l.style.display='flex';r1.style.display='none';r2.style.display='none';}else{l.style.display='none';r1.style.display='flex';r2.style.display='none';} }
-        function toggleReactionFromGrid(imageId, event) { if(!requireLogin(event)) return; event.stopPropagation(); toggleReactionInModal(imageId); }
+        
+        // --- FIX: Pasar tipo para dar like correctamente desde grilla ---
+        function toggleReactionFromGrid(imageId, type, event) { 
+            if(!requireLogin(event)) return; 
+            event.stopPropagation(); 
+            // Establecer contexto temporalmente si no abrimos modal
+            currentContext = type; 
+            toggleReactionInModal(imageId); 
+        }
         
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value).catch(err=>document.getElementById('login-error').textContent=err.message); });
         async function validateAuthStep1() { document.getElementById('register-step-1').style.display='none'; document.getElementById('register-step-2').style.display='flex'; }
         document.getElementById('register-step-2').addEventListener('submit', (e) => { e.preventDefault(); auth.createUserWithEmailAndPassword(document.getElementById('reg-email').value, document.getElementById('reg-password').value).then(c => db.ref('users/'+c.user.uid).set({username:document.getElementById('reg-name').value})).then(()=>location.reload()); });
 
-        function loadUserProfile(uid) { db.ref('users/' + uid).on('value', snap => { if (snap.exists()) { const data = snap.val(); document.getElementById('header-user-img').src = data.profilePic || 'https://placehold.co/100x100/333/fff?text=U'; userDataCache = data; } }); }
+        // Cambiado a .once() para evitar carga constante
+        function loadUserProfile(uid) { 
+            db.ref('users/' + uid).once('value', snap => { 
+                if (snap.exists()) { 
+                    const data = snap.val(); 
+                    document.getElementById('header-user-img').src = data.profilePic || 'https://placehold.co/100x100/333/fff?text=U'; 
+                    userDataCache = data; 
+                } 
+            }); 
+        }
+        
         let newProfileFile = null;
         function openConfigModal() { document.getElementById('config-modal').style.display = 'flex'; document.getElementById('config-preview-img').src = document.getElementById('header-user-img').src; document.getElementById('config-upload-status').innerHTML = 'Toca para cambiar imagen'; document.getElementById('btn-save-config').disabled = false; document.getElementById('btn-save-config').innerHTML = 'Guardar'; newProfileFile = null; }
         function closeConfigModal() { document.getElementById('config-modal').style.display = 'none'; }

@@ -132,6 +132,37 @@
         .analyzing-text { animation: glowText 1.5s infinite; font-style: italic; }
         .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); pointer-events: none; }
 
+        /* SUGERENCIAS DE PERSONAJES (NUEVO) */
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%; left: 0; right: 0;
+            background: rgba(24, 24, 27, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            z-index: 50;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+        .suggestions-dropdown.visible { display: block; animation: fadeIn 0.2s ease-out; }
+        .suggestion-item {
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.2s;
+        }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-item:hover, .suggestion-item:active { background: rgba(249, 115, 22, 0.1); }
+        .suggestion-name { font-weight: 500; color: #e4e4e7; font-size: 0.9rem; }
+        .suggestion-meta { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #a1a1aa; }
+        .verified-badge { color: #4ade80; font-size: 0.8rem; }
+        
         /* Grid Mode */
         .grid-mode-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; }
         .grid-item { aspect-ratio: 1/1; overflow: hidden; position: relative; background-color: #222; cursor: pointer; }
@@ -300,8 +331,14 @@
                         <div class="flex flex-col gap-3">
                             <input type="text" id="post-title" maxlength="30" placeholder="Título (Opcional)" class="custom-input font-bold bg-black/20 border-zinc-700">
                             
-                            <!-- Input de Personaje -->
-                            <input type="text" id="post-character" maxlength="30" placeholder="Nombre del personaje (Opcional)" class="custom-input bg-black/20 border-zinc-700">
+                            <!-- Input de Personaje CON SUGERENCIAS -->
+                            <div class="relative w-full">
+                                <input type="text" id="post-character" maxlength="30" placeholder="Nombre del personaje (Opcional)" class="custom-input bg-black/20 border-zinc-700" autocomplete="off">
+                                <!-- Contenedor de Sugerencias -->
+                                <div id="character-suggestions" class="suggestions-dropdown custom-scrollbar">
+                                    <!-- Se llena dinámicamente con JS -->
+                                </div>
+                            </div>
                             
                             <!-- Tags OCULTOS visualmente pero funcionales -->
                             <div class="hidden">
@@ -394,9 +431,11 @@
                     <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#121214]">
                         <div class="mb-5">
                             <h3 id="modal-title" class="text-xl font-bold text-white mb-2 font-[Poppins] leading-snug"></h3>
-                            <!-- Etiqueta de Personaje en el Visor -->
-                            <div id="modal-character-tag" class="hidden inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider mb-2">
-                                <i class="fas fa-user-tag text-[10px]"></i> <span id="modal-character-name"></span>
+                            <!-- Etiqueta de Personaje en el Visor (CLICKEABLE) -->
+                            <div id="modal-character-tag-container" class="hidden mb-2">
+                                <button id="modal-character-btn" onclick="" class="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-orange-500/20 transition active:scale-95">
+                                    <i class="fas fa-user-tag text-[10px]"></i> <span id="modal-character-name"></span>
+                                </button>
                             </div>
                             <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-light"></p>
                         </div>
@@ -456,11 +495,9 @@
         }
         window.runAutoTagging = async function(originalFile) {
             const tagInput = document.getElementById('post-tags'); const icon = document.getElementById('tag-status-icon'); const publishBtn = document.getElementById('publish-btn');
-            // Tags visualmente ocultos, pero se llenan en el value
             tagInput.value = ""; 
             publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
             showToast("IA: Analizando imagen...");
-            
             try {
                 const processedFile = await resizeImageForApi(originalFile);
                 const client = await Client.connect("Jossle/deepdanbooru_online_Exen");
@@ -494,7 +531,11 @@
         let currentRenderIndex = 0;
         const POSTS_PER_PAGE = 10;
         
+        let characterStatsCache = {};
+
         let currentFilterTag = null;
+        let currentFilterType = null; // 'tag' o 'character'
+
         let currentSortOrder = 'newest';
         let currentModalIndex = -1;
         let confirmCallback = null;
@@ -525,153 +566,66 @@
             if(res && confirmCallback) confirmCallback(); confirmCallback = null;
         }
 
-        // --- CONFIGURACIÓN Y LÓGICA DE SHARPNESS (MEJORA INTELIGENTE) ---
+        // --- FACE API ---
         const FACE_MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
         let faceModelsLoaded = false;
-        
-        // PARÁMETROS AJUSTADOS: Menos agresivos para evitar quemado
-        const SHARP_PARAMS = {
-            faceAmount: 0.25, // Muy sutil, solo para dar vida a ojos/labios
-            bodyAmount: 0.1, // Moderado, define bordes sin crear halos blancos
-            faceThreshold: 10,
-            bodyThreshold: 2
-        };
+        const SHARP_PARAMS = { faceAmount: 0.25, bodyAmount: 0.1, faceThreshold: 10, bodyThreshold: 2 };
 
-        // Cargar modelos silenciosamente al inicio
         window.addEventListener('load', loadFaceApiModels);
-
         async function loadFaceApiModels() {
             if (faceModelsLoaded) return;
-            try {
-                // Solo necesitamos el detector ligero
-                await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL);
-                faceModelsLoaded = true;
-            } catch (err) {
-                console.warn("IA Local: Fallback activo.", err);
-            }
+            try { await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL); faceModelsLoaded = true; } 
+            catch (err) { console.warn("IA Local: Fallback activo.", err); }
         }
 
-        /**
-         * Función Principal: Procesa la imagen aplicando lógica inteligente.
-         * ESTA FUNCIÓN ES CLIENT-SIDE (GRATUITA Y SIN LÍMITES).
-         * Utiliza la CPU/GPU del usuario para procesar, no tu servidor.
-         */
         async function processImageSmartSharpen(fileObj) {
             if (!faceModelsLoaded) await loadFaceApiModels();
-            
             return new Promise(async (resolve, reject) => {
                 try {
                     const img = await faceapi.bufferToImage(fileObj);
-                    const width = img.width;
-                    const height = img.height;
-
-                    // 1. Preparar Canvas Virtual
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
+                    const width = img.width, height = img.height;
+                    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                    
-                    // Dibujar original
                     ctx.drawImage(img, 0, 0);
-
-                    // 2. Generar versión CUERPO (Fondo/Ropa) - Enfoque Moderado
                     const bodySharpened = applyUnsharpMask(ctx, img, SHARP_PARAMS.bodyAmount, 2.0, SHARP_PARAMS.bodyThreshold);
-
-                    // 3. Detectar Caras (Si falla, no pasa nada, se queda con el cuerpo enfocado)
                     let detections = [];
-                    try {
-                        detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions());
-                    } catch (e) { }
-
-                    // 4. Fusión Inteligente
+                    try { detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions()); } catch (e) { }
                     if (detections.length > 0) {
-                        // Generar versión CARA (Piel) - Enfoque Sutil
                         const faceSharpened = applyUnsharpMask(ctx, img, SHARP_PARAMS.faceAmount, 0.5, SHARP_PARAMS.faceThreshold);
-
-                        // Mezclar: Poner píxeles de cara SOBRE píxeles de cuerpo
                         detections.forEach(det => {
                             const { x, y, width: w, height: h } = det.box;
-                            const pad = Math.floor(w * 0.05); // Margen pequeño
-                            
-                            const startX = Math.max(0, Math.floor(x) - pad);
-                            const startY = Math.max(0, Math.floor(y) - pad);
-                            const endX = Math.min(width, Math.floor(x + w) + pad);
-                            const endY = Math.min(height, Math.floor(y + h) + pad);
-
+                            const pad = Math.floor(w * 0.05);
+                            const startX = Math.max(0, Math.floor(x) - pad), startY = Math.max(0, Math.floor(y) - pad);
+                            const endX = Math.min(width, Math.floor(x + w) + pad), endY = Math.min(height, Math.floor(y + h) + pad);
                             for (let row = startY; row < endY; row++) {
                                 const rowOffset = row * width;
                                 for (let col = startX; col < endX; col++) {
                                     const idx = (rowOffset + col) * 4;
-                                    // Reemplazar pixel fuerte con pixel suave
-                                    bodySharpened.data[idx] = faceSharpened.data[idx];     // R
-                                    bodySharpened.data[idx+1] = faceSharpened.data[idx+1]; // G
-                                    bodySharpened.data[idx+2] = faceSharpened.data[idx+2]; // B
+                                    bodySharpened.data[idx] = faceSharpened.data[idx]; bodySharpened.data[idx+1] = faceSharpened.data[idx+1]; bodySharpened.data[idx+2] = faceSharpened.data[idx+2];
                                 }
                             }
                         });
                     }
-
-                    // 5. Volcar resultado final al canvas y exportar
                     ctx.putImageData(bodySharpened, 0, 0);
-                    
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            // Crear nuevo archivo con nombre modificado
-                            const newFile = new File([blob], fileObj.name, { type: "image/jpeg", lastModified: Date.now() });
-                            resolve(newFile);
-                        } else {
-                            reject(new Error("Error generando blob"));
-                        }
-                    }, 'image/jpeg', 0.95);
-
-                } catch (error) {
-                    console.error("Error silencioso en mejora:", error);
-                    resolve(fileObj); // Fallback: devolver original si falla algo
-                }
+                    canvas.toBlob((blob) => { if (blob) resolve(new File([blob], fileObj.name, { type: "image/jpeg", lastModified: Date.now() })); else reject(new Error("Error generando blob")); }, 'image/jpeg', 0.95);
+                } catch (error) { console.error("Error silencioso en mejora:", error); resolve(fileObj); }
             });
         }
-
-        // Algoritmo matemático de Unsharp Mask (Optimizado)
         function applyUnsharpMask(ctx, imgSource, amount, radius, threshold) {
-            const w = ctx.canvas.width;
-            const h = ctx.canvas.height;
-            
-            // Original
-            ctx.filter = 'none';
-            ctx.clearRect(0,0,w,h);
-            ctx.drawImage(imgSource, 0, 0);
+            const w = ctx.canvas.width, h = ctx.canvas.height;
+            ctx.filter = 'none'; ctx.clearRect(0,0,w,h); ctx.drawImage(imgSource, 0, 0);
             const srcData = ctx.getImageData(0, 0, w, h);
-
-            // Blur
-            ctx.clearRect(0,0,w,h);
-            ctx.filter = `blur(${radius}px)`;
-            ctx.drawImage(imgSource, 0, 0);
-            const blurData = ctx.getImageData(0, 0, w, h);
-            ctx.filter = 'none'; 
-
-            const output = ctx.createImageData(w, h);
-            const src = srcData.data;
-            const blur = blurData.data;
-            const dst = output.data;
-
+            ctx.clearRect(0,0,w,h); ctx.filter = `blur(${radius}px)`; ctx.drawImage(imgSource, 0, 0);
+            const blurData = ctx.getImageData(0, 0, w, h); ctx.filter = 'none'; 
+            const output = ctx.createImageData(w, h), src = srcData.data, blur = blurData.data, dst = output.data;
             for (let i = 0; i < src.length; i += 4) {
-                dst[i+3] = src[i+3]; // Alpha
+                dst[i+3] = src[i+3];
                 for (let c = 0; c < 3; c++) {
-                    const original = src[i+c];
-                    const blurred = blur[i+c];
-                    const diff = original - blurred;
-                    if (Math.abs(diff) > threshold) {
-                        let val = original + (diff * amount);
-                        val = val < 0 ? 0 : (val > 255 ? 255 : val);
-                        dst[i+c] = val;
-                    } else {
-                        dst[i+c] = original;
-                    }
+                    const original = src[i+c], blurred = blur[i+c], diff = original - blurred;
+                    if (Math.abs(diff) > threshold) { let val = original + (diff * amount); dst[i+c] = val < 0 ? 0 : (val > 255 ? 255 : val); } else { dst[i+c] = original; }
                 }
-            }
-            return output;
+            } return output;
         }
-
 
         // --- AUTH ---
         auth.onAuthStateChanged(user => {
@@ -683,10 +637,7 @@
                 db.ref('users/' + user.uid).on('value', snap => { 
                     const d = snap.val(); if(d) {
                         currentUserData = d; 
-                        if(d.profilePic) { 
-                             document.getElementById('current-user-avatar').src = d.profilePic; 
-                             document.getElementById('post-avatar').src = d.profilePic; 
-                        }
+                        if(d.profilePic) { document.getElementById('current-user-avatar').src = d.profilePic; document.getElementById('post-avatar').src = d.profilePic; }
                     }
                 });
             } else {
@@ -694,11 +645,13 @@
             }
             loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500);
             initFeedListener();
+            initCharacterStatsListener();
         });
 
-        // --- FEED LOGIC ---
+        // --- FEED LOGIC (MODIFICADO: SNAPSHOT) ---
         function initFeedListener() {
-            db.ref('feed_posts').limitToLast(200).on('value', snapshot => {
+            // USAMOS .once() EN LUGAR DE .on() PARA CARGA ESTÁTICA
+            db.ref('feed_posts').limitToLast(200).once('value', snapshot => {
                 if(!snapshot.exists()) { allPostsCache = []; applyFiltersAndRender(); return; }
                 const tempPosts = [];
                 snapshot.forEach(child => { tempPosts.push({ id: child.key, ...child.val() }); });
@@ -707,15 +660,30 @@
             });
         }
 
+        function initCharacterStatsListener() {
+            db.ref('stats/characters').on('value', snapshot => {
+                if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; }
+            });
+        }
+
         function applyFiltersAndRender() {
             let filtered = [...allPostsCache];
+            const filterBar = document.getElementById('filter-bar');
+            
             if (currentFilterTag) {
-                const tag = currentFilterTag.toLowerCase();
-                filtered = filtered.filter(p => (p.tags||'').toLowerCase().includes(tag) || (p.text||'').toLowerCase().includes('#'+tag));
-                document.getElementById('filter-bar').classList.remove('hidden');
-                document.getElementById('active-filter-tag').innerText = '#' + currentFilterTag;
+                const term = currentFilterTag.toLowerCase();
+                if (currentFilterType === 'character') {
+                    // Filtrar por nombre exacto de personaje
+                    filtered = filtered.filter(p => p.characterName && p.characterName.toLowerCase() === term);
+                    document.getElementById('active-filter-tag').innerHTML = `<i class="fas fa-user-tag"></i> ${currentFilterTag}`;
+                } else {
+                    // Filtrar por Tag convencional
+                    filtered = filtered.filter(p => (p.tags||'').toLowerCase().includes(term) || (p.text||'').toLowerCase().includes('#'+term));
+                    document.getElementById('active-filter-tag').innerText = '#' + currentFilterTag;
+                }
+                filterBar.classList.remove('hidden');
             } else {
-                document.getElementById('filter-bar').classList.add('hidden');
+                filterBar.classList.add('hidden');
             }
 
             if (currentSortOrder === 'newest') filtered.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -765,31 +733,27 @@
         // --- CREAR TARJETA ---
         function createPostCard(post) {
             const div = document.createElement('div'); div.className = "feed-card opacity-0 animate-enter";
-            
-            // Texto Colapsable
             let textHtml = '';
             if (post.text) {
                 const fullText = post.text;
                 if (fullText.length > 150) {
                     const shortText = fullText.substring(0, 150);
-                    textHtml = `
-                        <div class="mt-2">
-                            <p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light" id="text-short-${post.id}">
-                                ${shortText}... <button onclick="expandText('${post.id}')" class="text-orange-500 font-bold hover:underline text-xs ml-1">Ver más</button>
-                            </p>
-                            <p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light hidden" id="text-full-${post.id}">
-                                ${fullText}
-                            </p>
-                        </div>
-                    `;
+                    textHtml = `<div class="mt-2"><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light" id="text-short-${post.id}">${shortText}... <button onclick="expandText('${post.id}')" class="text-orange-500 font-bold hover:underline text-xs ml-1">Ver más</button></p><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light hidden" id="text-full-${post.id}">${fullText}</p></div>`;
                 } else {
                     textHtml = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-2 font-light">${fullText}</p>`;
                 }
             }
             
-            let metaChips = ''; 
-            if (post.category) metaChips += `<span class="text-[10px] bg-orange-900/40 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30 uppercase font-bold tracking-wide">${post.category}</span>`;
-
+            // Meta chips y PERSONAJE CLICKEABLE
+            let metaHtml = '<div class="mt-3 flex flex-wrap items-center gap-2">';
+            if (post.characterName) {
+                metaHtml += `<button onclick="filterByCharacter('${post.characterName}')" class="text-[10px] bg-indigo-900/40 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/30 uppercase font-bold tracking-wide hover:bg-indigo-500/20 active:scale-95 transition flex items-center gap-1"><i class="fas fa-user-circle"></i> ${post.characterName}</button>`;
+            }
+            if (post.category) {
+                metaHtml += `<span class="text-[10px] bg-orange-900/40 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30 uppercase font-bold tracking-wide">${post.category}</span>`;
+            }
+            metaHtml += '</div>';
+            
             const isOwner = currentUser && currentUser.uid === post.userId;
             let optionsBtn = isOwner ? `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 p-2 hover:text-white"><i class="fas fa-ellipsis-v"></i></button><div id="options-menu-${post.id}" class="options-menu"><div class="options-item text-red-400 hover:bg-red-900/20" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>` : '';
 
@@ -807,49 +771,24 @@
                     </div>
                     ${post.title ? `<h4 class="font-bold text-white mt-3 text-sm tracking-wide">${post.title}</h4>` : ''}
                     ${textHtml}
-                    <div class="mt-3 flex flex-wrap items-center gap-2">${metaChips}</div>
+                    ${metaHtml}
                 </div>
                 ${post.imageUrl ? `<div class="mt-2 bg-black relative cursor-pointer group overflow-hidden border-t border-b border-zinc-800" onclick="openViewerById('${post.id}')"><img src="${post.imageUrl}" loading="lazy" class="w-full h-auto max-h-[500px] object-contain mx-auto"></div>` : ''}
                 <div class="px-4 py-3 flex items-center gap-6 border-t border-white/5 mt-1 bg-[#1a1a1c]">
-                    <button id="like-btn-${post.id}" onclick="toggleLike('${post.id}')" class="flex items-center gap-2 text-gray-400 active:text-red-500 hover:text-red-400 transition group active:scale-95">
-                        <i class="far fa-heart text-lg group-active:scale-125 transition-transform"></i>
-                        <span class="text-xs font-bold" id="likes-count-${post.id}">${post.likes || 0}</span>
-                    </button>
-                    <!-- BOTÓN DE COMENTARIOS CON CONTADOR -->
-                    <button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-white transition active:scale-95">
-                        <i class="far fa-comment text-lg"></i>
-                        <span class="text-xs font-bold" id="comments-count-${post.id}">0</span>
-                    </button>
+                    <button id="like-btn-${post.id}" onclick="toggleLike('${post.id}')" class="flex items-center gap-2 text-gray-400 active:text-red-500 hover:text-red-400 transition group active:scale-95"><i class="far fa-heart text-lg group-active:scale-125 transition-transform"></i><span class="text-xs font-bold" id="likes-count-${post.id}">${post.likes || 0}</span></button>
+                    <button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-white transition active:scale-95"><i class="far fa-comment text-lg"></i><span class="text-xs font-bold" id="comments-count-${post.id}">0</span></button>
                 </div>
-                <div id="comments-${post.id}" class="hidden px-4 py-3 bg-[#0f0f10] border-t border-white/5">
-                    <div id="comments-list-${post.id}" class="flex flex-col gap-3 mb-3 max-h-60 overflow-y-auto custom-scrollbar"></div>
-                    <form onsubmit="postComment(event, '${post.id}')" class="flex gap-2 relative">
-                        <input type="text" id="comment-input-${post.id}" maxlength="200" class="w-full bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2.5 text-sm text-white focus:border-orange-500 focus:outline-none pr-10" placeholder="Escribe..." autocomplete="off">
-                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 active:scale-90 transition"><i class="fas fa-paper-plane"></i></button>
-                    </form>
-                </div>`;
+                <div id="comments-${post.id}" class="hidden px-4 py-3 bg-[#0f0f10] border-t border-white/5"><div id="comments-list-${post.id}" class="flex flex-col gap-3 mb-3 max-h-60 overflow-y-auto custom-scrollbar"></div><form onsubmit="postComment(event, '${post.id}')" class="flex gap-2 relative"><input type="text" id="comment-input-${post.id}" maxlength="200" class="w-full bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2.5 text-sm text-white focus:border-orange-500 focus:outline-none pr-10" placeholder="Escribe..." autocomplete="off"><button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 active:scale-90 transition"><i class="fas fa-paper-plane"></i></button></form></div>`;
             checkLikeStatus(post.id);
-            checkCommentStatus(post.id); // Nueva función para contador
+            checkCommentStatus(post.id);
             return div;
         }
 
-        function expandText(id) {
-            document.getElementById(`text-short-${id}`).classList.add('hidden');
-            document.getElementById(`text-full-${id}`).classList.remove('hidden');
-        }
+        function expandText(id) { document.getElementById(`text-short-${id}`).classList.add('hidden'); document.getElementById(`text-full-${id}`).classList.remove('hidden'); }
+        function createGridItem(post) { const div = document.createElement('div'); div.className = 'grid-item group'; div.onclick = () => openViewerById(post.id); div.innerHTML = `<img src="${post.imageUrl}" loading="lazy"><div class="grid-overlay opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-white text-[10px] font-bold drop-shadow-md"><i class="fas fa-heart text-white text-[9px]"></i> ${post.likes || 0}</span></div>`; return div; }
 
-        function createGridItem(post) {
-            const div = document.createElement('div'); div.className = 'grid-item group'; 
-            div.onclick = () => openViewerById(post.id);
-            div.innerHTML = `<img src="${post.imageUrl}" loading="lazy"><div class="grid-overlay opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-white text-[10px] font-bold drop-shadow-md"><i class="fas fa-heart text-white text-[9px]"></i> ${post.likes || 0}</span></div>`; 
-            return div;
-        }
-
-        // --- UPLOAD LOGIC ---
-        function expandPostArea() { 
-            document.getElementById('extra-fields').classList.add('expanded'); 
-            document.getElementById('post-text').rows = 3; 
-        }
+        // --- UPLOAD LOGIC & SUGGESTIONS ---
+        function expandPostArea() { document.getElementById('extra-fields').classList.add('expanded'); document.getElementById('post-text').rows = 3; }
         function collapsePostArea(force=false) { 
             const reset = () => {
                 document.getElementById('extra-fields').classList.remove('expanded'); 
@@ -857,8 +796,9 @@
                 clearSelection();
                 document.getElementById('post-text').value = '';
                 document.getElementById('post-title').value = '';
-                document.getElementById('post-character').value = ''; // Limpiar personaje
+                document.getElementById('post-character').value = ''; 
                 document.getElementById('post-tags').value = '';
+                document.getElementById('character-suggestions').classList.remove('visible'); 
                 document.getElementById('publish-btn').disabled = false;
                 document.getElementById('publish-btn').classList.remove('btn-disabled');
             };
@@ -871,17 +811,55 @@
             if(selectedFile) { 
                 document.getElementById('image-preview').src = URL.createObjectURL(selectedFile); 
                 document.getElementById('preview-container').classList.remove('hidden');
-                
-                // Trigger Auto-Tagging (Paso 1: Tagging al seleccionar)
                 if(window.runAutoTagging) window.runAutoTagging(selectedFile);
             } 
         }
         function clearSelection() { selectedFile = null; document.getElementById('file-input').value = ''; document.getElementById('preview-container').classList.add('hidden'); }
 
+        // --- LÓGICA DE SUGERENCIAS DE PERSONAJES ---
+        const charInput = document.getElementById('post-character');
+        const suggestionsBox = document.getElementById('character-suggestions');
+
+        charInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim().toLowerCase();
+            if (!val) {
+                suggestionsBox.classList.remove('visible');
+                return;
+            }
+            const allChars = Object.entries(characterStatsCache).map(([key, data]) => ({ id: key, name: data.displayName, count: data.count || 0 }));
+            const matches = allChars.filter(c => c.name.toLowerCase().includes(val)).sort((a, b) => b.count - a.count).slice(0, 3);
+
+            if (matches.length > 0) { renderSuggestions(matches); suggestionsBox.classList.add('visible'); } 
+            else { suggestionsBox.classList.remove('visible'); }
+        });
+
+        document.addEventListener('click', (e) => { if (!charInput.contains(e.target) && !suggestionsBox.contains(e.target)) { suggestionsBox.classList.remove('visible'); } });
+
+        function renderSuggestions(matches) {
+            suggestionsBox.innerHTML = '';
+            matches.forEach((match, index) => {
+                const isTop = index === 0; 
+                const countDisplay = formatCount(match.count);
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.onclick = () => selectSuggestion(match.name);
+                div.innerHTML = `<span class="suggestion-name flex items-center gap-2">${match.name}${isTop && match.count > 0 ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}</span><span class="suggestion-meta">${countDisplay} usos</span>`;
+                suggestionsBox.appendChild(div);
+            });
+        }
+
+        function formatCount(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M...';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'k...';
+            return num;
+        }
+
+        function selectSuggestion(name) { charInput.value = name; suggestionsBox.classList.remove('visible'); }
+
         async function uploadPost() {
             const text = document.getElementById('post-text').value.trim();
             const title = document.getElementById('post-title').value.trim();
-            const characterName = document.getElementById('post-character').value.trim(); // NUEVO CAMPO
+            const characterName = document.getElementById('post-character').value.trim();
             const tags = document.getElementById('post-tags').value.trim();
             const category = document.getElementById('post-category').value;
             
@@ -891,35 +869,19 @@
             const btn = document.getElementById('publish-btn');
             const progress = document.getElementById('upload-progress');
             
-            btn.disabled = true; 
-            btn.classList.add('btn-disabled'); 
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
+            btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
             progress.classList.remove('hidden');
             
             try {
                 let imageUrl = null;
                 if (selectedFile) {
-                    // --- PASO 2: APLICAR SHARPNESS (SILENCIOSO) ---
-                    // Sin toasts visuales, solo ocurre en background
                     let processedFile = selectedFile;
-                    try {
-                        // Procesamos la imagen con el algoritmo inteligente antes de subir
-                        processedFile = await processImageSmartSharpen(selectedFile);
-                    } catch (sharpError) {
-                        // Si falla, seguimos con el archivo original silenciosamente
-                    }
-
-                    // --- PASO 3: SUBIR A CATBOX (CON COMPRESIÓN EXTRA) ---
+                    try { processedFile = await processImageSmartSharpen(selectedFile); } catch (e) {}
                     const compressedFile = await compressImage(processedFile);
-                    
                     const formData = new FormData(); 
-                    formData.append('reqtype','fileupload'); 
-                    formData.append('userhash',CATBOX_USERHASH); 
-                    formData.append('fileToUpload', compressedFile);
-                    
+                    formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', compressedFile);
                     const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
                     const txt = await r.text();
-                    
                     if(!r.ok || !txt.includes('catbox.moe')) throw new Error("Error subida imagen");
                     imageUrl = txt.trim();
                 }
@@ -934,6 +896,19 @@
                 };
                 
                 await db.ref('feed_posts').push(post);
+
+                if (characterName) {
+                    const normalizedChar = characterName.toLowerCase().replace(/[.#$\[\]]/g, ""); 
+                    const charRef = db.ref(`stats/characters/${normalizedChar}`);
+                    charRef.transaction((currentData) => {
+                        if (currentData === null) { return { count: 1, displayName: characterName }; } 
+                        else { return { count: (currentData.count || 0) + 1, displayName: characterName }; }
+                    });
+                }
+
+                // RECARGAR SOLO PARA EL USUARIO QUE PUBLICÓ PARA VER SUS CAMBIOS
+                initFeedListener(); 
+
                 collapsePostArea(true); showToast("¡Publicado con éxito!");
             } catch(e) { showAlert("Error: " + e.message); }
             finally { 
@@ -951,8 +926,7 @@
                 reader.onload = e => {
                     const img = new Image(); img.src = e.target.result;
                     img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width; canvas.height = img.height;
+                        const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
                         const ctx = canvas.getContext('2d'); ctx.drawImage(img,0,0,img.width,img.height);
                         let q = 0.9, attempts=0;
                         const tryC = () => {
@@ -983,23 +957,23 @@
             document.getElementById('modal-image').src = post.imageUrl;
             document.getElementById('modal-title').textContent = post.title || 'Sin Título';
             
-            // Mostrar etiqueta de Personaje si existe
-            const charTag = document.getElementById('modal-character-tag');
+            // PERSONAJE CLICKEABLE EN MODAL
+            const charContainer = document.getElementById('modal-character-tag-container');
             if (post.characterName) {
-                charTag.classList.remove('hidden');
+                charContainer.classList.remove('hidden');
                 document.getElementById('modal-character-name').textContent = post.characterName;
+                document.getElementById('modal-character-btn').onclick = () => filterByCharacterFromModal(post.characterName);
             } else {
-                charTag.classList.add('hidden');
+                charContainer.classList.add('hidden');
             }
-
+            
             document.getElementById('modal-desc').innerHTML = (post.text || '').replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
             document.getElementById('modal-user-name').textContent = post.userName;
             document.getElementById('modal-user-pic').src = post.userAvatar;
             
-            // Tags Retráctiles Logic
             const tagsDiv = document.getElementById('modal-tags');
             const tagsBtn = document.getElementById('tags-toggle-btn');
-            tagsDiv.classList.add('hidden'); // Siempre iniciar oculto
+            tagsDiv.classList.add('hidden'); 
             tagsBtn.innerHTML = '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>';
             tagsDiv.innerHTML = '';
             
@@ -1010,9 +984,7 @@
                 tagsBtn.style.display = 'none';
             }
 
-            // CARGAR SIMILARES (Lógica nueva: Prioridad personaje, luego tags)
             loadSimilarImagesInSlider(post.tags, post.id, post.characterName);
-
             const likeBtn = document.getElementById('modal-like-btn');
             const likesCount = document.getElementById('modal-likes-count');
             likeBtn.onclick = () => toggleLike(post.id);
@@ -1035,68 +1007,34 @@
             document.getElementById('modal-next').style.display = currentModalIndex < displayedPosts.length-1 ? 'flex' : 'none';
         }
 
-        // --- LÓGICA DE SIMILARES ACTUALIZADA ---
         function loadSimilarImagesInSlider(tagsString, currentId, currentCharacterName) {
             const container = document.getElementById('similar-grid');
             container.innerHTML = '';
-            
             const candidates = allPostsCache.filter(p => p.id !== currentId && p.imageUrl);
             let finalResults = [];
             let addedIds = new Set();
-
-            // 1. PRIORIDAD: Mismo Personaje (Max 3)
             if (currentCharacterName) {
-                const charMatches = candidates.filter(p => 
-                    p.characterName && 
-                    p.characterName.toLowerCase().trim() === currentCharacterName.toLowerCase().trim()
-                ).slice(0, 3);
-                
-                charMatches.forEach(p => {
-                    finalResults.push(p);
-                    addedIds.add(p.id);
-                });
+                const charMatches = candidates.filter(p => p.characterName && p.characterName.toLowerCase().trim() === currentCharacterName.toLowerCase().trim()).slice(0, 3);
+                charMatches.forEach(p => { finalResults.push(p); addedIds.add(p.id); });
             }
-
-            // 2. RELLENO: Coincidencia de Tags (para dar variedad)
             if (tagsString) {
                 const tags = tagsString.split(',').map(t => t.trim().toLowerCase());
-                
-                const tagMatches = candidates
-                    .filter(p => !addedIds.has(p.id)) // Evitar duplicados si ya salió por personaje
-                    .map(p => {
-                        const pTags = (p.tags || '').toLowerCase().split(',').map(t => t.trim());
-                        const common = pTags.filter(t => tags.includes(t));
-                        return { post: p, score: common.length };
-                    })
-                    .filter(item => item.score > 0)
-                    .sort((a, b) => b.score - a.score)
-                    .map(item => item.post);
-
-                // Agregar el resto hasta llenar unos 10 items en total
+                const tagMatches = candidates.filter(p => !addedIds.has(p.id)).map(p => {
+                    const pTags = (p.tags || '').toLowerCase().split(',').map(t => t.trim());
+                    const common = pTags.filter(t => tags.includes(t));
+                    return { post: p, score: common.length };
+                }).filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.post);
                 finalResults = finalResults.concat(tagMatches);
             }
-
-            if (finalResults.length === 0) {
-                container.innerHTML = '<span class="text-xs text-gray-500 italic px-2">No se encontraron imágenes similares.</span>';
-                return;
-            }
-
+            if (finalResults.length === 0) { container.innerHTML = '<span class="text-xs text-gray-500 italic px-2">No se encontraron imágenes similares.</span>'; return; }
             finalResults.slice(0, 10).forEach(post => {
-                const div = document.createElement('div');
-                div.className = "similar-card cursor-pointer group";
-                div.onclick = () => openViewerById(post.id);
+                const div = document.createElement('div'); div.className = "similar-card cursor-pointer group"; div.onclick = () => openViewerById(post.id);
                 div.innerHTML = `<img src="${post.imageUrl}" loading="lazy"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
                 container.appendChild(div);
             });
         }
 
-        function toggleTags() {
-            const div = document.getElementById('modal-tags');
-            const btn = document.getElementById('tags-toggle-btn');
-            if (div.classList.contains('hidden')) { div.classList.remove('hidden'); btn.innerHTML = '<span>Ocultar etiquetas</span> <i class="fas fa-chevron-up"></i>'; } 
-            else { div.classList.add('hidden'); btn.innerHTML = '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>'; }
-        }
-
+        function toggleTags() { const div = document.getElementById('modal-tags'); const btn = document.getElementById('tags-toggle-btn'); if (div.classList.contains('hidden')) { div.classList.remove('hidden'); btn.innerHTML = '<span>Ocultar etiquetas</span> <i class="fas fa-chevron-up"></i>'; } else { div.classList.add('hidden'); btn.innerHTML = '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>'; } }
         function navigateModal(dir) {
             const prev = displayedPosts[currentModalIndex];
             if(prev){ db.ref(`feed_likes/${prev.id}`).off(); db.ref(`feed_posts/${prev.id}/likes`).off(); db.ref(`feed_comments/${prev.id}`).off(); }
@@ -1104,100 +1042,35 @@
             else if (dir===-1 && currentModalIndex>0) currentModalIndex--;
             updateModalContent();
         }
-
-        // Swipe Modal
         const modalArea = document.getElementById('modal-image-area');
         modalArea.addEventListener('touchstart', e => touchStartX=e.changedTouches[0].screenX, {passive:true});
-        modalArea.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            if(Math.abs(touchEndX - touchStartX) > 50) { if(touchEndX < touchStartX) navigateModal(1); else navigateModal(-1); }
-        }, {passive:true});
-
-        document.getElementById('close-modal').onclick = () => {
-            const p = displayedPosts[currentModalIndex]; if(p){ db.ref(`feed_likes/${p.id}`).off(); db.ref(`feed_posts/${p.id}/likes`).off(); db.ref(`feed_comments/${p.id}`).off(); }
-            document.getElementById('modal').classList.remove('visible'); document.body.style.overflow='auto';
-        };
+        modalArea.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; if(Math.abs(touchEndX - touchStartX) > 50) { if(touchEndX < touchStartX) navigateModal(1); else navigateModal(-1); } }, {passive:true});
+        document.getElementById('close-modal').onclick = () => { const p = displayedPosts[currentModalIndex]; if(p){ db.ref(`feed_likes/${p.id}`).off(); db.ref(`feed_posts/${p.id}/likes`).off(); db.ref(`feed_comments/${p.id}`).off(); } document.getElementById('modal').classList.remove('visible'); document.body.style.overflow='auto'; };
 
         // --- HELPERS ---
-        function switchView(mode) {
-            const f=document.getElementById('feed-list-container'), g=document.getElementById('grid-view-container');
-            const bf=document.getElementById('btn-view-feed'), bg=document.getElementById('btn-view-grid');
-            if(mode==='feed'){ f.classList.remove('hidden'); g.classList.add('hidden'); bf.classList.add('active'); bg.classList.remove('active'); }
-            else{ f.classList.add('hidden'); g.classList.remove('hidden'); bf.classList.remove('active'); bg.classList.add('active'); }
-        }
+        function switchView(mode) { const f=document.getElementById('feed-list-container'), g=document.getElementById('grid-view-container'); const bf=document.getElementById('btn-view-feed'), bg=document.getElementById('btn-view-grid'); if(mode==='feed'){ f.classList.remove('hidden'); g.classList.add('hidden'); bf.classList.add('active'); bg.classList.remove('active'); } else{ f.classList.add('hidden'); g.classList.remove('hidden'); bf.classList.remove('active'); bg.classList.add('active'); } }
         function changeSortOrder(o) { currentSortOrder = o; applyFiltersAndRender(); }
-        function filterByTag(t) { currentFilterTag = t.replace('#','').trim(); applyFiltersAndRender(); window.scrollTo({top:0, behavior:'smooth'}); }
+        
+        // FILTRADO DE TAGS Y PERSONAJES
+        function filterByTag(t) { currentFilterTag = t.replace('#','').trim(); currentFilterType = 'tag'; applyFiltersAndRender(); window.scrollTo({top:0, behavior:'smooth'}); }
+        function filterByCharacter(name) { currentFilterTag = name; currentFilterType = 'character'; applyFiltersAndRender(); window.scrollTo({top:0, behavior:'smooth'}); }
+        
         function filterByTagFromModal(t) { document.getElementById('close-modal').click(); filterByTag(t); }
-        function clearTagFilter() { currentFilterTag = null; applyFiltersAndRender(); }
+        function filterByCharacterFromModal(name) { document.getElementById('close-modal').click(); filterByCharacter(name); }
+        
+        function clearTagFilter() { currentFilterTag = null; currentFilterType = null; applyFiltersAndRender(); }
         function goToProfile(uid) { window.location.href = `profile.html?uid=${uid}`; }
         function toggleFullScreen() { document.getElementById('modal').classList.toggle('fullscreen-mode'); }
         function toggleOptionsMenu(id) { const m = document.getElementById(`options-menu-${id}`); document.querySelectorAll('.options-menu').forEach(x => {if(x!==m)x.classList.remove('show')}); m.classList.toggle('show'); }
         window.onclick = e => { if(!e.target.closest('.options-trigger')) document.querySelectorAll('.options-menu').forEach(m=>m.classList.remove('show')); };
-        
-        function deletePost(id) { showConfirm("¿Eliminar publicación?", () => db.ref('feed_posts/'+id).remove().then(()=>showToast("Eliminado"))); }
-        
-        function toggleLike(id) {
-            if(!currentUser && !deviceID) return showAlert("Inicia sesión para dar like.");
-            const uid = currentUser ? currentUser.uid : deviceID;
-            const ref = db.ref(`feed_likes/${id}/${uid}`);
-            ref.once('value', s => {
-                if(s.exists()) { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); }
-                else { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); }
-            });
-        }
-        function checkLikeStatus(id) {
-            const uid = currentUser ? currentUser.uid : deviceID;
-            db.ref(`feed_likes/${id}/${uid}`).on('value', s => {
-                const btn = document.getElementById(`like-btn-${id}`);
-                if(btn) {
-                    if(s.exists()) { btn.classList.add('text-red-500'); btn.querySelector('i').className = 'fas fa-heart text-lg like-anim'; } 
-                    else { btn.classList.remove('text-red-500'); btn.querySelector('i').className = 'far fa-heart text-lg'; }
-                }
-            });
-            db.ref(`feed_posts/${id}/likes`).on('value', s => { const el = document.getElementById(`likes-count-${id}`); if(el) el.innerText = s.val() || 0; });
-        }
-        
-        // --- NUEVA FUNCIÓN: CONTADOR DE COMENTARIOS ---
-        function checkCommentStatus(id) {
-             db.ref(`feed_comments/${id}`).on('value', s => {
-                 const count = s.numChildren();
-                 const el = document.getElementById(`comments-count-${id}`);
-                 if(el) {
-                     el.innerText = count || 0;
-                     if(count > 0) el.classList.add('text-white'); else el.classList.remove('text-white');
-                 }
-             });
-        }
-
-        function toggleComments(id) {
-            const el = document.getElementById(`comments-${id}`);
-            if(el.classList.contains('hidden')) {
-                el.classList.remove('hidden');
-                db.ref(`feed_comments/${id}`).off(); document.getElementById(`comments-list-${id}`).innerHTML = '';
-                db.ref(`feed_comments/${id}`).on('child_added', s => {
-                    const c = s.val();
-                    const div = document.createElement('div'); div.className = "flex gap-2 items-start text-sm animate-enter";
-                    div.innerHTML = `<img src="${c.userAvatar}" class="w-6 h-6 rounded-full mt-1 border border-zinc-700 object-cover cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800 p-2.5 rounded-2xl rounded-tl-none"><span class="font-bold text-gray-300 block text-xs mb-0.5 cursor-pointer hover:text-orange-400" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 font-light">${c.text}</span></div>`;
-                    document.getElementById(`comments-list-${id}`).appendChild(div);
-                });
-            } else el.classList.add('hidden');
-        }
-        function postComment(e, id) {
-            e.preventDefault(); const input = document.getElementById(`comment-input-${id}`);
-            if(!input.value.trim()) return;
-            const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo');
-            const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U';
-            db.ref(`feed_comments/${id}`).push({ text:input.value, userId:currentUser?currentUser.uid:'anon', userName:uN, userAvatar:uA, timestamp:Date.now() });
-            input.value='';
-        }
-        function updateUserAvatarInUI(uid) {
-            if(!userProfileCache[uid]) db.ref(`users/${uid}/profilePic`).once('value', s => { const url = s.val()||'https://placehold.co/100x100/333/fff?text=U'; userProfileCache[uid]=url; document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = url); });
-            else document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = userProfileCache[uid]);
-        }
-        function timeAgo(ts) {
-            if(!ts) return ''; const s = Math.floor((Date.now()-ts)/1000);
-            if(s<60) return 'Hace un momento'; if(s<3600) return Math.floor(s/60)+'m'; if(s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d';
-        }
+        function deletePost(id) { showConfirm("¿Eliminar publicación?", () => db.ref('feed_posts/'+id).remove().then(()=>{ showToast("Eliminado"); initFeedListener(); })); }
+        function toggleLike(id) { if(!currentUser && !deviceID) return showAlert("Inicia sesión para dar like."); const uid = currentUser ? currentUser.uid : deviceID; const ref = db.ref(`feed_likes/${id}/${uid}`); ref.once('value', s => { if(s.exists()) { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } else { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } }); }
+        function checkLikeStatus(id) { const uid = currentUser ? currentUser.uid : deviceID; db.ref(`feed_likes/${id}/${uid}`).on('value', s => { const btn = document.getElementById(`like-btn-${id}`); if(btn) { if(s.exists()) { btn.classList.add('text-red-500'); btn.querySelector('i').className = 'fas fa-heart text-lg like-anim'; } else { btn.classList.remove('text-red-500'); btn.querySelector('i').className = 'far fa-heart text-lg'; } } }); db.ref(`feed_posts/${id}/likes`).on('value', s => { const el = document.getElementById(`likes-count-${id}`); if(el) el.innerText = s.val() || 0; }); }
+        function checkCommentStatus(id) { db.ref(`feed_comments/${id}`).on('value', s => { const count = s.numChildren(); const el = document.getElementById(`comments-count-${id}`); if(el) { el.innerText = count || 0; if(count > 0) el.classList.add('text-white'); else el.classList.remove('text-white'); } }); }
+        function toggleComments(id) { const el = document.getElementById(`comments-${id}`); if(el.classList.contains('hidden')) { el.classList.remove('hidden'); db.ref(`feed_comments/${id}`).off(); document.getElementById(`comments-list-${id}`).innerHTML = ''; db.ref(`feed_comments/${id}`).on('child_added', s => { const c = s.val(); const div = document.createElement('div'); div.className = "flex gap-2 items-start text-sm animate-enter"; div.innerHTML = `<img src="${c.userAvatar}" class="w-6 h-6 rounded-full mt-1 border border-zinc-700 object-cover cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800 p-2.5 rounded-2xl rounded-tl-none"><span class="font-bold text-gray-300 block text-xs mb-0.5 cursor-pointer hover:text-orange-400" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 font-light">${c.text}</span></div>`; document.getElementById(`comments-list-${id}`).appendChild(div); }); } else el.classList.add('hidden'); }
+        function postComment(e, id) { e.preventDefault(); const input = document.getElementById(`comment-input-${id}`); if(!input.value.trim()) return; const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; db.ref(`feed_comments/${id}`).push({ text:input.value, userId:currentUser?currentUser.uid:'anon', userName:uN, userAvatar:uA, timestamp:Date.now() }); input.value=''; }
+        function updateUserAvatarInUI(uid) { if(!userProfileCache[uid]) db.ref(`users/${uid}/profilePic`).once('value', s => { const url = s.val()||'https://placehold.co/100x100/333/fff?text=U'; userProfileCache[uid]=url; document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = url); }); else document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = userProfileCache[uid]); }
+        function timeAgo(ts) { if(!ts) return ''; const s = Math.floor((Date.now()-ts)/1000); if(s<60) return 'Hace un momento'; if(s<3600) return Math.floor(s/60)+'m'; if(s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; }
 
         // --- AUTH ---
         function switchAuthTab(t) { document.getElementById('login-form').style.display=t==='login'?'flex':'none'; document.getElementById('register-step-1').style.display=t==='login'?'none':'flex'; document.getElementById('register-step-2').style.display='none'; document.getElementById('tab-login').className=t==='login'?"text-orange-500 border-b-2 border-orange-500 pb-1":"text-gray-400 pb-1 hover:text-white"; document.getElementById('tab-register').className=t==='login'?"text-gray-400 pb-1 hover:text-white":"text-orange-500 border-b-2 border-orange-500 pb-1"; }
