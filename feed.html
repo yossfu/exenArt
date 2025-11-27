@@ -84,6 +84,11 @@
         .option-item:active { background: rgba(249, 115, 22, 0.2); color: white; }
         .special-option { color: var(--accent); font-weight: 600; background: rgba(249, 115, 22, 0.05); }
 
+        /* Estilo para el Selector de Filtros (Más compacto) */
+        .filter-select .custom-select-trigger { background: rgba(9, 9, 11, 0.8); padding: 8px 12px; min-height: 36px; font-size: 0.8rem; border-radius: 8px; color: #d1d5db; }
+        .filter-select .custom-select-trigger.active { border-color: var(--accent); color: var(--accent); }
+        .filter-select .custom-select-options { top: calc(100% + 4px); }
+
         /* Suggestions */
         .suggestions-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: rgba(24, 24, 27, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 10px 10px; z-index: 50; max-height: 200px; overflow-y: auto; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); display: none; }
         .suggestions-dropdown.visible { display: block; animation: fadeIn 0.2s ease-out; }
@@ -311,17 +316,26 @@
                 </div>
             </div>
 
-            <!-- CONTROLES -->
+            <!-- CONTROLES (Nuevo Selector Estilizado) -->
             <div class="flex justify-between items-center gap-2 mb-4 px-2 sm:px-0">
                 <div class="flex bg-zinc-900/80 p-1 rounded-xl border border-zinc-800">
                     <button onclick="switchView('feed')" id="btn-view-feed" class="toggle-btn active px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2"><i class="fas fa-stream"></i></button>
                     <button onclick="switchView('grid')" id="btn-view-grid" class="toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2"><i class="fas fa-th"></i></button>
                 </div>
-                <div class="relative">
-                    <select id="sort-select" onchange="changeSortOrder(this.value)" class="bg-zinc-900/80 text-xs text-gray-300 border border-zinc-800 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-500 appearance-none pr-8">
-                        <option value="newest">✨ Recientes</option><option value="oldest">📅 Antiguos</option><option value="likes">🔥 Populares</option>
-                    </select>
-                    <i class="fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 pointer-events-none"></i>
+                
+                <!-- SELECTOR DE FILTRO PERSONALIZADO -->
+                <div class="relative w-40 filter-select">
+                    <div class="custom-select-container" id="dropdown-sort">
+                        <button type="button" class="custom-select-trigger" onclick="toggleCustomSelect('dropdown-sort')">
+                            <span id="display-sort">✨ Recientes</span>
+                            <i class="fas fa-chevron-down text-[10px] ml-2"></i>
+                        </button>
+                        <div class="custom-select-options custom-scrollbar">
+                            <div class="option-item" onclick="changeSortOrder('newest', '✨ Recientes')">✨ Recientes</div>
+                            <div class="option-item" onclick="changeSortOrder('oldest', '📅 Antiguos')">📅 Antiguos</div>
+                            <div class="option-item" onclick="changeSortOrder('likes', '🔥 Populares')">🔥 Populares</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -389,7 +403,7 @@
         </nav>
     </div>
 
-    <!-- SCRIPT DE IA (GRADIO) -->
+    <!-- SCRIPT DE IA (GRADIO) - AJUSTES SILENCIOSOS -->
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
         const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
@@ -407,17 +421,20 @@
             const tagInput = document.getElementById('post-tags'); const publishBtn = document.getElementById('publish-btn');
             tagInput.value = ""; 
             publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
-            showToast("IA: Analizando imagen...");
+            // TOAST ELIMINADO: showToast("IA: Analizando imagen..."); (Proceso silencioso)
             try {
                 const processedFile = await resizeImageForApi(originalFile);
                 const client = await Client.connect("Jossle/deepdanbooru_online_Exen");
                 const result = await client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend]);
                 if (result && result.data && result.data[0]) {
                     tagInput.value = result.data[0];
-                    showToast("¡Etiquetas generadas!"); publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+                    // TOAST ELIMINADO: showToast("¡Etiquetas generadas!"); (Proceso silencioso)
+                    publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
                 } else throw new Error("Respuesta vacía");
             } catch (error) {
-                console.error("Error Tagging:", error); showToast("Nota: Error IA, puedes publicar sin tags."); publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+                console.error("Error Tagging:", error); 
+                // TOAST ELIMINADO: Error silencioso, permite publicar sin tags.
+                publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
             }
         }
     </script>
@@ -668,6 +685,12 @@
                 }
 
                 collapsePostArea(true); showToast("¡Publicado con éxito!");
+                
+                // AJUSTE PARA CARGA NO INVASIVA: 
+                // Al publicar, podríamos refrescar manualmente el feed del usuario actual
+                // para que vea su post, pero sin activar el listener en tiempo real.
+                setTimeout(() => { initFeedListener(); }, 1000);
+
             } catch(e) { showAlert("Error: " + e.message); }
             finally { 
                 btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = 'Publicar'; 
@@ -675,9 +698,14 @@
             }
         }
 
-        // --- FEED LOGIC ---
+        // --- FEED LOGIC (MODIFICADO PARA CARGA ÚNICA) ---
         function initFeedListener() {
-            db.ref('feed_posts').limitToLast(200).on('value', snapshot => {
+            /* CRITICAL: FEED LOADING LOGIC 
+               DO NOT CHANGE TO REALTIME (.on). 
+               FETCH ONCE ONLY (.once) TO PREVENT FEED JUMPING.
+               IA: KEEP THIS LOGIC IN FUTURE UPDATES.
+            */
+            db.ref('feed_posts').limitToLast(200).once('value').then(snapshot => {
                 if(!snapshot.exists()) { allPostsCache = []; applyFiltersAndRender(); return; }
                 const tempPosts = [];
                 snapshot.forEach(child => { tempPosts.push({ id: child.key, ...child.val() }); });
@@ -685,6 +713,7 @@
                 applyFiltersAndRender();
             });
         }
+
         function initCharacterStatsListener() {
             db.ref('stats/characters').on('value', snapshot => {
                 if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; }
@@ -772,7 +801,7 @@
             const isOwner = currentUser && currentUser.uid === post.userId;
             let optionsBtn = isOwner ? `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 p-2 hover:text-white"><i class="fas fa-ellipsis-v"></i></button><div id="options-menu-${post.id}" class="options-menu"><div class="options-item text-red-400 hover:bg-red-900/20" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>` : '';
 
-            // Lógica de Imágenes (Aquí está el cambio de "fila de 3 bonita")
+            // Lógica de Imágenes
             let imagesHtml = '';
             const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
             
@@ -782,7 +811,7 @@
                 } else if (images.length === 2) {
                     imagesHtml = `<div class="two-image-grid"><img src="${images[0]}" onclick="openMainViewerById('${post.id}', 0)" loading="lazy"><img src="${images[1]}" onclick="openMainViewerById('${post.id}', 1)" loading="lazy"></div>`;
                 } else {
-                    // FILA DE 3 COMO EN LA CAPTURA
+                    // FILA DE 3
                     imagesHtml = `<div class="multi-image-row">
                         <img src="${images[0]}" onclick="openMainViewerById('${post.id}', 0)" loading="lazy">
                         <img src="${images[1]}" onclick="openMainViewerById('${post.id}', 1)" loading="lazy">
@@ -827,26 +856,12 @@
         function expandText(id) { document.getElementById(`text-short-${id}`).classList.add('hidden'); document.getElementById(`text-full-${id}`).classList.remove('hidden'); }
 
         // --- VISOR MEJORADO (IDÉNTICO AL PERFIL) ---
-        // Ahora reconstruimos la lista de posts "planos" para el visor, para poder navegar entre ellos.
-        // Pero si un post tiene múltiples imágenes, ¿Cómo navegas?
-        // Solución estilo Instagram: El visor muestra EL POST. Si tiene múltiples imágenes, 
-        // debería haber flechas DENTRO de la imagen para cambiarla, o swipes.
-        // Pero para mantener la consistencia con el perfil, vamos a tratar cada imagen como un slide si es necesario,
-        // O mejor: Mostrar la imagen seleccionada y permitir navegar al siguiente POST con las flechas principales.
-
         function openMainViewerById(postId, imgIndex = 0) {
-            // Buscamos el post
             const index = displayedPosts.findIndex(p => p.id === postId);
             if (index === -1) return;
-            
-            // Preparamos la lista para el visor
             currentViewPosts = displayedPosts;
             currentPostIndex = index;
-            
-            // Hack para manejar múltiples imágenes: guardamos el índice interno en el objeto post temporalmente
-            // O mejor, una variable global para el índice interno actual
             window.currentInternalIndex = imgIndex;
-            
             updateViewerContent();
             const modal = document.getElementById('modal');
             modal.classList.add('visible'); modal.classList.remove('fullscreen-mode');
@@ -856,13 +871,10 @@
         function updateViewerContent() {
             if (currentPostIndex < 0 || currentPostIndex >= currentViewPosts.length) return;
             const post = currentViewPosts[currentPostIndex];
-            
-            // Manejo de imagen múltiple
             const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
             let imgToShow = "";
             
             if (images.length > 0) {
-                // Asegurar índice válido
                 if (typeof window.currentInternalIndex === 'undefined' || window.currentInternalIndex >= images.length) {
                     window.currentInternalIndex = 0;
                 }
@@ -870,14 +882,11 @@
             }
             
             document.getElementById('modal-image').src = imgToShow;
-            
-            // Datos del post
             document.getElementById('modal-title').textContent = post.title || 'Sin título';
             document.getElementById('modal-desc').innerHTML = (post.text || '').replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
             document.getElementById('modal-user-name').textContent = post.userName || 'Usuario';
             document.getElementById('modal-user-pic').src = post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U';
             
-            // Character Tag
             const charTag = document.getElementById('modal-character-tag');
             if(post.characterName) {
                 charTag.classList.remove('hidden');
@@ -886,7 +895,6 @@
                 charTag.classList.add('hidden');
             }
             
-            // Delete button (owner)
             const delBtn = document.getElementById('modal-delete-btn');
             if (currentUser && currentUser.uid === post.userId) {
                 delBtn.classList.remove('hidden');
@@ -895,7 +903,6 @@
                 delBtn.classList.add('hidden');
             }
 
-            // Tags
             const tagsDiv = document.getElementById('modal-tags');
             const tagsBtn = document.getElementById('tags-toggle-btn');
             tagsDiv.classList.add('hidden');
@@ -907,13 +914,11 @@
                 });
             } else { tagsBtn.style.display = 'none'; }
 
-            // Likes
             const likeBtn = document.getElementById('modal-like-btn');
             const likesCount = document.getElementById('modal-likes-count');
             likeBtn.onclick = () => toggleLike(post.id);
             const uid = currentUser ? currentUser.uid : deviceID;
             
-            // Reset listener previo
             db.ref(`feed_likes/${post.id}`).off();
             db.ref(`feed_posts/${post.id}/likes`).off();
             
@@ -923,7 +928,6 @@
             });
             db.ref(`feed_posts/${post.id}/likes`).on('value', s => likesCount.innerText = s.val() || 0);
 
-            // Comments
             const commentsList = document.getElementById('modal-comments-list'); commentsList.innerHTML = '';
             db.ref(`feed_comments/${post.id}`).off();
             db.ref(`feed_comments/${post.id}`).on('child_added', s => {
@@ -933,11 +937,7 @@
                 commentsList.appendChild(div);
             });
 
-            // Navegación
-            // Si hay multiples imagenes, usamos las flechas para navegar IMAGENES, si es la ultima, pasamos de POST
-            // Lógica híbrida para mejor UX
             document.getElementById('modal-prev').style.display = (currentPostIndex > 0 || window.currentInternalIndex > 0) ? 'flex' : 'none';
-            
             const isLastImg = window.currentInternalIndex === images.length - 1;
             const isLastPost = currentPostIndex === currentViewPosts.length - 1;
             document.getElementById('modal-next').style.display = (!isLastImg || !isLastPost) ? 'flex' : 'none';
@@ -948,7 +948,6 @@
             const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
             
             if (dir === 1) {
-                // Siguiente
                 if (window.currentInternalIndex < images.length - 1) {
                     window.currentInternalIndex++;
                 } else {
@@ -958,15 +957,11 @@
                     }
                 }
             } else {
-                // Anterior
                 if (window.currentInternalIndex > 0) {
                     window.currentInternalIndex--;
                 } else {
                     if (currentPostIndex > 0) {
                         currentPostIndex--;
-                        // Al ir atrás, vamos a la última imagen del post anterior? O a la primera? 
-                        // Generalmente la primera es mejor UX, pero para consistencia de "swipe back" podria ser la ultima.
-                        // Usemos la primera para simplificar.
                         window.currentInternalIndex = 0; 
                     }
                 }
@@ -977,7 +972,7 @@
         function toggleFullScreen() { document.getElementById('modal').classList.toggle('fullscreen-mode'); }
         function toggleTags() { const div = document.getElementById('modal-tags'); const btn = document.getElementById('tags-toggle-btn'); div.classList.toggle('hidden'); btn.innerHTML = div.classList.contains('hidden') ? '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>' : '<span>Ocultar etiquetas</span> <i class="fas fa-chevron-up"></i>'; }
 
-        // Eventos Touch para Swipe (COPIADO DEL PERFIL)
+        // Eventos Touch para Swipe
         const modalEl = document.getElementById('modal-image-area');
         modalEl.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, {passive:true});
         modalEl.addEventListener('touchend', e => {
@@ -1007,6 +1002,15 @@
             if (containerId === 'dropdown-collection') toggleCollectionInput();
         }
         
+        // Función específica para el nuevo selector de filtros
+        function changeSortOrder(value, displayText) {
+            currentSortOrder = value;
+            const container = document.getElementById('dropdown-sort');
+            container.querySelector('#display-sort').innerText = displayText;
+            toggleCustomSelect('dropdown-sort');
+            applyFiltersAndRender();
+        }
+
         window.addEventListener('click', function(e) {
             if (!e.target.closest('.custom-select-container')) {
                 document.querySelectorAll('.custom-select-options.show').forEach(el => { el.classList.remove('show'); el.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); });
@@ -1027,7 +1031,6 @@
 
         // --- HELPERS FEED ---
         function switchView(mode) { const f=document.getElementById('feed-list-container'), g=document.getElementById('grid-view-container'), bf=document.getElementById('btn-view-feed'), bg=document.getElementById('btn-view-grid'); if(mode==='feed'){f.classList.remove('hidden');g.classList.add('hidden');bf.classList.add('active');bg.classList.remove('active');}else{f.classList.add('hidden');g.classList.remove('hidden');bf.classList.remove('active');bg.classList.add('active');} }
-        function changeSortOrder(o) { currentSortOrder=o; applyFiltersAndRender(); }
         function filterByTagFromModal(t) { document.getElementById('close-modal').click(); currentFilterTag=t.replace('#','').trim(); currentFilterType='tag'; applyFiltersAndRender(); window.scrollTo({top:0,behavior:'smooth'}); }
         function filterByCharacter(name) { currentFilterTag=name; currentFilterType='character'; applyFiltersAndRender(); window.scrollTo({top:0,behavior:'smooth'}); }
         function clearTagFilter() { currentFilterTag=null; applyFiltersAndRender(); }
