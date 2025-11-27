@@ -3,109 +3,380 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplicador de Marca de Agua (Firma) en Imágenes</title>
+    <title>Mejora de Foto: Cara vs Cuerpo</title>
+    <!-- Cargamos face-api -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <!-- Tailwind para diseño -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @font-face {
-            font-family: 'FirmaFont';
-            src: url('data:font/truetype;base64,[AQUÍ_PEGA_EL_BASE64_DEL_ARCHIVO_pkbbri.ttf]') format('truetype');
+        /* Fondo de ajedrez para ver transparencias si las hubiera */
+        .canvas-bg {
+            background-color: #f0f0f0;
+            background-image: 
+                linear-gradient(45deg, #ddd 25%, transparent 25%), 
+                linear-gradient(-45deg, #ddd 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #ddd 75%), 
+                linear-gradient(-45deg, transparent 75%, #ddd 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
         }
-        #canvas {
-            border: 1px solid #ccc;
-            margin: 20px auto;
-            display: block;
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Contenedor del canvas para superponer el loader */
+        .preview-area {
+            position: relative;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 0.75rem; /* rounded-xl */
         }
-        .controls {
-            margin-bottom: 20px;
-        }
-        #testText {
-            font-family: 'FirmaFont';
-            font-size: 24px;
-            color: red;
-            margin: 20px;
+
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            backdrop-filter: blur(2px);
         }
     </style>
 </head>
-<body>
-    <h1>Aplicador de Marca de Agua (Firma) en Imágenes</h1>
-    <div class="controls">
-        <label for="imageUpload">Selecciona una imagen:</label><br>
-        <input type="file" id="imageUpload" accept="image/*"><br><br>
+<body class="bg-slate-100 text-slate-800 font-sans p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
         
-        <label for="signatureText">Texto de la firma:</label><br>
-        <input type="text" id="signatureText" placeholder="Ingresa tu firma aquí"><br><br>
-        
-        <button id="applyButton">Aplicar Firma</button>
+        <!-- Panel Izquierdo: Controles -->
+        <div class="md:col-span-4 bg-white p-6 rounded-xl shadow-lg h-fit">
+            <h1 class="text-2xl font-bold mb-2 text-slate-900">Editor Inteligente</h1>
+            <p class="text-sm text-slate-500 mb-6 border-b pb-4">
+                El algoritmo detecta caras automáticamente. Aplica enfoque fuerte en ropa/fondo y suave en la piel.
+            </p>
+
+            <!-- Selección de Archivo -->
+            <label class="block mb-4">
+                <span class="text-sm font-semibold text-slate-700">1. Seleccionar Imagen</span>
+                <input type="file" id="inputImage" accept="image/*" class="mt-1 block w-full text-sm text-slate-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100 cursor-pointer
+                ">
+            </label>
+
+            <!-- Controles Avanzados (Ocultables/Visibles) -->
+            <div class="space-y-4 mb-6">
+                <div>
+                    <div class="flex justify-between">
+                        <label class="text-xs font-bold text-blue-600 uppercase">Enfoque Cara (Suave)</label>
+                        <span id="lblFace" class="text-xs text-slate-500">0.4x</span>
+                    </div>
+                    <input type="range" id="paramFace" min="0" max="1.5" step="0.1" value="0.4" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <div>
+                    <div class="flex justify-between">
+                        <label class="text-xs font-bold text-green-600 uppercase">Enfoque Cuerpo (Fuerte)</label>
+                        <span id="lblBody" class="text-xs text-slate-500">1.0x</span>
+                    </div>
+                    <input type="range" id="paramBody" min="0" max="3" step="0.1" value="1.0" class="w-full h-2 bg-green-100 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <button id="btnProcess" disabled class="w-full bg-slate-900 text-white font-bold py-3 px-4 rounded-lg hover:bg-black transition-all disabled:bg-slate-300 disabled:cursor-not-allowed shadow-md">
+                2. Aplicar Mejora
+            </button>
+
+            <!-- Log de estado -->
+            <div id="statusLog" class="mt-4 p-3 bg-slate-50 rounded text-xs font-mono text-slate-500 min-h-[60px] max-h-[150px] overflow-y-auto border border-slate-200">
+                Esperando imagen...
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Visualización -->
+        <div class="md:col-span-8 preview-area canvas-bg shadow-inner border border-slate-200">
+            <!-- Mensaje Placeholder -->
+            <div id="placeholder" class="text-center p-10">
+                <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <p class="text-slate-400 font-medium">Sube una imagen para comenzar</p>
+            </div>
+
+            <!-- Overlay de Carga (Oculto por defecto) -->
+            <div id="loadingOverlay" class="overlay hidden">
+                <div class="loader mb-3"></div>
+                <h3 class="text-slate-700 font-bold">Procesando...</h3>
+                <p id="loadingText" class="text-xs text-slate-500">Analizando imagen</p>
+            </div>
+
+            <!-- Canvas Principal -->
+            <canvas id="mainCanvas" class="hidden max-w-full h-auto object-contain"></canvas>
+        </div>
     </div>
-    
-    <p id="testText">Texto de prueba con la fuente FirmaFont (debería verse diferente si se carga correctamente).</p>
-    
-    <canvas id="canvas" width="500" height="300"></canvas> <!-- Canvas visible por defecto para depuración -->
-    
-    <a id="downloadLink" style="display: none;" download="imagen_con_firma.png">Descargar Imagen con Firma</a>
-    
+
     <script>
-        // Cargar la fuente al inicio para asegurar disponibilidad
-        document.fonts.load('50px FirmaFont').then(() => {
-            console.log('Fuente FirmaFont cargada al inicio.');
-        }).catch(error => {
-            console.error('Error al precargar la fuente:', error);
+        // --- CONFIGURACIÓN ---
+        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+        let modelsLoaded = false;
+        let originalImageElement = null; // Guardamos la imagen cargada aquí
+
+        // --- REFERENCIAS UI ---
+        const inputImage = document.getElementById('inputImage');
+        const btnProcess = document.getElementById('btnProcess');
+        const mainCanvas = document.getElementById('mainCanvas');
+        const statusLog = document.getElementById('statusLog');
+        const placeholder = document.getElementById('placeholder');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+
+        const paramFace = document.getElementById('paramFace');
+        const paramBody = document.getElementById('paramBody');
+        const lblFace = document.getElementById('lblFace');
+        const lblBody = document.getElementById('lblBody');
+
+        // --- EVENTOS ---
+        
+        // Actualizar etiquetas de sliders
+        paramFace.oninput = () => lblFace.innerText = paramFace.value + 'x';
+        paramBody.oninput = () => lblBody.innerText = paramBody.value + 'x';
+
+        // Cargar Imagen
+        inputImage.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            log("Cargando imagen...");
+            try {
+                // Leemos el archivo a un objeto Image HTML
+                const img = await faceapi.bufferToImage(file);
+                originalImageElement = img;
+
+                // Mostramos la imagen ORIGINAL en el canvas inmediatamente
+                mainCanvas.width = img.width;
+                mainCanvas.height = img.height;
+                const ctx = mainCanvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                // UI
+                mainCanvas.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                btnProcess.disabled = false;
+                log("Imagen cargada. Lista para procesar.");
+
+                // Precargar modelos en segundo plano si aún no están listos
+                if (!modelsLoaded) loadModels();
+
+            } catch (err) {
+                log("Error al cargar imagen: " + err.message);
+                console.error(err);
+            }
         });
 
-        const imageUpload = document.getElementById('imageUpload');
-        const signatureText = document.getElementById('signatureText');
-        const applyButton = document.getElementById('applyButton');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const downloadLink = document.getElementById('downloadLink');
-
-        applyButton.addEventListener('click', function() {
-            const file = imageUpload.files[0];
-            if (!file) {
-                alert('Por favor, selecciona una imagen primero.');
-                return;
-            }
-            if (!signatureText.value) {
-                alert('Por favor, ingresa el texto de la firma.');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-
-                    // Dibujar la imagen original
-                    ctx.drawImage(img, 0, 0);
-
-                    // Configurar la fuente y el texto
-                    const selectedFont = 'FirmaFont';
-                    const fontSize = 50; // Tamaño de fuente ajustable
-                    ctx.font = `\( {fontSize}px \){selectedFont}`;
-                    console.log('Fuente establecida en canvas:', ctx.font); // Para depuración
-
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Color semi-transparente para marca de agua
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'bottom';
-
-                    // Dibujar el texto en la esquina inferior derecha (ajustable)
-                    ctx.fillText(signatureText.value, canvas.width - 20, canvas.height - 20);
-
-                    // Generar la URL de la imagen resultante
-                    downloadLink.href = canvas.toDataURL('image/png');
-                    downloadLink.style.display = 'block';
-                    downloadLink.textContent = 'Descargar Imagen con Firma';
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
+        // Botón Procesar
+        btnProcess.addEventListener('click', () => {
+            if (!originalImageElement) return;
+            startProcessing();
         });
+
+        // --- FUNCIONES PRINCIPALES ---
+
+        async function loadModels() {
+            if (modelsLoaded) return;
+            log("Descargando modelos de IA (esto solo pasa una vez)...");
+            try {
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                // await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL); // No estrictamente necesario para la caja, ahorramos red
+                modelsLoaded = true;
+                log("Modelos listos.");
+            } catch (err) {
+                log("Error cargando modelos: " + err);
+            }
+        }
+
+        async function startProcessing() {
+            // 1. Mostrar estado de carga
+            loadingOverlay.classList.remove('hidden');
+            btnProcess.disabled = true;
+            loadingText.innerText = "Iniciando motor gráfico...";
+
+            // Usamos setTimeout para permitir que el navegador renderice el overlay de carga
+            // antes de bloquear el hilo con cálculos pesados.
+            setTimeout(async () => {
+                try {
+                    await processImageLogic();
+                } catch (error) {
+                    log("ERROR CRÍTICO: " + error.message);
+                    console.error(error);
+                    alert("Ocurrió un error. Revisa el log.");
+                } finally {
+                    loadingOverlay.classList.add('hidden');
+                    btnProcess.disabled = false;
+                }
+            }, 100);
+        }
+
+        async function processImageLogic() {
+            if (!modelsLoaded) {
+                loadingText.innerText = "Cargando modelos...";
+                await loadModels();
+            }
+
+            const width = originalImageElement.width;
+            const height = originalImageElement.height;
+
+            // --- PASO 1: Preparación (Offscreen) ---
+            loadingText.innerText = "Preparando datos...";
+            
+            // Creamos un canvas virtual para leer los datos puros
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = width;
+            offCanvas.height = height;
+            const ctx = offCanvas.getContext('2d', { willReadFrequently: true });
+            
+            // Dibujamos la original
+            ctx.drawImage(originalImageElement, 0, 0);
+            const originalData = ctx.getImageData(0, 0, width, height);
+
+            // --- PASO 2: Generar Versión Cuerpo (Sharpness Fuerte) ---
+            loadingText.innerText = "Aplicando detalle al cuerpo...";
+            const bodyAmt = parseFloat(paramBody.value);
+            // Umbral 8: Ignora ruido suave, enfoca bordes reales
+            const bodySharpened = applyUnsharpMask(ctx, originalImageElement, bodyAmt, 2.0, 8); 
+
+            // --- PASO 3: Detectar Caras ---
+            loadingText.innerText = "Detectando rostros con IA...";
+            // Detectamos sobre el elemento de imagen original (es más rápido)
+            const detections = await faceapi.detectAllFaces(originalImageElement, new faceapi.TinyFaceDetectorOptions());
+            
+            log(`Se encontraron ${detections.length} rostros.`);
+
+            // --- PASO 4: Fusión Inteligente ---
+            if (detections.length > 0) {
+                loadingText.innerText = "Suavizando piel en caras...";
+                
+                // Generamos la versión de la cara (Sharpness Sutil)
+                const faceAmt = parseFloat(paramFace.value);
+                // Umbral 15: Protege mucho la piel, solo enfoca ojos/boca muy marcados
+                const faceSharpened = applyUnsharpMask(ctx, originalImageElement, faceAmt, 0.5, 15);
+
+                // Mezclamos: Copiamos los píxeles de "faceSharpened" dentro de los cuadros de las caras
+                // sobre "bodySharpened"
+                detections.forEach((det, i) => {
+                    const { x, y, width: w, height: h } = det.box;
+                    log(`Procesando cara ${i+1}...`);
+                    
+                    // Añadimos padding suave para asegurar que cubrimos toda la cara
+                    // pero con cuidado de no salirnos
+                    const pad = Math.floor(w * 0.05);
+                    
+                    const startX = Math.max(0, Math.floor(x) - pad);
+                    const startY = Math.max(0, Math.floor(y) - pad);
+                    const endX = Math.min(width, Math.floor(x + w) + pad);
+                    const endY = Math.min(height, Math.floor(y + h) + pad);
+
+                    // Copiado de píxeles
+                    for (let row = startY; row < endY; row++) {
+                        // Optimización: calcular índices de fila una vez
+                        const rowOffset = row * width;
+                        for (let col = startX; col < endX; col++) {
+                            const idx = (rowOffset + col) * 4;
+                            
+                            // Reemplazamos el píxel del cuerpo por el de la cara
+                            bodySharpened.data[idx] = faceSharpened.data[idx];     // R
+                            bodySharpened.data[idx+1] = faceSharpened.data[idx+1]; // G
+                            bodySharpened.data[idx+2] = faceSharpened.data[idx+2]; // B
+                            // Alpha se mantiene igual (usualmente 255)
+                        }
+                    }
+                });
+            }
+
+            // --- PASO 5: Renderizado Final ---
+            loadingText.innerText = "Finalizando...";
+            // Volcamos el resultado final ("bodySharpened" que ahora contiene las caras insertadas)
+            // al canvas visible
+            const mainCtx = mainCanvas.getContext('2d');
+            mainCtx.putImageData(bodySharpened, 0, 0);
+            
+            log("¡Proceso completado con éxito!");
+        }
+
+        /**
+         * Algoritmo Unsharp Mask (Máscara de Enfoque)
+         * Genera un nuevo ImageData con el filtro aplicado.
+         * No modifica el canvas visible.
+         */
+        function applyUnsharpMask(ctx, imgSource, amount, radius, threshold) {
+            const w = ctx.canvas.width;
+            const h = ctx.canvas.height;
+
+            // 1. Obtener datos originales limpios
+            // Limpiamos y dibujamos para asegurar pureza
+            ctx.filter = 'none';
+            ctx.clearRect(0,0,w,h);
+            ctx.drawImage(imgSource, 0, 0);
+            const srcData = ctx.getImageData(0, 0, w, h);
+
+            // 2. Obtener datos borrosos (Blur)
+            // Usamos el filtro del navegador (es muy rápido y acelerado por hardware)
+            ctx.clearRect(0,0,w,h);
+            ctx.filter = `blur(${radius}px)`;
+            ctx.drawImage(imgSource, 0, 0);
+            const blurData = ctx.getImageData(0, 0, w, h);
+            ctx.filter = 'none'; // Reset importante
+
+            // 3. Calcular diferencia y aplicar máscara
+            const output = ctx.createImageData(w, h);
+            const src = srcData.data;
+            const blur = blurData.data;
+            const dst = output.data;
+
+            for (let i = 0; i < src.length; i += 4) {
+                // Alpha: copia directa
+                dst[i+3] = src[i+3];
+
+                // RGB
+                for (let c = 0; c < 3; c++) {
+                    const original = src[i+c];
+                    const blurred = blur[i+c];
+                    const diff = original - blurred;
+
+                    // Si la diferencia es notable (supera el umbral), la amplificamos (sharpness)
+                    // Si no (es piel lisa o cielo), dejamos el original.
+                    if (Math.abs(diff) > threshold) {
+                        let val = original + (diff * amount);
+                        // Clamp 0-255
+                        val = val < 0 ? 0 : (val > 255 ? 255 : val);
+                        dst[i+c] = val;
+                    } else {
+                        dst[i+c] = original;
+                    }
+                }
+            }
+
+            return output;
+        }
+
+        // Helper para log
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            statusLog.innerHTML += `<div><span class="text-slate-400">[${time}]</span> ${msg}</div>`;
+            statusLog.scrollTop = statusLog.scrollHeight;
+        }
+
     </script>
 </body>
 </html>

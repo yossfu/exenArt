@@ -13,6 +13,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
+    <!-- Face API (Procesamiento Gratuito y Local) -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -522,6 +525,154 @@
             if(res && confirmCallback) confirmCallback(); confirmCallback = null;
         }
 
+        // --- CONFIGURACIÓN Y LÓGICA DE SHARPNESS (MEJORA INTELIGENTE) ---
+        const FACE_MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+        let faceModelsLoaded = false;
+        
+        // PARÁMETROS AJUSTADOS: Menos agresivos para evitar quemado
+        const SHARP_PARAMS = {
+            faceAmount: 0.25, // Muy sutil, solo para dar vida a ojos/labios
+            bodyAmount: 0.1, // Moderado, define bordes sin crear halos blancos
+            faceThreshold: 10,
+            bodyThreshold: 2
+        };
+
+        // Cargar modelos silenciosamente al inicio
+        window.addEventListener('load', loadFaceApiModels);
+
+        async function loadFaceApiModels() {
+            if (faceModelsLoaded) return;
+            try {
+                // Solo necesitamos el detector ligero
+                await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL);
+                faceModelsLoaded = true;
+            } catch (err) {
+                console.warn("IA Local: Fallback activo.", err);
+            }
+        }
+
+        /**
+         * Función Principal: Procesa la imagen aplicando lógica inteligente.
+         * ESTA FUNCIÓN ES CLIENT-SIDE (GRATUITA Y SIN LÍMITES).
+         * Utiliza la CPU/GPU del usuario para procesar, no tu servidor.
+         */
+        async function processImageSmartSharpen(fileObj) {
+            if (!faceModelsLoaded) await loadFaceApiModels();
+            
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const img = await faceapi.bufferToImage(fileObj);
+                    const width = img.width;
+                    const height = img.height;
+
+                    // 1. Preparar Canvas Virtual
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    
+                    // Dibujar original
+                    ctx.drawImage(img, 0, 0);
+
+                    // 2. Generar versión CUERPO (Fondo/Ropa) - Enfoque Moderado
+                    const bodySharpened = applyUnsharpMask(ctx, img, SHARP_PARAMS.bodyAmount, 2.0, SHARP_PARAMS.bodyThreshold);
+
+                    // 3. Detectar Caras (Si falla, no pasa nada, se queda con el cuerpo enfocado)
+                    let detections = [];
+                    try {
+                        detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions());
+                    } catch (e) { }
+
+                    // 4. Fusión Inteligente
+                    if (detections.length > 0) {
+                        // Generar versión CARA (Piel) - Enfoque Sutil
+                        const faceSharpened = applyUnsharpMask(ctx, img, SHARP_PARAMS.faceAmount, 0.5, SHARP_PARAMS.faceThreshold);
+
+                        // Mezclar: Poner píxeles de cara SOBRE píxeles de cuerpo
+                        detections.forEach(det => {
+                            const { x, y, width: w, height: h } = det.box;
+                            const pad = Math.floor(w * 0.05); // Margen pequeño
+                            
+                            const startX = Math.max(0, Math.floor(x) - pad);
+                            const startY = Math.max(0, Math.floor(y) - pad);
+                            const endX = Math.min(width, Math.floor(x + w) + pad);
+                            const endY = Math.min(height, Math.floor(y + h) + pad);
+
+                            for (let row = startY; row < endY; row++) {
+                                const rowOffset = row * width;
+                                for (let col = startX; col < endX; col++) {
+                                    const idx = (rowOffset + col) * 4;
+                                    // Reemplazar pixel fuerte con pixel suave
+                                    bodySharpened.data[idx] = faceSharpened.data[idx];     // R
+                                    bodySharpened.data[idx+1] = faceSharpened.data[idx+1]; // G
+                                    bodySharpened.data[idx+2] = faceSharpened.data[idx+2]; // B
+                                }
+                            }
+                        });
+                    }
+
+                    // 5. Volcar resultado final al canvas y exportar
+                    ctx.putImageData(bodySharpened, 0, 0);
+                    
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            // Crear nuevo archivo con nombre modificado
+                            const newFile = new File([blob], fileObj.name, { type: "image/jpeg", lastModified: Date.now() });
+                            resolve(newFile);
+                        } else {
+                            reject(new Error("Error generando blob"));
+                        }
+                    }, 'image/jpeg', 0.95);
+
+                } catch (error) {
+                    console.error("Error silencioso en mejora:", error);
+                    resolve(fileObj); // Fallback: devolver original si falla algo
+                }
+            });
+        }
+
+        // Algoritmo matemático de Unsharp Mask (Optimizado)
+        function applyUnsharpMask(ctx, imgSource, amount, radius, threshold) {
+            const w = ctx.canvas.width;
+            const h = ctx.canvas.height;
+            
+            // Original
+            ctx.filter = 'none';
+            ctx.clearRect(0,0,w,h);
+            ctx.drawImage(imgSource, 0, 0);
+            const srcData = ctx.getImageData(0, 0, w, h);
+
+            // Blur
+            ctx.clearRect(0,0,w,h);
+            ctx.filter = `blur(${radius}px)`;
+            ctx.drawImage(imgSource, 0, 0);
+            const blurData = ctx.getImageData(0, 0, w, h);
+            ctx.filter = 'none'; 
+
+            const output = ctx.createImageData(w, h);
+            const src = srcData.data;
+            const blur = blurData.data;
+            const dst = output.data;
+
+            for (let i = 0; i < src.length; i += 4) {
+                dst[i+3] = src[i+3]; // Alpha
+                for (let c = 0; c < 3; c++) {
+                    const original = src[i+c];
+                    const blurred = blur[i+c];
+                    const diff = original - blurred;
+                    if (Math.abs(diff) > threshold) {
+                        let val = original + (diff * amount);
+                        val = val < 0 ? 0 : (val > 255 ? 255 : val);
+                        dst[i+c] = val;
+                    } else {
+                        dst[i+c] = original;
+                    }
+                }
+            }
+            return output;
+        }
+
+
         // --- AUTH ---
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('initial-loader');
@@ -721,7 +872,7 @@
                 document.getElementById('image-preview').src = URL.createObjectURL(selectedFile); 
                 document.getElementById('preview-container').classList.remove('hidden');
                 
-                // Trigger Auto-Tagging
+                // Trigger Auto-Tagging (Paso 1: Tagging al seleccionar)
                 if(window.runAutoTagging) window.runAutoTagging(selectedFile);
             } 
         }
@@ -738,17 +889,37 @@
             if (selectedFile && (!title || !category)) return showAlert("Completa título y categoría.");
 
             const btn = document.getElementById('publish-btn');
-            btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            document.getElementById('upload-progress').classList.remove('hidden');
+            const progress = document.getElementById('upload-progress');
+            
+            btn.disabled = true; 
+            btn.classList.add('btn-disabled'); 
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
+            progress.classList.remove('hidden');
             
             try {
                 let imageUrl = null;
                 if (selectedFile) {
-                    // COMPRESIÓN DE IMAGEN
-                    const compressedFile = await compressImage(selectedFile);
-                    const formData = new FormData(); formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', compressedFile);
+                    // --- PASO 2: APLICAR SHARPNESS (SILENCIOSO) ---
+                    // Sin toasts visuales, solo ocurre en background
+                    let processedFile = selectedFile;
+                    try {
+                        // Procesamos la imagen con el algoritmo inteligente antes de subir
+                        processedFile = await processImageSmartSharpen(selectedFile);
+                    } catch (sharpError) {
+                        // Si falla, seguimos con el archivo original silenciosamente
+                    }
+
+                    // --- PASO 3: SUBIR A CATBOX (CON COMPRESIÓN EXTRA) ---
+                    const compressedFile = await compressImage(processedFile);
+                    
+                    const formData = new FormData(); 
+                    formData.append('reqtype','fileupload'); 
+                    formData.append('userhash',CATBOX_USERHASH); 
+                    formData.append('fileToUpload', compressedFile);
+                    
                     const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
                     const txt = await r.text();
+                    
                     if(!r.ok || !txt.includes('catbox.moe')) throw new Error("Error subida imagen");
                     imageUrl = txt.trim();
                 }
@@ -767,7 +938,7 @@
             } catch(e) { showAlert("Error: " + e.message); }
             finally { 
                 btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = 'Publicar'; 
-                document.getElementById('upload-progress').classList.add('hidden'); 
+                progress.classList.add('hidden'); 
             }
         }
 
