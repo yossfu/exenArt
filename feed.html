@@ -13,9 +13,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- Face API (Manteniendo tu librería original) -->
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -67,11 +64,11 @@
         /* Upload Area */
         .upload-card { background: linear-gradient(145deg, #18181b, #121212); border: 1px solid rgba(249, 115, 22, 0.15); }
         #extra-fields { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease; }
-        #extra-fields.expanded { max-height: 1200px; opacity: 1; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); overflow: visible !important; }
+        #extra-fields.expanded { max-height: 1000px; opacity: 1; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); overflow: visible !important; }
         .custom-input { background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; transition: all 0.3s; }
         .custom-input:focus { outline: none; border-color: var(--accent); background: rgba(0,0,0,0.4); }
 
-        /* Dropdowns Personalizados */
+        /* Dropdowns */
         .custom-select-container { position: relative; width: 100%; }
         .custom-select-trigger { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; border-radius: 10px; color: #9ca3af; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; min-height: 44px; }
         .custom-select-trigger:active, .custom-select-trigger.active { border-color: var(--accent); color: white; background: rgba(0,0,0,0.4); }
@@ -94,37 +91,28 @@
         .suggestion-meta { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #a1a1aa; }
         .verified-badge { color: #4ade80; font-size: 0.8rem; }
         
-        /* Grid Mode */
+        /* Grid Mode & Multi-Image Styles */
         .grid-mode-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; }
         .grid-item { aspect-ratio: 1/1; overflow: hidden; position: relative; background-color: #222; cursor: pointer; }
         .grid-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
         .grid-item:active img { transform: scale(0.96); opacity: 0.8; }
         .grid-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%); display: flex; align-items: flex-end; padding: 4px; opacity: 1; }
 
-        /* COLLAGE CSS (USADO EN PREVIEW Y FEED) */
-        .collage-container { width: 100%; overflow: hidden; position: relative; background-color: #09090b; border: 1px solid var(--border-color); border-radius: 8px; margin-top: 0.5rem; }
-        
-        /* 1 Image */
-        .collage-1 { height: auto; max-height: 500px; display: flex; align-items: center; justify-content: center; background: black; }
-        .collage-1 img { width: 100%; height: auto; max-height: 500px; object-fit: contain; }
-        
-        /* 2 Images (Split Vertical) */
+        /* COLLAGE LAYOUTS FOR FEED */
+        .collage-container { width: 100%; overflow: hidden; position: relative; background-color: #000; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-top: 0.5rem; }
+        .collage-1 img { width: 100%; height: auto; max-height: 500px; object-fit: contain; margin: 0 auto; display: block; }
         .collage-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; height: 300px; }
         .collage-2 img { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* 3 Images (Revista: 1 Izq Grande, 2 Der Apiladas) */
-        .collage-3 { display: grid; grid-template-columns: 1.5fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; height: 350px; }
-        .collage-3 .img-slot-0 { grid-row: 1 / 3; grid-column: 1 / 2; height: 100%; position: relative; }
-        .collage-3 .img-slot-1 { grid-row: 1 / 2; grid-column: 2 / 3; height: 100%; position: relative; }
-        .collage-3 .img-slot-2 { grid-row: 2 / 3; grid-column: 2 / 3; height: 100%; position: relative; }
-        .collage-3 img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .collage-3 { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; height: 300px; }
+        .collage-3 img:nth-child(1) { grid-row: 1 / 3; grid-column: 1 / 2; height: 100%; }
+        .collage-3 img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Estilos del Preview Grid */
-        #preview-grid-container { display: none; width: 100%; margin-bottom: 15px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
-        .preview-remove-btn { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; border: 1px solid rgba(255,255,255,0.3); transition: transform 0.2s; }
-        .preview-remove-btn:hover { background: #ef4444; border-color: #ef4444; }
-        .preview-remove-btn:active { transform: scale(0.9); }
-        .preview-img-wrapper { position: relative; width: 100%; height: 100%; overflow: hidden; }
+        /* PREVIEW STACK (ESTILO DEFINITIVO) */
+        #preview-stack { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-top: 15px; margin-bottom: 10px; width: 100%; min-height: 90px; }
+        .preview-thumb { position: relative; width: 80px; height: 80px; flex-shrink: 0; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); animation: fadeIn 0.3s ease; background-color: #222; }
+        .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .remove-thumb-btn { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; z-index: 10; border: 1px solid rgba(255,255,255,0.3); transition: all 0.2s; }
+        .remove-thumb-btn:active { transform: scale(0.9); background: var(--accent); }
 
         /* Navbar & Botones */
         .bottom-nav { background-color: rgba(9, 9, 11, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--border-color); z-index: 3000; padding-bottom: env(safe-area-inset-bottom); }
@@ -144,11 +132,10 @@
         .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 20; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); border-radius: 50%; color: white; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s; }
         .nav-arrow:active { background: var(--accent); }
         .nav-prev { left: 15px; } .nav-next { right: 15px; }
-        
-        /* Carousel interno del modal */
-        .carousel-dots { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 25; pointer-events: none; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3); transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .dot.active { background: #fff; transform: scale(1.3); }
+
+        .carousel-dots { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 25; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); transition: all 0.2s; }
+        .dot.active { background: #fff; transform: scale(1.2); }
 
         /* Similar Cards */
         .similar-card { min-width: 90px; width: 90px; aspect-ratio: 1/1; border-radius: 0.5rem; overflow: hidden; position: relative; flex-shrink: 0; scroll-snap-align: start; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s; background-color: #1a1a1c; }
@@ -253,7 +240,7 @@
 
         <main class="container mx-auto max-w-lg px-0 sm:px-4 py-2 overflow-x-hidden">
             
-            <!-- UPLOAD CARD MEJORADA -->
+            <!-- UPLOAD CARD -->
             <div class="px-2 sm:px-0">
                 <div class="feed-card upload-card p-4 rounded-2xl mb-4">
                     <div class="flex gap-3 items-center mb-2">
@@ -261,40 +248,30 @@
                             <img id="post-avatar" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-1 relative">
-                            <textarea id="post-text" rows="1" maxlength="500" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" placeholder="¿Qué estás pensando?" onfocus="expandPostArea()" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                            <textarea id="post-text" rows="1" maxlength="500" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" placeholder="¿Qué quieres compartir?" onfocus="expandPostArea()" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
                         </div>
+                        <label class="flex items-center justify-center text-orange-500 cursor-pointer active:scale-90 transition p-2 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700" title="Añadir imagen (Max 3)">
+                            <i class="fas fa-image text-lg"></i>
+                            <!-- INPUT DE ARCHIVOS: La magia sucede en handleFileSelect -->
+                            <input type="file" id="file-input" accept="image/*" class="hidden" multiple onchange="handleFileSelect(event)">
+                        </label>
                     </div>
                     
-                    <!-- PREVIEW GRID: Se muestra inmediatamente al seleccionar imágenes -->
-                    <div id="preview-grid-container" class="hidden animate-enter bg-black/50 border border-zinc-800 rounded-xl overflow-hidden mb-3">
-                        <!-- El contenido se inyecta por JS -->
-                    </div>
+                    <!-- AREA DE PREVISUALIZACIÓN: Invisible por defecto, controlado por JS -->
+                    <div id="preview-stack" style="display: none;"></div>
                     
                     <div id="extra-fields">
                         <div class="flex flex-col gap-3">
-                            
-                            <!-- BOTONES ESTILO FACEBOOK -->
-                            <div class="flex items-center gap-2 border-t border-b border-zinc-800 py-2 my-1">
-                                <label class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg hover:bg-zinc-800 cursor-pointer transition active:scale-95 group">
-                                    <i class="fas fa-images text-green-500 text-lg group-hover:scale-110 transition-transform"></i>
-                                    <span class="text-xs font-bold text-gray-400 group-hover:text-white">Fotos (Max 3)</span>
-                                    <!-- INPUT MULTIPLE -->
-                                    <input type="file" id="file-input" accept="image/*" class="hidden" multiple onchange="handleFileSelect(event)">
-                                </label>
-                                <div class="w-[1px] h-6 bg-zinc-800"></div>
-                                <div class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg hover:bg-zinc-800 cursor-pointer transition active:scale-95 group" onclick="toggleCustomSelect('dropdown-collection')">
-                                    <i class="fas fa-folder text-blue-500 text-lg group-hover:scale-110 transition-transform"></i>
-                                    <span class="text-xs font-bold text-gray-400 group-hover:text-white">Álbum</span>
-                                </div>
-                            </div>
-
                             <input type="text" id="post-title" maxlength="30" placeholder="Título (Opcional)" class="custom-input font-bold bg-black/20 border-zinc-700">
                             
-                            <!-- Input Personaje -->
+                            <!-- Personaje + Sugerencias -->
                             <div class="relative w-full">
                                 <input type="text" id="post-character" maxlength="30" placeholder="Nombre del personaje (Opcional)" class="custom-input bg-black/20 border-zinc-700" autocomplete="off">
                                 <div id="character-suggestions" class="suggestions-dropdown custom-scrollbar"></div>
                             </div>
+                            
+                            <!-- Hidden Tags -->
+                            <div class="hidden"><input type="text" id="post-tags" placeholder="Auto-tagging..." readonly><i id="tag-status-icon"></i></div>
                             
                             <!-- Categoría y Colección -->
                             <div class="flex flex-col sm:flex-row gap-3">
@@ -306,8 +283,6 @@
                                         <option value="amateur">Amateur</option><option value="tvgames">TV/Games</option>
                                     </select>
                                 </div>
-                                
-                                <!-- Dropdown Álbum -->
                                 <div class="custom-select-container w-full" id="dropdown-collection">
                                     <input type="hidden" id="post-collection" value="">
                                     <button type="button" class="custom-select-trigger" onclick="toggleCustomSelect('dropdown-collection')">
@@ -316,12 +291,11 @@
                                     <div id="collection-options-list" class="custom-select-options custom-scrollbar"></div>
                                 </div>
                             </div>
-
-                            <div id="new-collection-container" class="hidden animate-enter">
-                                <input type="text" id="new-collection-name" maxlength="15" placeholder="Nombre de la nueva colección..." class="custom-input bg-orange-900/10 border-orange-500/30 text-sm focus:bg-orange-900/20">
-                            </div>
                             
-                            <div class="hidden"><input type="text" id="post-tags" placeholder="Auto-tagging..." readonly><i id="tag-status-icon"></i></div>
+                            <!-- Nueva Colección -->
+                            <div id="new-collection-container" class="hidden animate-enter">
+                                <input type="text" id="new-collection-name" maxlength="15" placeholder="Nombre de la nueva colección..." class="custom-input bg-orange-900/10 border-orange-500/30 text-sm">
+                            </div>
                             
                             <div class="flex gap-3 mt-2 pt-3 border-t border-white/5">
                                 <button onclick="collapsePostArea()" class="flex-1 py-2 rounded-xl text-gray-400 text-sm font-semibold hover:bg-zinc-800 transition active:scale-95">Cancelar</button>
@@ -364,26 +338,20 @@
             </div>
         </main>
 
-        <!-- VISOR (MODAL) -->
+        <!-- VISOR -->
         <div id="modal" class="modal-backdrop overflow-hidden">
             <button id="close-modal" class="fixed top-4 right-4 z-[8000] h-10 w-10 flex items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-times text-lg"></i></button>
             <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black transition-all duration-300">
                 <div class="image-area relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[55vh] lg:h-full" id="modal-image-area">
                     <img id="modal-image" src="" class="max-w-full max-h-full object-contain w-auto h-auto transition-transform duration-300">
-                    
-                    <!-- Navegación entre POSTS -->
                     <button id="modal-prev" class="nav-arrow nav-prev" onclick="navigateModal(-1)"><i class="fas fa-chevron-left"></i></button>
                     <button id="modal-next" class="nav-arrow nav-next" onclick="navigateModal(1)"><i class="fas fa-chevron-right"></i></button>
                     
-                    <!-- Navegación interna (Multi-Imagen) -->
                     <div id="internal-carousel-nav" class="hidden w-full h-full absolute inset-0 pointer-events-none">
-                         <!-- Zonas de toque invisibles para navegar -->
-                         <div onclick="navigateInternalCarousel(-1)" class="pointer-events-auto absolute left-0 top-0 bottom-0 w-[15%] z-10 cursor-pointer hover:bg-white/5 transition"></div>
-                         <div onclick="navigateInternalCarousel(1)" class="pointer-events-auto absolute right-0 top-0 bottom-0 w-[15%] z-10 cursor-pointer hover:bg-white/5 transition"></div>
-                         <!-- Puntos indicadores -->
+                         <div onclick="navigateInternalCarousel(-1)" class="pointer-events-auto absolute left-0 top-0 bottom-0 w-[20%] z-10"></div>
+                         <div onclick="navigateInternalCarousel(1)" class="pointer-events-auto absolute right-0 top-0 bottom-0 w-[20%] z-10"></div>
                          <div id="carousel-dots" class="carousel-dots"></div>
                     </div>
-
                     <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-zinc-800/80 text-white p-2.5 rounded-xl backdrop-blur-md border border-white/10 active:scale-90 transition shadow-lg"><i class="fas fa-expand text-sm"></i></button>
                 </div>
                 <div class="info-panel w-full lg:w-[400px] lg:h-full bg-[#121214] border-l border-zinc-800 flex flex-col h-[45vh] z-30 relative shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
@@ -435,7 +403,6 @@
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
         const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
-        
         async function resizeImageForApi(file) {
             if (file.size <= 1024 * 1024) return file;
             return new Promise((resolve) => {
@@ -446,7 +413,6 @@
                 }; img.src = URL.createObjectURL(file);
             });
         }
-        
         window.runAutoTagging = async function(originalFile) {
             const tagInput = document.getElementById('post-tags'); const publishBtn = document.getElementById('publish-btn');
             tagInput.value = ""; 
@@ -458,12 +424,10 @@
                 const result = await client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend]);
                 if (result && result.data && result.data[0]) {
                     tagInput.value = result.data[0];
-                    showToast("¡Etiquetas generadas!"); 
+                    showToast("¡Etiquetas generadas internamente!"); publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
                 } else throw new Error("Respuesta vacía");
             } catch (error) {
-                console.error("Error Tagging:", error); showToast("Nota: Error IA, puedes publicar sin tags.");
-            } finally {
-                publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+                console.error("Error Tagging:", error); showToast("Nota: Error IA, puedes publicar sin tags."); publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
             }
         }
     </script>
@@ -477,7 +441,7 @@
 
         let currentUser = null;
         let currentUserData = null;
-        let selectedFiles = []; // ARRAY GLOBAL PARA MÚLTIPLES IMÁGENES
+        let selectedFiles = []; // Global
         let deviceID = localStorage.getItem('deviceID');
         if (!deviceID) { deviceID = Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('deviceID', deviceID); }
 
@@ -566,7 +530,7 @@
             initCharacterStatsListener();
         });
 
-        // --- MANEJO DE ARCHIVOS MÚLTIPLES ---
+        // --- MANEJO DE ARCHIVOS MÚLTIPLES (SOLUCIÓN DEFINITIVA) ---
         function expandPostArea() { 
             document.getElementById('extra-fields').classList.add('expanded'); 
             document.getElementById('post-text').rows = 3; 
@@ -574,100 +538,87 @@
         
         function collapsePostArea(force=false) { 
             const reset = () => {
-                document.getElementById('extra-fields').classList.remove('expanded'); 
-                document.getElementById('post-text').rows = 1;
-                selectedFiles = []; // Limpiar array
-                renderPreviewGrid(); // Limpiar UI
+                document.getElementById('extra-fields').classList.remove('expanded'); document.getElementById('post-text').rows = 1;
+                selectedFiles = []; 
+                renderPreviewStack(); // Actualiza visual
                 
-                document.getElementById('post-text').value = ''; 
-                document.getElementById('post-title').value = '';
-                document.getElementById('post-character').value = ''; 
-                document.getElementById('post-tags').value = '';
-                
+                document.getElementById('post-text').value = ''; document.getElementById('post-title').value = '';
+                document.getElementById('post-character').value = ''; document.getElementById('post-tags').value = '';
                 selectCustomOption('dropdown-collection', '', '<i class="fas fa-folder mr-2 text-xs text-orange-500"></i> Álbum');
                 document.getElementById('new-collection-name').value = '';
-                
                 document.getElementById('character-suggestions').classList.remove('visible'); 
-                document.getElementById('publish-btn').disabled = false; 
-                document.getElementById('publish-btn').classList.remove('btn-disabled');
+                document.getElementById('publish-btn').disabled = false; document.getElementById('publish-btn').classList.remove('btn-disabled');
             };
             if(force || (selectedFiles.length === 0 && !document.getElementById('post-text').value)) reset();
             else showConfirm("¿Descartar publicación?", reset);
         }
         
-        // --- FUNCIÓN PRINCIPAL DE SELECCIÓN ---
         function handleFileSelect(e) {
             expandPostArea();
             
+            // 1. Obtener archivos
             const newFiles = Array.from(e.target.files);
-            e.target.value = ""; // Limpiar input para permitir reselección
-            
             if (!newFiles.length) return;
             
+            let filesAdded = 0;
             let limitReached = false;
-            let addedCount = 0;
 
-            // Agregar respetando límite de 3
+            // 2. Agregar a la lista global respetando límite de 3
             newFiles.forEach(file => {
                 if (selectedFiles.length < 3) {
                     selectedFiles.push(file);
-                    addedCount++;
+                    filesAdded++;
                 } else {
                     limitReached = true;
                 }
             });
 
-            if (limitReached) showToast("Máximo 3 imágenes permitidas.");
-
-            renderPreviewGrid(); // Actualizar la grilla visualmente
-            
-            // Auto-tagger solo si hay exactamente 1 imagen
-            if (selectedFiles.length === 1 && window.runAutoTagging && addedCount > 0) {
-                try { window.runAutoTagging(selectedFiles[0]); } catch(e) { console.log("Tagging error", e); }
-            } else if (selectedFiles.length > 1) {
-                document.getElementById('post-tags').value = ""; // Borrar tags si son varias
+            // 3. Feedback al usuario
+            if (limitReached) {
+                showToast("Solo se subieron las 3 primeras imágenes.");
             }
+
+            // 4. Renderizar y Auto-tagging (solo si se añadió algo)
+            renderPreviewStack();
+            
+            if (filesAdded > 0 && window.runAutoTagging) {
+                // Ejecutar tagging de forma segura
+                try { window.runAutoTagging(selectedFiles[selectedFiles.length - 1]); } catch(e) { console.log("Tagging error", e); }
+            }
+
+            // 5. Limpiar input para permitir reselección
+            e.target.value = ""; 
         }
 
-        function renderPreviewGrid() {
-            const container = document.getElementById('preview-grid-container');
+        function renderPreviewStack() {
+            const container = document.getElementById('preview-stack');
+            if (!container) return;
+
             container.innerHTML = '';
             
+            // Manejo explícito de visibilidad con estilos inline
             if (selectedFiles.length === 0) { 
-                container.classList.add('hidden');
+                container.style.display = 'none';
                 return; 
             }
             
-            container.classList.remove('hidden');
-            
-            // Crear contenedor de collage según cantidad
-            const collageDiv = document.createElement('div');
-            collageDiv.className = `collage-container collage-${selectedFiles.length}`;
+            container.style.display = 'flex';
             
             selectedFiles.forEach((file, index) => {
                 const url = URL.createObjectURL(file);
-                
-                // Wrapper para imagen + boton borrar
-                const wrapper = document.createElement('div');
-                // Asignar clase de slot (para collage-3)
-                wrapper.className = `preview-img-wrapper img-slot-${index}`;
-                
-                wrapper.innerHTML = `
-                    <img src="${url}" class="w-full h-full object-cover">
-                    <div class="preview-remove-btn" onclick="removeFile(${index})" title="Eliminar foto">
-                        <i class="fas fa-times"></i>
-                    </div>
+                const thumb = document.createElement('div');
+                thumb.className = 'preview-thumb';
+                thumb.innerHTML = `
+                    <img src="${url}">
+                    <div class="remove-thumb-btn" onclick="removeFile(${index})"><i class="fas fa-times"></i></div>
                 `;
-                collageDiv.appendChild(wrapper);
+                container.appendChild(thumb);
             });
-            
-            container.appendChild(collageDiv);
         }
         
         function removeFile(index) {
             selectedFiles.splice(index, 1);
-            renderPreviewGrid(); // Re-renderizar todo
-            if(selectedFiles.length === 0) document.getElementById('post-tags').value = "";
+            renderPreviewStack();
         }
 
         // --- FEED LOGIC ---
@@ -729,7 +680,6 @@
             const gridContainer = document.getElementById('grid-view-container');
             chunk.forEach(post => {
                 feedContainer.appendChild(createPostCard(post));
-                // Grid solo muestra la primera imagen
                 const displayImg = (post.imageUrls && post.imageUrls.length > 0) ? post.imageUrls[0] : post.imageUrl;
                 if (displayImg) gridContainer.appendChild(createGridItem(post, displayImg));
                 updateUserAvatarInUI(post.userId);
@@ -742,7 +692,7 @@
         }, { rootMargin: '100px' });
         document.addEventListener('DOMContentLoaded', () => { const t = document.getElementById('load-more-trigger'); if(t) scrollObserver.observe(t); });
 
-        // --- RENDER POST CARD (SOPORTE MULTI-IMAGEN) ---
+        // --- RENDER POST CARD ---
         function createPostCard(post) {
             const div = document.createElement('div'); div.className = "feed-card opacity-0 animate-enter";
             let textHtml = '';
@@ -763,21 +713,15 @@
             let optionsBtn = isOwner ? `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 p-2 hover:text-white"><i class="fas fa-ellipsis-v"></i></button><div id="options-menu-${post.id}" class="options-menu"><div class="options-item text-red-400 hover:bg-red-900/20" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>` : '';
 
             let imagesHtml = '';
-            // Soporte Híbrido: post.imageUrls (Array) o post.imageUrl (String Legacy)
             const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
             
             if (images.length > 0) {
                 if (images.length === 1) {
-                    imagesHtml = `<div class="collage-container collage-1 cursor-pointer" onclick="openViewerById('${post.id}')"><img src="${images[0]}" loading="lazy"></div>`;
+                    imagesHtml = `<div class="collage-container collage-1" onclick="openViewerById('${post.id}')"><img src="${images[0]}" loading="lazy"></div>`;
                 } else if (images.length === 2) {
-                    imagesHtml = `<div class="collage-container collage-2 cursor-pointer" onclick="openViewerById('${post.id}')"><img src="${images[0]}" loading="lazy"><img src="${images[1]}" loading="lazy"></div>`;
+                    imagesHtml = `<div class="collage-container collage-2" onclick="openViewerById('${post.id}')"><img src="${images[0]}" loading="lazy"><img src="${images[1]}" loading="lazy"></div>`;
                 } else {
-                    // 3 o más
-                    imagesHtml = `<div class="collage-container collage-3 cursor-pointer" onclick="openViewerById('${post.id}')">
-                        <div class="img-slot-0"><img src="${images[0]}" loading="lazy"></div>
-                        <div class="img-slot-1"><img src="${images[1]}" loading="lazy"></div>
-                        <div class="img-slot-2"><img src="${images[2]}" loading="lazy"></div>
-                    </div>`;
+                    imagesHtml = `<div class="collage-container collage-3" onclick="openViewerById('${post.id}')"><img src="${images[0]}" loading="lazy"><img src="${images[1]}" loading="lazy"><img src="${images[2]}" loading="lazy"></div>`;
                 }
             }
 
@@ -815,7 +759,7 @@
 
         function expandText(id) { document.getElementById(`text-short-${id}`).classList.add('hidden'); document.getElementById(`text-full-${id}`).classList.remove('hidden'); }
 
-        // --- LÓGICA DE COLECCIONES (ÁLBUMES) - PORTADA DE PROFILE.HTML ---
+        // --- LÓGICA DE COLECCIONES ---
         function toggleCustomSelect(id) {
             const el = document.getElementById(id);
             const list = el.querySelector('.custom-select-options');
@@ -864,7 +808,7 @@
             db.ref(`collections/${userId}/${colId}/cover`).set(newImgUrl);
         }
 
-        // --- SUBIDA MULTIPLE (Bucle de Upload) ---
+        // --- SUBIDA MULTIPLE ---
         async function uploadPost() {
             const text = document.getElementById('post-text').value.trim();
             const title = document.getElementById('post-title').value.trim();
@@ -895,20 +839,16 @@
                     const snap = await db.ref(`collections/${currentUser.uid}/${colId}/name`).once('value'); colName = snap.val();
                 }
 
-                // 2. Subida de Imágenes (Loop)
+                // 2. Subida de Imágenes
                 let uploadedUrls = [];
                 if (selectedFiles.length > 0) {
                     for (const file of selectedFiles) {
                         let processedFile = file;
                         try { processedFile = await compressImage(file); } catch (e) {}
-                        
                         const formData = new FormData(); 
                         formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', processedFile);
-                        
-                        // Usar corsproxy.io para evitar CORS
                         const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
                         const txt = await r.text();
-                        
                         if(!r.ok || !txt.includes('catbox.moe')) throw new Error("Error subida imagen");
                         uploadedUrls.push(txt.trim());
                     }
@@ -917,11 +857,10 @@
                 const finalUserName = (currentUserData && currentUserData.username) ? currentUserData.username : (currentUser?.displayName || 'Usuario');
                 const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
 
-                // 3. Crear Post
                 const post = {
                     text, 
-                    imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null, // Retrocompatibilidad
-                    imageUrls: uploadedUrls, // Nuevo Array
+                    imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
+                    imageUrls: uploadedUrls,
                     title, tags, category, characterName,
                     userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0,
@@ -939,7 +878,6 @@
                     });
                 }
 
-                // Actualizar colección con la primera imagen
                 if (colId && uploadedUrls.length > 0) {
                     await updateCollectionPreviews(currentUser.uid, colId, uploadedUrls[0]);
                 }
@@ -953,7 +891,7 @@
             }
         }
 
-        // --- VIEWER LOGIC (MODAL) ---
+        // --- VIEWER LOGIC ---
         function openViewerById(id) {
             currentModalIndex = displayedPosts.findIndex(p => p.id === id);
             if (currentModalIndex === -1) return;
@@ -976,7 +914,6 @@
                 imgEl.src = images[currentInternalImageIndex];
             } else { imgEl.src = ""; }
 
-            // Lógica Carousel Interno
             const dotsContainer = document.getElementById('carousel-dots');
             const navContainer = document.getElementById('internal-carousel-nav');
             dotsContainer.innerHTML = '';
@@ -1038,10 +975,8 @@
             const post = displayedPosts[currentModalIndex];
             const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
             if (images.length <= 1) return;
-            
             if (dir === 1) { if (currentInternalImageIndex < images.length - 1) currentInternalImageIndex++; else currentInternalImageIndex = 0; } 
             else { if (currentInternalImageIndex > 0) currentInternalImageIndex--; else currentInternalImageIndex = images.length - 1; }
-            
             updateModalContent();
         }
 
