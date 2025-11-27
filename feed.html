@@ -51,7 +51,6 @@
         .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
         
-        #auth-overlay { position: fixed; inset: 0; z-index: 9999; background-color: rgba(9, 9, 11, 0.98); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; padding: 1.5rem; overflow-y: auto; }
         .form-card { background: #18181b; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); width: 100%; max-width: 400px; }
         .input-field { background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); transition: all 0.3s ease; color: white; }
         .input-field:focus { border-color: var(--accent); outline: none; background: rgba(0,0,0,0.6); }
@@ -188,38 +187,6 @@
         </div>
     </div>
 
-    <!-- LOGIN -->
-    <div id="auth-overlay">
-        <div class="form-card rounded-2xl p-8 relative overflow-hidden">
-            <div class="text-center mb-8">
-                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-14 mx-auto mb-4 drop-shadow-[0_0_15px_rgba(249,115,22,0.3)]">
-                <h2 class="text-2xl font-bold font-[Poppins] text-white">Bienvenido</h2>
-                <div class="flex justify-center gap-4 mt-4 text-sm font-semibold border-b border-zinc-800 pb-2">
-                    <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1" onclick="switchAuthTab('login')">Iniciar Sesión</button>
-                    <button id="tab-register" class="text-gray-500 pb-1 hover:text-white" onclick="switchAuthTab('register')">Registrarse</button>
-                </div>
-            </div>
-            <form id="login-form" class="flex flex-col gap-4">
-                <div class="space-y-1"><label class="text-xs text-gray-400 ml-1">Correo</label><input type="email" id="login-email" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="tu@correo.com" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400 ml-1">Contraseña</label><input type="password" id="login-password" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="••••••••" required></div>
-                <button type="submit" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white mt-2 shadow-lg active:scale-95 transition">Entrar</button>
-            </form>
-            <form id="register-step-1" class="flex flex-col gap-4 hidden-step">
-                <p class="text-sm text-gray-300 text-center mb-2">Paso 1: Identidad</p>
-                <input type="text" id="reg-name" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Nombre de Usuario" required>
-                <input type="number" id="reg-age" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Edad" required>
-                <div class="relative w-full"><input type="file" id="file-upload-auth" accept="image/*" class="hidden" onchange="handleAuthFileUpload(event)"><label for="file-upload-auth" class="flex items-center gap-3 w-full input-field rounded-xl px-4 py-3 cursor-pointer hover:bg-zinc-800/50"><div class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-zinc-600"><img id="auth-preview-img" src="https://placehold.co/100x100/333/fff?text=Foto" class="w-full h-full object-cover"></div><div class="flex-1"><span class="text-sm text-gray-300 block">Subir imagen</span></div><i class="fas fa-camera text-gray-400"></i></label></div><input type="hidden" id="reg-photo-url">
-                <button type="button" id="btn-step-1" onclick="validateAuthStep1()" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white mt-2 active:scale-95 transition">Continuar</button>
-            </form>
-            <form id="register-step-2" class="flex flex-col gap-4 hidden-step">
-                <input type="email" id="reg-email" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Correo" required>
-                <input type="password" id="reg-password" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Contraseña" required>
-                <input type="password" id="reg-confirm-password" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Confirmar Contraseña" required>
-                <div class="flex gap-2 mt-2"><button type="button" onclick="authBackToStep1()" class="w-1/3 py-3.5 rounded-xl text-gray-400 border border-zinc-700 active:scale-95">Atrás</button><button type="submit" id="btn-register-final" class="btn-primary w-2/3 py-3.5 rounded-xl font-bold text-white active:scale-95">Finalizar</button></div>
-            </form>
-        </div>
-    </div>
-
     <!-- APP CONTENT -->
     <div id="app-content" style="display: none;">
         <header class="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex justify-between items-center">
@@ -227,7 +194,7 @@
                 <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-8 w-auto">
                 <span class="font-bold text-lg tracking-tight font-[Poppins] text-orange-500">Social</span>
             </div>
-            <a href="profile.html" class="w-9 h-9 rounded-full overflow-hidden border border-zinc-600 block relative active:scale-90 transition">
+            <a href="profile.html" onclick="return requireLogin(event)" class="w-9 h-9 rounded-full overflow-hidden border border-zinc-600 block relative active:scale-90 transition">
                 <img id="current-user-avatar" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
             </a>
         </header>
@@ -242,11 +209,11 @@
                             <img id="post-avatar" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-1 relative">
-                            <textarea id="post-text" rows="1" maxlength="500" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" placeholder="¿Qué quieres compartir?" onfocus="expandPostArea()" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                            <textarea id="post-text" rows="1" maxlength="500" class="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-sm py-2 min-h-[40px]" placeholder="¿Qué quieres compartir?" onfocus="if(requireLogin(event)) expandPostArea()" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
                         </div>
                         <label class="flex items-center justify-center text-orange-500 cursor-pointer active:scale-90 transition p-2 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700" title="Añadir imagen (Max 3)">
                             <i class="fas fa-image text-lg"></i>
-                            <input type="file" id="file-input" accept="image/*" class="hidden" multiple onchange="handleFileSelect(event)">
+                            <input type="file" id="file-input" accept="image/*" class="hidden" multiple onchange="if(requireLogin(event)) handleFileSelect(event)">
                         </label>
                     </div>
                     
@@ -399,7 +366,7 @@
         <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-[70px] justify-around items-center px-2 pb-2">
             <a href="index.html" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-home text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Galería</span></a>
             <a href="feed.html" class="nav-item active flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-globe-americas text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Social</span></a>
-            <a href="profile.html" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-user text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Perfil</span></a>
+            <a href="profile.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-user text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Perfil</span></a>
         </nav>
     </div>
 
@@ -421,19 +388,16 @@
             const tagInput = document.getElementById('post-tags'); const publishBtn = document.getElementById('publish-btn');
             tagInput.value = ""; 
             publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
-            // TOAST ELIMINADO: showToast("IA: Analizando imagen..."); (Proceso silencioso)
             try {
                 const processedFile = await resizeImageForApi(originalFile);
                 const client = await Client.connect("Jossle/deepdanbooru_online_Exen");
                 const result = await client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend]);
                 if (result && result.data && result.data[0]) {
                     tagInput.value = result.data[0];
-                    // TOAST ELIMINADO: showToast("¡Etiquetas generadas!"); (Proceso silencioso)
                     publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
                 } else throw new Error("Respuesta vacía");
             } catch (error) {
                 console.error("Error Tagging:", error); 
-                // TOAST ELIMINADO: Error silencioso, permite publicar sin tags.
                 publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
             }
         }
@@ -519,6 +483,17 @@
                 }; reader.onerror=reject;
             });
         }
+        
+        // --- NUEVA FUNCIÓN DE LOGIN CENTRALIZADO ---
+        function requireLogin(event) {
+            if (!currentUser) {
+                if(event) { event.preventDefault(); event.stopPropagation(); }
+                // Redirigir al nuevo login
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
 
         // --- AUTH & INIT ---
         auth.onAuthStateChanged(user => {
@@ -526,7 +501,7 @@
             if (user && !user.isAnonymous) {
                 currentUser = user;
                 document.getElementById('app-content').style.display = 'block'; 
-                document.getElementById('auth-overlay').style.display = 'none';
+                // document.getElementById('auth-overlay').style.display = 'none'; // ELIMINADO
                 db.ref('users/' + user.uid).on('value', snap => { 
                     const d = snap.val(); if(d) {
                         currentUserData = d; 
@@ -535,7 +510,9 @@
                 });
                 loadUserCollectionsSelect();
             } else {
-                currentUser = null; document.getElementById('app-content').style.display = 'none'; document.getElementById('auth-overlay').style.display = 'flex';
+                currentUser = null; 
+                document.getElementById('app-content').style.display = 'block'; // Permitir lectura pública
+                // document.getElementById('auth-overlay').style.display = 'flex'; // ELIMINADO
             }
             loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500);
             initFeedListener();
@@ -613,8 +590,10 @@
             renderPreviewStack();
         }
 
-        // --- SUBIDA (FIXED) ---
+        // --- SUBIDA (MODIFICADA CON REQUIRELOGIN) ---
         async function uploadPost() {
+            if(!requireLogin()) return; // VERIFICACIÓN AÑADIDA
+
             const text = document.getElementById('post-text').value.trim();
             const title = document.getElementById('post-title').value.trim();
             const characterName = document.getElementById('post-character').value.trim();
@@ -686,9 +665,6 @@
 
                 collapsePostArea(true); showToast("¡Publicado con éxito!");
                 
-                // AJUSTE PARA CARGA NO INVASIVA: 
-                // Al publicar, podríamos refrescar manualmente el feed del usuario actual
-                // para que vea su post, pero sin activar el listener en tiempo real.
                 setTimeout(() => { initFeedListener(); }, 1000);
 
             } catch(e) { showAlert("Error: " + e.message); }
@@ -698,13 +674,8 @@
             }
         }
 
-        // --- FEED LOGIC (MODIFICADO PARA CARGA ÚNICA) ---
+        // --- FEED LOGIC ---
         function initFeedListener() {
-            /* CRITICAL: FEED LOADING LOGIC 
-               DO NOT CHANGE TO REALTIME (.on). 
-               FETCH ONCE ONLY (.once) TO PREVENT FEED JUMPING.
-               IA: KEEP THIS LOGIC IN FUTURE UPDATES.
-            */
             db.ref('feed_posts').limitToLast(200).once('value').then(snapshot => {
                 if(!snapshot.exists()) { allPostsCache = []; applyFiltersAndRender(); return; }
                 const tempPosts = [];
@@ -765,7 +736,6 @@
                 feedContainer.appendChild(createPostCard(post));
                 const imgs = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
                 if (imgs.length > 0) {
-                    // En grid view, si hay varias imágenes, mostramos la primera
                     gridContainer.appendChild(createGridItem(post, imgs[0]));
                 }
                 updateUserAvatarInUI(post.userId);
@@ -778,7 +748,7 @@
         }, { rootMargin: '100px' });
         document.addEventListener('DOMContentLoaded', () => { const t = document.getElementById('load-more-trigger'); if(t) scrollObserver.observe(t); });
 
-        // --- CREAR TARJETA DE POST (FIXED MULTI-IMAGE) ---
+        // --- CREAR TARJETA DE POST ---
         function createPostCard(post) {
             const div = document.createElement('div'); div.className = "feed-card opacity-0 animate-enter";
             
@@ -855,7 +825,7 @@
 
         function expandText(id) { document.getElementById(`text-short-${id}`).classList.add('hidden'); document.getElementById(`text-full-${id}`).classList.remove('hidden'); }
 
-        // --- VISOR MEJORADO (IDÉNTICO AL PERFIL) ---
+        // --- VISOR MEJORADO ---
         function openMainViewerById(postId, imgIndex = 0) {
             const index = displayedPosts.findIndex(p => p.id === postId);
             if (index === -1) return;
@@ -1039,47 +1009,46 @@
         function toggleOptionsMenu(id) { const m = document.getElementById(`options-menu-${id}`); document.querySelectorAll('.options-menu').forEach(x=>{if(x!==m)x.classList.remove('show')}); m.classList.toggle('show'); }
         window.onclick = e => { if(!e.target.closest('.options-trigger')) document.querySelectorAll('.options-menu').forEach(m=>m.classList.remove('show')); };
         function deletePost(id) { showConfirm("¿Eliminar publicación?", () => { db.ref('feed_posts/'+id).remove().then(()=>{ showToast("Eliminado"); document.getElementById('modal').classList.remove('visible'); document.body.style.overflow='auto'; initFeedListener(); }); }); }
-        function toggleLike(id) { if(!currentUser && !deviceID) return showAlert("Inicia sesión."); const uid = currentUser ? currentUser.uid : deviceID; const ref = db.ref(`feed_likes/${id}/${uid}`); ref.once('value', s => { if(s.exists()) { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } else { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } }); }
+        
+        // --- INTERACCIONES PROTEGIDAS CON REQUIRELOGIN ---
+        function toggleLike(id) { 
+            if(!requireLogin()) return; // REDIRECT
+            const uid = currentUser.uid;
+            const ref = db.ref(`feed_likes/${id}/${uid}`); 
+            ref.once('value', s => { 
+                if(s.exists()) { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } 
+                else { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } 
+            }); 
+        }
         function checkLikeStatus(id) { const uid = currentUser ? currentUser.uid : deviceID; db.ref(`feed_likes/${id}/${uid}`).on('value', s => { const btn = document.getElementById(`like-btn-${id}`); if(btn) { if(s.exists()) { btn.classList.add('text-red-500'); btn.querySelector('i').className = 'fas fa-heart text-lg like-anim'; } else { btn.classList.remove('text-red-500'); btn.querySelector('i').className = 'far fa-heart text-lg'; } } }); db.ref(`feed_posts/${id}/likes`).on('value', s => { const el = document.getElementById(`likes-count-${id}`); if(el) el.innerText = s.val() || 0; }); }
         function checkCommentStatus(id) { db.ref(`feed_comments/${id}`).on('value', s => { const c = s.numChildren(); const el = document.getElementById(`comments-count-${id}`); if(el) { el.innerText = c || 0; if(c>0) el.classList.add('text-white'); else el.classList.remove('text-white'); } }); }
         function toggleComments(id) { const el = document.getElementById(`comments-${id}`); if(el.classList.contains('hidden')) { el.classList.remove('hidden'); db.ref(`feed_comments/${id}`).off(); document.getElementById(`comments-list-${id}`).innerHTML = ''; db.ref(`feed_comments/${id}`).on('child_added', s => { const c = s.val(); const div = document.createElement('div'); div.className = "flex gap-2 items-start text-sm animate-enter"; div.innerHTML = `<img src="${c.userAvatar}" class="w-6 h-6 rounded-full mt-1 border border-zinc-700 object-cover cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800 p-2.5 rounded-2xl rounded-tl-none"><span class="font-bold text-gray-300 block text-xs mb-0.5 cursor-pointer hover:text-orange-400" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 font-light">${c.text}</span></div>`; document.getElementById(`comments-list-${id}`).appendChild(div); }); } else el.classList.add('hidden'); }
-        function postComment(e, id) { e.preventDefault(); const input = document.getElementById(`comment-input-${id}`); if(!input.value.trim()) return; const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; db.ref(`feed_comments/${id}`).push({ text:input.value, userId:currentUser?currentUser.uid:'anon', userName:uN, userAvatar:uA, timestamp:Date.now() }); input.value=''; }
-        function postCommentInModal(e) { e.preventDefault(); const input = document.getElementById('modal-comment-input'); const post = currentViewPosts[currentPostIndex]; if(!input.value.trim() || !post) return; const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; db.ref(`feed_comments/${post.id}`).push({ text:input.value, userId:currentUser?currentUser.uid:'anon', userName:uN, userAvatar:uA, timestamp:Date.now() }); input.value=''; }
+        function postComment(e, id) { 
+            e.preventDefault(); 
+            if(!requireLogin()) return; // REDIRECT
+
+            const input = document.getElementById(`comment-input-${id}`); 
+            if(!input.value.trim()) return; 
+            const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); 
+            const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; 
+            db.ref(`feed_comments/${id}`).push({ text:input.value, userId:currentUser.uid, userName:uN, userAvatar:uA, timestamp:Date.now() }); 
+            input.value=''; 
+        }
+        function postCommentInModal(e) { 
+            e.preventDefault(); 
+            if(!requireLogin()) return; // REDIRECT
+
+            const input = document.getElementById('modal-comment-input'); 
+            const post = currentViewPosts[currentPostIndex]; 
+            if(!input.value.trim() || !post) return; 
+            const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); 
+            const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; 
+            db.ref(`feed_comments/${post.id}`).push({ text:input.value, userId:currentUser.uid, userName:uN, userAvatar:uA, timestamp:Date.now() }); 
+            input.value=''; 
+        }
         function updateUserAvatarInUI(uid) { if(!userProfileCache[uid]) db.ref(`users/${uid}/profilePic`).once('value', s => { const url = s.val()||'https://placehold.co/100x100/333/fff?text=U'; userProfileCache[uid]=url; document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = url); }); else document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = userProfileCache[uid]); }
         function timeAgo(ts) { if(!ts) return ''; const s = Math.floor((Date.now()-ts)/1000); if(s<60) return 'Hace un momento'; if(s<3600) return Math.floor(s/60)+'m'; if(s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; }
 
-        // --- AUTH ---
-        function switchAuthTab(t) { document.getElementById('login-form').style.display=t==='login'?'flex':'none'; document.getElementById('register-step-1').style.display=t==='login'?'none':'flex'; document.getElementById('register-step-2').style.display='none'; document.getElementById('tab-login').className=t==='login'?"text-orange-500 border-b-2 border-orange-500 pb-1":"text-gray-400 pb-1 hover:text-white"; document.getElementById('tab-register').className=t==='login'?"text-gray-400 pb-1 hover:text-white":"text-orange-500 border-b-2 border-orange-500 pb-1"; }
-        document.getElementById('login-form').onsubmit = e => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value).catch(err=>showAlert(err.message)); };
-        function authBackToStep1() { document.getElementById('register-step-2').style.display='none'; document.getElementById('register-step-1').style.display='flex'; }
-        async function handleAuthFileUpload(e) { 
-            const f = e.target.files[0]; if(!f) return;
-            document.getElementById('auth-preview-img').src = URL.createObjectURL(f);
-            isUploadingAuth=true; document.getElementById('btn-step-1').innerText = "PROCESANDO..."; document.getElementById('btn-step-1').disabled=true;
-            try {
-                const cF = await compressImage(f);
-                const fd = new FormData(); fd.append('reqtype','fileupload'); fd.append('userhash',CATBOX_USERHASH); fd.append('fileToUpload', cF);
-                const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", {method:'POST', body:fd});
-                const t = await r.text();
-                document.getElementById('reg-photo-url').value = t.trim();
-            } catch(e){ showAlert("Error imagen: "+e.message); }
-            finally { isUploadingAuth=false; document.getElementById('btn-step-1').innerText="Continuar"; document.getElementById('btn-step-1').disabled=false; }
-        }
-        function validateAuthStep1() {
-            if(isUploadingAuth) return;
-            const n = document.getElementById('reg-name').value; const a = document.getElementById('reg-age').value;
-            if(!n || !a) return showAlert("Completa nombre y edad.");
-            authDataCache = {name:n, age:a, photo:document.getElementById('reg-photo-url').value};
-            document.getElementById('register-step-1').style.display='none'; document.getElementById('register-step-2').style.display='flex';
-        }
-        document.getElementById('register-step-2').onsubmit = e => {
-            e.preventDefault(); const p1 = document.getElementById('reg-password').value; const p2 = document.getElementById('reg-confirm-password').value;
-            if(p1!==p2) return showAlert("Contraseñas no coinciden.");
-            auth.createUserWithEmailAndPassword(document.getElementById('reg-email').value, p1).then(c => {
-                db.ref('users/'+c.user.uid).set({username:authDataCache.name, age:authDataCache.age, profilePic:authDataCache.photo||null, email:c.user.email, slogan:"..."});
-            }).catch(err=>showAlert(err.message));
-        };
-        
         // --- SUGGESTIONS ---
         const charInput = document.getElementById('post-character');
         const suggestionsBox = document.getElementById('character-suggestions');

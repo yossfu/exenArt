@@ -1,4 +1,102 @@
-el listener de feed no debe ser escucha hasta que se recargue, 
-cambiar el sistema de publicación nueva de produce y hacerlo igual al de feed.
-las imágenes múltiples se deben ver en profile como unificadas.
-en index implementar para que se vean todas las imágenes de publicaciones múltiples ya que se ven solo 1.
+INSTRUCCIONES PARA MIGRAR AL NUEVO LOGIN CON GOOGLE
+
+Sigue estos pasos archivo por archivo. El objetivo es centralizar todo el acceso en login.html.
+
+GENERAL (Concepto)
+
+Ya no existen modales de "Registro" ni "Login" dentro de index, feed o profile.
+
+Cualquier botón que antes decía "Entrar" o "Registrarse" ahora debe simplemente redirigir a 'login.html'.
+
+La función de Google Sign-In ya está completa en el archivo login.html que te acabo de entregar.
+
+ARCHIVO: index.html
+
+ACCIÓN 1: Eliminar el HTML del Auth Overlay antiguo
+
+Busca el <div id="auth-overlay">...</div> y elimínalo por completo (o coméntalo).
+
+Busca el <div id="gallery-register-gate">...</div>.
+
+CAMBIO: Dentro de este div, el botón que dice "Crear Cuenta", cambia su onclick para que sea:
+
+onclick="window.location.href='login.html'"
+
+ACCIÓN 2: Modificar Scripts (Función requireLogin)
+
+Busca la función requireLogin(event).
+
+Reemplaza su contenido para que redirija en lugar de abrir el overlay.
+
+CÓDIGO NUEVO:
+
+function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } // Redirigir al nuevo login window.location.href = 'login.html'; return false; } return true; } 
+
+ACCIÓN 3: Modificar Header (Botón de Perfil)
+
+Busca <div class="user-profile-btn" onclick="if(requireLogin(event)) openConfigModal()">.
+
+Asegúrate de que requireLogin ahora redirige (como hiciste en el paso 2), así que si no está logueado, lo mandará a login.html.
+
+ARCHIVO: feed.html
+
+ACCIÓN 1: Eliminar Auth Overlay
+
+Busca y elimina todo el bloque <div id="auth-overlay">...</div> (líneas aprox 85-110).
+
+ACCIÓN 2: Modificar Scripts
+
+Busca la función switchAuthTab. Puedes eliminarla, ya no se usará.
+
+Al inicio del script, donde dice auth.onAuthStateChanged(user => { ... }):
+
+En el else (cuando no hay usuario), elimina la línea document.getElementById('auth-overlay').style.display = 'flex';.
+
+Si el usuario no está logueado en Feed, tal vez quieras redirigirlo inmediatamente o dejarlo ver pero no tocar.
+
+RECOMENDACIÓN: Si intentan interactuar (dar like, comentar), usa una función requireLogin similar a la de index.html.
+
+ACCIÓN 3: Redirección al cargar (Opcional)
+
+Si quieres que Feed sea PRIVADO (solo logueados), añade esto dentro del else del onAuthStateChanged:
+
+window.location.href = 'login.html';
+
+Si quieres que sea PÚBLICO (lectura), asegúrate de que los botones de Like/Comentar verifiquen if(!currentUser) window.location.href='login.html'.
+
+ARCHIVO: profile.html
+
+ACCIÓN 1: Eliminar Auth Overlay
+
+Elimina el <div id="auth-overlay">...</div>.
+
+ACCIÓN 2: Lógica de Usuario
+
+En auth.onAuthStateChanged:
+
+En el else (no hay usuario), donde antes se hacía document.getElementById('auth-overlay').style.display = 'flex';:
+
+CÁMBIALO POR: window.location.href = 'login.html';
+
+Esto protegerá el perfil. Si alguien intenta entrar sin sesión, lo manda al login.
+
+ACCIÓN 3: Botón Logout
+
+Busca la función logout() o logoutUser().
+
+Asegúrate de que tras el auth.signOut(), redirija al login:
+
+function logout() { auth.signOut().then(() => { window.location.href = 'login.html'; }); } 
+
+NOTAS SOBRE LA "MIGRACIÓN" DE CUENTAS
+
+Firebase Auth, por defecto, intenta vincular cuentas si el correo es el mismo.
+
+Si un usuario tenía "usuario@gmail.com" con contraseña, y ahora entra con el botón de Google (que usa "usuario@gmail.com"):
+
+Si tu configuración de Firebase Console tiene activado "One account per email address" (Una cuenta por correo), Firebase los vinculará automáticamente. El usuario conservará sus datos (fotos, perfil).
+
+Si no está activado, podría crear un usuario duplicado.
+
+El código de login.html que he generado maneja el inicio de sesión estándar. Si el correo coincide, debería funcionar transparentemente para el usuario.
+

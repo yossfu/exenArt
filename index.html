@@ -55,35 +55,6 @@
         .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 10px var(--accent)); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* --- AUTH OVERLAY --- */
-        #auth-overlay {
-            position: fixed; inset: 0; z-index: 9999;
-            background-color: rgba(0, 0, 0, 0.98);
-            backdrop-filter: blur(5px);
-            display: none;
-            align-items: center; justify-content: center;
-            padding: 1rem;
-            overflow-y: auto;
-        }
-        .form-card {
-            background: rgba(20, 20, 25, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            width: 100%; max-width: 400px;
-        }
-        .input-field {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-        .input-field:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); }
-        .btn-primary { background: linear-gradient(135deg, #f97316, #ea580c); transition: transform 0.2s; }
-        .btn-primary:active { transform: scale(0.98); }
-        .hidden-step { display: none; animation: fadeIn 0.5s forwards; }
-        .upload-spinner { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
         /* --- ESTILOS GENERALES --- */
         .image-card {
             border-radius: 1rem;
@@ -243,42 +214,6 @@
         <i class="fas fa-spinner fa-spin text-orange-500 text-2xl"></i>
     </div>
 
-    <!-- OVERLAY AUTH -->
-    <div id="auth-overlay">
-        <div class="form-card rounded-2xl p-8 relative overflow-hidden">
-            <button onclick="document.getElementById('auth-overlay').style.display='none'" class="absolute top-4 right-4 text-gray-400 hover:text-white z-50 p-2"><i class="fas fa-times text-xl"></i></button>
-            <div class="text-center mb-8">
-                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-16 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
-                <h2 class="text-2xl font-bold font-[Poppins] text-white">Bienvenido</h2>
-                <p class="text-gray-400 text-xs mt-2">Inicia sesión para interactuar y ver perfiles.</p>
-                <div class="flex justify-center gap-4 mt-4 text-sm font-semibold">
-                    <button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-1 transition-colors" onclick="switchAuthTab('login')">Iniciar Sesión</button>
-                    <button id="tab-register" class="text-gray-400 pb-1 hover:text-white transition-colors" onclick="switchAuthTab('register')">Registrarse</button>
-                </div>
-            </div>
-            <form id="login-form" class="flex flex-col gap-4">
-                <div class="space-y-1"><label class="text-xs text-gray-400 ml-1">Correo</label><input type="email" id="login-email" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400 ml-1">Contraseña</label><input type="password" id="login-password" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <button type="submit" id="btn-login-submit" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2 shadow-lg">Entrar</button>
-                <p id="login-error" class="text-red-400 text-xs text-center mt-2 hidden"></p>
-            </form>
-            <form id="register-step-1" class="flex flex-col gap-4 hidden-step" style="display: none;">
-                <div class="space-y-1"><label class="text-xs text-gray-400">Usuario</label><input type="text" id="reg-name" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400">Edad</label><input type="number" id="reg-age" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400">Foto</label><div class="relative w-full"><input type="file" id="file-upload" accept="image/*" class="hidden" onchange="handleAuthFileUpload(event)"><label for="file-upload" class="flex items-center gap-3 w-full input-field rounded-lg px-4 py-3 cursor-pointer"><div class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden"><img id="auth-preview-img" src="https://placehold.co/100x100/333/fff?text=Foto" class="w-full h-full object-cover"></div><div class="flex-1"><span class="text-sm text-gray-300">Subir imagen</span><span class="text-[10px] text-gray-500 block" id="upload-status">Max 5MB</span></div><i class="fas fa-camera text-gray-400"></i></label></div><input type="hidden" id="reg-photo-url"></div>
-                <button type="button" id="btn-step-1" onclick="validateAuthStep1()" class="btn-primary w-full py-3 rounded-lg font-bold text-white mt-2">Continuar</button>
-                <p id="step1-error" class="text-red-400 text-xs text-center mt-2 hidden"></p>
-            </form>
-            <form id="register-step-2" class="flex flex-col gap-4 hidden-step" style="display: none;">
-                <div class="space-y-1"><label class="text-xs text-gray-400">Correo</label><input type="email" id="reg-email" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400">Contraseña</label><input type="password" id="reg-password" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="space-y-1"><label class="text-xs text-gray-400">Confirmar</label><input type="password" id="reg-confirm-password" class="input-field w-full rounded-lg px-4 py-3 text-white" required></div>
-                <div class="flex gap-2 mt-2"><button type="button" onclick="authBackToStep1()" class="w-1/3 py-3 rounded-lg text-gray-400 border border-gray-600">Atrás</button><button type="submit" id="btn-register-final" class="btn-primary w-2/3 py-3 rounded-lg font-bold text-white">Finalizar</button></div>
-                <p id="reg-error" class="text-red-400 text-xs text-center mt-2 hidden"></p>
-            </form>
-        </div>
-    </div>
-
     <!-- Modal Edad -->
     <div id="age-alert-modal" class="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" style="display: none;">
         <div class="bg-gray-900 border border-red-500/50 rounded-2xl p-6 max-w-sm w-full text-center shadow-[0_0_30px_rgba(239,68,68,0.3)]">
@@ -375,7 +310,8 @@
                         <i class="fas fa-lock text-4xl text-orange-500 mb-3"></i>
                         <h3 class="text-xl font-bold text-white mb-2">¡Descubre más!</h3>
                         <p class="text-gray-400 text-sm mb-4">Regístrate gratis para desbloquear la galería completa, dar likes y comentar.</p>
-                        <button onclick="document.getElementById('auth-overlay').style.display='flex'; switchAuthTab('register')" class="w-full py-3 rounded-full bg-gradient-to-r from-orange-600 to-orange-500 text-white font-bold shadow-lg hover:scale-105 transition transform">Crear Cuenta</button>
+                        <!-- UPDATE: Redirige a login.html -->
+                        <button onclick="window.location.href='login.html'" class="w-full py-3 rounded-full bg-gradient-to-r from-orange-600 to-orange-500 text-white font-bold shadow-lg hover:scale-105 transition transform">Crear Cuenta</button>
                     </div>
                 </div>
 
@@ -533,18 +469,15 @@
 
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('initial-loader');
-            const authOverlay = document.getElementById('auth-overlay');
             const appContent = document.getElementById('app-content');
 
             if (user && !user.isAnonymous) {
                 currentUser = user;
-                authOverlay.style.display = 'none';
                 appContent.style.display = 'block';
                 loadUserProfile(user.uid);
                 document.getElementById('gallery-register-gate').style.display = 'none';
             } else {
                 currentUser = null;
-                authOverlay.style.display = 'none'; 
                 appContent.style.display = 'block';
             }
 
@@ -689,7 +622,7 @@
             if (!currentUser) {
                 const cta = document.createElement('div');
                 cta.className = "cta-card cursor-pointer group";
-                cta.onclick = () => { document.getElementById('auth-overlay').style.display='flex'; switchAuthTab('register'); };
+                cta.onclick = () => { window.location.href = 'login.html'; }; // UPDATE: Redirect
                 cta.innerHTML = `<div class="w-14 h-14 rounded-full bg-orange-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition"><i class="fas fa-user-plus text-2xl text-orange-500"></i></div><h4 class="text-white font-bold text-lg mb-1">¡Únete!</h4><p class="text-gray-400 text-xs mb-4 leading-relaxed">Comparte tu arte, recibe likes y conecta con otros.</p><span class="text-xs font-bold text-orange-400 bg-orange-900/30 px-4 py-2 rounded-full border border-orange-500/30 group-hover:bg-orange-500 group-hover:text-white transition">Crear Cuenta</span>`;
                 container.appendChild(cta);
             }
@@ -1105,8 +1038,17 @@
 
         function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton'; } }
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
-        function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } document.getElementById('auth-overlay').style.display = 'flex'; return false; } return true; }
-        function switchAuthTab(tab) { const l = document.getElementById('login-form'), r1 = document.getElementById('register-step-1'), r2 = document.getElementById('register-step-2'); if(tab==='login'){l.style.display='flex';r1.style.display='none';r2.style.display='none';}else{l.style.display='none';r1.style.display='flex';r2.style.display='none';} }
+        
+        /* ACTION 2: RequireLogin Updated */
+        function requireLogin(event) { 
+            if (!currentUser) { 
+                if(event) { event.preventDefault(); event.stopPropagation(); }
+                // Redirigir al nuevo login
+                window.location.href = 'login.html';
+                return false; 
+            } 
+            return true; 
+        }
         
         // --- FIX: Pasar tipo para dar like correctamente desde grilla ---
         function toggleReactionFromGrid(imageId, type, event) { 
@@ -1117,10 +1059,6 @@
             toggleReactionInModal(imageId); 
         }
         
-        document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value).catch(err=>document.getElementById('login-error').textContent=err.message); });
-        async function validateAuthStep1() { document.getElementById('register-step-1').style.display='none'; document.getElementById('register-step-2').style.display='flex'; }
-        document.getElementById('register-step-2').addEventListener('submit', (e) => { e.preventDefault(); auth.createUserWithEmailAndPassword(document.getElementById('reg-email').value, document.getElementById('reg-password').value).then(c => db.ref('users/'+c.user.uid).set({username:document.getElementById('reg-name').value})).then(()=>location.reload()); });
-
         // Cambiado a .once() para evitar carga constante
         function loadUserProfile(uid) { 
             db.ref('users/' + uid).once('value', snap => { 
@@ -1138,7 +1076,6 @@
         async function handleConfigImageSelect(event) { const file = event.target.files[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { alert("Máx 5MB"); return; } newProfileFile = file; document.getElementById('config-preview-img').src = URL.createObjectURL(file); document.getElementById('config-upload-status').innerHTML = '<span class="text-orange-400 font-bold">Imagen seleccionada (No guardada aún)</span>'; }
         async function saveNewProfilePic() { if (!newProfileFile) { closeConfigModal(); return; } const btn = document.getElementById('btn-save-config'); const status = document.getElementById('config-upload-status'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...'; status.innerHTML = 'Subiendo a Catbox...'; try { const formData = new FormData(); formData.append('reqtype', 'fileupload'); formData.append('userhash', CATBOX_USERHASH); formData.append('fileToUpload', newProfileFile); const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData }); if (!res.ok) throw new Error("Error de red"); const url = await res.text(); if (url.includes('catbox.moe')) { const finalUrl = url.trim(); if (currentUser) { await db.ref('users/' + currentUser.uid).update({ profilePic: finalUrl }); alert('Foto actualizada correctamente'); closeConfigModal(); } } else { throw new Error("Error Catbox API"); } } catch (e) { console.error(e); status.innerHTML = '<span class="text-red-500">Error al subir imagen</span>'; btn.disabled = false; btn.innerHTML = 'Reintentar'; } }
         function logoutUser() { auth.signOut().then(() => { window.location.reload(); }); }
-        async function handleAuthFileUpload(event) { const file = event.target.files[0]; if (!file || file.size > 5*1024*1024) { alert("Máx 5MB"); return; } const statusEl = document.getElementById('upload-status'); const previewImg = document.getElementById('auth-preview-img'); const btn = document.getElementById('btn-step-1'); isUploadingAuth = true; btn.disabled = true; btn.classList.add('opacity-50'); statusEl.innerHTML = '<i class="fas fa-spinner upload-spinner text-orange-500"></i> Subiendo...'; previewImg.src = URL.createObjectURL(file); try { const formData = new FormData(); formData.append('reqtype', 'fileupload'); formData.append('userhash', CATBOX_USERHASH); formData.append('fileToUpload', file); const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData }); if (!res.ok) throw new Error("Error red"); const url = await res.text(); if (url.includes('catbox.moe')) { document.getElementById('reg-photo-url').value = url.trim(); statusEl.innerHTML = '<span class="text-green-400"><i class="fas fa-check"></i> Listo</span>'; } else throw new Error("Error API"); } catch (e) { console.error(e); statusEl.innerHTML = '<span class="text-red-400">Error</span>'; } finally { isUploadingAuth = false; btn.disabled = false; btn.classList.remove('opacity-50'); } }
     </script>
 </body>
 </html>

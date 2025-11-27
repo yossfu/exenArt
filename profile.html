@@ -56,8 +56,6 @@
         .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); animation: pulse 2s infinite; }
         #page-loader { position: fixed; inset: 0; background: var(--bg-dark); z-index: 5000; display: flex; align-items: center; justify-content: center; }
 
-        /* Auth Overlay */
-        #auth-overlay { position: fixed; inset: 0; z-index: 9999; background-color: rgba(9, 9, 11, 0.95); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; padding: 1.5rem; overflow-y: auto; }
         .form-card { background: #18181b; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); width: 100%; max-width: 400px; }
         .input-field { background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); transition: all 0.3s ease; color: white; }
         .input-field:focus { border-color: var(--accent); outline: none; background: rgba(0,0,0,0.6); box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1); }
@@ -220,8 +218,7 @@
     <div id="custom-alert" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4"><div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl"><div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-500/20"><i class="fas fa-exclamation text-red-500 text-2xl"></i></div><h3 class="text-white font-bold text-xl mb-2">Atención</h3><p id="custom-alert-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">Mensaje</p><button onclick="closeCustomAlert()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold transition active:scale-95">Entendido</button></div></div>
     <div id="custom-confirm" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4"><div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl"><div class="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4 border border-orange-500/20"><i class="fas fa-question text-orange-500 text-2xl"></i></div><h3 id="custom-confirm-title" class="text-white font-bold text-xl mb-2">¿Estás seguro?</h3><p id="custom-confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">¿Continuar?</p><div class="flex gap-3"><button onclick="closeCustomConfirm(false)" class="flex-1 bg-zinc-800 text-gray-300 py-3 rounded-xl font-bold border border-zinc-700 active:scale-95 transition">Cancelar</button><button onclick="closeCustomConfirm(true)" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">Confirmar</button></div></div></div>
 
-    <!-- LOGIN -->
-    <div id="auth-overlay"><div class="form-card rounded-2xl p-6 sm:p-8 relative overflow-hidden"><div class="text-center mb-8"><img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-14 mx-auto mb-4 drop-shadow-[0_0_15px_rgba(249,115,22,0.3)]"><h2 class="text-2xl font-bold text-white tracking-tight">Bienvenido</h2><div class="flex justify-center gap-6 mt-5 text-sm font-semibold border-b border-zinc-800 pb-1"><button id="tab-login" class="text-orange-500 border-b-2 border-orange-500 pb-2 transition-colors" onclick="switchAuthTab('login')">Iniciar Sesión</button><button id="tab-register" class="text-gray-500 pb-2 hover:text-gray-300 transition-colors" onclick="switchAuthTab('register')">Registrarse</button></div></div><form id="login-form" class="flex flex-col gap-4"><input type="email" id="login-email" class="input-field w-full rounded-xl px-4 py-3.5 text-sm" placeholder="Correo electrónico" required><input type="password" id="login-password" class="input-field w-full rounded-xl px-4 py-3.5 text-sm" placeholder="Contraseña" required><button type="submit" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white mt-2 shadow-lg tracking-wide text-sm active:scale-95 transition">ENTRAR</button></form><form id="register-step-1" class="flex flex-col gap-4 hidden-step"><input type="text" id="reg-name" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Nombre de Usuario" required><input type="number" id="reg-age" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Tu Edad" required><div class="relative w-full"><input type="file" id="file-upload-auth" accept="image/*" class="hidden" onchange="handleAuthFileUpload(event)"><label for="file-upload-auth" class="flex items-center gap-4 w-full input-field rounded-xl p-3 cursor-pointer hover:bg-zinc-800/50"><div class="w-12 h-12 rounded-full bg-zinc-800 overflow-hidden flex-shrink-0 border border-zinc-600"><img id="auth-preview-img" src="https://placehold.co/100x100/333/666?text=Foto" class="w-full h-full object-cover"></div><span class="text-sm text-gray-200 font-medium flex-1">Subir foto de perfil</span><i class="fas fa-camera text-gray-500 mr-2"></i></label></div><input type="hidden" id="reg-photo-url"><button type="button" id="btn-step-1" onclick="validateAuthStep1()" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white mt-2 active:scale-95 transition">CONTINUAR</button></form><form id="register-step-2" class="flex flex-col gap-4 hidden-step"><input type="email" id="reg-email" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Correo electrónico" required><input type="password" id="reg-password" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Contraseña" required><input type="password" id="reg-confirm-password" class="input-field w-full rounded-xl px-4 py-3.5 text-white" placeholder="Confirmar contraseña" required><div class="flex gap-3 mt-2"><button type="button" onclick="authBackToStep1()" class="w-1/3 py-3.5 rounded-xl text-gray-300 border border-zinc-700 font-semibold text-sm active:scale-95 transition">Atrás</button><button type="submit" class="btn-primary w-2/3 py-3.5 rounded-xl font-bold text-white text-sm active:scale-95 transition">FINALIZAR</button></div></form></div></div>
+    <!-- ELIMINADO AUTH OVERLAY ANTIGUO -->
 
     <!-- APP CONTENT -->
     <div id="app-content">
@@ -454,8 +451,8 @@
     <!-- Nav -->
     <nav id="main-nav" class="bottom-nav fixed bottom-0 left-0 right-0 flex h-[70px] justify-around items-center px-2 pb-2">
         <a href="index.html" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-home text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Galería</span></a>
-        <a href="feed.html" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-globe-americas text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Social</span></a>
-        <a href="profile.html" class="nav-item active flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-user text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Perfil</span></a>
+        <a href="feed.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-globe-americas text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Social</span></a>
+        <a href="profile.html" onclick="return requireLogin(event)" class="nav-item active flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-user text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Perfil</span></a>
     </nav>
 
     <!-- Scripts -->
@@ -509,23 +506,39 @@
         function selectCustomOption(containerId, value, displayText) { const container = document.getElementById(containerId); container.querySelector('input[type="hidden"]').value = value; container.querySelector('.custom-select-trigger span').innerHTML = displayText; container.querySelector('.custom-select-trigger').classList.remove('active'); container.querySelector('.custom-select-options').classList.remove('show'); if (containerId === 'dropdown-collection') toggleCollectionInput(); if (containerId === 'dropdown-add-social') toggleCustomSelect('dropdown-add-social'); }
         window.addEventListener('click', function(e) { if (!e.target.closest('.custom-select-container')) { document.querySelectorAll('.custom-select-options.show').forEach(el => { el.classList.remove('show'); el.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); }); } });
 
+        // --- NEW REQUIRE LOGIN ---
+        function requireLogin(event) {
+            if (!currentUser) {
+                if(event) { event.preventDefault(); event.stopPropagation(); }
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
         // --- AUTH & INIT ---
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('initial-loader'); const urlParams = new URLSearchParams(window.location.search); const uidParam = urlParams.get('uid');
+            
             if (user && !user.isAnonymous) {
                 currentUser = user; targetUserId = uidParam || currentUser.uid;
                 if (!uidParam) window.history.replaceState(null, '', `?uid=${currentUser.uid}`);
                 db.ref('users/' + currentUser.uid).once('value', s => currentUserData = s.val());
-                document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('app-content').style.display = 'block';
+                // document.getElementById('auth-overlay').style.display = 'none'; // ELIMINADO
+                document.getElementById('app-content').style.display = 'block';
                 setupUIForTargetUser(); loadUserProfile(); loadUserPosts(); loadUserCollectionsGrid(); 
                 initCharacterStatsListener();
             } else {
                 currentUser = null;
                 if (uidParam) {
-                    targetUserId = uidParam; document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('app-content').style.display = 'block';
+                    // Vista pública de otro perfil
+                    targetUserId = uidParam; 
+                    // document.getElementById('auth-overlay').style.display = 'none'; // ELIMINADO
+                    document.getElementById('app-content').style.display = 'block';
                     setupUIForTargetUser(); loadUserProfile(); loadUserPosts(); loadUserCollectionsGrid();
                 } else {
-                    document.getElementById('app-content').style.display = 'none'; document.getElementById('auth-overlay').style.display = 'flex';
+                    // Intento de entrar a "Mi Perfil" sin sesión -> Redirigir
+                    window.location.href = 'login.html';
                 }
             }
             document.getElementById('page-loader').style.display = 'none';
@@ -536,12 +549,6 @@
             db.ref('stats/characters').on('value', snapshot => {
                 if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; }
             });
-        }
-
-        function switchAuthTab(tab) {
-            document.getElementById('login-form').style.display = tab==='login'?'flex':'none'; document.getElementById('register-step-1').style.display = tab==='login'?'none':'flex'; document.getElementById('register-step-2').style.display = 'none';
-            document.getElementById('tab-login').className = tab==='login'?"text-orange-500 border-b-2 border-orange-500 pb-2 transition-colors":"text-gray-500 pb-2 hover:text-gray-300 transition-colors";
-            document.getElementById('tab-register').className = tab==='login'?"text-gray-500 pb-2 hover:text-gray-300 transition-colors":"text-orange-500 border-b-2 border-orange-500 pb-2 transition-colors";
         }
 
         // --- UI LOGIC ---
@@ -1200,7 +1207,13 @@
         function postCommentInModal(e) { e.preventDefault(); const input = document.getElementById('modal-comment-input'); const post = currentViewPosts[currentPostIndex]; if(!input.value.trim() || !post) return; if(!currentUser) { showAlert("Inicia sesión."); return; } const c = { text: input.value, userId: currentUser.uid, userName: (currentUserData && currentUserData.username) ? currentUserData.username : (currentUser.displayName || 'Anon'), userAvatar: (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/666?text=U', timestamp: Date.now() }; db.ref(`feed_comments/${post.id}`).push(c); input.value = ''; }
         function openShareModal() { const u = new URL(window.location.href); u.searchParams.set('uid', targetUserId); document.getElementById('share-link-input').value = u.toString(); document.getElementById('share-modal').classList.remove('hidden'); document.getElementById('share-modal').classList.add('flex'); }
         function copyLinkFromModal() { const i = document.getElementById('share-link-input'); i.select(); i.setSelectionRange(0, 99999); navigator.clipboard.writeText(i.value).then(()=>{ document.getElementById('share-modal').classList.add('hidden'); document.getElementById('share-modal').classList.remove('flex'); showToast("Copiado"); }); }
-        function logout() { auth.signOut().then(()=>window.location.reload()); }
+        
+        // --- ACTION 3: LOGOUT REDIRECT ---
+        function logout() { 
+            auth.signOut().then(() => { 
+                window.location.href = 'login.html'; 
+            }); 
+        }
     </script>
 </body>
 </html>
