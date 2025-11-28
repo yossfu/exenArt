@@ -698,7 +698,7 @@
             });
         }
         
-        // --- SISTEMA INTELIGENTE DE ORDENAMIENTO (Smart Mix) ---
+        // --- SISTEMA INTELIGENTE DE ORDENAMIENTO (Smart Mix) + PRIORIDAD PROPIA ---
         function applyFiltersAndRender() {
             let filtered = [...allPostsCache];
             const filterBar = document.getElementById('filter-bar');
@@ -719,49 +719,47 @@
             }
 
             // 2. Ordenamiento inteligente (Smart Mix)
-            // Solo aplicamos mix si estamos en "Recientes", si no, respetamos el orden explícito
             if (currentSortOrder === 'newest') {
+                const myPosts = [];
                 const followedPosts = [];
                 const otherPosts = [];
 
                 filtered.forEach(post => {
-                    if (followingCache[post.userId]) followedPosts.push(post);
-                    else otherPosts.push(post);
+                    if (post.userId === currentUser.uid) {
+                        myPosts.push(post);
+                    } else if (followingCache[post.userId]) {
+                        followedPosts.push(post);
+                    } else {
+                        otherPosts.push(post);
+                    }
                 });
 
-                // Ordenamos ambos grupos internamente por fecha
+                // Ordenamos internamente por fecha
+                myPosts.sort((a, b) => b.timestamp - a.timestamp);
                 followedPosts.sort((a, b) => b.timestamp - a.timestamp);
                 otherPosts.sort((a, b) => b.timestamp - a.timestamp);
 
-                // Si no seguimos a nadie, mostramos todo cronológico
-                if (followedPosts.length === 0) {
-                    displayedPosts = otherPosts;
-                } else {
-                    // Mezclamos: 3 de seguidos, 1 de otros (Discovery)
-                    const mixed = [];
-                    let fIndex = 0;
-                    let oIndex = 0;
+                // Mezcla Inteligente: 3 Seguidos / 1 Otros
+                const mixed = [];
+                let fIndex = 0;
+                let oIndex = 0;
+                
+                while(fIndex < followedPosts.length || oIndex < otherPosts.length) {
+                    for(let i=0; i<3 && fIndex < followedPosts.length; i++) mixed.push(followedPosts[fIndex++]);
+                    if(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]);
                     
-                    while(fIndex < followedPosts.length || oIndex < otherPosts.length) {
-                        // Insertar hasta 3 posts de seguidos
-                        for(let i=0; i<3 && fIndex < followedPosts.length; i++) {
-                            mixed.push(followedPosts[fIndex++]);
-                        }
-                        // Insertar 1 post de descubrimiento (si queda)
-                        if(oIndex < otherPosts.length) {
-                            mixed.push(otherPosts[oIndex++]);
-                        }
-                        // Si se acaban los seguidos, llenar con el resto de otros
-                        if(fIndex >= followedPosts.length && oIndex < otherPosts.length) {
-                             while(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]);
-                        }
-                        // Si se acaban los otros, llenar con el resto de seguidos
-                        if(oIndex >= otherPosts.length && fIndex < followedPosts.length) {
-                             while(fIndex < followedPosts.length) mixed.push(followedPosts[fIndex++]);
-                        }
-                    }
-                    displayedPosts = mixed;
+                    // Si se acaban los seguidos, llenar con otros
+                    if(fIndex >= followedPosts.length && oIndex < otherPosts.length) 
+                        while(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]);
+                    
+                    // Si se acaban los otros, llenar con seguidos
+                    if(oIndex >= otherPosts.length && fIndex < followedPosts.length) 
+                        while(fIndex < followedPosts.length) mixed.push(followedPosts[fIndex++]);
                 }
+
+                // Resultado Final: TUS POSTS PRIMERO + MIX
+                displayedPosts = [...myPosts, ...mixed];
+
             } else if (currentSortOrder === 'oldest') {
                 displayedPosts = filtered.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
             } else if (currentSortOrder === 'likes') {
