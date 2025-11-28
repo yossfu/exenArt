@@ -185,6 +185,16 @@
         }
         .move-to-album-btn:active { transform: scale(0.95); }
         .move-to-album-btn.disabled { opacity: 0.5; filter: grayscale(1); pointer-events: none; box-shadow: none; background: #333; }
+        
+        /* Botón Follow */
+        .profile-follow-btn {
+            padding: 6px 16px; border-radius: 99px; font-size: 12px; font-weight: 700;
+            transition: all 0.2s; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+            border: 1px solid transparent; display: flex; items-center; gap: 6px;
+        }
+        .profile-follow-btn.not-following { background: var(--accent); color: white; box-shadow: 0 2px 10px rgba(249, 115, 22, 0.3); }
+        .profile-follow-btn.following { background: transparent; border-color: #444; color: #aaa; }
+        .profile-follow-btn.following:hover { border-color: var(--accent); color: white; }
 
         /* Bottom Nav Standard */
         .bottom-nav { background-color: rgba(9, 9, 11, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--border-color); z-index: 3000; padding-bottom: env(safe-area-inset-bottom); transition: transform 0.3s ease; }
@@ -218,8 +228,6 @@
     <div id="custom-alert" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4"><div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl"><div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-500/20"><i class="fas fa-exclamation text-red-500 text-2xl"></i></div><h3 class="text-white font-bold text-xl mb-2">Atención</h3><p id="custom-alert-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">Mensaje</p><button onclick="closeCustomAlert()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold transition active:scale-95">Entendido</button></div></div>
     <div id="custom-confirm" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4"><div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl"><div class="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4 border border-orange-500/20"><i class="fas fa-question text-orange-500 text-2xl"></i></div><h3 id="custom-confirm-title" class="text-white font-bold text-xl mb-2">¿Estás seguro?</h3><p id="custom-confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">¿Continuar?</p><div class="flex gap-3"><button onclick="closeCustomConfirm(false)" class="flex-1 bg-zinc-800 text-gray-300 py-3 rounded-xl font-bold border border-zinc-700 active:scale-95 transition">Cancelar</button><button onclick="closeCustomConfirm(true)" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">Confirmar</button></div></div></div>
 
-    <!-- ELIMINADO AUTH OVERLAY ANTIGUO -->
-
     <!-- APP CONTENT -->
     <div id="app-content">
         <div id="page-loader"><img src="https://files.catbox.moe/ap1lh0.png" class="h-16 w-auto animate-pulse"></div>
@@ -250,6 +258,7 @@
                         <div class="flex gap-8 mt-3">
                             <div class="stat-box"><span id="posts-count" class="text-xl font-bold text-white leading-none tracking-tight">-</span><span class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mt-1">Posts</span></div>
                             <div class="stat-box"><span id="likes-received-count" class="text-xl font-bold text-white leading-none tracking-tight">-</span><span class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mt-1">Likes</span></div>
+                            <div class="stat-box"><span id="followers-count" class="text-xl font-bold text-white leading-none tracking-tight">-</span><span class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mt-1">Seguidores</span></div>
                         </div>
                     </div>
                 </div>
@@ -487,9 +496,10 @@
         let currentViewPosts = [], currentPostIndex = -1, currentCollectionId = null, userDataCache = {};
         let isUploadingAuth = false, touchStartX = 0, touchEndX = 0, confirmCallback = null;
         let isSelectionMode = false, selectedPostIds = []; 
-        let allUserPostsCache = []; // Almacena todos los posts cargados para filtrado
+        let allUserPostsCache = [];
         let currentCharacterFilter = null;
         let characterStatsCache = {};
+        let amIFollowing = false;
 
         // --- GLOBAL ERROR & SAFETY ---
         window.onerror = function(msg) { console.error("Global Error:", msg); const loader = document.getElementById('initial-loader'); if(loader && loader.style.display !== 'none') { document.getElementById('loader-status').innerText = "Error. Recarga la página."; } };
@@ -518,26 +528,24 @@
 
         // --- AUTH & INIT ---
         auth.onAuthStateChanged(user => {
-            const loader = document.getElementById('initial-loader'); const urlParams = new URLSearchParams(window.location.search); const uidParam = urlParams.get('uid');
+            const loader = document.getElementById('initial-loader'); const urlParams = new URLSearchParams(window.location.search); const uidParam = urlParams.get('uid'); const collectionParam = urlParams.get('collection');
             
             if (user && !user.isAnonymous) {
                 currentUser = user; targetUserId = uidParam || currentUser.uid;
                 if (!uidParam) window.history.replaceState(null, '', `?uid=${currentUser.uid}`);
                 db.ref('users/' + currentUser.uid).once('value', s => currentUserData = s.val());
-                // document.getElementById('auth-overlay').style.display = 'none'; // ELIMINADO
                 document.getElementById('app-content').style.display = 'block';
-                setupUIForTargetUser(); loadUserProfile(); loadUserPosts(); loadUserCollectionsGrid(); 
+                setupUIForTargetUser(); loadUserProfile(); loadUserPosts(); loadUserCollectionsGrid(collectionParam); 
+                checkFollowStatus(); loadFollowersCount();
                 initCharacterStatsListener();
             } else {
                 currentUser = null;
                 if (uidParam) {
-                    // Vista pública de otro perfil
                     targetUserId = uidParam; 
-                    // document.getElementById('auth-overlay').style.display = 'none'; // ELIMINADO
                     document.getElementById('app-content').style.display = 'block';
-                    setupUIForTargetUser(); loadUserProfile(); loadUserPosts(); loadUserCollectionsGrid();
+                    setupUIForTargetUser(); loadUserProfile(); loadUserPosts(); loadUserCollectionsGrid(collectionParam);
+                    loadFollowersCount();
                 } else {
-                    // Intento de entrar a "Mi Perfil" sin sesión -> Redirigir
                     window.location.href = 'login.html';
                 }
             }
@@ -550,6 +558,59 @@
                 if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; }
             });
         }
+
+        // --- FOLLOW SYSTEM ---
+        function checkFollowStatus() {
+            if (!currentUser || currentUser.uid === targetUserId) return;
+            db.ref(`follows/${currentUser.uid}/${targetUserId}`).on('value', snap => {
+                amIFollowing = snap.exists();
+                updateFollowButtonUI();
+            });
+        }
+
+        function loadFollowersCount() {
+            db.ref(`followers/${targetUserId}`).on('value', snap => {
+                document.getElementById('followers-count').innerText = snap.numChildren() || 0;
+            });
+        }
+
+        function updateFollowButtonUI() {
+            const btn = document.getElementById('profile-follow-btn');
+            if(!btn) return;
+            if(amIFollowing) {
+                btn.classList.remove('not-following'); btn.classList.add('following');
+                btn.innerHTML = 'Siguiendo';
+            } else {
+                btn.classList.remove('following'); btn.classList.add('not-following');
+                btn.innerHTML = 'Seguir';
+            }
+        }
+
+        function toggleFollowProfile() {
+            if (!requireLogin()) return;
+            if(amIFollowing) {
+                db.ref(`follows/${currentUser.uid}/${targetUserId}`).remove();
+                db.ref(`followers/${targetUserId}/${currentUser.uid}`).remove();
+            } else {
+                db.ref(`follows/${currentUser.uid}/${targetUserId}`).set(true);
+                db.ref(`followers/${targetUserId}/${currentUser.uid}`).set(true);
+                sendNotification(targetUserId, 'follow');
+            }
+        }
+        
+        function sendNotification(targetUid, type, postId = null) {
+            if (targetUid === currentUser.uid) return;
+            const notifRef = db.ref(`notifications/${targetUid}`).push();
+            notifRef.set({
+                type: type,
+                fromUserId: currentUser.uid,
+                fromUserName: (currentUserData && currentUserData.username) ? currentUserData.username : 'Alguien',
+                postId: postId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                read: false
+            });
+        }
+
 
         // --- UI LOGIC ---
         function setupUIForTargetUser() {
@@ -647,6 +708,7 @@
                     <div class="flex justify-between items-center mb-3 px-1">
                         <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Perfil Público</span>
                         <div class="flex gap-2 items-center" id="visitor-actions">
+                            <button id="profile-follow-btn" onclick="toggleFollowProfile()" class="profile-follow-btn not-following">Seguir</button>
                             <button onclick="openShareModal()" class="text-xs bg-zinc-800 text-gray-300 h-9 w-9 rounded-xl border border-zinc-700 hover:bg-zinc-700 flex items-center justify-center transition active:scale-95"><i class="fas fa-share-alt"></i></button>
                         </div>
                     </div>`;
@@ -1179,7 +1241,7 @@
         async function handleBannerUpload(e) { const f = e.target.files[0]; if(!f) return; document.getElementById('banner-loading').classList.remove('hidden'); try { const fileToUpload = await compressImage(f); const fd = new FormData(); fd.append('reqtype', 'fileupload'); fd.append('userhash', CATBOX_USERHASH); fd.append('fileToUpload', fileToUpload); const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", {method:'POST', body:fd}); const txt = await res.text(); if(txt.includes('catbox.moe')) { db.ref('users/'+currentUser.uid).update({bannerUrl:txt.trim()}); showToast("Portada actualizada"); } } catch(err){ showAlert("Error banner."); } finally{document.getElementById('banner-loading').classList.add('hidden');} }
         function loadUserCollectionsSelect() { if (!currentUser) return; db.ref('collections/' + currentUser.uid).on('value', snap => { let html = `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '', '<i class=\\'fas fa-folder mr-2 text-xs text-orange-500\\'></i> Ningún Álbum')">Ningún Álbum</div><div class="option-item special-option" onclick="selectCustomOption('dropdown-collection', 'new', '➕ Crear Nueva Colección...')">➕ Crear Nueva Colección...</div>`; snap.forEach(child => { html += `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '${child.key}', '📁 ${child.val().name}')">📁 ${child.val().name}</div>`; }); const el = document.getElementById('collection-options-list'); if(el) el.innerHTML = html; }); }
         function toggleCollectionInput() { const val = document.getElementById('post-collection').value; const c = document.getElementById('new-collection-container'); if(val === 'new') c.classList.remove('hidden'); else c.classList.add('hidden'); }
-        function loadUserCollectionsGrid() { const grid = document.getElementById('collections-grid'), noMsg = document.getElementById('no-collections-msg'); db.ref('collections/' + targetUserId).on('value', snap => { grid.innerHTML = ''; if (!snap.exists()) { noMsg.classList.remove('hidden'); return; } noMsg.classList.add('hidden'); snap.forEach(c => { const col = c.val(); const colId = c.key; let coverHtml = ''; if (col.previews && Array.isArray(col.previews) && col.previews.length > 0) { if (col.previews.length === 1) coverHtml = `<img src="${col.previews[0]}" class="collection-cover-single transition duration-700 group-hover:scale-110">`; else { let imgs = ''; col.previews.slice(0, 4).forEach(url => { imgs += `<img src="${url}">`; }); coverHtml = `<div class="collection-cover-grid transition duration-700 group-hover:scale-105">${imgs}</div>`; } } else { const cover = (col.cover && col.cover !== 'pending') ? col.cover : 'https://placehold.co/300x300/18181b/333?text=...'; coverHtml = `<img src="${cover}" class="collection-cover-single transition duration-700 group-hover:scale-110">`; } const card = document.createElement('div'); card.className = 'collection-card group'; card.onclick = () => openCollectionDetail(colId, col.name); card.innerHTML = `${coverHtml}<div class="collection-info"><h3 class="text-white font-bold text-sm drop-shadow-lg truncate leading-tight">${col.name}</h3><span class="text-[10px] text-gray-300 font-medium mt-1">Ver Álbum <i class="fas fa-chevron-right ml-1 text-[8px]"></i></span></div>`; grid.appendChild(card); }); }); }
+        function loadUserCollectionsGrid(autoOpenColId) { const grid = document.getElementById('collections-grid'), noMsg = document.getElementById('no-collections-msg'); db.ref('collections/' + targetUserId).on('value', snap => { grid.innerHTML = ''; if (!snap.exists()) { noMsg.classList.remove('hidden'); return; } noMsg.classList.add('hidden'); snap.forEach(c => { const col = c.val(); const colId = c.key; let coverHtml = ''; if (col.previews && Array.isArray(col.previews) && col.previews.length > 0) { if (col.previews.length === 1) coverHtml = `<img src="${col.previews[0]}" class="collection-cover-single transition duration-700 group-hover:scale-110">`; else { let imgs = ''; col.previews.slice(0, 4).forEach(url => { imgs += `<img src="${url}">`; }); coverHtml = `<div class="collection-cover-grid transition duration-700 group-hover:scale-105">${imgs}</div>`; } } else { const cover = (col.cover && col.cover !== 'pending') ? col.cover : 'https://placehold.co/300x300/18181b/333?text=...'; coverHtml = `<img src="${cover}" class="collection-cover-single transition duration-700 group-hover:scale-110">`; } const card = document.createElement('div'); card.className = 'collection-card group'; card.onclick = () => openCollectionDetail(colId, col.name); grid.appendChild(card); }); if(autoOpenColId) { switchTab('collections'); openCollectionDetail(autoOpenColId, "Cargando..."); db.ref(`collections/${targetUserId}/${autoOpenColId}/name`).once('value', s=> { if(s.exists()) document.getElementById('detail-collection-title').innerText = s.val(); }); } }); }
         function openCollectionDetail(colId, colName) { currentCollectionId = colId; document.getElementById('detail-collection-title').innerText = colName; document.getElementById('collection-detail-view').classList.remove('translate-x-full'); document.body.classList.add('body-lock'); const delBtn = document.getElementById('delete-collection-btn'); if(currentUser && currentUser.uid === targetUserId) delBtn.classList.remove('hidden'); else delBtn.classList.add('hidden'); loadCollectionPosts(colId); }
         function closeCollectionDetail() { document.getElementById('collection-detail-view').classList.add('translate-x-full'); document.body.classList.remove('body-lock'); currentCollectionId = null; }
         function loadCollectionPosts(colId) { const grid = document.getElementById('detail-collection-grid'), emptyMsg = document.getElementById('detail-empty-msg'); grid.innerHTML = '<div class="col-span-3 text-center py-10"><i class="fas fa-circle-notch fa-spin text-orange-500"></i></div>'; db.ref('feed_posts').orderByChild('userId').equalTo(targetUserId).limitToLast(200).once('value', snap => { grid.innerHTML = ''; let colPosts = []; if(snap.exists()){ snap.forEach(c => { const p = c.val(); if(p.collectionId === colId && (p.imageUrl || (p.imageUrls && p.imageUrls.length > 0))) { p.id = c.key; colPosts.push(p); } }); } if (colPosts.length === 0) { emptyMsg.classList.remove('hidden'); return; } emptyMsg.classList.add('hidden'); colPosts.sort((a,b) => b.timestamp - a.timestamp); colPosts.forEach((post, idx) => { const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []); images.forEach((imgUrl, imgIdx) => { const div = document.createElement('div'); div.className = "grid-item"; div.onclick = () => openMainViewer(colPosts, idx, imgIdx); div.innerHTML = `<img src="${imgUrl}" class="grid-image" loading="lazy">`; grid.appendChild(div); }); }); }); }
