@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
+    <title>exen-E | Feedback</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        :root { 
+            --accent: #f97316; 
+            --accent-hover: #ea580c;
+            --bg-dark: #09090b;
+            --bg-card: #121214;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --body-font: 'Inter', sans-serif;
+            --title-font: 'Poppins', sans-serif;
+        }
+
+        /* Ajustes Globales */
+        html, body {
+            overflow-x: hidden; width: 100%; background-color: var(--bg-dark);
+            overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent;
+        }
+        body { 
+            font-family: var(--body-font); 
+            background-image: radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.08) 0%, transparent 60%);
+            color: #f3f4f6; padding-bottom: 90px; min-height: 100vh;
+        }
+
+        /* Scrollbars */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+        /* Loader */
+        #initial-loader { position: fixed; inset: 0; z-index: 10000; background-color: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
+
+        /* UI Elements */
+        .nav-header {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(9, 9, 11, 0.95); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feedback-input-card {
+            background: linear-gradient(145deg, #18181b, #121212);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            border-radius: 1rem;
+            position: relative; overflow: hidden;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        }
+
+        .feedback-item {
+            background-color: #18181b;
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .feedback-item:active { transform: scale(0.98); background-color: #202023; }
+
+        .progress-ring { transform: rotate(-90deg); transform-origin: 50% 50%; }
+        .progress-ring-circle { transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%; }
+
+        .chip {
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 2px 8px; border-radius: 6px;
+        }
+        .chip-bug { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .chip-idea { background: rgba(249, 115, 22, 0.15); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); }
+        .chip-other { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+        .bottom-nav { background-color: rgba(9, 9, 11, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--border-color); z-index: 3000; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { color: #71717a; transition: all 0.3s ease; }
+        .nav-item.active { color: var(--accent); }
+
+        .like-anim { animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes likeBounce { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+        
+        .animate-enter { animation: slideUpFade 0.4s ease-out forwards; }
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="antialiased select-none">
+
+    <!-- LOADER -->
+    <div id="initial-loader">
+        <img src="https://files.catbox.moe/ap1lh0.png" class="loader-logo">
+        <i class="fas fa-lightbulb fa-spin text-orange-500 text-3xl"></i>
+        <p class="text-gray-500 text-xs mt-4 animate-pulse">Cargando Feedback...</p>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast-container" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[9000] pointer-events-none transition-all duration-300 opacity-0 translate-y-4">
+        <div class="bg-zinc-900/95 backdrop-blur-md border border-zinc-700 px-6 py-3 rounded-full text-white font-medium shadow-2xl flex items-center gap-3">
+            <i class="fas fa-check-circle text-green-500 text-lg"></i>
+            <span id="toast-message">Acción completada</span>
+        </div>
+    </div>
+
+    <!-- CONTENIDO -->
+    <div id="app-content" style="display: none;">
+        
+        <!-- HEADER -->
+        <header class="nav-header px-4 py-3 flex justify-between items-center">
+            <button onclick="window.history.back()" class="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800/50 text-white active:scale-90 transition">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="flex flex-col items-center">
+                <h1 class="font-bold text-lg font-[Poppins] text-white">Feedback & Ideas</h1>
+                <span class="text-[10px] text-gray-500">Ayúdanos a mejorar exen-E</span>
+            </div>
+            <div class="w-10"></div> <!-- Spacer -->
+        </header>
+
+        <main class="container mx-auto max-w-lg px-3 py-4">
+            
+            <!-- TARJETA DE INPUT -->
+            <div class="feedback-input-card p-5 mb-8 animate-enter">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full overflow-hidden border border-zinc-600">
+                            <img id="user-avatar" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h3 id="user-name" class="font-bold text-sm text-white">Cargando...</h3>
+                            <div class="flex items-center gap-1 text-[10px] text-gray-400">
+                                <span id="posts-count-text">0/5 aportes usados</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Barra de progreso circular pequeña -->
+                    <div class="relative w-10 h-10 flex items-center justify-center">
+                        <svg class="progress-ring w-10 h-10">
+                            <circle class="text-zinc-800" stroke-width="3" stroke="currentColor" fill="transparent" r="16" cx="20" cy="20" />
+                            <circle id="progress-circle" class="text-orange-500 progress-ring-circle" stroke-width="3" stroke="currentColor" fill="transparent" r="16" cx="20" cy="20" stroke-dasharray="100" stroke-dashoffset="100" />
+                        </svg>
+                        <i id="limit-icon" class="fas fa-pencil-alt text-xs absolute text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div id="input-container">
+                    <textarea id="feedback-text" rows="3" maxlength="300" class="w-full bg-black/30 border border-zinc-700 rounded-xl p-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition resize-none mb-3" placeholder="¿Qué te gustaría ver en exen-E? ¿Encontraste un error?"></textarea>
+                    
+                    <div class="flex gap-2 mb-3 overflow-x-auto pb-1 no-scrollbar" id="type-selector">
+                        <button type="button" onclick="setType('idea')" class="type-btn active flex-1 py-2 px-3 rounded-lg border border-orange-500/50 bg-orange-500/20 text-orange-400 text-xs font-bold transition whitespace-nowrap" data-type="idea"><i class="fas fa-lightbulb mr-1"></i> Idea</button>
+                        <button type="button" onclick="setType('bug')" class="type-btn flex-1 py-2 px-3 rounded-lg border border-zinc-700 bg-zinc-800 text-gray-400 text-xs font-bold transition whitespace-nowrap" data-type="bug"><i class="fas fa-bug mr-1"></i> Error</button>
+                        <button type="button" onclick="setType('other')" class="type-btn flex-1 py-2 px-3 rounded-lg border border-zinc-700 bg-zinc-800 text-gray-400 text-xs font-bold transition whitespace-nowrap" data-type="other"><i class="fas fa-comment-dots mr-1"></i> Otro</button>
+                    </div>
+
+                    <button id="submit-btn" onclick="postFeedback()" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-orange-900/20 active:scale-95 transition flex items-center justify-center gap-2">
+                        <span>Publicar en el Muro</span> <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                
+                <div id="limit-reached-msg" class="hidden text-center py-4 bg-red-500/10 rounded-xl border border-red-500/20 mt-2">
+                    <i class="fas fa-lock text-red-500 mb-1"></i>
+                    <p class="text-red-400 text-xs font-bold">Has alcanzado el límite de 5 feedbacks.</p>
+                </div>
+            </div>
+
+            <!-- FILTRO / TITULO LISTA -->
+            <div class="flex items-center justify-between mb-4 px-1">
+                <h2 class="font-bold text-gray-400 text-xs uppercase tracking-widest"><i class="fas fa-stream mr-1"></i> Muro de la Comunidad</h2>
+                <span class="text-[10px] text-gray-600" id="total-feedbacks">0 publicaciones</span>
+            </div>
+
+            <!-- LISTA DE FEEDBACK -->
+            <div id="feedback-list" class="flex flex-col gap-3 pb-20">
+                <!-- Se llena con JS -->
+                <div class="text-center py-10 text-gray-500 text-sm"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando opiniones...</div>
+            </div>
+
+        </main>
+
+        <!-- NAV -->
+        <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[100] flex h-[70px] justify-around items-center px-2 pb-2">
+            <a href="index.html" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-home text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Galería</span></a>
+            <a href="feed.html" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-globe-americas text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Social</span></a>
+            <a href="profile.html" class="nav-item flex flex-col items-center justify-center w-1/3 p-2 active:scale-95"><i class="fas fa-user text-xl mb-1.5"></i><span class="text-[10px] font-bold tracking-wide">Perfil</span></a>
+        </nav>
+    </div>
+
+    <!-- ALERTAS -->
+    <div id="custom-alert" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
+            <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-500/20"><i class="fas fa-exclamation text-red-500 text-2xl"></i></div>
+            <h3 class="text-white font-bold text-xl mb-2">Atención</h3>
+            <p id="custom-alert-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">Mensaje</p>
+            <button onclick="document.getElementById('custom-alert').classList.add('hidden'); document.getElementById('custom-alert').classList.remove('flex')" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold transition active:scale-95">Entendido</button>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN FIREBASE (Misma que tu proyecto)
+        const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        let currentUser = null;
+        let selectedType = 'idea';
+        const MAX_POSTS = 5;
+        let userPostCount = 0;
+        let deviceID = localStorage.getItem('deviceID');
+        if (!deviceID) { deviceID = Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('deviceID', deviceID); }
+
+        // --- AUTH INIT ---
+        auth.onAuthStateChanged(user => {
+            const loader = document.getElementById('initial-loader');
+            if (user) {
+                currentUser = user;
+                document.getElementById('app-content').style.display = 'block';
+                
+                // Cargar datos usuario
+                db.ref('users/' + user.uid).on('value', snap => {
+                    const d = snap.val();
+                    if(d) {
+                        document.getElementById('user-name').innerText = d.username || "Usuario";
+                        if(d.profilePic) document.getElementById('user-avatar').src = d.profilePic;
+                    }
+                });
+
+                // Contar posts del usuario
+                checkUserLimit();
+                
+                // Cargar feed
+                loadFeedbackWall();
+
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // --- LÓGICA DEL MURO ---
+        function checkUserLimit() {
+            db.ref('feedback_posts').orderByChild('userId').equalTo(currentUser.uid).on('value', snap => {
+                userPostCount = snap.numChildren();
+                updateLimitUI();
+            });
+        }
+
+        function updateLimitUI() {
+            document.getElementById('posts-count-text').innerText = `${userPostCount}/${MAX_POSTS} aportes usados`;
+            
+            // Actualizar círculo de progreso
+            const circle = document.getElementById('progress-circle');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            const percent = userPostCount / MAX_POSTS;
+            const offset = circumference - (percent * circumference);
+            circle.style.strokeDashoffset = offset;
+
+            const inputContainer = document.getElementById('input-container');
+            const limitMsg = document.getElementById('limit-reached-msg');
+            const icon = document.getElementById('limit-icon');
+
+            if (userPostCount >= MAX_POSTS) {
+                inputContainer.classList.add('hidden');
+                limitMsg.classList.remove('hidden');
+                circle.classList.remove('text-orange-500'); circle.classList.add('text-red-500');
+                icon.className = 'fas fa-check text-xs absolute text-green-500';
+            } else {
+                inputContainer.classList.remove('hidden');
+                limitMsg.classList.add('hidden');
+                circle.classList.add('text-orange-500'); circle.classList.remove('text-red-500');
+                icon.className = 'fas fa-pencil-alt text-xs absolute text-gray-400';
+            }
+        }
+
+        function setType(type) {
+            selectedType = type;
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-orange-500/20', 'text-orange-400', 'border-orange-500/50');
+                btn.classList.add('bg-zinc-800', 'text-gray-400', 'border-zinc-700');
+                
+                if (btn.dataset.type === type) {
+                    btn.classList.remove('bg-zinc-800', 'text-gray-400', 'border-zinc-700');
+                    if(type === 'idea') btn.classList.add('bg-orange-500/20', 'text-orange-400', 'border-orange-500/50');
+                    if(type === 'bug') btn.classList.add('bg-red-500/20', 'text-red-400', 'border-red-500/50');
+                    if(type === 'other') btn.classList.add('bg-blue-500/20', 'text-blue-400', 'border-blue-500/50');
+                }
+            });
+        }
+
+        async function postFeedback() {
+            const text = document.getElementById('feedback-text').value.trim();
+            if (!text) return showToast("Escribe algo primero");
+            if (userPostCount >= MAX_POSTS) return showAlert("Límite de publicaciones alcanzado.");
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publicando...';
+
+            try {
+                // Obtener datos frescos del usuario
+                const userSnap = await db.ref('users/' + currentUser.uid).once('value');
+                const userData = userSnap.val() || {};
+                
+                await db.ref('feedback_posts').push({
+                    userId: currentUser.uid,
+                    userName: userData.username || 'Usuario',
+                    userAvatar: userData.profilePic || 'https://placehold.co/100x100/333/fff?text=U',
+                    text: text,
+                    type: selectedType,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    likes: 0
+                });
+
+                document.getElementById('feedback-text').value = '';
+                showToast("¡Feedback enviado!");
+            } catch (error) {
+                console.error(error);
+                showAlert("Error al publicar.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Publicar en el Muro</span> <i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        function loadFeedbackWall() {
+            const list = document.getElementById('feedback-list');
+            
+            db.ref('feedback_posts').limitToLast(50).on('value', snap => {
+                list.innerHTML = '';
+                if (!snap.exists()) {
+                    list.innerHTML = '<div class="text-center py-10 text-gray-500 text-sm flex flex-col items-center"><i class="fas fa-wind text-2xl mb-2 opacity-50"></i><p>Aún no hay opiniones. ¡Sé el primero!</p></div>';
+                    document.getElementById('total-feedbacks').innerText = "0 publicaciones";
+                    return;
+                }
+
+                let posts = [];
+                snap.forEach(c => posts.push({key: c.key, ...c.val()}));
+                posts.sort((a,b) => b.timestamp - a.timestamp); // Ordenar nuevos primero
+                
+                document.getElementById('total-feedbacks').innerText = `${posts.length} publicaciones`;
+
+                posts.forEach(post => {
+                    const div = document.createElement('div');
+                    div.className = "feedback-item p-4 animate-enter";
+                    
+                    let typeBadge = '';
+                    if(post.type === 'idea') typeBadge = '<span class="chip chip-idea"><i class="fas fa-lightbulb"></i> Idea</span>';
+                    else if(post.type === 'bug') typeBadge = '<span class="chip chip-bug"><i class="fas fa-bug"></i> Error</span>';
+                    else typeBadge = '<span class="chip chip-other"><i class="fas fa-comment-dots"></i> Otro</span>';
+
+                    // Botón borrar solo para dueño
+                    const deleteBtn = (post.userId === currentUser.uid) 
+                        ? `<button onclick="deleteFeedback('${post.key}')" class="text-gray-600 hover:text-red-400 p-1"><i class="fas fa-trash-alt text-xs"></i></button>` 
+                        : '';
+
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <img src="${post.userAvatar}" class="w-8 h-8 rounded-full border border-zinc-700 object-cover bg-zinc-800">
+                                <div>
+                                    <h4 class="text-xs font-bold text-gray-300">${post.userName}</h4>
+                                    <span class="text-[10px] text-gray-600 block">${timeAgo(post.timestamp)}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${typeBadge}
+                                ${deleteBtn}
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-200 leading-relaxed font-light mb-3 whitespace-pre-wrap">${post.text}</p>
+                        <div class="flex items-center justify-between border-t border-white/5 pt-2">
+                            <button id="like-btn-${post.key}" onclick="toggleLike('${post.key}')" class="flex items-center gap-1.5 text-gray-500 hover:text-orange-500 transition group">
+                                <i class="far fa-thumbs-up group-active:scale-125 transition-transform"></i>
+                                <span class="text-xs font-bold" id="likes-count-${post.key}">${post.likes || 0}</span>
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                    checkLikeStatus(post.key);
+                });
+            });
+        }
+
+        function deleteFeedback(key) {
+            if(confirm("¿Borrar tu opinión?")) {
+                db.ref('feedback_posts/'+key).remove();
+                showToast("Eliminado");
+            }
+        }
+
+        function toggleLike(key) {
+            const uid = currentUser.uid;
+            const ref = db.ref(`feedback_likes/${key}/${uid}`);
+            ref.once('value', s => {
+                if (s.exists()) {
+                    ref.remove();
+                    db.ref(`feedback_posts/${key}/likes`).transaction(c => (c || 1) - 1);
+                } else {
+                    ref.set(true);
+                    db.ref(`feedback_posts/${key}/likes`).transaction(c => (c || 0) + 1);
+                }
+            });
+        }
+
+        function checkLikeStatus(key) {
+            const uid = currentUser.uid;
+            db.ref(`feedback_likes/${key}/${uid}`).on('value', s => {
+                const btn = document.getElementById(`like-btn-${key}`);
+                if (btn) {
+                    if (s.exists()) {
+                        btn.classList.add('text-orange-500');
+                        btn.querySelector('i').className = "fas fa-thumbs-up like-anim";
+                    } else {
+                        btn.classList.remove('text-orange-500');
+                        btn.querySelector('i').className = "far fa-thumbs-up";
+                    }
+                }
+            });
+            // Listener de contador en tiempo real
+            db.ref(`feedback_posts/${key}/likes`).on('value', s => {
+                const el = document.getElementById(`likes-count-${key}`);
+                if(el) el.innerText = s.val() || 0;
+            });
+        }
+
+        // Utils
+        function showToast(msg) {
+            const t = document.getElementById('toast-container');
+            document.getElementById('toast-message').innerText = msg;
+            t.classList.remove('opacity-0', 'translate-y-4');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3000);
+        }
+        function showAlert(msg) {
+            document.getElementById('custom-alert-msg').innerText = msg;
+            const el = document.getElementById('custom-alert');
+            el.classList.remove('hidden'); el.classList.add('flex');
+        }
+        function timeAgo(ts) { 
+            if(!ts) return ''; const s = Math.floor((Date.now()-ts)/1000); 
+            if(s<60) return 'Hace un momento'; 
+            if(s<3600) return Math.floor(s/60)+'m'; 
+            if(s<86400) return Math.floor(s/3600)+'h'; 
+            return Math.floor(s/86400)+'d'; 
+        }
+
+        // Simulación de tipo Select
+        function setTypeVisual(type) {
+            // Ya manejado en setType()
+        }
+    </script>
+</body>
+</html>
