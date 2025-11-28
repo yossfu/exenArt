@@ -46,6 +46,17 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* Similar Slider Styles (Ported form Index) */
+        .similar-card {
+            min-width: 90px; width: 90px; aspect-ratio: 1/1;
+            border-radius: 0.5rem; overflow: hidden; position: relative;
+            flex-shrink: 0; scroll-snap-align: start;
+            border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s;
+            background-color: #1a1a1c;
+        }
+        .similar-card:active { transform: scale(0.95); border-color: var(--accent); }
+        .similar-card img { width: 100%; height: 100%; object-fit: cover; }
+
         /* Loaders & Auth */
         #initial-loader { position: fixed; inset: 0; z-index: 10000; background-color: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); animation: pulse 2s infinite; }
@@ -346,12 +357,20 @@
                             </div>
                             <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-light"></p>
                         </div>
+                        
                         <div class="mb-8 border-b border-zinc-800 pb-5">
                             <button onclick="toggleTags()" id="tags-toggle-btn" class="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 hover:text-orange-500 transition-colors mb-2">
                                 <span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>
                             </button>
                             <div id="modal-tags" class="hidden flex flex-wrap gap-2 mt-3"></div>
                         </div>
+
+                        <!-- Imágenes Similares (ADDED) -->
+                        <div class="mb-6 border-b border-zinc-800 pb-4">
+                            <h4 class="text-[11px] font-bold text-gray-500 uppercase mb-3 tracking-widest flex items-center gap-2"><i class="fas fa-th-large"></i> Similares</h4>
+                            <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-3 snap-x no-scrollbar"></div>
+                        </div>
+
                         <div><h4 class="text-[11px] font-bold text-gray-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h4><div id="modal-comments-list" class="flex flex-col gap-4 pb-4"></div></div>
                     </div>
                     <div class="p-3 bg-[#18181b] border-t border-zinc-800 flex-shrink-0 safe-bottom">
@@ -1020,10 +1039,24 @@
         function expandText(id) { document.getElementById(`text-short-${id}`).classList.add('hidden'); document.getElementById(`text-full-${id}`).classList.remove('hidden'); }
 
         // --- VIEWER ---
+        // Helper para texto
+        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
+
         function openMainViewerById(postId, imgIndex = 0) {
-            const index = displayedPosts.findIndex(p => p.id === postId);
-            if (index === -1) return;
-            currentViewPosts = displayedPosts;
+            let index = displayedPosts.findIndex(p => p.id === postId);
+            let sourceList = displayedPosts;
+            
+            // Si no está en la lista mostrada (por filtros), buscar en el cache global
+            if (index === -1) {
+                index = allPostsCache.findIndex(p => p.id === postId);
+                if (index !== -1) {
+                    sourceList = allPostsCache;
+                } else {
+                    return; // No encontrado
+                }
+            }
+            
+            currentViewPosts = sourceList;
             currentPostIndex = index;
             window.currentInternalIndex = imgIndex;
             updateViewerContent();
@@ -1068,6 +1101,9 @@
             db.ref(`feed_likes/${post.id}`).off(); db.ref(`feed_posts/${post.id}/likes`).off();
             db.ref(`feed_likes/${post.id}/${uid}`).on('value', s => { if(s.exists()) { likeBtn.classList.add('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim"; } else { likeBtn.classList.remove('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400"; } });
             db.ref(`feed_posts/${post.id}/likes`).on('value', s => likesCount.innerText = s.val() || 0);
+            
+            // Cargar imágenes similares con reglas de peso
+            loadSimilarImagesInSlider(post.tags, post.id, post.characterName, post.userId);
 
             const commentsList = document.getElementById('modal-comments-list'); commentsList.innerHTML = '';
             db.ref(`feed_comments/${post.id}`).off();
@@ -1076,6 +1112,74 @@
             document.getElementById('modal-prev').style.display = (currentPostIndex > 0 || window.currentInternalIndex > 0) ? 'flex' : 'none';
             const isLastImg = window.currentInternalIndex === images.length - 1; const isLastPost = currentPostIndex === currentViewPosts.length - 1;
             document.getElementById('modal-next').style.display = (!isLastImg || !isLastPost) ? 'flex' : 'none';
+        }
+        
+        // --- FUNCIÓN IMÁGENES SIMILARES (UPDATED WITH RULES) ---
+        function loadSimilarImagesInSlider(tagsStr, currentId, currentCharacterName, currentUserId) {
+            const container = document.getElementById('similar-grid');
+            container.innerHTML = '';
+            
+            // Usar allPostsCache para buscar candidatos
+            // Filtrar post actual y asegurar que tengan imagen
+            const candidates = allPostsCache.filter(p => p.id !== currentId && (p.imageUrls || p.imageUrl));
+            
+            if (candidates.length === 0) {
+                 container.innerHTML = '<span class="text-xs text-gray-500 italic px-2 self-center">No hay similares.</span>';
+                 return;
+            }
+
+            const currentTags = tagsStr ? tagsStr.split(',').map(t => normalize(t)) : [];
+            const normCharName = normalize(currentCharacterName);
+
+            // Calcular puntajes
+            const scoredCandidates = candidates.map(p => {
+                let score = 0;
+                
+                // Regla 1: Peso por Personaje (Prioridad Alta)
+                if (normCharName && p.characterName && normalize(p.characterName) === normCharName) {
+                    score += 100; // Gran peso base por personaje
+                    
+                    // Regla 2: Prioridad a diferentes usuarios con mismo personaje
+                    if (p.userId !== currentUserId) {
+                        score += 50; // Bonus por diversidad de usuario
+                    }
+                }
+
+                // Regla 3: Tags (Prioridad Baja)
+                if (p.tags) {
+                    const pTags = p.tags.split(',').map(t => normalize(t));
+                    const common = pTags.filter(t => currentTags.includes(t));
+                    score += common.length; // +1 por cada tag coincidente
+                }
+
+                return { post: p, score: score };
+            });
+
+            // Filtrar los que tienen score > 0 y ordenar
+            const finalResults = scoredCandidates
+                .filter(item => item.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .map(item => item.post)
+                .slice(0, 15); // Mostrar top 15
+
+            if (finalResults.length === 0) {
+                container.innerHTML = '<span class="text-xs text-gray-500 italic px-2 self-center">No hay similares.</span>';
+                return;
+            }
+            
+            // Asegurar que el contenedor sea visible
+            container.closest('.mb-6').style.display = 'block';
+
+            finalResults.forEach(post => {
+                const div = document.createElement('div');
+                div.className = "similar-card cursor-pointer group";
+                div.onclick = () => openMainViewerById(post.id, 0); 
+                
+                const imgUrl = (post.imageUrls && post.imageUrls.length > 0) ? post.imageUrls[0] : post.imageUrl;
+                
+                div.innerHTML = `<img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
+                container.appendChild(div);
+            });
         }
 
         function navigateModal(dir) {
