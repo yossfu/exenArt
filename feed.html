@@ -46,30 +46,16 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Loaders & UI */
+        /* Loaders & Auth */
         #initial-loader { position: fixed; inset: 0; z-index: 10000; background-color: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
         
-        .feed-card { background-color: #18181b; border: 1px solid var(--border-color); border-radius: 1rem; margin-bottom: 1.5rem; position: relative; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.2); transition: border-color 0.3s; }
-        .feed-card.following-highlight { border-color: rgba(249, 115, 22, 0.3); background: linear-gradient(to bottom, #1f1f22, #18181b); }
+        .feed-card { background-color: #18181b; border: 1px solid var(--border-color); border-radius: 1rem; margin-bottom: 1.5rem; position: relative; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         .upload-card { overflow: visible !important; background: linear-gradient(145deg, #18181b, #121212); border: 1px solid rgba(249, 115, 22, 0.15); z-index: 50; }
         
         .animate-enter { animation: slideUpFade 0.4s ease-out forwards; }
         @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Notificaciones */
-        .notif-badge { position: absolute; top: 0; right: 0; width: 8px; height: 8px; bg-red-500; border-radius: 50%; display: none; }
-        .notif-panel {
-            position: absolute; top: 60px; right: 10px; width: 300px; max-height: 400px;
-            background: #18181b; border: 1px solid var(--border-color); border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 2000;
-            display: none; flex-direction: column; overflow: hidden;
-            animation: fadeIn 0.2s ease-out;
-        }
-        .notif-panel.visible { display: flex; }
-        .notif-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px; align-items: start; transition: background 0.2s; cursor: pointer; }
-        .notif-item:hover { background: rgba(255,255,255,0.03); }
-        .notif-item.unread { background: rgba(249, 115, 22, 0.05); }
 
         /* Upload Area */
         #extra-fields { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease; }
@@ -85,6 +71,7 @@
         .custom-select-options.show { max-height: 300px; opacity: 1; overflow-y: auto; transform: scaleY(1); }
         .option-item { padding: 14px 16px; cursor: pointer; color: #d1d5db; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; align-items: center; gap: 10px; }
         .option-item:active { background: rgba(249, 115, 22, 0.2); color: white; }
+        .special-option { color: var(--accent); font-weight: 600; background: rgba(249, 115, 22, 0.05); }
 
         /* Filter Select */
         .filter-select .custom-select-trigger { background: rgba(9, 9, 11, 0.8); padding: 8px 12px; min-height: 36px; font-size: 0.8rem; border-radius: 8px; color: #d1d5db; }
@@ -101,11 +88,13 @@
         .grid-mode-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; }
         .grid-item { aspect-ratio: 1/1; overflow: hidden; position: relative; background-color: #222; cursor: pointer; }
         .grid-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .grid-item:active img { transform: scale(0.96); opacity: 0.8; }
         .grid-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%); display: flex; align-items: flex-end; padding: 4px; opacity: 1; }
 
         /* Multi-Image */
         .multi-image-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; aspect-ratio: 3/1.3; margin-top: 0.5rem; border-radius: 0.5rem; overflow: hidden; }
         .multi-image-row img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; transition: opacity 0.2s; }
+        .multi-image-row img:active { opacity: 0.8; }
         .single-image-container { width: 100%; margin-top: 0.5rem; border-radius: 0.5rem; overflow: hidden; background: #000; display: flex; justify-content: center; }
         .single-image-container img { max-height: 500px; width: auto; max-width: 100%; object-fit: contain; }
         .two-image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 0.5rem; border-radius: 0.5rem; overflow: hidden; aspect-ratio: 2/1; }
@@ -124,6 +113,21 @@
         .toggle-btn { background: transparent; border: 1px solid #333; color: #666; transition: all 0.2s; }
         .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
 
+        /* Notificaciones & Follow */
+        .notif-btn { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: #ccc; transition: all 0.2s; }
+        .notif-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+        .notif-badge { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; border: 2px solid var(--bg-dark); }
+        
+        .notification-dropdown { position: fixed; top: 60px; right: 10px; left: 10px; max-width: 400px; margin: 0 auto; background: #1c1c1f; border: 1px solid var(--border-color); border-radius: 16px; z-index: 5000; box-shadow: 0 10px 40px rgba(0,0,0,0.8); max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: top right; transform: scale(0.95); }
+        .notification-dropdown.visible { max-height: 400px; opacity: 1; transform: scale(1); }
+        .notif-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; cursor: pointer; transition: background 0.2s; }
+        .notif-item:active { background: rgba(255,255,255,0.05); }
+        .notif-item.unread { background: rgba(249, 115, 22, 0.05); border-left: 3px solid var(--accent); }
+
+        .follow-btn { padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; transition: all 0.2s; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid transparent; }
+        .follow-btn.not-following { background: var(--accent); color: white; box-shadow: 0 2px 10px rgba(249, 115, 22, 0.3); }
+        .follow-btn.following { background: transparent; border-color: #444; color: #888; }
+
         /* Visor */
         .modal-backdrop { display: none; position: fixed; inset: 0; background-color: #000; z-index: 7000; } 
         .modal-backdrop.visible { display: block; animation: fadeIn 0.3s forwards; }
@@ -136,21 +140,12 @@
         .options-menu { display: none; position: absolute; top: 40px; right: 10px; background: #1c1c1f; border: 1px solid #333; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 50; min-width: 150px; }
         .options-menu.show { display: block; animation: popIn 0.2s; }
         .options-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #ccc; font-size: 0.95rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .options-item:last-child { border-bottom: none; }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         
-        /* Login Wall */
-        #login-wall {
-            position: fixed; inset: 0; z-index: 9999;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 2rem;
-            animation: fadeIn 0.5s ease-out;
-            display: none; /* JS will toggle */
-        }
-
         .like-anim { animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes likeBounce { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
         .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); pointer-events: none; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -162,17 +157,6 @@
         <p id="loader-status" class="text-gray-500 text-xs mt-4 animate-pulse">Cargando comunidad...</p>
     </div>
 
-    <!-- LOGIN WALL (No Autenticados) -->
-    <div id="login-wall">
-        <div class="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mb-6 border border-orange-500/30">
-            <i class="fas fa-lock text-3xl text-orange-500"></i>
-        </div>
-        <h2 class="text-2xl font-bold text-white mb-2">Comunidad Privada</h2>
-        <p class="text-gray-400 mb-8 max-w-xs">Debes iniciar sesión para ver el feed, interactuar y unirte a la comunidad.</p>
-        <a href="login.html" class="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition transform w-full max-w-xs">Iniciar Sesión</a>
-        <a href="index.html" class="text-gray-500 text-sm mt-4 hover:text-white transition">Volver al inicio</a>
-    </div>
-
     <!-- TOAST -->
     <div id="toast-container" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[9000] pointer-events-none transition-all duration-300 opacity-0 translate-y-4">
         <div class="bg-zinc-900/95 backdrop-blur-md border border-zinc-700 px-6 py-3 rounded-full text-white font-medium shadow-2xl flex items-center gap-3">
@@ -181,29 +165,53 @@
         </div>
     </div>
 
+    <!-- ALERTAS -->
+    <div id="custom-alert" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
+            <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-500/20"><i class="fas fa-exclamation text-red-500 text-2xl"></i></div>
+            <h3 class="text-white font-bold text-xl mb-2">Atención</h3>
+            <p id="custom-alert-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">Mensaje</p>
+            <button onclick="closeCustomAlert()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold transition active:scale-95">Entendido</button>
+        </div>
+    </div>
+
+    <div id="custom-confirm" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
+            <div class="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4 border border-orange-500/20"><i class="fas fa-question text-orange-500 text-2xl"></i></div>
+            <h3 id="custom-confirm-title" class="text-white font-bold text-xl mb-2">¿Estás seguro?</h3>
+            <p id="custom-confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">¿Continuar?</p>
+            <div class="flex gap-3">
+                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-zinc-800 text-gray-300 py-3 rounded-xl font-bold border border-zinc-700 active:scale-95 transition">Cancelar</button>
+                <button onclick="closeCustomConfirm(true)" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- APP CONTENT -->
     <div id="app-content" style="display: none;">
-        <header class="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex justify-between items-center">
+        <!-- FIX: Z-Index aumentado a z-[100] para sobreponerse a la tarjeta de subida -->
+        <header class="sticky top-0 z-[100] bg-[#09090b]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-8 w-auto">
                 <span class="font-bold text-lg tracking-tight font-[Poppins] text-orange-500">Social</span>
             </div>
+            
             <div class="flex items-center gap-4">
                 <!-- NOTIFICACIONES -->
                 <div class="relative">
-                    <button onclick="toggleNotifications()" class="w-9 h-9 rounded-full bg-zinc-800/50 flex items-center justify-center text-gray-300 hover:text-white transition active:scale-90 relative">
-                        <i class="far fa-bell text-sm"></i>
-                        <span id="notif-badge" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                    <button onclick="toggleNotifications()" class="notif-btn">
+                        <i class="far fa-bell text-lg"></i>
+                        <div id="notif-badge" class="notif-badge hidden"></div>
                     </button>
-                    <!-- PANEL NOTIFICACIONES -->
-                    <div id="notif-panel" class="notif-panel custom-scrollbar">
-                        <div class="p-3 border-b border-white/5 flex justify-between items-center bg-[#1c1c1f]">
-                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Notificaciones</span>
-                            <button onclick="toggleNotifications()" class="text-gray-500 hover:text-white"><i class="fas fa-times"></i></button>
+                    <!-- DROPDOWN LAZY LOAD -->
+                    <div id="notification-dropdown" class="notification-dropdown custom-scrollbar">
+                        <div class="p-3 border-b border-white/5 flex justify-between items-center bg-[#18181b]">
+                            <span class="text-sm font-bold text-white">Notificaciones</span>
+                            <span class="text-[10px] text-gray-500">Recientes</span>
                         </div>
                         <div id="notif-list" class="flex flex-col max-h-[300px] overflow-y-auto">
-                            <!-- Items inyectados JS -->
-                            <div class="p-4 text-center text-gray-500 text-xs">Cargando...</div>
+                            <!-- Items se inyectan aquí -->
+                            <div class="p-8 text-center text-gray-500 text-xs italic"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando...</div>
                         </div>
                     </div>
                 </div>
@@ -216,7 +224,7 @@
 
         <main class="container mx-auto max-w-lg px-0 sm:px-4 py-2 overflow-x-hidden">
             
-            <!-- UPLOAD CARD -->
+            <!-- UPLOAD CARD (Z-index 50) -->
             <div class="px-2 sm:px-0">
                 <div class="feed-card upload-card p-4 rounded-2xl mb-4">
                     <div class="flex gap-3 items-center mb-2">
@@ -308,7 +316,6 @@
                         </button>
                         <div class="custom-select-options custom-scrollbar">
                             <div class="option-item" onclick="changeSortOrder('newest', '✨ Recientes')">✨ Recientes</div>
-                            <div class="option-item" onclick="changeSortOrder('following', '👥 Siguiendo')">👥 Siguiendo</div>
                             <div class="option-item" onclick="changeSortOrder('oldest', '📅 Antiguos')">📅 Antiguos</div>
                             <div class="option-item" onclick="changeSortOrder('likes', '🔥 Populares')">🔥 Populares</div>
                         </div>
@@ -349,8 +356,8 @@
                     <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#121214]">
                         <div class="mb-5">
                             <h3 id="modal-title" class="text-xl font-bold text-white mb-2 font-[Poppins] leading-snug"></h3>
-                            <!-- Etiqueta Clickable -->
-                            <div id="modal-character-tag" class="hidden inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider mb-2 cursor-pointer hover:bg-orange-500/20 transition" onclick="filterByCharacterFromModal()">
+                            <!-- Etiqueta de personaje clickeable en el visor -->
+                            <div id="modal-character-tag" onclick="filterByCharacterFromModal()" class="hidden inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider mb-2 cursor-pointer hover:bg-orange-500/20 transition">
                                 <i class="fas fa-user-tag text-[10px]"></i> <span id="modal-character-name"></span>
                             </div>
                             <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-light"></p>
@@ -432,6 +439,9 @@
         const POSTS_PER_PAGE = 10;
         let characterStatsCache = {};
         
+        // Cache de a quién sigo
+        let followingCache = {};
+
         let currentViewPosts = [];
         let currentPostIndex = -1;
         let touchStartX = 0;
@@ -443,10 +453,46 @@
         
         let confirmCallback = null;
         const userProfileCache = {};
-        
-        // Follow System
-        let followedUsersCache = new Set();
-        let isFollowingCacheLoaded = false;
+
+        // --- AUTH CHECK INMEDIATO ---
+        auth.onAuthStateChanged(user => {
+            const loader = document.getElementById('initial-loader');
+            if (user && !user.isAnonymous) {
+                currentUser = user;
+                document.getElementById('app-content').style.display = 'block'; 
+                
+                // Cargar datos de usuario
+                db.ref('users/' + user.uid).on('value', snap => { 
+                    const d = snap.val(); if(d) {
+                        currentUserData = d; 
+                        if(d.profilePic) { document.getElementById('current-user-avatar').src = d.profilePic; document.getElementById('post-avatar').src = d.profilePic; }
+                    }
+                });
+
+                // Cargar lista de seguidos (Follows)
+                db.ref('follows/' + user.uid).on('value', snap => {
+                    followingCache = snap.val() || {};
+                    // Si ya hay posts cargados, re-renderizar para actualizar estados de botones
+                    if(allPostsCache.length > 0) applyFiltersAndRender();
+                });
+
+                // Listener de notificaciones (Solo badge)
+                db.ref('notifications/' + user.uid).orderByChild('read').equalTo(false).on('value', snap => {
+                    const badge = document.getElementById('notif-badge');
+                    if(snap.exists()) badge.classList.remove('hidden'); else badge.classList.add('hidden');
+                });
+
+                loadUserCollectionsSelect();
+                initFeedOnce();
+                initCharacterStatsListener();
+                
+                loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500);
+
+            } else {
+                // BLOQUEAR ACCESO SI NO ESTÁ LOGUEADO
+                window.location.href = 'login.html';
+            }
+        });
 
         // --- UTILS ---
         function showToast(msg) {
@@ -471,6 +517,16 @@
             if(res && confirmCallback) confirmCallback(); confirmCallback = null;
         }
 
+        function requireLogin(event) {
+            if (!currentUser) {
+                if(event) { event.preventDefault(); event.stopPropagation(); }
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        // COMPRESIÓN IDÉNTICA A PERFIL
         function compressImage(file) {
             return new Promise((resolve, reject) => {
                 const maxSizeKB = 150;
@@ -494,63 +550,17 @@
             });
         }
         
-        function requireLogin(event) {
-            if (!currentUser) {
-                if(event) { event.preventDefault(); event.stopPropagation(); }
-                // El login wall ya maneja la visual, pero por si acaso
-                window.location.href = 'login.html';
-                return false;
-            }
-            return true;
-        }
-
-        // --- AUTH & INIT ---
-        auth.onAuthStateChanged(user => {
-            const loader = document.getElementById('initial-loader');
-            const loginWall = document.getElementById('login-wall');
-            
-            if (user && !user.isAnonymous) {
-                currentUser = user;
-                document.getElementById('app-content').style.display = 'block'; 
-                loginWall.style.display = 'none'; // Ocultar muro
-                
-                // Cargar datos usuario
-                db.ref('users/' + user.uid).on('value', snap => { 
-                    const d = snap.val(); if(d) {
-                        currentUserData = d; 
-                        if(d.profilePic) { document.getElementById('current-user-avatar').src = d.profilePic; document.getElementById('post-avatar').src = d.profilePic; }
-                    }
-                });
-                
-                // Cargar seguidos
-                db.ref('following/' + user.uid).once('value', s => {
-                    followedUsersCache = new Set();
-                    if(s.exists()) Object.keys(s.val()).forEach(k => followedUsersCache.add(k));
-                    isFollowingCacheLoaded = true;
-                    // Recargar feed si ya cargó para actualizar prioridades
-                    if(allPostsCache.length > 0) applyFiltersAndRender();
-                });
-                
-                loadUserCollectionsSelect();
-            } else {
-                currentUser = null; 
-                // Mostrar solo el muro de bloqueo, ocultar contenido
-                document.getElementById('app-content').style.display = 'none';
-                loginWall.style.display = 'flex';
-            }
-            loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500);
-            
-            // Cargar feed incluso si no logueado (quedará oculto detrás del muro) para que esté listo
-            initFeedOnce();
-            initCharacterStatsListener();
-        });
-
         // --- MANEJO DE ARCHIVOS MÚLTIPLES ---
-        function expandPostArea() { document.getElementById('extra-fields').classList.add('expanded'); document.getElementById('post-text').rows = 3; }
+        function expandPostArea() { 
+            document.getElementById('extra-fields').classList.add('expanded'); 
+            document.getElementById('post-text').rows = 3; 
+        }
+        
         function collapsePostArea(force=false) { 
             const reset = () => {
                 document.getElementById('extra-fields').classList.remove('expanded'); document.getElementById('post-text').rows = 1;
-                selectedFiles = []; renderPreviewStack(); 
+                selectedFiles = []; 
+                renderPreviewStack(); 
                 document.getElementById('post-text').value = ''; document.getElementById('post-title').value = '';
                 document.getElementById('post-character').value = ''; document.getElementById('post-tags').value = '';
                 selectCustomOption('dropdown-collection', '', '<i class="fas fa-folder mr-2 text-xs text-orange-500"></i> Álbum');
@@ -562,30 +572,36 @@
             if(force || (selectedFiles.length === 0 && !document.getElementById('post-text').value)) reset();
             else showConfirm("¿Descartar publicación?", reset);
         }
+        
         function handleFileSelect(e) {
             expandPostArea();
-            const newFiles = Array.from(e.target.files); if (!newFiles.length) return;
+            const newFiles = Array.from(e.target.files);
+            if (!newFiles.length) return;
             newFiles.forEach(file => { if (selectedFiles.length < 3) selectedFiles.push(file); });
             if (selectedFiles.length === 3) showToast("Máximo 3 imágenes alcanzado");
             renderPreviewStack();
             if (selectedFiles.length > 0 && window.runAutoTagging) { try { window.runAutoTagging(selectedFiles[selectedFiles.length - 1]); } catch(e) {} }
             e.target.value = ""; 
         }
+
         function renderPreviewStack() {
-            const container = document.getElementById('preview-stack'); container.innerHTML = '';
+            const container = document.getElementById('preview-stack');
+            container.innerHTML = '';
             if (selectedFiles.length === 0) { container.style.display = 'none'; return; }
             container.style.display = 'flex';
             selectedFiles.forEach((file, index) => {
-                const url = URL.createObjectURL(file); const thumb = document.createElement('div'); thumb.className = 'preview-thumb';
+                const url = URL.createObjectURL(file);
+                const thumb = document.createElement('div'); thumb.className = 'preview-thumb';
                 thumb.innerHTML = `<img src="${url}"><div class="remove-thumb-btn" onclick="removeFile(${index})"><i class="fas fa-times"></i></div>`;
                 container.appendChild(thumb);
             });
         }
         function removeFile(index) { selectedFiles.splice(index, 1); renderPreviewStack(); }
 
-        // --- SUBIDA ---
+        // --- SUBIDA DE POST ---
         async function uploadPost() {
             if(!requireLogin()) return;
+
             const text = document.getElementById('post-text').value.trim();
             const title = document.getElementById('post-title').value.trim();
             const characterName = document.getElementById('post-character').value.trim();
@@ -598,32 +614,43 @@
             if (selectedFiles.length > 0 && (!title || !category)) return showAlert("Título y Categoría son requeridos con imagen.");
             if (colId === 'new' && !newColName) return showAlert("Nombre de colección requerido.");
 
-            const btn = document.getElementById('publish-btn'); const progress = document.getElementById('upload-progress');
-            btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Subiendo...'; progress.classList.remove('hidden');
+            const btn = document.getElementById('publish-btn');
+            const progress = document.getElementById('upload-progress');
+            btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Subiendo...';
+            progress.classList.remove('hidden');
             
             try {
                 let colName = null;
                 if (colId === 'new') {
-                    const ref = db.ref('collections/' + currentUser.uid).push(); colId = ref.key; colName = newColName;
+                    const ref = db.ref('collections/' + currentUser.uid).push();
+                    colId = ref.key; colName = newColName;
                     await ref.set({ name: newColName, createdAt: firebase.database.ServerValue.TIMESTAMP, cover: 'pending', previews: [] });
-                } else if (colId) { const snap = await db.ref(`collections/${currentUser.uid}/${colId}/name`).once('value'); colName = snap.val(); }
+                } else if (colId) {
+                    const snap = await db.ref(`collections/${currentUser.uid}/${colId}/name`).once('value'); colName = snap.val();
+                }
 
                 let uploadedUrls = [];
                 if (selectedFiles.length > 0) {
                     for (const file of selectedFiles) {
                         let processedFile = await compressImage(file);
-                        const formData = new FormData(); formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', processedFile);
+                        const formData = new FormData(); 
+                        formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', processedFile);
                         const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
-                        const txt = await r.text(); if(txt.includes('catbox.moe')) uploadedUrls.push(txt.trim());
+                        const txt = await r.text();
+                        if(txt.includes('catbox.moe')) uploadedUrls.push(txt.trim());
                     }
                 }
                 
                 const finalUserName = (currentUserData && currentUserData.username) ? currentUserData.username : (currentUser?.displayName || 'Usuario');
                 const finalUserAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100/333/fff?text=U';
-                const newPostRef = db.ref('feed_posts').push(); const newPostId = newPostRef.key;
+
+                const newPostRef = db.ref('feed_posts').push();
+                const newPostId = newPostRef.key;
                 
                 const postData = {
-                    text, imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null, imageUrls: uploadedUrls,
+                    text, 
+                    imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
+                    imageUrls: uploadedUrls,
                     title, tags, category, characterName,
                     userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0,
@@ -631,18 +658,29 @@
                 };
                 
                 await newPostRef.set(postData);
+
+                // ACTUALIZACIÓN LOCAL INMEDIATA
                 const localPost = { ...postData, id: newPostId, timestamp: Date.now() }; 
                 allPostsCache.unshift(localPost);
-                applyFiltersAndRender();
+                applyFiltersAndRender(); 
                 
                 if (characterName) {
                     const normalizedChar = characterName.toLowerCase().replace(/[.#$\[\]]/g, ""); 
-                    db.ref(`stats/characters/${normalizedChar}`).transaction((d) => { return { count: (d ? d.count : 0) + 1, displayName: characterName }; });
+                    const charRef = db.ref(`stats/characters/${normalizedChar}`);
+                    charRef.transaction((currentData) => { return { count: (currentData ? currentData.count : 0) + 1, displayName: characterName }; });
                 }
-                if (colId && uploadedUrls.length > 0) await updateCollectionPreviews(currentUser.uid, colId, uploadedUrls[0]);
+
+                if (colId && uploadedUrls.length > 0) {
+                    await updateCollectionPreviews(currentUser.uid, colId, uploadedUrls[0]);
+                }
+
                 collapsePostArea(true); showToast("¡Publicado!");
+
             } catch(e) { showAlert("Error: " + e.message); }
-            finally { btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = 'Publicar'; progress.classList.add('hidden'); }
+            finally { 
+                btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = 'Publicar'; 
+                progress.classList.add('hidden'); 
+            }
         }
 
         // --- FEED LOGIC (ONCE) ---
@@ -651,13 +689,17 @@
                 if(!snapshot.exists()) { allPostsCache = []; applyFiltersAndRender(); return; }
                 const tempPosts = [];
                 snapshot.forEach(child => { tempPosts.push({ id: child.key, ...child.val() }); });
+                
+                // Orden inicial por timestamp inverso
                 allPostsCache = tempPosts.sort((a,b) => b.timestamp - a.timestamp);
                 applyFiltersAndRender();
             });
         }
 
         function initCharacterStatsListener() {
-            db.ref('stats/characters').on('value', snapshot => { if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; } });
+            db.ref('stats/characters').on('value', snapshot => {
+                if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; }
+            });
         }
         
         function applyFiltersAndRender() {
@@ -674,19 +716,26 @@
                     document.getElementById('active-filter-tag').innerText = '#' + currentFilterTag;
                 }
                 filterBar.classList.remove('hidden');
-            } else { filterBar.classList.add('hidden'); }
-
-            // Lógica de Ordenamiento y Prioridad
-            if (currentSortOrder === 'following') {
-                filtered = filtered.filter(p => followedUsersCache.has(p.userId));
-                filtered.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            } else if (currentSortOrder === 'newest') {
-                filtered.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            } else if (currentSortOrder === 'oldest') {
-                filtered.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-            } else if (currentSortOrder === 'likes') {
-                filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+            } else {
+                filterBar.classList.add('hidden');
             }
+
+            // --- LÓGICA DE ORDENAMIENTO DE FEED (FOLLOWERS BOOST) ---
+            filtered.sort((a, b) => {
+                const aIsFollowed = followingCache[a.userId] ? 1 : 0;
+                const bIsFollowed = followingCache[b.userId] ? 1 : 0;
+                
+                if (currentSortOrder === 'newest') {
+                    if (aIsFollowed !== bIsFollowed) {
+                        return bIsFollowed - aIsFollowed; // Seguidos primero
+                    }
+                    return (b.timestamp || 0) - (a.timestamp || 0);
+                } else if (currentSortOrder === 'oldest') {
+                    return (a.timestamp || 0) - (b.timestamp || 0);
+                } else if (currentSortOrder === 'likes') {
+                    return (b.likes || 0) - (a.likes || 0);
+                }
+            });
 
             displayedPosts = filtered;
             resetFeedView();
@@ -708,27 +757,124 @@
             document.getElementById('scroll-spinner').style.opacity = '1';
             const nextIndex = currentRenderIndex + POSTS_PER_PAGE;
             const chunk = displayedPosts.slice(currentRenderIndex, nextIndex);
-            
             const feedContainer = document.getElementById('feed-list-container');
             const gridContainer = document.getElementById('grid-view-container');
             
             chunk.forEach(post => {
-                if(!document.getElementById(`post-card-${post.id}`)) { feedContainer.appendChild(createPostCard(post)); }
+                if(!document.getElementById(`post-card-${post.id}`)) {
+                    feedContainer.appendChild(createPostCard(post));
+                }
                 const imgs = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
-                if (imgs.length > 0) { gridContainer.appendChild(createGridItem(post, imgs[0])); }
+                if (imgs.length > 0) {
+                     gridContainer.appendChild(createGridItem(post, imgs[0]));
+                }
                 updateUserAvatarInUI(post.userId);
             });
             currentRenderIndex = nextIndex;
             if (currentRenderIndex >= displayedPosts.length) document.getElementById('scroll-spinner').style.opacity = '0';
         }
         
-        // --- POST CARD CREATION ---
+        const scrollObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && currentRenderIndex < displayedPosts.length) setTimeout(() => loadMorePosts(), 500);
+        }, { rootMargin: '100px' });
+        document.addEventListener('DOMContentLoaded', () => { const t = document.getElementById('load-more-trigger'); if(t) scrollObserver.observe(t); });
+
+        // --- FOLLOW SYSTEM ---
+        function toggleFollow(targetUid, btn) {
+            if (!requireLogin()) return;
+            if (targetUid === currentUser.uid) return;
+
+            const isFollowing = followingCache[targetUid];
+            
+            if (isFollowing) {
+                db.ref(`follows/${currentUser.uid}/${targetUid}`).remove();
+                db.ref(`followers/${targetUid}/${currentUser.uid}`).remove();
+                if(btn) {
+                    btn.classList.remove('following'); btn.classList.add('not-following');
+                    btn.innerHTML = 'Seguir';
+                }
+            } else {
+                db.ref(`follows/${currentUser.uid}/${targetUid}`).set(true);
+                db.ref(`followers/${targetUid}/${currentUser.uid}`).set(true);
+                sendNotification(targetUid, 'follow');
+                if(btn) {
+                    btn.classList.remove('not-following'); btn.classList.add('following');
+                    btn.innerHTML = 'Siguiendo';
+                }
+            }
+        }
+
+        // --- NOTIFICATIONS SYSTEM ---
+        function toggleNotifications() {
+            const dd = document.getElementById('notification-dropdown');
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            
+            if (dd.classList.contains('visible')) {
+                dd.classList.remove('visible');
+            } else {
+                dd.classList.add('visible');
+                if (!list.getAttribute('data-loaded')) {
+                    loadNotifications();
+                    list.setAttribute('data-loaded', 'true');
+                }
+                badge.classList.add('hidden');
+            }
+        }
+
+        function loadNotifications() {
+            const list = document.getElementById('notif-list');
+            db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
+                list.innerHTML = '';
+                if (!snap.exists()) {
+                    list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones.</div>';
+                    return;
+                }
+                const notifs = [];
+                snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
+                notifs.reverse().forEach(n => {
+                    const item = document.createElement('div');
+                    item.className = `notif-item ${!n.read ? 'unread' : ''}`;
+                    
+                    let icon = 'fas fa-bell';
+                    let text = 'Nueva interacción';
+                    let linkFn = '';
+
+                    if (n.type === 'like') { icon = 'fas fa-heart text-red-500'; text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
+                    else if (n.type === 'comment') { icon = 'fas fa-comment text-blue-400'; text = `<b>${n.fromUserName}</b> comentó tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
+                    else if (n.type === 'follow') { icon = 'fas fa-user-plus text-green-400'; text = `<b>${n.fromUserName}</b> empezó a seguirte.`; linkFn = `goToProfile('${n.fromUserId}')`; }
+
+                    item.innerHTML = `
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700"><i class="${icon}"></i></div>
+                        <div class="flex-1 text-sm text-gray-300 leading-tight">${text} <br><span class="text-[10px] text-gray-500">${timeAgo(n.timestamp)}</span></div>
+                    `;
+                    item.onclick = () => {
+                        db.ref(`notifications/${currentUser.uid}/${n.key}/read`).set(true);
+                        item.classList.remove('unread');
+                        eval(linkFn); 
+                        document.getElementById('notification-dropdown').classList.remove('visible');
+                    };
+                    list.appendChild(item);
+                });
+            });
+        }
+
+        function sendNotification(targetUid, type, postId = null) {
+            if (targetUid === currentUser.uid) return;
+            const notifRef = db.ref(`notifications/${targetUid}`).push();
+            notifRef.set({
+                type: type,
+                fromUserId: currentUser.uid,
+                fromUserName: (currentUserData && currentUserData.username) ? currentUserData.username : 'Alguien',
+                postId: postId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                read: false
+            });
+        }
+
+        // --- CREAR TARJETA ---
         function createPostCard(post) {
-            const isFollowing = followedUsersCache.has(post.userId);
-            const div = document.createElement('div'); 
-            div.className = "feed-card opacity-0 animate-enter";
-            // Highlight seguido
-            if (isFollowing) div.classList.add('following-highlight');
+            const div = document.createElement('div'); div.className = "feed-card opacity-0 animate-enter";
             div.id = `post-card-${post.id}`;
             
             let textHtml = '';
@@ -740,7 +886,6 @@
             }
             
             let metaHtml = '<div class="mt-3 flex flex-wrap items-center gap-2">';
-            // Filtros de personaje clickeables
             if (post.characterName) metaHtml += `<button onclick="filterByCharacter('${post.characterName}')" class="text-[10px] bg-indigo-900/40 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/30 uppercase font-bold tracking-wide hover:bg-indigo-500/20 active:scale-95 transition flex items-center gap-1"><i class="fas fa-user-circle"></i> ${post.characterName}</button>`;
             if (post.collectionName) metaHtml += `<span class="text-[10px] bg-zinc-800 text-gray-400 px-2 py-0.5 rounded border border-zinc-700 font-medium"><i class="fas fa-folder text-orange-500 mr-1"></i> ${post.collectionName}</span>`;
             if (post.category) metaHtml += `<span class="text-[10px] bg-orange-900/40 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30 uppercase font-bold tracking-wide">${post.category}</span>`;
@@ -748,9 +893,14 @@
             
             const isOwner = currentUser && currentUser.uid === post.userId;
             let optionsBtn = isOwner ? `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 p-2 hover:text-white"><i class="fas fa-ellipsis-v"></i></button><div id="options-menu-${post.id}" class="options-menu"><div class="options-item text-red-400 hover:bg-red-900/20" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>` : '';
-            
-            // Icono de siguiendo
-            const followingBadge = isFollowing ? `<span class="ml-2 text-[10px] bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded border border-orange-500/20 font-bold"><i class="fas fa-user-check"></i> Siguiendo</span>` : '';
+
+            let followBtnHtml = '';
+            if (!isOwner) {
+                const isFollowing = followingCache[post.userId];
+                const btnClass = isFollowing ? 'following' : 'not-following';
+                const btnText = isFollowing ? 'Siguiendo' : 'Seguir';
+                followBtnHtml = `<button onclick="toggleFollow('${post.userId}', this)" class="follow-btn ${btnClass} ml-2">${btnText}</button>`;
+            }
 
             let imagesHtml = '';
             const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
@@ -763,15 +913,15 @@
             div.innerHTML = `
                 <div class="p-4 pb-2">
                     <div class="flex justify-between items-start relative">
-                        <div class="flex gap-3 items-center" onclick="goToProfile('${post.userId}')" style="cursor:pointer;">
-                            <img src="${post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-10 h-10 rounded-full object-cover border border-zinc-700 user-avatar-${post.userId} bg-zinc-800">
-                            <div class="flex flex-col">
-                                <div class="flex items-center">
-                                    <span class="font-bold text-gray-200 text-sm hover:text-orange-400 transition">${post.userName}</span>
-                                    ${followingBadge}
+                        <div class="flex items-center gap-2">
+                            <div class="flex gap-3 items-center" onclick="goToProfile('${post.userId}')" style="cursor:pointer;">
+                                <img src="${post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-10 h-10 rounded-full object-cover border border-zinc-700 user-avatar-${post.userId} bg-zinc-800">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-gray-200 text-sm hover:text-orange-400 transition flex items-center gap-2">${post.userName}</span>
+                                    <span class="text-[10px] text-gray-500 font-medium">${timeAgo(post.timestamp)}</span>
                                 </div>
-                                <span class="text-[10px] text-gray-500 font-medium">${timeAgo(post.timestamp)}</span>
                             </div>
+                            ${followBtnHtml}
                         </div>
                         ${optionsBtn}
                     </div>
@@ -789,137 +939,74 @@
             return div;
         }
 
-        // --- NOTIFICACIONES (LAZY) ---
-        function toggleNotifications() {
-            const panel = document.getElementById('notif-panel');
-            const list = document.getElementById('notif-list');
-            
-            if (panel.classList.contains('visible')) {
-                panel.classList.remove('visible');
-            } else {
-                panel.classList.add('visible');
-                // Carga Lazy (.once)
-                if(!currentUser) return;
-                list.innerHTML = '<div class="p-4 text-center"><i class="fas fa-circle-notch fa-spin text-orange-500"></i></div>';
-                
-                db.ref(`notifications/${currentUser.uid}`).limitToLast(20).once('value', snap => {
-                    list.innerHTML = '';
-                    if(!snap.exists()) { list.innerHTML = '<div class="p-4 text-center text-gray-500 text-xs">Sin notificaciones nuevas.</div>'; return; }
-                    
-                    const notifs = [];
-                    snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
-                    notifs.reverse(); // Más recientes primero
-                    
-                    notifs.forEach(n => {
-                        const item = document.createElement('div');
-                        item.className = 'notif-item';
-                        let icon = '', text = '';
-                        
-                        if(n.type === 'like') { icon = '<i class="fas fa-heart text-red-500 mt-1"></i>'; text = `A <b>${n.fromName}</b> le gustó tu publicación.`; }
-                        else if(n.type === 'comment') { icon = '<i class="fas fa-comment text-blue-400 mt-1"></i>'; text = `<b>${n.fromName}</b> comentó tu publicación.`; }
-                        else if(n.type === 'follow') { icon = '<i class="fas fa-user-plus text-green-500 mt-1"></i>'; text = `<b>${n.fromName}</b> empezó a seguirte.`; }
-                        
-                        item.innerHTML = `<img src="${n.fromAvatar}" class="w-8 h-8 rounded-full object-cover border border-zinc-700">
-                                          <div class="flex-1 text-xs text-gray-300">${text}<br><span class="text-gray-500 text-[10px]">${timeAgo(n.timestamp)}</span></div>
-                                          ${icon}`;
-                        item.onclick = () => {
-                            if(n.postId) openMainViewerById(n.postId); // Ir al post
-                            else if(n.fromUid) goToProfile(n.fromUid); // Ir al perfil
-                        };
-                        list.appendChild(item);
-                    });
-                });
-            }
-        }
-
-        function pushNotification(toUid, type, postId = null) {
-            if(toUid === currentUser.uid) return; // No auto-notificar
-            const uN = (currentUserData && currentUserData.username) ? currentUserData.username : 'Usuario';
-            const uA = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/100x100';
-            db.ref(`notifications/${toUid}`).push({
-                type, fromUid: currentUser.uid, fromName: uN, fromAvatar: uA,
-                postId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
-            });
-        }
-
-        // --- VIEWER MODIFIED FOR TAG CLICK ---
-        function openMainViewerById(postId, imgIndex = 0) {
-            const index = displayedPosts.findIndex(p => p.id === postId);
-            if (index === -1) {
-                // Try fetch single post if not in feed (from notif)
-                db.ref(`feed_posts/${postId}`).once('value', s => {
-                   if(s.exists()) {
-                       const p = {id: s.key, ...s.val()};
-                       displayedPosts = [p]; currentViewPosts = [p]; currentPostIndex = 0; window.currentInternalIndex = 0;
-                       updateViewerContent();
-                       document.getElementById('modal').classList.add('visible');
-                   }
-                });
-                return;
-            }
-            currentViewPosts = displayedPosts; currentPostIndex = index; window.currentInternalIndex = imgIndex;
-            updateViewerContent();
-            document.getElementById('modal').classList.add('visible'); document.getElementById('modal').classList.remove('fullscreen-mode'); document.body.style.overflow = 'hidden';
-        }
-        
-        // MODIFICADO: Tag click cierra modal
-        function filterByCharacterFromModal(name) {
-            document.getElementById('modal').classList.remove('visible'); 
-            document.body.style.overflow = 'auto';
-            filterByCharacter(name);
-        }
-
-        function updateViewerContent() {
-            if (currentPostIndex < 0 || currentPostIndex >= currentViewPosts.length) return;
-            const post = currentViewPosts[currentPostIndex];
-            const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
-            let imgToShow = (images.length > 0) ? images[window.currentInternalIndex || 0] : '';
-            
-            document.getElementById('modal-image').src = imgToShow;
-            document.getElementById('modal-title').textContent = post.title || 'Sin título';
-            document.getElementById('modal-desc').innerHTML = (post.text || '');
-            document.getElementById('modal-user-name').textContent = post.userName || 'Usuario';
-            document.getElementById('modal-user-pic').src = post.userAvatar || 'https://placehold.co/100x100';
-            
-            const charTag = document.getElementById('modal-character-tag');
-            if(post.characterName) { 
-                charTag.classList.remove('hidden'); 
-                document.getElementById('modal-character-name').textContent = post.characterName;
-                // Asignar click handler directo
-                charTag.onclick = () => filterByCharacterFromModal(post.characterName);
-            } else { charTag.classList.add('hidden'); }
-            
-            // ... resto del código igual (botones, likes, etc)
-             const likeBtn = document.getElementById('modal-like-btn'); const likesCount = document.getElementById('modal-likes-count');
-            likeBtn.onclick = () => toggleLike(post.id, post.userId);
-            const uid = currentUser ? currentUser.uid : deviceID;
-            db.ref(`feed_likes/${post.id}`).off(); db.ref(`feed_posts/${post.id}/likes`).off();
-            db.ref(`feed_likes/${post.id}/${uid}`).on('value', s => { if(s.exists()) { likeBtn.classList.add('text-red-500'); likeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim"; } else { likeBtn.classList.remove('text-red-500'); likeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400"; } });
-            db.ref(`feed_posts/${post.id}/likes`).on('value', s => likesCount.innerText = s.val() || 0);
-            
-            loadCommentsInModal(post.id); // Separate function for clean code
-            
-            // Nav buttons logic
-            document.getElementById('modal-prev').style.display = (currentPostIndex > 0 || window.currentInternalIndex > 0) ? 'flex' : 'none';
-            const isLastImg = window.currentInternalIndex === images.length - 1; 
-            const isLastPost = currentPostIndex === currentViewPosts.length - 1;
-            document.getElementById('modal-next').style.display = (!isLastImg || !isLastPost) ? 'flex' : 'none';
-        }
-        
-        function loadCommentsInModal(id) {
-             const commentsList = document.getElementById('modal-comments-list'); commentsList.innerHTML = '';
-             db.ref(`feed_comments/${id}`).off();
-             db.ref(`feed_comments/${id}`).on('child_added', s => { const c = s.val(); const div = document.createElement('div'); div.className = "flex gap-3 items-start text-sm animate-enter"; div.innerHTML = `<img src="${c.userAvatar}" class="w-8 h-8 rounded-full mt-1 border border-zinc-700 object-cover flex-shrink-0 cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800/50 p-3 rounded-2xl rounded-tl-none border border-zinc-700/50 w-full"><span class="font-bold text-gray-300 block text-xs mb-1 hover:text-orange-400 cursor-pointer" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 leading-snug block break-words font-light">${c.text}</span></div>`; commentsList.appendChild(div); });
-        }
-
-        // --- HELPERS ---
         function createGridItem(post, imgUrl) { 
             const div = document.createElement('div'); div.className = 'grid-item group'; 
             div.onclick = () => openMainViewerById(post.id, 0); 
             const multipleIcon = (post.imageUrls && post.imageUrls.length > 1) ? '<i class="fas fa-clone absolute top-2 right-2 text-white drop-shadow-md text-xs"></i>' : '';
             div.innerHTML = `<img src="${imgUrl}" loading="lazy">${multipleIcon}<div class="grid-overlay opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-white text-[10px] font-bold drop-shadow-md"><i class="fas fa-heart text-white text-[9px]"></i> ${post.likes || 0}</span></div>`; return div; 
         }
+
         function expandText(id) { document.getElementById(`text-short-${id}`).classList.add('hidden'); document.getElementById(`text-full-${id}`).classList.remove('hidden'); }
+
+        // --- VIEWER ---
+        function openMainViewerById(postId, imgIndex = 0) {
+            const index = displayedPosts.findIndex(p => p.id === postId);
+            if (index === -1) return;
+            currentViewPosts = displayedPosts;
+            currentPostIndex = index;
+            window.currentInternalIndex = imgIndex;
+            updateViewerContent();
+            const modal = document.getElementById('modal');
+            modal.classList.add('visible'); modal.classList.remove('fullscreen-mode');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function updateViewerContent() {
+            if (currentPostIndex < 0 || currentPostIndex >= currentViewPosts.length) return;
+            const post = currentViewPosts[currentPostIndex];
+            const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
+            let imgToShow = "";
+            if (images.length > 0) {
+                if (typeof window.currentInternalIndex === 'undefined' || window.currentInternalIndex >= images.length) window.currentInternalIndex = 0;
+                imgToShow = images[window.currentInternalIndex];
+            }
+            
+            document.getElementById('modal-image').src = imgToShow;
+            document.getElementById('modal-title').textContent = post.title || 'Sin título';
+            document.getElementById('modal-desc').innerHTML = (post.text || '').replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
+            document.getElementById('modal-user-name').textContent = post.userName || 'Usuario';
+            document.getElementById('modal-user-pic').src = post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U';
+            
+            const charTag = document.getElementById('modal-character-tag');
+            if(post.characterName) { charTag.classList.remove('hidden'); document.getElementById('modal-character-name').textContent = post.characterName; } else { charTag.classList.add('hidden'); }
+            
+            const delBtn = document.getElementById('modal-delete-btn');
+            if (currentUser && currentUser.uid === post.userId) { delBtn.classList.remove('hidden'); delBtn.onclick = () => deletePost(post.id); } else { delBtn.classList.add('hidden'); }
+
+            const tagsDiv = document.getElementById('modal-tags'); const tagsBtn = document.getElementById('tags-toggle-btn');
+            tagsDiv.classList.add('hidden'); tagsDiv.innerHTML = '';
+            if (post.tags && post.tags.trim().length > 0) {
+                tagsBtn.style.display = 'flex';
+                post.tags.split(',').forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 text-gray-300 px-2.5 py-1 rounded-full border border-zinc-700 font-medium cursor-pointer hover:border-orange-500" onclick="filterByTagFromModal('${t.trim()}')">#${t.trim()}</span>`; });
+            } else { tagsBtn.style.display = 'none'; }
+
+            const likeBtn = document.getElementById('modal-like-btn'); const likesCount = document.getElementById('modal-likes-count');
+            likeBtn.onclick = () => toggleLike(post.id, post.userId);
+            const uid = currentUser ? currentUser.uid : deviceID;
+            
+            db.ref(`feed_likes/${post.id}`).off(); db.ref(`feed_posts/${post.id}/likes`).off();
+            db.ref(`feed_likes/${post.id}/${uid}`).on('value', s => { if(s.exists()) { likeBtn.classList.add('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim"; } else { likeBtn.classList.remove('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400"; } });
+            db.ref(`feed_posts/${post.id}/likes`).on('value', s => likesCount.innerText = s.val() || 0);
+
+            const commentsList = document.getElementById('modal-comments-list'); commentsList.innerHTML = '';
+            db.ref(`feed_comments/${post.id}`).off();
+            db.ref(`feed_comments/${post.id}`).on('child_added', s => { const c = s.val(); const div = document.createElement('div'); div.className = "flex gap-3 items-start text-sm animate-enter"; div.innerHTML = `<img src="${c.userAvatar}" class="w-8 h-8 rounded-full mt-1 border border-zinc-700 object-cover flex-shrink-0 cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800/50 p-3 rounded-2xl rounded-tl-none border border-zinc-700/50 w-full"><span class="font-bold text-gray-300 block text-xs mb-1 hover:text-orange-400 cursor-pointer" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 leading-snug block break-words font-light">${c.text}</span></div>`; commentsList.appendChild(div); });
+
+            document.getElementById('modal-prev').style.display = (currentPostIndex > 0 || window.currentInternalIndex > 0) ? 'flex' : 'none';
+            const isLastImg = window.currentInternalIndex === images.length - 1; const isLastPost = currentPostIndex === currentViewPosts.length - 1;
+            document.getElementById('modal-next').style.display = (!isLastImg || !isLastPost) ? 'flex' : 'none';
+        }
+
         function navigateModal(dir) {
             const post = currentViewPosts[currentPostIndex]; const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
             if (dir === 1) {
@@ -927,20 +1014,55 @@
                 else { if (currentPostIndex < currentViewPosts.length - 1) { currentPostIndex++; window.currentInternalIndex = 0; } }
             } else {
                 if (window.currentInternalIndex > 0) window.currentInternalIndex--;
-                else { if (currentPostIndex > 0) { currentPostIndex--; window.currentInternalIndex = images[images.length-1]?images.length-1:0; } }
+                else { if (currentPostIndex > 0) { currentPostIndex--; window.currentInternalIndex = 0; } }
             }
             updateViewerContent();
         }
+
         function toggleFullScreen() { document.getElementById('modal').classList.toggle('fullscreen-mode'); }
         function toggleTags() { const div = document.getElementById('modal-tags'); const btn = document.getElementById('tags-toggle-btn'); div.classList.toggle('hidden'); btn.innerHTML = div.classList.contains('hidden') ? '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>' : '<span>Ocultar etiquetas</span> <i class="fas fa-chevron-up"></i>'; }
+
         const modalEl = document.getElementById('modal-image-area');
         modalEl.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, {passive:true});
         modalEl.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; if (Math.abs(touchEndX - touchStartX) > 50) { if (touchEndX < touchStartX) navigateModal(1); else navigateModal(-1); } }, {passive:true});
         document.getElementById('close-modal').onclick = () => { document.getElementById('modal').classList.remove('visible'); document.body.style.overflow = 'auto'; };
-        
+
+        // --- COMUNES ---
+        function toggleCustomSelect(id) {
+            const el = document.getElementById(id); const list = el.querySelector('.custom-select-options'); const trigger = el.querySelector('.custom-select-trigger');
+            document.querySelectorAll('.custom-select-options.show').forEach(opt => { if(opt !== list) { opt.classList.remove('show'); opt.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); } });
+            list.classList.toggle('show'); trigger.classList.toggle('active');
+        }
+        function selectCustomOption(containerId, value, displayText) {
+            const container = document.getElementById(containerId); container.querySelector('input[type="hidden"]').value = value; container.querySelector('.custom-select-trigger span').innerHTML = displayText; container.querySelector('.custom-select-trigger').classList.remove('active'); container.querySelector('.custom-select-options').classList.remove('show');
+            if (containerId === 'dropdown-collection') toggleCollectionInput();
+        }
+        function changeSortOrder(value, displayText) { currentSortOrder = value; const container = document.getElementById('dropdown-sort'); container.querySelector('#display-sort').innerText = displayText; toggleCustomSelect('dropdown-sort'); applyFiltersAndRender(); }
+        window.addEventListener('click', function(e) { if (!e.target.closest('.custom-select-container')) { document.querySelectorAll('.custom-select-options.show').forEach(el => { el.classList.remove('show'); el.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); }); } });
+        window.addEventListener('click', function(e) { if (!e.target.closest('.relative') || e.target.closest('.notif-item')) { const d = document.getElementById('notification-dropdown'); if(d && !e.target.closest('.notif-btn')) d.classList.remove('visible'); } });
+
+        function loadUserCollectionsSelect() {
+            if (!currentUser) return;
+            db.ref('collections/' + currentUser.uid).on('value', snap => {
+                let html = `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '', '<i class=\\'fas fa-folder mr-2 text-xs text-orange-500\\'></i> Álbum')">Ningún Álbum</div><div class="option-item special-option" onclick="selectCustomOption('dropdown-collection', 'new', '➕ Crear Nueva Colección...')">➕ Crear Nueva Colección...</div>`;
+                snap.forEach(child => { html += `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '${child.key}', '📁 ${child.val().name}')">📁 ${child.val().name}</div>`; });
+                const el = document.getElementById('collection-options-list'); if(el) el.innerHTML = html;
+            });
+        }
+        function toggleCollectionInput() { const v = document.getElementById('post-collection').value; const c = document.getElementById('new-collection-container'); if(v==='new') c.classList.remove('hidden'); else c.classList.add('hidden'); }
+        async function updateCollectionPreviews(uid, cid, url) { if(!cid||cid==='new'||!url)return; const r=db.ref(`collections/${uid}/${cid}/previews`); await r.transaction(l=>{ l=l||[]; if(!Array.isArray(l))l=[]; l.unshift(url); return l.slice(0,4); }); db.ref(`collections/${uid}/${cid}/cover`).set(url); }
+
         function switchView(mode) { const f=document.getElementById('feed-list-container'), g=document.getElementById('grid-view-container'), bf=document.getElementById('btn-view-feed'), bg=document.getElementById('btn-view-grid'); if(mode==='feed'){f.classList.remove('hidden');g.classList.add('hidden');bf.classList.add('active');bg.classList.remove('active');}else{f.classList.add('hidden');g.classList.remove('hidden');bf.classList.remove('active');bg.classList.add('active');} }
+        function filterByTagFromModal(t) { document.getElementById('close-modal').click(); currentFilterTag=t.replace('#','').trim(); currentFilterType='tag'; applyFiltersAndRender(); window.scrollTo({top:0,behavior:'smooth'}); }
+        function filterByCharacterFromModal() {
+            const name = document.getElementById('modal-character-name').innerText;
+            document.getElementById('close-modal').click();
+            filterByCharacter(name);
+        }
         function filterByCharacter(name) { 
             currentFilterTag=name; currentFilterType='character'; applyFiltersAndRender(); 
+            document.getElementById('modal').classList.remove('visible');
+            document.body.style.overflow = 'auto';
             window.scrollTo({top:0,behavior:'smooth'}); 
         }
         function clearTagFilter() { currentFilterTag=null; applyFiltersAndRender(); }
@@ -950,33 +1072,44 @@
         window.onclick = e => { if(!e.target.closest('.options-trigger')) document.querySelectorAll('.options-menu').forEach(m=>m.classList.remove('show')); };
         function deletePost(id) { showConfirm("¿Eliminar publicación?", () => { db.ref('feed_posts/'+id).remove().then(()=>{ showToast("Eliminado"); document.getElementById('modal').classList.remove('visible'); document.body.style.overflow='auto'; initFeedOnce(); }); }); }
         
-        function toggleLike(id, authorId) { 
-            if(!requireLogin()) return; const uid = currentUser.uid; const ref = db.ref(`feed_likes/${id}/${uid}`); 
+        function toggleLike(id, postOwnerId) { 
+            if(!requireLogin()) return; 
+            const uid = currentUser.uid; 
+            const ref = db.ref(`feed_likes/${id}/${uid}`); 
             ref.once('value', s => { 
-                if(s.exists()) { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } 
-                else { 
-                    ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); 
-                    pushNotification(authorId, 'like', id);
+                if(s.exists()) { 
+                    ref.remove(); 
+                    db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); 
+                } else { 
+                    ref.set(true); 
+                    db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1);
+                    sendNotification(postOwnerId, 'like', id);
                 } 
             }); 
         }
         function checkLikeStatus(id) { const uid = currentUser ? currentUser.uid : deviceID; db.ref(`feed_likes/${id}/${uid}`).on('value', s => { const btn = document.getElementById(`like-btn-${id}`); if(btn) { if(s.exists()) { btn.classList.add('text-red-500'); btn.querySelector('i').className = 'fas fa-heart text-lg like-anim'; } else { btn.classList.remove('text-red-500'); btn.querySelector('i').className = 'far fa-heart text-lg'; } } }); db.ref(`feed_posts/${id}/likes`).on('value', s => { const el = document.getElementById(`likes-count-${id}`); if(el) el.innerText = s.val() || 0; }); }
         function checkCommentStatus(id) { db.ref(`feed_comments/${id}`).on('value', s => { const c = s.numChildren(); const el = document.getElementById(`comments-count-${id}`); if(el) { el.innerText = c || 0; if(c>0) el.classList.add('text-white'); else el.classList.remove('text-white'); } }); }
         function toggleComments(id) { const el = document.getElementById(`comments-${id}`); if(el.classList.contains('hidden')) { el.classList.remove('hidden'); db.ref(`feed_comments/${id}`).off(); document.getElementById(`comments-list-${id}`).innerHTML = ''; db.ref(`feed_comments/${id}`).on('child_added', s => { const c = s.val(); const div = document.createElement('div'); div.className = "flex gap-2 items-start text-sm animate-enter"; div.innerHTML = `<img src="${c.userAvatar}" class="w-6 h-6 rounded-full mt-1 border border-zinc-700 object-cover cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800 p-2.5 rounded-2xl rounded-tl-none"><span class="font-bold text-gray-300 block text-xs mb-0.5 cursor-pointer hover:text-orange-400" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 font-light">${c.text}</span></div>`; document.getElementById(`comments-list-${id}`).appendChild(div); }); } else el.classList.add('hidden'); }
-        function postComment(e, id, authorId) { 
-            e.preventDefault(); if(!requireLogin()) return; const input = document.getElementById(`comment-input-${id}`); if(!input.value.trim()) return; 
+        
+        function postComment(e, id, postOwnerId) { 
+            e.preventDefault(); if(!requireLogin()) return; 
+            const input = document.getElementById(`comment-input-${id}`); 
+            if(!input.value.trim()) return; 
             const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); 
             const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; 
             db.ref(`feed_comments/${id}`).push({ text:input.value, userId:currentUser.uid, userName:uN, userAvatar:uA, timestamp:Date.now() }); 
-            pushNotification(authorId, 'comment', id);
+            sendNotification(postOwnerId, 'comment', id);
             input.value=''; 
         }
         function postCommentInModal(e) { 
-            e.preventDefault(); if(!requireLogin()) return; const input = document.getElementById('modal-comment-input'); const post = currentViewPosts[currentPostIndex]; if(!input.value.trim() || !post) return; 
+            e.preventDefault(); if(!requireLogin()) return; 
+            const input = document.getElementById('modal-comment-input'); 
+            const post = currentViewPosts[currentPostIndex]; 
+            if(!input.value.trim() || !post) return; 
             const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); 
             const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; 
             db.ref(`feed_comments/${post.id}`).push({ text:input.value, userId:currentUser.uid, userName:uN, userAvatar:uA, timestamp:Date.now() }); 
-            pushNotification(post.userId, 'comment', post.id);
+            sendNotification(post.userId, 'comment', post.id);
             input.value=''; 
         }
         function updateUserAvatarInUI(uid) { if(!userProfileCache[uid]) db.ref(`users/${uid}/profilePic`).once('value', s => { const url = s.val()||'https://placehold.co/100x100/333/fff?text=U'; userProfileCache[uid]=url; document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = url); }); else document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = userProfileCache[uid]); }
