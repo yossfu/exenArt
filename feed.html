@@ -116,13 +116,19 @@
         /* Notificaciones & Follow */
         .notif-btn { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: #ccc; transition: all 0.2s; }
         .notif-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
-        .notif-badge { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; border: 2px solid var(--bg-dark); }
+        
+        /* Ajuste: Punto rojo solo indicador (Facebook style) */
+        .notif-badge { position: absolute; top: 0px; right: 0px; width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; border: 2px solid var(--bg-dark); box-shadow: 0 0 5px rgba(249, 115, 22, 0.8); }
         
         .notification-dropdown { position: fixed; top: 60px; right: 10px; left: 10px; max-width: 400px; margin: 0 auto; background: #1c1c1f; border: 1px solid var(--border-color); border-radius: 16px; z-index: 5000; box-shadow: 0 10px 40px rgba(0,0,0,0.8); max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: top right; transform: scale(0.95); }
         .notification-dropdown.visible { max-height: 400px; opacity: 1; transform: scale(1); }
-        .notif-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; cursor: pointer; transition: background 0.2s; }
-        .notif-item:active { background: rgba(255,255,255,0.05); }
-        .notif-item.unread { background: rgba(249, 115, 22, 0.05); border-left: 3px solid var(--accent); }
+        
+        .notif-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; cursor: pointer; transition: background 0.2s; background: transparent; }
+        .notif-item:active { background: rgba(255,255,255,0.1) !important; }
+        
+        /* Estilo para NO leídas (Persistente) */
+        .notif-item.unread { background: rgba(249, 115, 22, 0.08); border-left: 3px solid var(--accent); }
+        .notif-item.read { opacity: 0.7; }
 
         .follow-btn { padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; transition: all 0.2s; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid transparent; }
         .follow-btn.not-following { background: var(--accent); color: white; box-shadow: 0 2px 10px rgba(249, 115, 22, 0.3); }
@@ -165,31 +171,9 @@
         </div>
     </div>
 
-    <!-- ALERTAS -->
-    <div id="custom-alert" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
-            <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-500/20"><i class="fas fa-exclamation text-red-500 text-2xl"></i></div>
-            <h3 class="text-white font-bold text-xl mb-2">Atención</h3>
-            <p id="custom-alert-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">Mensaje</p>
-            <button onclick="closeCustomAlert()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold transition active:scale-95">Entendido</button>
-        </div>
-    </div>
-
-    <div id="custom-confirm" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
-            <div class="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4 border border-orange-500/20"><i class="fas fa-question text-orange-500 text-2xl"></i></div>
-            <h3 id="custom-confirm-title" class="text-white font-bold text-xl mb-2">¿Estás seguro?</h3>
-            <p id="custom-confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">¿Continuar?</p>
-            <div class="flex gap-3">
-                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-zinc-800 text-gray-300 py-3 rounded-xl font-bold border border-zinc-700 active:scale-95 transition">Cancelar</button>
-                <button onclick="closeCustomConfirm(true)" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">Confirmar</button>
-            </div>
-        </div>
-    </div>
-
     <!-- APP CONTENT -->
     <div id="app-content" style="display: none;">
-        <!-- Header con Z-Index Corregido -->
+        <!-- Header -->
         <header class="sticky top-0 z-[100] bg-[#09090b]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-8 w-auto">
@@ -197,10 +181,11 @@
             </div>
             
             <div class="flex items-center gap-4">
-                <!-- NOTIFICACIONES -->
+                <!-- SISTEMA DE NOTIFICACIONES -->
                 <div class="relative">
                     <button onclick="toggleNotifications()" class="notif-btn">
                         <i class="far fa-bell text-lg"></i>
+                        <!-- El badge ahora es solo un indicador visual que desaparece al abrir -->
                         <div id="notif-badge" class="notif-badge hidden"></div>
                     </button>
                     <!-- DROPDOWN LAZY LOAD -->
@@ -210,7 +195,6 @@
                             <span class="text-[10px] text-gray-500">Recientes</span>
                         </div>
                         <div id="notif-list" class="flex flex-col max-h-[300px] overflow-y-auto">
-                            <!-- Items se inyectan aquí -->
                             <div class="p-8 text-center text-gray-500 text-xs italic"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando...</div>
                         </div>
                     </div>
@@ -387,6 +371,28 @@
         </nav>
     </div>
 
+    <!-- ALERTAS -->
+    <div id="custom-alert" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
+            <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-500/20"><i class="fas fa-exclamation text-red-500 text-2xl"></i></div>
+            <h3 class="text-white font-bold text-xl mb-2">Atención</h3>
+            <p id="custom-alert-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">Mensaje</p>
+            <button onclick="closeCustomAlert()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold transition active:scale-95">Entendido</button>
+        </div>
+    </div>
+
+    <div id="custom-confirm" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-[#18181b] border border-zinc-800 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl">
+            <div class="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4 border border-orange-500/20"><i class="fas fa-question text-orange-500 text-2xl"></i></div>
+            <h3 id="custom-confirm-title" class="text-white font-bold text-xl mb-2">¿Estás seguro?</h3>
+            <p id="custom-confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">¿Continuar?</p>
+            <div class="flex gap-3">
+                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-zinc-800 text-gray-300 py-3 rounded-xl font-bold border border-zinc-700 active:scale-95 transition">Cancelar</button>
+                <button onclick="closeCustomConfirm(true)" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SCRIPT DE IA -->
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
@@ -472,14 +478,11 @@
                 // Cargar lista de seguidos (ONCE para evitar repintados agresivos)
                 db.ref('follows/' + user.uid).once('value', snap => {
                     followingCache = snap.val() || {};
-                    initFeedOnce(); // Iniciar feed solo después de saber a quién seguimos
+                    initFeedOnce(); 
                 });
 
-                // Listener de notificaciones (Solo badge)
-                db.ref('notifications/' + user.uid).orderByChild('read').equalTo(false).on('value', snap => {
-                    const badge = document.getElementById('notif-badge');
-                    if(snap.exists()) badge.classList.remove('hidden'); else badge.classList.add('hidden');
-                });
+                // INICIAR SISTEMA DE NOTIFICACIONES CORREGIDO
+                initNotificationSystem(user.uid);
 
                 loadUserCollectionsSelect();
                 initCharacterStatsListener();
@@ -487,10 +490,121 @@
                 loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500);
 
             } else {
-                // BLOQUEAR ACCESO SI NO ESTÁ LOGUEADO
                 window.location.href = 'login.html';
             }
         });
+
+        // --- SISTEMA DE NOTIFICACIONES (Estilo Facebook) ---
+        function initNotificationSystem(uid) {
+            const badge = document.getElementById('notif-badge');
+            // Escuchar SOLO la última notificación para decidir si mostrar el badge (Lazy Check)
+            db.ref('notifications/' + uid).orderByKey().limitToLast(1).on('child_added', snap => {
+                if(!snap.exists()) return;
+                const lastNotif = snap.val();
+                const lastSeenTimestamp = localStorage.getItem('lastSeenNotif_' + uid) || 0;
+                
+                // Si la última notificación es más nueva que la última vez que abrimos el menú
+                if (lastNotif.timestamp > lastSeenTimestamp) {
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            });
+        }
+
+        function toggleNotifications() {
+            const dd = document.getElementById('notification-dropdown');
+            const badge = document.getElementById('notif-badge');
+            
+            if (dd.classList.contains('visible')) {
+                // Cerrar
+                dd.classList.remove('visible');
+            } else {
+                // Abrir
+                dd.classList.add('visible');
+                
+                // 1. Ocultar Badge inmediatamente (ya se vio el menú)
+                badge.classList.add('hidden');
+                
+                // 2. Guardar timestamp actual como "Visto"
+                if(currentUser) {
+                    localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now());
+                }
+
+                // 3. Cargar lista (Lazy Load & Refresh)
+                loadNotifications();
+            }
+        }
+
+        function loadNotifications() {
+            const list = document.getElementById('notif-list');
+            // Cargar historial de notificaciones (persisten aunque se recargue)
+            db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
+                list.innerHTML = '';
+                if (!snap.exists()) {
+                    list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones recientes.</div>';
+                    return;
+                }
+                const notifs = [];
+                snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
+                
+                // Ordenar: más nuevas primero
+                notifs.reverse().forEach(n => {
+                    const item = document.createElement('div');
+                    // Clase 'unread' si read=false en DB (para color resaltado)
+                    // Clase 'read' si read=true en DB (para color normal)
+                    const isUnread = !n.read; 
+                    item.className = `notif-item ${isUnread ? 'unread' : 'read'}`;
+                    item.id = `notif-item-${n.key}`;
+                    
+                    let icon = 'fas fa-bell';
+                    let text = 'Nueva interacción';
+                    let linkFn = '';
+
+                    if (n.type === 'like') { icon = 'fas fa-heart text-red-500'; text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
+                    else if (n.type === 'comment') { icon = 'fas fa-comment text-blue-400'; text = `<b>${n.fromUserName}</b> comentó tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
+                    else if (n.type === 'follow') { icon = 'fas fa-user-plus text-green-400'; text = `<b>${n.fromUserName}</b> empezó a seguirte.`; linkFn = `goToProfile('${n.fromUserId}')`; }
+
+                    item.innerHTML = `
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 flex-shrink-0"><i class="${icon}"></i></div>
+                        <div class="flex-1 text-sm text-gray-300 leading-tight">${text} <br><span class="text-[10px] text-gray-500">${timeAgo(n.timestamp)}</span></div>
+                        ${isUnread ? '<div class="w-2 h-2 rounded-full bg-orange-500"></div>' : ''} 
+                    `;
+                    
+                    // Al hacer click: Marcar como leída en DB y visualmente
+                    item.onclick = () => {
+                        markAsRead(n.key, item);
+                        eval(linkFn);
+                        document.getElementById('notification-dropdown').classList.remove('visible');
+                    };
+                    list.appendChild(item);
+                });
+            });
+        }
+
+        function markAsRead(key, element) {
+            // Actualizar DB
+            db.ref(`notifications/${currentUser.uid}/${key}/read`).set(true);
+            // Actualizar Visualmente (Quitar highlight)
+            element.classList.remove('unread');
+            element.classList.add('read');
+            // Quitar el puntito naranja interno si existe
+            const dot = element.querySelector('.bg-orange-500');
+            if(dot) dot.remove();
+        }
+
+        function sendNotification(targetUid, type, postId = null) {
+            if (targetUid === currentUser.uid) return;
+            const notifRef = db.ref(`notifications/${targetUid}`).push();
+            notifRef.set({
+                type: type,
+                fromUserId: currentUser.uid,
+                fromUserName: (currentUserData && currentUserData.username) ? currentUserData.username : 'Alguien',
+                postId: postId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                read: false
+            });
+        }
 
         // --- UTILS ---
         function showToast(msg) {
@@ -698,12 +812,11 @@
             });
         }
         
-        // --- SISTEMA INTELIGENTE DE ORDENAMIENTO (Smart Mix) + PRIORIDAD PROPIA ---
+        // --- SISTEMA INTELIGENTE DE ORDENAMIENTO (Smart Mix) ---
         function applyFiltersAndRender() {
             let filtered = [...allPostsCache];
             const filterBar = document.getElementById('filter-bar');
             
-            // 1. Filtrado básico (Tags/Personajes)
             if (currentFilterTag) {
                 const term = currentFilterTag.toLowerCase();
                 if (currentFilterType === 'character') {
@@ -718,7 +831,6 @@
                 filterBar.classList.add('hidden');
             }
 
-            // 2. Ordenamiento inteligente (Smart Mix)
             if (currentSortOrder === 'newest') {
                 const myPosts = [];
                 const followedPosts = [];
@@ -734,12 +846,10 @@
                     }
                 });
 
-                // Ordenamos internamente por fecha
                 myPosts.sort((a, b) => b.timestamp - a.timestamp);
                 followedPosts.sort((a, b) => b.timestamp - a.timestamp);
                 otherPosts.sort((a, b) => b.timestamp - a.timestamp);
 
-                // Mezcla Inteligente: 3 Seguidos / 1 Otros
                 const mixed = [];
                 let fIndex = 0;
                 let oIndex = 0;
@@ -747,17 +857,12 @@
                 while(fIndex < followedPosts.length || oIndex < otherPosts.length) {
                     for(let i=0; i<3 && fIndex < followedPosts.length; i++) mixed.push(followedPosts[fIndex++]);
                     if(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]);
-                    
-                    // Si se acaban los seguidos, llenar con otros
                     if(fIndex >= followedPosts.length && oIndex < otherPosts.length) 
                         while(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]);
-                    
-                    // Si se acaban los otros, llenar con seguidos
                     if(oIndex >= otherPosts.length && fIndex < followedPosts.length) 
                         while(fIndex < followedPosts.length) mixed.push(followedPosts[fIndex++]);
                 }
 
-                // Resultado Final: TUS POSTS PRIMERO + MIX
                 displayedPosts = [...myPosts, ...mixed];
 
             } else if (currentSortOrder === 'oldest') {
@@ -807,17 +912,15 @@
         }, { rootMargin: '100px' });
         document.addEventListener('DOMContentLoaded', () => { const t = document.getElementById('load-more-trigger'); if(t) scrollObserver.observe(t); });
 
-        // --- FOLLOW SYSTEM OPTIMIZADO (Sin parpadeos) ---
+        // --- FOLLOW SYSTEM OPTIMIZADO ---
         function toggleFollow(targetUid, btn) {
             if (!requireLogin()) return;
             if (targetUid === currentUser.uid) return;
 
             const isFollowing = followingCache[targetUid];
             
-            // Actualización optimista de UI
             if (isFollowing) {
-                // Dejar de seguir
-                delete followingCache[targetUid]; // Actualizar caché local
+                delete followingCache[targetUid]; 
                 db.ref(`follows/${currentUser.uid}/${targetUid}`).remove();
                 db.ref(`followers/${targetUid}/${currentUser.uid}`).remove();
                 if(btn) {
@@ -825,8 +928,7 @@
                     btn.innerHTML = 'Seguir';
                 }
             } else {
-                // Seguir
-                followingCache[targetUid] = true; // Actualizar caché local
+                followingCache[targetUid] = true; 
                 db.ref(`follows/${currentUser.uid}/${targetUid}`).set(true);
                 db.ref(`followers/${targetUid}/${currentUser.uid}`).set(true);
                 sendNotification(targetUid, 'follow');
@@ -835,76 +937,6 @@
                     btn.innerHTML = 'Siguiendo';
                 }
             }
-            // NOTA: No llamamos a applyFiltersAndRender() aquí para evitar el parpadeo.
-            // El nuevo orden se aplicará la próxima vez que se recargue o cambie el filtro.
-        }
-
-        // --- NOTIFICATIONS SYSTEM ---
-        function toggleNotifications() {
-            const dd = document.getElementById('notification-dropdown');
-            const list = document.getElementById('notif-list');
-            const badge = document.getElementById('notif-badge');
-            
-            if (dd.classList.contains('visible')) {
-                dd.classList.remove('visible');
-            } else {
-                dd.classList.add('visible');
-                if (!list.getAttribute('data-loaded')) {
-                    loadNotifications();
-                    list.setAttribute('data-loaded', 'true');
-                }
-                badge.classList.add('hidden');
-            }
-        }
-
-        function loadNotifications() {
-            const list = document.getElementById('notif-list');
-            db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
-                list.innerHTML = '';
-                if (!snap.exists()) {
-                    list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones.</div>';
-                    return;
-                }
-                const notifs = [];
-                snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
-                notifs.reverse().forEach(n => {
-                    const item = document.createElement('div');
-                    item.className = `notif-item ${!n.read ? 'unread' : ''}`;
-                    
-                    let icon = 'fas fa-bell';
-                    let text = 'Nueva interacción';
-                    let linkFn = '';
-
-                    if (n.type === 'like') { icon = 'fas fa-heart text-red-500'; text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
-                    else if (n.type === 'comment') { icon = 'fas fa-comment text-blue-400'; text = `<b>${n.fromUserName}</b> comentó tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
-                    else if (n.type === 'follow') { icon = 'fas fa-user-plus text-green-400'; text = `<b>${n.fromUserName}</b> empezó a seguirte.`; linkFn = `goToProfile('${n.fromUserId}')`; }
-
-                    item.innerHTML = `
-                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700"><i class="${icon}"></i></div>
-                        <div class="flex-1 text-sm text-gray-300 leading-tight">${text} <br><span class="text-[10px] text-gray-500">${timeAgo(n.timestamp)}</span></div>
-                    `;
-                    item.onclick = () => {
-                        db.ref(`notifications/${currentUser.uid}/${n.key}/read`).set(true);
-                        item.classList.remove('unread');
-                        eval(linkFn); 
-                        document.getElementById('notification-dropdown').classList.remove('visible');
-                    };
-                    list.appendChild(item);
-                });
-            });
-        }
-
-        function sendNotification(targetUid, type, postId = null) {
-            if (targetUid === currentUser.uid) return;
-            const notifRef = db.ref(`notifications/${targetUid}`).push();
-            notifRef.set({
-                type: type,
-                fromUserId: currentUser.uid,
-                fromUserName: (currentUserData && currentUserData.username) ? currentUserData.username : 'Alguien',
-                postId: postId,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                read: false
-            });
         }
 
         // --- CREAR TARJETA ---
@@ -923,7 +955,6 @@
             let metaHtml = '<div class="mt-3 flex flex-wrap items-center gap-2">';
             if (post.characterName) metaHtml += `<button onclick="filterByCharacter('${post.characterName}')" class="text-[10px] bg-indigo-900/40 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/30 uppercase font-bold tracking-wide hover:bg-indigo-500/20 active:scale-95 transition flex items-center gap-1"><i class="fas fa-user-circle"></i> ${post.characterName}</button>`;
             
-            // --- CAMBIO: Tag de Álbum Clickeable ---
             if (post.collectionName) {
                 metaHtml += `<button onclick="window.location.href='profile.html?uid=${post.userId}&collection=${post.collectionId}'" class="text-[10px] bg-zinc-800 text-gray-400 px-2 py-0.5 rounded border border-zinc-700 font-medium hover:text-white hover:border-orange-500 transition"><i class="fas fa-folder text-orange-500 mr-1"></i> ${post.collectionName}</button>`;
             }
