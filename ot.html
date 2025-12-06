@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RPG Pocket Master</title>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@500;700&display=swap");
+
+  :root {
+    --primary: #d4a373;
+    --secondary: #faedcd;
+    --bg-dark: #231b15;
+    --panel-bg: rgba(30, 24, 18, 0.96);
+    --accent: #e63946;
+    --success: #2a9d8f;
+    --text-main: #fefae0;
+    --font-head: "Press Start 2P", cursive;
+    --font-body: "Rajdhani", sans-serif;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-body);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-image: url("https://user-uploads.perchance.org/file/ab420d1d360b70ea7199245068c7a872.jpg");
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* --- SOUND FEEDBACK --- */
+  .click-feedback { animation: pulse 0.1s; }
+
+  /* --- START SCREEN (TABBED) --- */
+  #startScreen {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.92);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .game-title {
+    font-family: var(--font-head);
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 20px;
+    text-shadow: 0 4px var(--accent);
+    line-height: 1.5;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    background: #444;
+    border: none;
+    padding: 10px;
+    color: #aaa;
+    font-family: var(--font-head);
+    font-size: 10px;
+    cursor: pointer;
+    border-radius: 5px 5px 0 0;
+  }
+  .tab-btn.active { background: var(--primary); color: var(--bg-dark); }
+
+  .tab-content {
+    background: #333;
+    padding: 15px;
+    border-radius: 0 0 10px 10px;
+    border: 1px solid var(--primary);
+    display: none;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .tab-content.active { display: flex; }
+
+  /* Inputs Styling */
+  label { font-weight: bold; color: var(--primary); font-size: 14px; margin-bottom: 5px; display: block; }
+  input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #666;
+    border-radius: 8px;
+    color: white;
+    font-family: var(--font-body);
+    font-size: 16px;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; }
+
+  .big-btn {
+    background: linear-gradient(180deg, var(--success), #1b635a);
+    color: white;
+    font-family: var(--font-head);
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    margin-top: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 5px #0f3d37;
+  }
+  .big-btn:active { transform: translateY(4px); box-shadow: 0 1px #0f3d37; }
+
+  /* --- AVATAR PREVIEW --- */
+  .avatar-preview-container {
+    text-align: center;
+    padding: 10px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border: 1px dashed var(--primary);
+  }
+  .preview-emoji { font-size: 60px; display: inline-block; filter: drop-shadow(0 0 10px rgba(212, 163, 115, 0.5)); }
+  .anim-breath { animation: breath 3s infinite ease-in-out; }
+
+  /* --- GAME HUD --- */
+  .hud {
+    background: var(--panel-bg);
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 3px solid var(--primary);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    z-index: 10;
+  }
+
+  .hud-avatar {
+    width: 45px; height: 45px;
+    border-radius: 50%;
+    background: #4a3b2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 2px solid var(--primary);
+    margin-right: 10px;
+  }
+
+  .hud-stats { flex: 1; }
+  
+  .bar-container {
+    height: 10px;
+    background: #111;
+    border-radius: 5px;
+    margin-bottom: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+  .bar-fill { height: 100%; transition: width 0.5s ease; }
+  .hp-fill { background: var(--accent); }
+  .xp-fill { background: var(--success); }
+  
+  .hud-text { font-size: 12px; color: #aaa; display: flex; justify-content: space-between; }
+
+  .menu-toggle {
+    background: none; border: none; font-size: 24px; cursor: pointer; color: var(--primary);
+  }
+
+  /* --- CHAT AREA --- */
+  #gameChat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    padding-bottom: 180px; /* Space for bottom controls */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    scroll-behavior: smooth;
+  }
+
+  .msg {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    line-height: 1.4;
+    font-size: 16px;
+    position: relative;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    word-wrap: break-word;
+  }
+  .msg-ai {
+    background: var(--panel-bg);
+    border-left: 4px solid var(--primary);
+    border-top-left-radius: 2px;
+  }
+  .msg-user {
+    align-self: flex-end;
+    background: #3d5a80;
+    color: white;
+    border-right: 4px solid #98c1d9;
+    border-top-right-radius: 2px;
+  }
+  .msg-img {
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 8px;
+    border: 2px solid #555;
+    background: #000;
+  }
+
+  .typing {
+    font-style: italic; color: #888; font-size: 12px; margin-left: 10px; display: none;
+  }
+
+  /* --- BOTTOM CONTROLS --- */
+  .controls-area {
+    position: fixed;
+    bottom: 0; left: 0; width: 100%;
+    background: var(--panel-bg);
+    padding: 10px;
+    border-top: 2px solid var(--primary);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .chips-scroll {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px;
+    -ms-overflow-style: none; scrollbar-width: none;
+  }
+  .chips-scroll::-webkit-scrollbar { display: none; }
+
+  .action-chip {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--primary);
+    color: var(--secondary);
+    padding: 8px 14px;
+    border-radius: 20px;
+    white-space: nowrap;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .action-chip:active { background: var(--primary); color: #000; }
+
+  .input-group { display: flex; gap: 10px; }
+  #playerInput {
+    flex: 1; padding: 12px; border-radius: 25px; border: 2px solid #555; background: #222; color: white;
+  }
+  #sendBtn {
+    width: 50px; height: 50px; border-radius: 50%; border: none;
+    background: var(--primary); color: #222; font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px #8b6b4b; cursor: pointer;
+  }
+  #sendBtn:active { transform: translateY(2px); box-shadow: 0 2px #8b6b4b; }
+
+  /* --- MODAL --- */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(5px);
+  }
+  .modal-overlay.active { display: flex; }
+
+  .modal-box {
+    background: #2a221a;
+    border: 2px solid var(--primary);
+    border-radius: 15px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,1);
+  }
+  .modal-head {
+    padding: 15px; background: var(--primary); color: #1a1510;
+    font-family: var(--font-head); font-size: 14px;
+    display: flex; justify-content: space-between;
+    border-radius: 12px 12px 0 0;
+  }
+  .modal-body { padding: 20px; overflow-y: auto; }
+
+  .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #444; }
+  .inv-item { background: #333; margin-bottom: 5px; padding: 10px; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
+
+  /* --- ANIMATIONS --- */
+  @keyframes breath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+  @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+  .shake { animation: shake 0.5s; }
+
+</style>
+</head>
+<body>
+
+  <!-- PANTALLA DE INICIO / CREACIÓN -->
+  <div id="startScreen">
+    <div class="game-title">⚔️ RPG POCKET<br>MASTER</div>
+    
+    <div class="avatar-preview-container">
+      <div id="previewEmoji" class="preview-emoji anim-breath">👤</div>
+      <div id="previewText" style="color: #aaa; margin-top: 5px; font-size: 14px;">Viajero Desconocido</div>
+    </div>
+
+    <!-- Pestañas -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('hero')">HÉROE</button>
+      <button class="tab-btn" onclick="switchTab('lore')">HISTORIA</button>
+      <button class="tab-btn" onclick="switchTab('world')">MUNDO</button>
+    </div>
+
+    <!-- Contenido Pestaña Héroe -->
+    <div id="tab-hero" class="tab-content active">
+      <label>Nombre</label>
+      <input type="text" id="charName" placeholder="Ej: Aragorn">
+      
+      <label>Raza</label>
+      <select id="charRace" onchange="checkCustom('charRace', 'customRace'); updatePreview()">
+        <option value="human">Humano</option>
+        <option value="elf">Elfo</option>
+        <option value="dwarf">Enano</option>
+        <option value="orc">Orco</option>
+        <option value="cyborg">Cyborg</option>
+        <option value="alien">Alien</option>
+        <option value="custom">🛠️ Personalizada...</option>
+      </select>
+      <input type="text" id="customRace" placeholder="Escribe tu raza..." style="display:none;" oninput="updatePreview()">
+
+      <label>Clase</label>
+      <select id="charClass" onchange="checkCustom('charClass', 'customClass'); updatePreview()">
+        <option value="warrior">Guerrero</option>
+        <option value="mage">Mago</option>
+        <option value="rogue">Pícaro</option>
+        <option value="hacker">Hacker</option>
+        <option value="pilot">Piloto</option>
+        <option value="custom">🛠️ Personalizada...</option>
+      </select>
+      <input type="text" id="customClass" placeholder="Escribe tu clase..." style="display:none;" oninput="updatePreview()">
+    </div>
+
+    <!-- Contenido Pestaña Historia (Lore) -->
+    <div id="tab-lore" class="tab-content">
+      <label>Trasfondo del Personaje (Lore)</label>
+      <textarea id="charLore" placeholder="¿Quién eres? ¿Qué buscas? Ej: Busco la espada que rompió mi padre..."></textarea>
+      
+      <label>Género</label>
+      <select id="charGender">
+        <option value="male">Masculino</option>
+        <option value="female">Femenino</option>
+        <option value="nb">No Binario</option>
+      </select>
+    </div>
+
+    <!-- Contenido Pestaña Mundo -->
+    <div id="tab-world" class="tab-content">
+      <label>Temática</label>
+      <select id="worldTheme" onchange="checkCustom('worldTheme', 'customTheme')">
+        <option value="fantasy">Fantasía Medieval</option>
+        <option value="cyberpunk">Cyberpunk / Futuro</option>
+        <option value="horror">Horror Cósmico</option>
+        <option value="postapoc">Post-Apocalíptico</option>
+        <option value="custom">🛠️ Personalizada...</option>
+      </select>
+      <input type="text" id="customTheme" placeholder="Ej: Mundo hecho de dulces..." style="display:none;">
+
+      <label>Reglas del Mundo (World Lore)</label>
+      <textarea id="worldLore" placeholder="Detalles especiales del mundo. Ej: La magia está prohibida por el Rey..."></textarea>
+    </div>
+
+    <button class="big-btn" onclick="startGame()">¡COMENZAR AVENTURA! ▶</button>
+  </div>
+
+  <!-- INTERFAZ DE JUEGO -->
+  <div class="hud">
+    <div class="hud-avatar" id="hudAvatar" onclick="openMenu()">👤</div>
+    <div class="hud-stats">
+      <div class="bar-container"><div id="hpBar" class="bar-fill hp-fill" style="width: 100%"></div></div>
+      <div class="bar-container"><div id="xpBar" class="bar-fill xp-fill" style="width: 0%"></div></div>
+      <div class="hud-text">
+        <span>HP <b id="hpVal">100</b></span>
+        <span>LVL <b id="lvlVal">1</b></span>
+      </div>
+    </div>
+    <button class="menu-toggle" onclick="openMenu()">☰</button>
+  </div>
+
+  <div id="gameChat">
+    <div class="msg msg-ai">
+      Bienvenido. Configura tu personaje para iniciar la simulación...
+    </div>
+  </div>
+  <div id="typingIndicator" class="typing">✨ El universo está respondiendo...</div>
+
+  <div class="controls-area">
+    <div class="chips-scroll">
+      <div class="action-chip" onclick="quickAction('Inspeccionar área')">👁️ Mirar</div>
+      <div class="action-chip" onclick="quickAction('Abrir inventario')">🎒 Inventario</div>
+      <div class="action-chip" onclick="quickAction('Atacar enemigo')">⚔️ Atacar</div>
+      <div class="action-chip" onclick="quickAction('Explorar')">🦶 Explorar</div>
+      <div class="action-chip" onclick="quickAction('Hablar')">🗣️ Hablar</div>
+    </div>
+    <div class="input-group">
+      <input type="text" id="playerInput" placeholder="¿Qué haces?" autocomplete="off">
+      <button id="sendBtn" onclick="submitAction()">➤</button>
+    </div>
+  </div>
+
+  <!-- MENU MODAL -->
+  <div id="menuModal" class="modal-overlay" onclick="closeMenu(event)">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span>PAUSA / MENÚ</span>
+        <span onclick="toggleModal('menuModal')" style="cursor:pointer">✖</span>
+      </div>
+      <div class="modal-body">
+        <h3 style="color:var(--primary); margin-top:0;">Estadísticas</h3>
+        <div class="stat-row"><span>Nombre:</span> <span id="menuName">--</span></div>
+        <div class="stat-row"><span>Clase:</span> <span id="menuClass">--</span></div>
+        <div class="stat-row"><span>XP:</span> <span id="menuXP">0/100</span></div>
+        
+        <h3 style="color:var(--primary);">Inventario</h3>
+        <div id="inventoryList"></div>
+
+        <h3 style="color:var(--primary);">Sistema</h3>
+        <button class="action-chip" style="width:100%; margin-bottom:10px; text-align:center;" onclick="toggleSound()">🔊 Sonido: <span id="soundStatus">ON</span></button>
+        <div style="display:flex; gap:10px;">
+            <button class="big-btn" style="margin-top:0; flex:1;" onclick="saveGame()">💾 Guardar</button>
+            <button class="big-btn" style="margin-top:0; flex:1; background:var(--accent);" onclick="resetGame()">♻ Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  /* --- SISTEMA DE SONIDO (Sintetizador Web Audio) --- */
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioContext();
+  let soundEnabled = true;
+
+  function playTone(type) {
+    if (!soundEnabled) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    if (type === 'click') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+      gainNode.gain.setValueAtTime(0.1, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } 
+    else if (type === 'start') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.linearRampToValueAtTime(440, now + 0.2);
+      osc.frequency.linearRampToValueAtTime(880, now + 0.4);
+      gainNode.gain.setValueAtTime(0.1, now);
+      gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+      osc.start(now);
+      osc.stop(now + 0.5);
+    }
+    else if (type === 'message') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(500, now);
+      gainNode.gain.setValueAtTime(0.05, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    }
+    else if (type === 'hit') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(100, now);
+      osc.frequency.linearRampToValueAtTime(50, now + 0.2);
+      gainNode.gain.setValueAtTime(0.2, now);
+      gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    }
+    else if (type === 'levelup') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.setValueAtTime(554, now + 0.1);
+      osc.frequency.setValueAtTime(659, now + 0.2);
+      osc.frequency.setValueAtTime(880, now + 0.3);
+      gainNode.gain.setValueAtTime(0.1, now);
+      gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
+      osc.start(now);
+      osc.stop(now + 0.6);
+    }
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('soundStatus').innerText = soundEnabled ? "ON" : "OFF";
+    playTone('click');
+  }
+
+  /* --- UI LOGIC --- */
+  function switchTab(tabId) {
+    playTone('click');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tabId).classList.add('active');
+  }
+
+  function checkCustom(selectId, inputId) {
+    const val = document.getElementById(selectId).value;
+    document.getElementById(inputId).style.display = val === 'custom' ? 'block' : 'none';
+    if(val === 'custom') document.getElementById(inputId).focus();
+  }
+
+  // Mapa de Emojis para razas y clases
+  const emojiMap = {
+    human: "👱", elf: "🧝", dwarf: "🧔", orc: "👹", cyborg: "🤖", alien: "👽", custom: "👤",
+    warrior: "⚔️", mage: "🔮", rogue: "🗡️", hacker: "💻", pilot: "🚀", custom: "✨"
+  };
+
+  function updatePreview() {
+    const rSelect = document.getElementById('charRace').value;
+    const cSelect = document.getElementById('charClass').value;
+    
+    // Obtener valores reales (si es custom)
+    const rVal = rSelect === 'custom' ? (document.getElementById('customRace').value || 'Desconocido') : rSelect;
+    const cVal = cSelect === 'custom' ? (document.getElementById('customClass').value || 'Aventurero') : cSelect;
+
+    // Obtener Emojis
+    const rEmoji = emojiMap[rSelect] || "👤";
+    const cEmoji = emojiMap[cSelect] || "✨";
+
+    document.getElementById('previewEmoji').innerText = rEmoji + cEmoji;
+    
+    // Texto bonito
+    const rLabel = rSelect === 'custom' ? rVal : document.querySelector(`#charRace option[value="${rSelect}"]`).text;
+    const cLabel = cSelect === 'custom' ? cVal : document.querySelector(`#charClass option[value="${cSelect}"]`).text;
+    
+    document.getElementById('previewText').innerText = `${rLabel} ${cLabel}`;
+  }
+
+  function toggleModal(id) {
+    playTone('click');
+    const el = document.getElementById(id);
+    el.classList.toggle('active');
+    if(el.classList.contains('active')) updateMenu();
+  }
+  
+  function openMenu() { toggleModal('menuModal'); }
+  function closeMenu(e) { if(e.target.id === 'menuModal') toggleModal('menuModal'); }
+
+  /* --- GAME STATE & LOGIC --- */
+  let gameState = {
+    name: "", race: "", class: "", gender: "", lore: "",
+    theme: "", themeLore: "",
+    hp: 100, maxHp: 100, xp: 0, level: 1,
+    inventory: [],
+    history: []
+  };
+
+  async function startGame() {
+    playTone('start');
+    
+    // Recopilar Datos
+    const name = document.getElementById('charName').value || "Héroe";
+    const rSelect = document.getElementById('charRace').value;
+    const cSelect = document.getElementById('charClass').value;
+    const tSelect = document.getElementById('worldTheme').value;
+    
+    gameState.name = name;
+    gameState.race = rSelect === 'custom' ? document.getElementById('customRace').value : document.querySelector(`#charRace option[value="${rSelect}"]`).text;
+    gameState.class = cSelect === 'custom' ? document.getElementById('customClass').value : document.querySelector(`#charClass option[value="${cSelect}"]`).text;
+    gameState.gender = document.getElementById('charGender').options[document.getElementById('charGender').selectedIndex].text;
+    gameState.lore = document.getElementById('charLore').value || "Un viajero misterioso.";
+    
+    gameState.theme = tSelect === 'custom' ? document.getElementById('customTheme').value : document.querySelector(`#worldTheme option[value="${tSelect}"]`).text;
+    gameState.themeLore = document.getElementById('worldLore').value || "Un mundo lleno de peligros y oportunidades.";
+
+    // Emoji de HUD
+    const rEmoji = emojiMap[rSelect] || "👤";
+    const cEmoji = emojiMap[cSelect] || "";
+    document.getElementById('hudAvatar').innerText = rEmoji;
+
+    // Inventario inicial
+    gameState.inventory = ["Mapa", "Raciones (2)"];
+    
+    // Ocultar inicio
+    document.getElementById('startScreen').style.display = 'none';
+    
+    // Limpiar chat anterior
+    document.getElementById('gameChat').innerHTML = "";
+    
+    // Generar Prompt Inicial
+    const prompt = `INICIO DE JUEGO.
+    Personaje: ${gameState.name}, ${gameState.race} ${gameState.class} (${gameState.gender}).
+    Lore Personal: ${gameState.lore}.
+    Mundo: ${gameState.theme}.
+    Lore Mundo: ${gameState.themeLore}.
+    Inventario: ${gameState.inventory.join(', ')}.
+    
+    Instrucción: Genera una introducción inmersiva corta (max 60 palabras). Describe dónde estoy y preséntame un conflicto inmediato o punto de interés. Termina preguntando qué hago.`;
+
+    await processTurn(prompt, true, true);
+  }
+
+  function addMsg(role, text, img = null) {
+    const div = document.createElement('div');
+    div.className = `msg msg-${role}`;
+    
+    // Formato básico markdown a HTML
+    let html = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'); // Negrita
+    html = html.replace(/\*(.*?)\*/g, '<i>$1</i>'); // Cursiva
+    div.innerHTML = html;
+
+    if(img) {
+      const image = document.createElement('img');
+      image.src = img;
+      image.className = "msg-img";
+      div.appendChild(image);
+    }
+
+    document.getElementById('gameChat').appendChild(div);
+    document.getElementById('gameChat').scrollTop = document.getElementById('gameChat').scrollHeight;
+    
+    if(role === 'ai') playTone('message');
+  }
+
+  /* --- API CALLS --- */
+  async function processTurn(userText, isSystemPrompt = false, generateImg = false) {
+    document.getElementById('typingIndicator').style.display = 'block';
+    
+    // Añadir mensaje de usuario al chat (si no es prompt de sistema)
+    if(!isSystemPrompt) {
+      addMsg('user', userText);
+      gameState.history.push({ role: "user", parts: [{ text: userText }] });
+    }
+
+    const apiKey = ""; // Se inyecta automáticamente en el entorno
+    const urlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    
+    // Sistema
+    const sysPrompt = `Eres un Game Master de Rol experto. Idioma: Español.
+    Reglas:
+    1. Respuestas cortas (max 80 palabras) pero descriptivas.
+    2. Usa 2da persona ("Ves...", "Sientes...").
+    3. Si el jugador recibe daño, escribe [DAÑO: X] al inicio.
+    4. Si el jugador recibe un objeto, escribe [ITEM: Nombre] al inicio.
+    5. Si el jugador gana experiencia, escribe [XP: Cantidad] al inicio.
+    6. Contexto actual: HP ${gameState.hp}/${gameState.maxHp}. Inventario: ${gameState.inventory.join(',')}.
+    7. IMPORTANTE: Integra el Lore del jugador (${gameState.lore}) y del mundo (${gameState.themeLore}) en la narrativa cuando sea relevante.`;
+
+    const payload = {
+      contents: isSystemPrompt ? [{ role: "user", parts: [{ text: userText }] }] : [...gameState.history],
+      systemInstruction: { parts: [{ text: sysPrompt }] }
+    };
+
+    try {
+      // 1. TEXTO
+      const resp = await fetch(urlText, {
+         method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      let aiText = data.candidates[0].content.parts[0].text;
+
+      // 2. PROCESAR EVENTOS (Tags)
+      aiText = parseEvents(aiText);
+
+      gameState.history.push({ role: "model", parts: [{ text: aiText }] });
+      
+      // 3. IMAGEN (Opcional)
+      let imgUrl = null;
+      if(generateImg || Math.random() < 0.15) { // 15% chance de imagen en turnos normales
+        imgUrl = await generateImage(aiText.substring(0, 100));
+      }
+
+      document.getElementById('typingIndicator').style.display = 'none';
+      addMsg('ai', aiText, imgUrl);
+      updateHUD();
+
+    } catch(e) {
+      console.error(e);
+      document.getElementById('typingIndicator').style.display = 'none';
+      addMsg('ai', "⚠️ *La conexión psíquica se rompió... intenta de nuevo.*");
+    }
+  }
+
+  function parseEvents(text) {
+    // Regex para capturar tags [TAG: Valor]
+    const damageRegex = /\[DAÑO:\s*(\d+)\]/i;
+    const xpRegex = /\[XP:\s*(\d+)\]/i;
+    const itemRegex = /\[ITEM:\s*(.*?)\]/i;
+
+    let cleanText = text;
+
+    // Daño
+    const dmgMatch = text.match(damageRegex);
+    if(dmgMatch) {
+        const dmg = parseInt(dmgMatch[1]);
+        gameState.hp = Math.max(0, gameState.hp - dmg);
+        playTone('hit');
+        document.body.classList.add('shake');
+        setTimeout(()=>document.body.classList.remove('shake'), 500);
+        cleanText = cleanText.replace(damageRegex, '');
+    }
+
+    // XP
+    const xpMatch = text.match(xpRegex);
+    if(xpMatch) {
+        const xpGain = parseInt(xpMatch[1]);
+        gameState.xp += xpGain;
+        if(gameState.xp >= 100) {
+            gameState.level++;
+            gameState.xp = 0;
+            gameState.maxHp += 10;
+            gameState.hp = gameState.maxHp;
+            playTone('levelup');
+            addMsg('ai', "🎉 **¡SUBIDA DE NIVEL!** Te sientes más poderoso.");
+        }
+        cleanText = cleanText.replace(xpRegex, '');
+    }
+
+    // Items
+    const itemMatch = text.match(itemRegex);
+    if(itemMatch) {
+        const item = itemMatch[1].trim();
+        gameState.inventory.push(item);
+        playTone('start'); // Sonido positivo
+        cleanText = cleanText.replace(itemRegex, '');
+    }
+
+    return cleanText.trim();
+  }
+
+  async function generateImage(promptFragment) {
+    const apiKey = "";
+    const urlImg = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+    
+    const fullPrompt = `RPG art, ${gameState.theme} style, ${promptFragment}`;
+    
+    try {
+        const res = await fetch(urlImg, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ instances: [{ prompt: fullPrompt }], parameters: { sampleCount: 1 } })
+        });
+        const d = await res.json();
+        return `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
+    } catch(e) { return null; }
+  }
+
+  /* --- CONTROLS --- */
+  function submitAction() {
+    playTone('click');
+    const input = document.getElementById('playerInput');
+    const val = input.value.trim();
+    if(val) {
+        processTurn(val);
+        input.value = "";
+    }
+  }
+
+  function quickAction(act) {
+    playTone('click');
+    processTurn(act);
+  }
+
+  function updateHUD() {
+    const hpPct = (gameState.hp / gameState.maxHp) * 100;
+    const xpPct = (gameState.xp / 100) * 100;
+    
+    document.getElementById('hpBar').style.width = hpPct + "%";
+    document.getElementById('xpBar').style.width = xpPct + "%";
+    document.getElementById('hpVal').innerText = gameState.hp;
+    document.getElementById('lvlVal').innerText = gameState.level;
+  }
+
+  function updateMenu() {
+    document.getElementById('menuName').innerText = gameState.name;
+    document.getElementById('menuClass').innerText = `${gameState.race} ${gameState.class}`;
+    document.getElementById('menuXP').innerText = `${gameState.xp}/100`;
+    
+    const list = document.getElementById('inventoryList');
+    list.innerHTML = "";
+    gameState.inventory.forEach(i => {
+        const div = document.createElement('div');
+        div.className = "inv-item";
+        div.innerHTML = `📦 ${i}`;
+        list.appendChild(div);
+    });
+  }
+
+  function saveGame() {
+    localStorage.setItem('pocketRpgSave', JSON.stringify(gameState));
+    playTone('levelup');
+    alert("¡Partida Guardada!");
+  }
+
+  function resetGame() {
+    if(confirm("¿Borrar progreso y reiniciar?")) {
+        localStorage.removeItem('pocketRpgSave');
+        location.reload();
+    }
+  }
+
+  // Cargar Partida al inicio si existe
+  window.onload = () => {
+    updatePreview(); // Init preview
+    const save = localStorage.getItem('pocketRpgSave');
+    if(save && confirm("¿Cargar partida guardada?")) {
+        gameState = JSON.parse(save);
+        document.getElementById('startScreen').style.display = 'none';
+        
+        // Restore Avatar
+        // Simple heuristic to recover emoji based on race name
+        let foundEmoji = "👤";
+        for (const [key, val] of Object.entries(emojiMap)) {
+             // Check if race name contains the key (simple check)
+             if (gameState.race.toLowerCase().includes(document.querySelector(`#charRace option[value="${key}"]`)?.text.toLowerCase() || "xyz")) {
+                 foundEmoji = val;
+             }
+        }
+        document.getElementById('hudAvatar').innerText = foundEmoji;
+        
+        updateHUD();
+        addMsg('ai', "📂 *Sistema restaurado. Bienvenido de vuelta, " + gameState.name + ".*");
+    }
+  };
+
+  // Enter Key
+  document.getElementById('playerInput').addEventListener("keypress", (e) => {
+    if(e.key === "Enter") submitAction();
+  });
+
+</script>
+</body>
+</html>
