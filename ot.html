@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RPG Pocket Master</title>
+<title>RPG Pocket Master (Free Edition)</title>
 <style>
   @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@500;700&display=swap");
 
@@ -11,7 +11,7 @@
     --primary: #d4a373;
     --secondary: #faedcd;
     --bg-dark: #231b15;
-    --panel-bg: rgba(30, 24, 18, 0.96);
+    --panel-bg: rgba(30, 24, 18, 0.98);
     --accent: #e63946;
     --success: #2a9d8f;
     --text-main: #fefae0;
@@ -31,301 +31,248 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background-image: url("https://user-uploads.perchance.org/file/ab420d1d360b70ea7199245068c7a872.jpg");
+    background-image: url("https://image.pollinations.ai/prompt/dark%20fantasy%20rpg%20background%20texture%20leather%20and%20wood?nologo=true");
     background-size: cover;
     background-position: center;
   }
 
-  /* --- SOUND FEEDBACK --- */
+  /* --- UTILS --- */
+  .hidden { display: none !important; }
   .click-feedback { animation: pulse 0.1s; }
 
-  /* --- START SCREEN (TABBED) --- */
-  #startScreen {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.92);
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    overflow-y: auto;
+  /* --- NOTIFICATIONS --- */
+  #notification-area {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 3000; display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+    width: 90%; max-width: 400px;
   }
+  .toast {
+    background: var(--panel-bg); border: 1px solid var(--primary);
+    padding: 10px 15px; border-radius: 8px; color: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    animation: slideDown 0.3s ease-out;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .toast-success { border-color: var(--success); color: var(--success); }
+  .toast-error { border-color: var(--accent); color: var(--accent); }
+
+  /* --- START SCREEN --- */
+  #startScreen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 12, 8, 0.98);
+    z-index: 1000;
+    display: flex; flex-direction: column;
+    padding: 20px; overflow-y: auto;
+  }
+
+  .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .settings-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; transition: color 0.3s; }
+  .settings-btn:hover { color: var(--primary); }
 
   .game-title {
-    font-family: var(--font-head);
-    color: var(--primary);
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 20px;
-    text-shadow: 0 4px var(--accent);
-    line-height: 1.5;
+    font-family: var(--font-head); color: var(--primary);
+    text-align: center; font-size: 20px;
+    text-shadow: 0 4px var(--accent); line-height: 1.5;
   }
 
-  .tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-  }
-
+  .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
   .tab-btn {
-    flex: 1;
-    background: #444;
-    border: none;
-    padding: 10px;
-    color: #aaa;
-    font-family: var(--font-head);
-    font-size: 10px;
-    cursor: pointer;
-    border-radius: 5px 5px 0 0;
+    flex: 1; background: #333; border: none; padding: 12px;
+    color: #888; font-family: var(--font-head); font-size: 10px;
+    cursor: pointer; border-radius: 8px 8px 0 0; transition: all 0.2s;
   }
   .tab-btn.active { background: var(--primary); color: var(--bg-dark); }
 
   .tab-content {
-    background: #333;
-    padding: 15px;
-    border-radius: 0 0 10px 10px;
+    background: rgba(40, 30, 25, 0.8);
+    padding: 20px; border-radius: 0 0 12px 12px;
     border: 1px solid var(--primary);
-    display: none;
-    flex-direction: column;
-    gap: 15px;
+    display: none; flex-direction: column; gap: 15px;
+    backdrop-filter: blur(5px);
   }
   .tab-content.active { display: flex; }
 
-  /* Inputs Styling */
   label { font-weight: bold; color: var(--primary); font-size: 14px; margin-bottom: 5px; display: block; }
   input, select, textarea {
-    width: 100%;
-    padding: 12px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid #666;
-    border-radius: 8px;
-    color: white;
-    font-family: var(--font-body);
-    font-size: 16px;
+    width: 100%; padding: 12px; background: rgba(0,0,0,0.4);
+    border: 1px solid #555; border-radius: 8px;
+    color: white; font-family: var(--font-body); font-size: 16px;
   }
   textarea { resize: vertical; min-height: 80px; }
-  input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; background: rgba(0,0,0,0.6); }
 
   .big-btn {
     background: linear-gradient(180deg, var(--success), #1b635a);
-    color: white;
-    font-family: var(--font-head);
-    padding: 15px;
-    border: none;
-    border-radius: 10px;
-    margin-top: 20px;
-    font-size: 14px;
-    cursor: pointer;
-    box-shadow: 0 5px #0f3d37;
+    color: white; font-family: var(--font-head);
+    padding: 15px; border: none; border-radius: 10px;
+    margin-top: 20px; font-size: 14px; cursor: pointer;
+    box-shadow: 0 5px #0f3d37; width: 100%;
+    transition: transform 0.1s;
   }
   .big-btn:active { transform: translateY(4px); box-shadow: 0 1px #0f3d37; }
 
   /* --- AVATAR PREVIEW --- */
   .avatar-preview-container {
-    text-align: center;
-    padding: 10px;
-    background: rgba(0,0,0,0.5);
-    border-radius: 10px;
-    margin-bottom: 10px;
-    border: 1px dashed var(--primary);
+    text-align: center; padding: 15px;
+    background: rgba(0,0,0,0.4); border-radius: 12px;
+    margin-bottom: 20px; border: 1px dashed var(--primary);
   }
-  .preview-emoji { font-size: 60px; display: inline-block; filter: drop-shadow(0 0 10px rgba(212, 163, 115, 0.5)); }
+  .preview-emoji { font-size: 60px; display: inline-block; filter: drop-shadow(0 0 15px rgba(212, 163, 115, 0.3)); }
   .anim-breath { animation: breath 3s infinite ease-in-out; }
 
   /* --- GAME HUD --- */
   .hud {
-    background: var(--panel-bg);
-    padding: 10px 15px;
-    display: flex;
-    align-items: center;
+    background: var(--panel-bg); padding: 10px 15px;
+    display: flex; align-items: center;
     border-bottom: 3px solid var(--primary);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    z-index: 10;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.6); z-index: 10;
   }
-
   .hud-avatar {
-    width: 45px; height: 45px;
-    border-radius: 50%;
-    background: #4a3b2a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    border: 2px solid var(--primary);
-    margin-right: 10px;
+    width: 50px; height: 50px; border-radius: 50%;
+    background: #1a1510; display: flex; align-items: center; justify-content: center;
+    font-size: 28px; border: 2px solid var(--primary); margin-right: 12px;
+    cursor: pointer;
   }
-
   .hud-stats { flex: 1; }
-  
   .bar-container {
-    height: 10px;
-    background: #111;
-    border-radius: 5px;
-    margin-bottom: 4px;
-    position: relative;
-    overflow: hidden;
+    height: 12px; background: #111; border-radius: 6px;
+    margin-bottom: 6px; position: relative; overflow: hidden; border: 1px solid #333;
   }
-  .bar-fill { height: 100%; transition: width 0.5s ease; }
-  .hp-fill { background: var(--accent); }
-  .xp-fill { background: var(--success); }
+  .bar-fill { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+  .hp-fill { background: linear-gradient(90deg, #e63946, #ff6b6b); }
+  .xp-fill { background: linear-gradient(90deg, #2a9d8f, #4ade80); }
   
-  .hud-text { font-size: 12px; color: #aaa; display: flex; justify-content: space-between; }
-
-  .menu-toggle {
-    background: none; border: none; font-size: 24px; cursor: pointer; color: var(--primary);
-  }
+  .hud-text { font-size: 12px; color: #bbb; display: flex; justify-content: space-between; font-weight: bold; }
 
   /* --- CHAT AREA --- */
   #gameChat {
-    flex: 1;
-    overflow-y: auto;
-    padding: 15px;
-    padding-bottom: 180px; /* Space for bottom controls */
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    scroll-behavior: smooth;
+    flex: 1; overflow-y: auto; padding: 15px;
+    padding-bottom: 180px; display: flex; flex-direction: column;
+    gap: 15px; scroll-behavior: smooth;
+    background: radial-gradient(circle at center, rgba(0,0,0,0.3), rgba(0,0,0,0.8));
   }
-
   .msg {
-    max-width: 85%;
-    padding: 12px 16px;
-    border-radius: 12px;
-    line-height: 1.4;
-    font-size: 16px;
-    position: relative;
-    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    word-wrap: break-word;
+    max-width: 88%; padding: 14px 18px; border-radius: 12px;
+    line-height: 1.5; font-size: 16px; position: relative;
+    animation: popIn 0.3s ease-out; word-wrap: break-word;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
   }
   .msg-ai {
-    background: var(--panel-bg);
-    border-left: 4px solid var(--primary);
-    border-top-left-radius: 2px;
+    background: var(--panel-bg); border-left: 4px solid var(--primary);
+    border-top-left-radius: 2px; margin-right: auto;
   }
   .msg-user {
-    align-self: flex-end;
-    background: #3d5a80;
-    color: white;
-    border-right: 4px solid #98c1d9;
-    border-top-right-radius: 2px;
+    align-self: flex-end; background: #3d5a80; color: white;
+    border-right: 4px solid #98c1d9; border-top-right-radius: 2px;
+    margin-left: auto;
   }
   .msg-img {
-    width: 100%;
-    border-radius: 8px;
-    margin-top: 8px;
-    border: 2px solid #555;
-    background: #000;
+    width: 100%; max-width: 400px; border-radius: 8px; margin-top: 10px;
+    border: 2px solid #555; display: block; background: #000; min-height: 150px;
+    object-fit: cover;
   }
-
   .typing {
-    font-style: italic; color: #888; font-size: 12px; margin-left: 10px; display: none;
+    font-style: italic; color: var(--primary); font-size: 12px;
+    margin: 10px 20px; display: none;
+    animation: pulse 1.5s infinite;
   }
 
   /* --- BOTTOM CONTROLS --- */
   .controls-area {
-    position: fixed;
-    bottom: 0; left: 0; width: 100%;
-    background: var(--panel-bg);
-    padding: 10px;
-    border-top: 2px solid var(--primary);
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: var(--panel-bg); padding: 12px;
+    border-top: 2px solid var(--primary); z-index: 20;
+    display: flex; flex-direction: column; gap: 12px;
   }
-
   .chips-scroll {
     display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px;
     -ms-overflow-style: none; scrollbar-width: none;
   }
   .chips-scroll::-webkit-scrollbar { display: none; }
-
   .action-chip {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid var(--primary);
-    color: var(--secondary);
-    padding: 8px 14px;
-    border-radius: 20px;
-    white-space: nowrap;
-    font-size: 14px;
-    cursor: pointer;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--primary);
+    color: var(--secondary); padding: 8px 16px; border-radius: 20px;
+    white-space: nowrap; font-size: 14px; cursor: pointer;
+    transition: background 0.2s;
   }
   .action-chip:active { background: var(--primary); color: #000; }
 
   .input-group { display: flex; gap: 10px; }
   #playerInput {
-    flex: 1; padding: 12px; border-radius: 25px; border: 2px solid #555; background: #222; color: white;
+    flex: 1; padding: 12px 20px; border-radius: 25px;
+    border: 2px solid #555; background: #222; color: white;
   }
   #sendBtn {
     width: 50px; height: 50px; border-radius: 50%; border: none;
     background: var(--primary); color: #222; font-size: 20px;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px #8b6b4b; cursor: pointer;
+    box-shadow: 0 4px #8b6b4b; cursor: pointer; flex-shrink: 0;
   }
   #sendBtn:active { transform: translateY(2px); box-shadow: 0 2px #8b6b4b; }
 
   /* --- MODAL --- */
   .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85);
-    z-index: 2000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    backdrop-filter: blur(5px);
+    background: rgba(0,0,0,0.85); z-index: 2000;
+    display: none; align-items: center; justify-content: center;
+    padding: 20px; backdrop-filter: blur(5px);
   }
   .modal-overlay.active { display: flex; }
-
   .modal-box {
-    background: #2a221a;
-    border: 2px solid var(--primary);
-    border-radius: 15px;
-    width: 100%;
-    max-width: 400px;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 10px 30px rgba(0,0,0,1);
+    background: #231b15; border: 2px solid var(--primary);
+    border-radius: 15px; width: 100%; max-width: 400px;
+    max-height: 85vh; display: flex; flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0,0,0,1); animation: popIn 0.2s;
   }
   .modal-head {
     padding: 15px; background: var(--primary); color: #1a1510;
     font-family: var(--font-head); font-size: 14px;
-    display: flex; justify-content: space-between;
+    display: flex; justify-content: space-between; align-items: center;
     border-radius: 12px 12px 0 0;
   }
-  .modal-body { padding: 20px; overflow-y: auto; }
+  .modal-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
   .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #444; }
-  .inv-item { background: #333; margin-bottom: 5px; padding: 10px; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
+  .inv-item { background: #333; padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px; border: 1px solid #444; }
 
   /* --- ANIMATIONS --- */
   @keyframes breath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
   @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
   @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
   .shake { animation: shake 0.5s; }
 
+  .api-note {
+    font-size: 12px; color: #aaa; background: #333; padding: 10px;
+    border-radius: 5px; border-left: 3px solid var(--success); margin-bottom: 10px;
+  }
 </style>
 </head>
 <body>
 
-  <!-- PANTALLA DE INICIO / CREACIÓN -->
+  <!-- NOTIFICACIONES -->
+  <div id="notification-area"></div>
+
+  <!-- PANTALLA DE INICIO -->
   <div id="startScreen">
-    <div class="game-title">⚔️ RPG POCKET<br>MASTER</div>
+    <div class="header-row">
+      <div class="game-title">⚔️ RPG POCKET<br>FREE EDITION</div>
+      <button class="settings-btn" onclick="openSettings()">⚙️</button>
+    </div>
     
     <div class="avatar-preview-container">
       <div id="previewEmoji" class="preview-emoji anim-breath">👤</div>
       <div id="previewText" style="color: #aaa; margin-top: 5px; font-size: 14px;">Viajero Desconocido</div>
     </div>
 
-    <!-- Pestañas -->
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('hero')">HÉROE</button>
       <button class="tab-btn" onclick="switchTab('lore')">HISTORIA</button>
       <button class="tab-btn" onclick="switchTab('world')">MUNDO</button>
     </div>
 
-    <!-- Contenido Pestaña Héroe -->
+    <!-- HÉROE -->
     <div id="tab-hero" class="tab-content active">
       <label>Nombre</label>
       <input type="text" id="charName" placeholder="Ej: Aragorn">
@@ -338,6 +285,7 @@
         <option value="orc">Orco</option>
         <option value="cyborg">Cyborg</option>
         <option value="alien">Alien</option>
+        <option value="catfolk">Félido</option>
         <option value="custom">🛠️ Personalizada...</option>
       </select>
       <input type="text" id="customRace" placeholder="Escribe tu raza..." style="display:none;" oninput="updatePreview()">
@@ -349,15 +297,16 @@
         <option value="rogue">Pícaro</option>
         <option value="hacker">Hacker</option>
         <option value="pilot">Piloto</option>
+        <option value="monk">Monje</option>
         <option value="custom">🛠️ Personalizada...</option>
       </select>
       <input type="text" id="customClass" placeholder="Escribe tu clase..." style="display:none;" oninput="updatePreview()">
     </div>
 
-    <!-- Contenido Pestaña Historia (Lore) -->
+    <!-- LORE -->
     <div id="tab-lore" class="tab-content">
-      <label>Trasfondo del Personaje (Lore)</label>
-      <textarea id="charLore" placeholder="¿Quién eres? ¿Qué buscas? Ej: Busco la espada que rompió mi padre..."></textarea>
+      <label>Trasfondo (Lore)</label>
+      <textarea id="charLore" placeholder="¿Quién eres? ¿Qué buscas? Ej: Busco la espada perdida de mi clan..."></textarea>
       
       <label>Género</label>
       <select id="charGender">
@@ -367,7 +316,7 @@
       </select>
     </div>
 
-    <!-- Contenido Pestaña Mundo -->
+    <!-- MUNDO -->
     <div id="tab-world" class="tab-content">
       <label>Temática</label>
       <select id="worldTheme" onchange="checkCustom('worldTheme', 'customTheme')">
@@ -375,18 +324,19 @@
         <option value="cyberpunk">Cyberpunk / Futuro</option>
         <option value="horror">Horror Cósmico</option>
         <option value="postapoc">Post-Apocalíptico</option>
+        <option value="wildwest">Viejo Oeste</option>
         <option value="custom">🛠️ Personalizada...</option>
       </select>
       <input type="text" id="customTheme" placeholder="Ej: Mundo hecho de dulces..." style="display:none;">
 
-      <label>Reglas del Mundo (World Lore)</label>
-      <textarea id="worldLore" placeholder="Detalles especiales del mundo. Ej: La magia está prohibida por el Rey..."></textarea>
+      <label>Reglas del Mundo</label>
+      <textarea id="worldLore" placeholder="Detalles extra. Ej: La magia está prohibida por el Emperador..."></textarea>
     </div>
 
     <button class="big-btn" onclick="startGame()">¡COMENZAR AVENTURA! ▶</button>
   </div>
 
-  <!-- INTERFAZ DE JUEGO -->
+  <!-- INTERFAZ JUEGO -->
   <div class="hud">
     <div class="hud-avatar" id="hudAvatar" onclick="openMenu()">👤</div>
     <div class="hud-stats">
@@ -397,7 +347,7 @@
         <span>LVL <b id="lvlVal">1</b></span>
       </div>
     </div>
-    <button class="menu-toggle" onclick="openMenu()">☰</button>
+    <button class="settings-btn" style="margin-left: 10px;" onclick="openMenu()">☰</button>
   </div>
 
   <div id="gameChat">
@@ -405,7 +355,7 @@
       Bienvenido. Configura tu personaje para iniciar la simulación...
     </div>
   </div>
-  <div id="typingIndicator" class="typing">✨ El universo está respondiendo...</div>
+  <div id="typingIndicator" class="typing">✨ Conectando con el Oráculo (Gratis)...</div>
 
   <div class="controls-area">
     <div class="chips-scroll">
@@ -413,7 +363,7 @@
       <div class="action-chip" onclick="quickAction('Abrir inventario')">🎒 Inventario</div>
       <div class="action-chip" onclick="quickAction('Atacar enemigo')">⚔️ Atacar</div>
       <div class="action-chip" onclick="quickAction('Explorar')">🦶 Explorar</div>
-      <div class="action-chip" onclick="quickAction('Hablar')">🗣️ Hablar</div>
+      <div class="action-chip" onclick="quickAction('Hablar con alguien')">🗣️ Hablar</div>
     </div>
     <div class="input-group">
       <input type="text" id="playerInput" placeholder="¿Qué haces?" autocomplete="off">
@@ -425,91 +375,111 @@
   <div id="menuModal" class="modal-overlay" onclick="closeMenu(event)">
     <div class="modal-box">
       <div class="modal-head">
-        <span>PAUSA / MENÚ</span>
-        <span onclick="toggleModal('menuModal')" style="cursor:pointer">✖</span>
+        <span>MENÚ DE PERSONAJE</span>
+        <span onclick="toggleModal('menuModal')" style="cursor:pointer; font-size:20px;">✖</span>
       </div>
       <div class="modal-body">
-        <h3 style="color:var(--primary); margin-top:0;">Estadísticas</h3>
+        <h3 style="color:var(--primary); margin:0;">Estadísticas</h3>
         <div class="stat-row"><span>Nombre:</span> <span id="menuName">--</span></div>
         <div class="stat-row"><span>Clase:</span> <span id="menuClass">--</span></div>
         <div class="stat-row"><span>XP:</span> <span id="menuXP">0/100</span></div>
         
-        <h3 style="color:var(--primary);">Inventario</h3>
-        <div id="inventoryList"></div>
+        <h3 style="color:var(--primary); margin-top:10px;">Inventario</h3>
+        <div id="inventoryList" style="max-height: 150px; overflow-y:auto;">
+            <div style="color:#666; font-style:italic;">Vacío...</div>
+        </div>
 
-        <h3 style="color:var(--primary);">Sistema</h3>
-        <button class="action-chip" style="width:100%; margin-bottom:10px; text-align:center;" onclick="toggleSound()">🔊 Sonido: <span id="soundStatus">ON</span></button>
-        <div style="display:flex; gap:10px;">
-            <button class="big-btn" style="margin-top:0; flex:1;" onclick="saveGame()">💾 Guardar</button>
-            <button class="big-btn" style="margin-top:0; flex:1; background:var(--accent);" onclick="resetGame()">♻ Reset</button>
+        <h3 style="color:var(--primary); margin-top:10px;">Sistema</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <button class="action-chip" style="text-align:center;" onclick="toggleSound()">🔊 <span id="soundStatus">ON</span></button>
+            <button class="action-chip" style="text-align:center;" onclick="openSettings()">⚙️ Config</button>
+            <button class="action-chip" style="text-align:center; border-color:var(--success); color:var(--success);" onclick="saveGame()">💾 Guardar</button>
+            <button class="action-chip" style="text-align:center; border-color:var(--accent); color:var(--accent);" onclick="resetGame()">♻ Reiniciar</button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="modal-overlay" onclick="closeSettings(event)">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span>CONFIGURACIÓN</span>
+        <span onclick="toggleModal('settingsModal')" style="cursor:pointer; font-size:20px;">✖</span>
+      </div>
+      <div class="modal-body">
+        <div class="api-note">
+           <b>Modo Gratuito Activado:</b><br>
+           Estás usando <b>Pollinations.ai</b>. Una API pública, gratuita y sin registro para texto e imágenes.
+           <br><br>
+           <i>Nota: Al ser público, la privacidad no es total y la velocidad depende del tráfico global.</i>
+        </div>
+        
+        <label>Estado del Servicio</label>
+        <div style="background: #333; padding: 10px; border-radius: 8px; color: var(--success);">
+            ✅ API Pública Conectada
+        </div>
+        
+        <button class="big-btn" onclick="toggleModal('settingsModal')">CERRAR</button>
+      </div>
+    </div>
+  </div>
+
 <script>
-  /* --- SISTEMA DE SONIDO (Sintetizador Web Audio) --- */
+  /* --- SISTEMA DE SONIDO --- */
   const AudioContext = window.AudioContext || window.webkitAudioContext;
-  const audioCtx = new AudioContext();
+  let audioCtx = new AudioContext();
   let soundEnabled = true;
 
   function playTone(type) {
     if (!soundEnabled) return;
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(e=>console.log(e));
 
     const osc = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
     osc.connect(gainNode);
     gainNode.connect(audioCtx.destination);
-
     const now = audioCtx.currentTime;
 
     if (type === 'click') {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(800, now);
       osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
-      gainNode.gain.setValueAtTime(0.1, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-      osc.start(now);
-      osc.stop(now + 0.1);
+      gainNode.gain.setValueAtTime(0.05, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.start(now); osc.stop(now + 0.1);
     } 
     else if (type === 'start') {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(220, now);
       osc.frequency.linearRampToValueAtTime(440, now + 0.2);
-      osc.frequency.linearRampToValueAtTime(880, now + 0.4);
       gainNode.gain.setValueAtTime(0.1, now);
-      gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
-      osc.start(now);
-      osc.stop(now + 0.5);
+      gainNode.gain.linearRampToValueAtTime(0, now + 0.4);
+      osc.start(now); osc.stop(now + 0.4);
     }
     else if (type === 'message') {
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(500, now);
-      gainNode.gain.setValueAtTime(0.05, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-      osc.start(now);
-      osc.stop(now + 0.1);
+      osc.frequency.setValueAtTime(600, now);
+      gainNode.gain.setValueAtTime(0.02, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.start(now); osc.stop(now + 0.15);
     }
     else if (type === 'hit') {
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(100, now);
+      osc.frequency.setValueAtTime(150, now);
       osc.frequency.linearRampToValueAtTime(50, now + 0.2);
-      gainNode.gain.setValueAtTime(0.2, now);
+      gainNode.gain.setValueAtTime(0.1, now);
       gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
-      osc.start(now);
-      osc.stop(now + 0.3);
+      osc.start(now); osc.stop(now + 0.3);
     }
     else if (type === 'levelup') {
       osc.type = 'square';
       osc.frequency.setValueAtTime(440, now);
       osc.frequency.setValueAtTime(554, now + 0.1);
       osc.frequency.setValueAtTime(659, now + 0.2);
-      osc.frequency.setValueAtTime(880, now + 0.3);
-      gainNode.gain.setValueAtTime(0.1, now);
-      gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
-      osc.start(now);
-      osc.stop(now + 0.6);
+      gainNode.gain.setValueAtTime(0.05, now);
+      gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+      osc.start(now); osc.stop(now + 0.5);
     }
   }
 
@@ -519,7 +489,16 @@
     playTone('click');
   }
 
-  /* --- UI LOGIC --- */
+  /* --- UI & TOASTS --- */
+  function showToast(msg, type = 'success') {
+    const area = document.getElementById('notification-area');
+    const div = document.createElement('div');
+    div.className = `toast toast-${type}`;
+    div.innerHTML = `<span>${type==='error'?'⚠️':'✅'}</span> <span>${msg}</span>`;
+    area.appendChild(div);
+    setTimeout(() => { div.style.opacity = '0'; setTimeout(()=>div.remove(), 300); }, 3000);
+  }
+
   function switchTab(tabId) {
     playTone('click');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -534,44 +513,45 @@
     if(val === 'custom') document.getElementById(inputId).focus();
   }
 
-  // Mapa de Emojis para razas y clases
   const emojiMap = {
-    human: "👱", elf: "🧝", dwarf: "🧔", orc: "👹", cyborg: "🤖", alien: "👽", custom: "👤",
-    warrior: "⚔️", mage: "🔮", rogue: "🗡️", hacker: "💻", pilot: "🚀", custom: "✨"
+    human: "👱", elf: "🧝", dwarf: "🧔", orc: "👹", cyborg: "🤖", alien: "👽", catfolk: "🐱", custom: "👤",
+    warrior: "⚔️", mage: "🔮", rogue: "🗡️", hacker: "💻", pilot: "🚀", monk: "🥋", custom: "✨"
   };
 
   function updatePreview() {
     const rSelect = document.getElementById('charRace').value;
     const cSelect = document.getElementById('charClass').value;
-    
-    // Obtener valores reales (si es custom)
     const rVal = rSelect === 'custom' ? (document.getElementById('customRace').value || 'Desconocido') : rSelect;
     const cVal = cSelect === 'custom' ? (document.getElementById('customClass').value || 'Aventurero') : cSelect;
-
-    // Obtener Emojis
     const rEmoji = emojiMap[rSelect] || "👤";
     const cEmoji = emojiMap[cSelect] || "✨";
-
     document.getElementById('previewEmoji').innerText = rEmoji + cEmoji;
     
-    // Texto bonito
-    const rLabel = rSelect === 'custom' ? rVal : document.querySelector(`#charRace option[value="${rSelect}"]`).text;
-    const cLabel = cSelect === 'custom' ? cVal : document.querySelector(`#charClass option[value="${cSelect}"]`).text;
-    
+    let rLabel = rSelect;
+    let cLabel = cSelect;
+    try {
+        rLabel = rSelect === 'custom' ? rVal : document.querySelector(`#charRace option[value="${rSelect}"]`).text;
+        cLabel = cSelect === 'custom' ? cVal : document.querySelector(`#charClass option[value="${cSelect}"]`).text;
+    } catch(e) {}
+
     document.getElementById('previewText').innerText = `${rLabel} ${cLabel}`;
   }
 
+  /* --- MODALS --- */
   function toggleModal(id) {
     playTone('click');
     const el = document.getElementById(id);
     el.classList.toggle('active');
-    if(el.classList.contains('active')) updateMenu();
+    if(el.classList.contains('active') && id === 'menuModal') updateMenu();
   }
   
   function openMenu() { toggleModal('menuModal'); }
   function closeMenu(e) { if(e.target.id === 'menuModal') toggleModal('menuModal'); }
+  
+  function openSettings() { toggleModal('settingsModal'); }
+  function closeSettings(e) { if(e.target.id === 'settingsModal') toggleModal('settingsModal'); }
 
-  /* --- GAME STATE & LOGIC --- */
+  /* --- GAME LOGIC --- */
   let gameState = {
     name: "", race: "", class: "", gender: "", lore: "",
     theme: "", themeLore: "",
@@ -581,10 +561,8 @@
   };
 
   async function startGame() {
-    playTone('start');
-    
-    // Recopilar Datos
-    const name = document.getElementById('charName').value || "Héroe";
+    // Collect Data
+    const name = document.getElementById('charName').value.trim() || "Héroe";
     const rSelect = document.getElementById('charRace').value;
     const cSelect = document.getElementById('charClass').value;
     const tSelect = document.getElementById('worldTheme').value;
@@ -594,33 +572,21 @@
     gameState.class = cSelect === 'custom' ? document.getElementById('customClass').value : document.querySelector(`#charClass option[value="${cSelect}"]`).text;
     gameState.gender = document.getElementById('charGender').options[document.getElementById('charGender').selectedIndex].text;
     gameState.lore = document.getElementById('charLore').value || "Un viajero misterioso.";
-    
     gameState.theme = tSelect === 'custom' ? document.getElementById('customTheme').value : document.querySelector(`#worldTheme option[value="${tSelect}"]`).text;
-    gameState.themeLore = document.getElementById('worldLore').value || "Un mundo lleno de peligros y oportunidades.";
+    gameState.themeLore = document.getElementById('worldLore').value || "Un mundo lleno de misterios.";
 
-    // Emoji de HUD
+    // HUD Setup
     const rEmoji = emojiMap[rSelect] || "👤";
-    const cEmoji = emojiMap[cSelect] || "";
     document.getElementById('hudAvatar').innerText = rEmoji;
-
-    // Inventario inicial
-    gameState.inventory = ["Mapa", "Raciones (2)"];
+    gameState.inventory = ["Mapa Viejo", "Raciones (2)"];
     
-    // Ocultar inicio
     document.getElementById('startScreen').style.display = 'none';
-    
-    // Limpiar chat anterior
     document.getElementById('gameChat').innerHTML = "";
+    playTone('start');
     
-    // Generar Prompt Inicial
-    const prompt = `INICIO DE JUEGO.
-    Personaje: ${gameState.name}, ${gameState.race} ${gameState.class} (${gameState.gender}).
-    Lore Personal: ${gameState.lore}.
-    Mundo: ${gameState.theme}.
-    Lore Mundo: ${gameState.themeLore}.
-    Inventario: ${gameState.inventory.join(', ')}.
-    
-    Instrucción: Genera una introducción inmersiva corta (max 60 palabras). Describe dónde estoy y preséntame un conflicto inmediato o punto de interés. Termina preguntando qué hago.`;
+    // Initial Prompt
+    const prompt = `INICIO. Personaje: ${gameState.name}, ${gameState.race} ${gameState.class} (${gameState.gender}). Lore: ${gameState.lore}. Mundo: ${gameState.theme}. Detalles Mundo: ${gameState.themeLore}. Inventario: ${gameState.inventory.join(', ')}.
+    Genera una intro inmersiva (max 60 palabras). Presenta un conflicto inmediato. Pregunta qué hago.`;
 
     await processTurn(prompt, true, true);
   }
@@ -628,71 +594,84 @@
   function addMsg(role, text, img = null) {
     const div = document.createElement('div');
     div.className = `msg msg-${role}`;
-    
-    // Formato básico markdown a HTML
-    let html = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'); // Negrita
-    html = html.replace(/\*(.*?)\*/g, '<i>$1</i>'); // Cursiva
+    // Format
+    let html = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>');
     div.innerHTML = html;
-
     if(img) {
       const image = document.createElement('img');
       image.src = img;
       image.className = "msg-img";
+      image.loading = "lazy";
+      image.onerror = function(){ this.style.display='none'; }; 
       div.appendChild(image);
     }
-
     document.getElementById('gameChat').appendChild(div);
-    document.getElementById('gameChat').scrollTop = document.getElementById('gameChat').scrollHeight;
-    
+    div.scrollIntoView({ behavior: 'smooth' });
     if(role === 'ai') playTone('message');
   }
 
-  /* --- API CALLS --- */
+  /* --- POLLINATIONS API HANDLER (FREE) --- */
   async function processTurn(userText, isSystemPrompt = false, generateImg = false) {
+    const inputField = document.getElementById('playerInput');
+    const sendBtn = document.getElementById('sendBtn');
+    inputField.disabled = true; sendBtn.disabled = true;
     document.getElementById('typingIndicator').style.display = 'block';
-    
-    // Añadir mensaje de usuario al chat (si no es prompt de sistema)
+
     if(!isSystemPrompt) {
       addMsg('user', userText);
-      gameState.history.push({ role: "user", parts: [{ text: userText }] });
+      gameState.history.push({ role: "user", content: userText });
     }
 
-    const apiKey = ""; // Se inyecta automáticamente en el entorno
-    const urlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-    
-    // Sistema
-    const sysPrompt = `Eres un Game Master de Rol experto. Idioma: Español.
+    // SYSTEM PROMPT
+    const sysPrompt = `Eres un Game Master de Rol. Idioma: Español.
     Reglas:
-    1. Respuestas cortas (max 80 palabras) pero descriptivas.
-    2. Usa 2da persona ("Ves...", "Sientes...").
-    3. Si el jugador recibe daño, escribe [DAÑO: X] al inicio.
-    4. Si el jugador recibe un objeto, escribe [ITEM: Nombre] al inicio.
-    5. Si el jugador gana experiencia, escribe [XP: Cantidad] al inicio.
-    6. Contexto actual: HP ${gameState.hp}/${gameState.maxHp}. Inventario: ${gameState.inventory.join(',')}.
-    7. IMPORTANTE: Integra el Lore del jugador (${gameState.lore}) y del mundo (${gameState.themeLore}) en la narrativa cuando sea relevante.`;
+    1. Respuestas cortas (max 80 palabras).
+    2. Usa 2da persona ("Ves...").
+    3. Tags al inicio si aplica: [DAÑO: N] (si pierdo vida), [ITEM: Nombre] (si obtengo algo), [XP: N] (si logro algo).
+    4. Contexto: HP ${gameState.hp}/${gameState.maxHp}. Inventario: ${gameState.inventory.join(',')}.
+    5. Nunca rompas el personaje.`;
 
-    const payload = {
-      contents: isSystemPrompt ? [{ role: "user", parts: [{ text: userText }] }] : [...gameState.history],
-      systemInstruction: { parts: [{ text: sysPrompt }] }
-    };
+    // Construct Messages for Pollinations (OpenAI style)
+    const messages = [
+        { role: "system", content: sysPrompt },
+        ...gameState.history
+    ];
+    if(isSystemPrompt) {
+        messages.push({ role: "user", content: userText });
+        // Don't add system prompt to history to save context space, just the result
+    }
 
     try {
-      // 1. TEXTO
-      const resp = await fetch(urlText, {
-         method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+      // 1. TEXT GENERATION (Pollinations.ai)
+      // We use a POST request to their text endpoint
+      const response = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: messages,
+          model: 'openai', // Pollinations proxies to best available
+          seed: Math.floor(Math.random() * 1000) // Random seed for variety
+        })
       });
-      const data = await resp.json();
-      let aiText = data.candidates[0].content.parts[0].text;
 
-      // 2. PROCESAR EVENTOS (Tags)
-      aiText = parseEvents(aiText);
-
-      gameState.history.push({ role: "model", parts: [{ text: aiText }] });
+      if (!response.ok) throw new Error('Pollinations API Busy');
       
-      // 3. IMAGEN (Opcional)
+      let aiText = await response.text(); // Pollinations often returns raw text
+      
+      // PROCESS GAME EVENTS
+      aiText = parseEvents(aiText);
+      gameState.history.push({ role: "assistant", content: aiText });
+
+      // 2. IMAGE GENERATION (Pollinations.ai Image)
+      // Pollinations images are generated via URL parameters, no fetch needed for base64
       let imgUrl = null;
-      if(generateImg || Math.random() < 0.15) { // 15% chance de imagen en turnos normales
-        imgUrl = await generateImage(aiText.substring(0, 100));
+      if (generateImg || Math.random() < 0.20) {
+          // Clean text for prompt
+          const cleanPrompt = aiText.replace(/\[.*?\]/g, '').substring(0, 100);
+          const encodedPrompt = encodeURIComponent(`fantasy rpg art, ${gameState.theme} style, ${cleanPrompt}`);
+          // Add random seed to avoid caching same image for similar prompts
+          const seed = Math.floor(Math.random() * 10000);
+          imgUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=300&nologo=true&seed=${seed}&model=flux`;
       }
 
       document.getElementById('typingIndicator').style.display = 'none';
@@ -702,82 +681,58 @@
     } catch(e) {
       console.error(e);
       document.getElementById('typingIndicator').style.display = 'none';
-      addMsg('ai', "⚠️ *La conexión psíquica se rompió... intenta de nuevo.*");
+      // Retry logic or simple error
+      addMsg('ai', `⚠️ <b>El Oráculo está en silencio...</b> (Error de red o servicio saturado). Intenta de nuevo.`);
     }
+
+    inputField.disabled = false; sendBtn.disabled = false;
+    inputField.focus();
   }
 
   function parseEvents(text) {
-    // Regex para capturar tags [TAG: Valor]
-    const damageRegex = /\[DAÑO:\s*(\d+)\]/i;
-    const xpRegex = /\[XP:\s*(\d+)\]/i;
-    const itemRegex = /\[ITEM:\s*(.*?)\]/i;
-
     let cleanText = text;
-
-    // Daño
-    const dmgMatch = text.match(damageRegex);
+    // Damage
+    const dmgMatch = text.match(/\[DAÑO:\s*(\d+)\]/i);
     if(dmgMatch) {
         const dmg = parseInt(dmgMatch[1]);
         gameState.hp = Math.max(0, gameState.hp - dmg);
         playTone('hit');
         document.body.classList.add('shake');
         setTimeout(()=>document.body.classList.remove('shake'), 500);
-        cleanText = cleanText.replace(damageRegex, '');
+        cleanText = cleanText.replace(dmgMatch[0], '');
+        showToast(`-${dmg} HP`, "error");
     }
-
     // XP
-    const xpMatch = text.match(xpRegex);
+    const xpMatch = text.match(/\[XP:\s*(\d+)\]/i);
     if(xpMatch) {
         const xpGain = parseInt(xpMatch[1]);
         gameState.xp += xpGain;
         if(gameState.xp >= 100) {
-            gameState.level++;
-            gameState.xp = 0;
-            gameState.maxHp += 10;
-            gameState.hp = gameState.maxHp;
+            gameState.level++; gameState.xp = 0; gameState.maxHp += 10; gameState.hp = gameState.maxHp;
             playTone('levelup');
-            addMsg('ai', "🎉 **¡SUBIDA DE NIVEL!** Te sientes más poderoso.");
+            showToast("¡SUBIDA DE NIVEL!");
+        } else {
+            showToast(`+${xpGain} XP`);
         }
-        cleanText = cleanText.replace(xpRegex, '');
+        cleanText = cleanText.replace(xpMatch[0], '');
     }
-
     // Items
-    const itemMatch = text.match(itemRegex);
+    const itemMatch = text.match(/\[ITEM:\s*(.*?)\]/i);
     if(itemMatch) {
         const item = itemMatch[1].trim();
         gameState.inventory.push(item);
-        playTone('start'); // Sonido positivo
-        cleanText = cleanText.replace(itemRegex, '');
+        playTone('start');
+        cleanText = cleanText.replace(itemMatch[0], '');
+        showToast(`Obtenido: ${item}`);
     }
-
     return cleanText.trim();
   }
 
-  async function generateImage(promptFragment) {
-    const apiKey = "";
-    const urlImg = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
-    
-    const fullPrompt = `RPG art, ${gameState.theme} style, ${promptFragment}`;
-    
-    try {
-        const res = await fetch(urlImg, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ instances: [{ prompt: fullPrompt }], parameters: { sampleCount: 1 } })
-        });
-        const d = await res.json();
-        return `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
-    } catch(e) { return null; }
-  }
-
-  /* --- CONTROLS --- */
   function submitAction() {
     playTone('click');
     const input = document.getElementById('playerInput');
     const val = input.value.trim();
-    if(val) {
-        processTurn(val);
-        input.value = "";
-    }
+    if(val) { processTurn(val); input.value = ""; }
   }
 
   function quickAction(act) {
@@ -786,13 +741,17 @@
   }
 
   function updateHUD() {
-    const hpPct = (gameState.hp / gameState.maxHp) * 100;
-    const xpPct = (gameState.xp / 100) * 100;
-    
+    const hpPct = Math.max(0, (gameState.hp / gameState.maxHp) * 100);
+    const xpPct = Math.min(100, (gameState.xp / 100) * 100);
     document.getElementById('hpBar').style.width = hpPct + "%";
     document.getElementById('xpBar').style.width = xpPct + "%";
     document.getElementById('hpVal').innerText = gameState.hp;
     document.getElementById('lvlVal').innerText = gameState.level;
+    
+    if(gameState.hp <= 0) {
+        addMsg('ai', "💀 <b>HAS MUERTO.</b> Tu aventura termina aquí.");
+        document.getElementById('playerInput').disabled = true;
+    }
   }
 
   function updateMenu() {
@@ -802,56 +761,68 @@
     
     const list = document.getElementById('inventoryList');
     list.innerHTML = "";
-    gameState.inventory.forEach(i => {
-        const div = document.createElement('div');
-        div.className = "inv-item";
-        div.innerHTML = `📦 ${i}`;
-        list.appendChild(div);
-    });
+    if(gameState.inventory.length === 0) {
+        list.innerHTML = '<div style="color:#666; font-style:italic; padding:5px;">Mochila vacía</div>';
+    } else {
+        gameState.inventory.forEach(i => {
+            const div = document.createElement('div');
+            div.className = "inv-item";
+            div.innerHTML = `📦 ${i}`;
+            list.appendChild(div);
+        });
+    }
   }
 
   function saveGame() {
-    localStorage.setItem('pocketRpgSave', JSON.stringify(gameState));
+    localStorage.setItem('pocketRpgFree_v1', JSON.stringify(gameState));
     playTone('levelup');
-    alert("¡Partida Guardada!");
+    showToast("Juego Guardado");
+    toggleModal('menuModal');
   }
 
   function resetGame() {
-    if(confirm("¿Borrar progreso y reiniciar?")) {
-        localStorage.removeItem('pocketRpgSave');
-        location.reload();
-    }
+    localStorage.removeItem('pocketRpgFree_v1');
+    location.reload();
   }
 
-  // Cargar Partida al inicio si existe
   window.onload = () => {
-    updatePreview(); // Init preview
-    const save = localStorage.getItem('pocketRpgSave');
-    if(save && confirm("¿Cargar partida guardada?")) {
-        gameState = JSON.parse(save);
-        document.getElementById('startScreen').style.display = 'none';
-        
-        // Restore Avatar
-        // Simple heuristic to recover emoji based on race name
-        let foundEmoji = "👤";
-        for (const [key, val] of Object.entries(emojiMap)) {
-             // Check if race name contains the key (simple check)
-             if (gameState.race.toLowerCase().includes(document.querySelector(`#charRace option[value="${key}"]`)?.text.toLowerCase() || "xyz")) {
-                 foundEmoji = val;
-             }
-        }
-        document.getElementById('hudAvatar').innerText = foundEmoji;
-        
-        updateHUD();
-        addMsg('ai', "📂 *Sistema restaurado. Bienvenido de vuelta, " + gameState.name + ".*");
+    updatePreview();
+    const save = localStorage.getItem('pocketRpgFree_v1');
+    if(save) {
+        try {
+            const loaded = JSON.parse(save);
+            const btn = document.createElement('button');
+            btn.className = 'big-btn';
+            btn.style.background = 'var(--secondary)';
+            btn.style.color = 'var(--bg-dark)';
+            btn.style.marginTop = '10px';
+            btn.innerHTML = `CONTINUAR: ${loaded.name} (Lvl ${loaded.level})`;
+            btn.onclick = () => {
+                gameState = loaded;
+                document.getElementById('startScreen').style.display = 'none';
+                
+                // Restore emoji
+                let foundEmoji = "👤";
+                // Simple restore logic
+                const rKey = Object.keys(emojiMap).find(k => gameState.race.includes(k) || (emojiMap[k] === document.getElementById('hudAvatar').innerText)); 
+                if(rKey) foundEmoji = emojiMap[rKey];
+                for (const [key, val] of Object.entries(emojiMap)) {
+                     if (gameState.race.toLowerCase().includes(key)) foundEmoji = val;
+                }
+                document.getElementById('hudAvatar').innerText = foundEmoji;
+
+                updateHUD();
+                addMsg('ai', `📂 *Bienvenido de vuelta, ${gameState.name}.*`);
+            };
+            const startBtn = document.querySelector('#startScreen .big-btn');
+            startBtn.parentNode.insertBefore(btn, startBtn);
+        } catch(e) { console.error("Save corrupted", e); }
     }
   };
 
-  // Enter Key
   document.getElementById('playerInput').addEventListener("keypress", (e) => {
     if(e.key === "Enter") submitAction();
   });
-
 </script>
 </body>
 </html>
