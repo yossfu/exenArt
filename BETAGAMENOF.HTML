@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MaleMuse V8 | Custom & Spanish Edition</title>
+    <title>MaleMuse V11 | Infinite Prompt Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --accent: #10b981; /* Emerald-500: Frescura y "Safe" */
+            --accent: #3b82f6; /* Blue-500: Tono más técnico/profesional */
             --bg-dark: #0f172a; /* Slate-900 */
         }
         body {
@@ -22,8 +22,8 @@
             font-family: 'JetBrains Mono', monospace;
         }
         .action-btn {
-            background: linear-gradient(135deg, #059669, #10b981);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
             transition: all 0.2s ease;
         }
         .action-btn:hover {
@@ -52,321 +52,318 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-emerald-400 selection:text-black">
+<body class="min-h-screen flex flex-col selection:bg-blue-400 selection:text-black">
 
     <!-- Header -->
     <header class="py-4 border-b border-slate-800 bg-slate-900/90 sticky top-0 z-50 backdrop-blur-md">
         <div class="container mx-auto px-4 flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <i class="fa-solid fa-layer-group text-emerald-400 text-xl"></i>
-                <h1 class="text-xl font-bold tracking-tight text-white">MALE<span class="text-emerald-400">MUSE</span> <span class="text-[10px] uppercase tracking-widest text-slate-500 ml-1">V8 CUSTOM</span></h1>
+                <i class="fa-solid fa-layer-group text-blue-500 text-xl"></i>
+                <h1 class="text-xl font-bold tracking-tight text-white">MALE<span class="text-blue-500">MUSE</span> <span class="text-[10px] uppercase tracking-widest text-slate-500 ml-1">V11 INFINITY</span></h1>
             </div>
-            <button onclick="copyNegative()" class="text-xs font-bold bg-slate-800 hover:bg-red-900/30 text-red-400 px-3 py-2 rounded border border-red-900/50 transition flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved"></i> Negativo
-            </button>
+            <div class="flex gap-2">
+                <button onclick="clearGrid()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-400 px-3 py-2 rounded border border-slate-700 transition">
+                    <i class="fa-solid fa-trash"></i> Limpiar
+                </button>
+            </div>
         </div>
     </header>
 
     <!-- Main -->
     <main class="flex-grow container mx-auto px-4 py-8 max-w-7xl">
         
-        <!-- Controls & Builder -->
-        <div class="max-w-5xl mx-auto mb-8 bg-slate-900/80 p-6 rounded-2xl border border-slate-800 shadow-xl">
+        <!-- Controls -->
+        <div class="max-w-6xl mx-auto mb-8 bg-slate-900/80 p-6 rounded-2xl border border-slate-800 shadow-xl">
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <!-- Subject Select -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <!-- Subject -->
                 <div class="flex flex-col gap-1">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">Sujeto / Modelo</label>
-                    <select id="sel-subject" class="w-full bg-slate-800 text-slate-200 text-xs border border-slate-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-emerald-500">
-                        <option value="random">🎲 Aleatorio</option>
-                        <option value="latino">Latino (Piel Clara/Suave)</option>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Sujeto (18-20 Años)</label>
+                    <select id="sel-subject" class="w-full bg-slate-800 text-slate-200 text-xs border border-slate-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-500">
+                        <option value="random">🎲 Aleatorio (Sorpréndeme)</option>
+                        <option value="latino">Latino (Bronceado ligero)</option>
                         <option value="asian">Asiático (K-Pop Style)</option>
-                        <option value="brunette">Castaño (Ojos Claros)</option>
-                        <option value="mixed">Mestizo (Piel Media)</option>
+                        <option value="nordic">Nórdico (Rubio/Ojos Claros)</option>
+                        <option value="brunette">Europeo (Castaño)</option>
+                        <option value="afro">Afrodescendiente (Atlético)</option>
+                        <option value="ginger">Pelirrojo (Piel clara)</option>
                     </select>
                 </div>
 
-                <!-- Wardrobe Select -->
+                <!-- Wardrobe -->
                 <div class="flex flex-col gap-1">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">Vestuario</label>
-                    <select id="sel-wardrobe" class="w-full bg-slate-800 text-slate-200 text-xs border border-slate-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-emerald-500">
-                        <option value="random">🎲 Aleatorio</option>
-                        <option value="risky">🔥 Risky (Minimal)</option>
-                        <option value="sport">⚽ Sport (Atlético)</option>
-                        <option value="casual">🏠 Casual (Relax)</option>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Vestuario (Expandido)</label>
+                    <select id="sel-wardrobe" class="w-full bg-slate-800 text-slate-200 text-xs border border-slate-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-500">
+                        <option value="random">🎲 Aleatorio Total</option>
+                        <optgroup label="Nuevas Categorías">
+                            <option value="leather">Cuero (Leather Gear)</option>
+                            <option value="patterned">Briefs Estampados/Diseño</option>
+                            <option value="loose">Boxers Flojos/Holgados</option>
+                        </optgroup>
+                        <optgroup label="Clásicos">
+                            <option value="white_briefs">Briefs Blancos (Clásico)</option>
+                            <option value="black_trunks">Trunks Negros (Moderno)</option>
+                            <option value="jockstrap">Deportivo (Athletic)</option>
+                        </optgroup>
                     </select>
                 </div>
 
-                <!-- Location Select -->
+                <!-- Scene -->
                 <div class="flex flex-col gap-1">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">Lugar / Set</label>
-                    <select id="sel-location" class="w-full bg-slate-800 text-slate-200 text-xs border border-slate-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-emerald-500">
-                        <option value="random">🎲 Aleatorio</option>
-                        <option value="studio">Estudio Minimalista</option>
-                        <option value="home">Interiores (Casa/Dorm)</option>
-                        <option value="gym">Gym & Lockers</option>
-                        <option value="outdoors">Exteriores / Naturaleza</option>
-                    </select>
-                </div>
-
-                <!-- Camera Select -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">Cámara / Estilo</label>
-                    <select id="sel-camera" class="w-full bg-slate-800 text-slate-200 text-xs border border-slate-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-emerald-500">
-                        <option value="random">🎲 Aleatorio</option>
-                        <option value="sony">Sony A7R (Nítido/Digital)</option>
-                        <option value="fuji">Fujifilm (Tonos Cine)</option>
-                        <option value="kodak">Kodak Portra (Analógico)</option>
-                        <option value="iphone">Smartphone (Candid/Selfie)</option>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Escenario (Librería V11)</label>
+                    <select id="sel-location" class="w-full bg-slate-800 text-slate-200 text-xs border border-slate-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-500">
+                        <option value="random">🎲 Aleatorio (Explorar Mundo)</option>
+                        <optgroup label="Naturaleza & Exterior">
+                            <option value="nature_beach">Playa / Costa</option>
+                            <option value="nature_forest">Bosque / Río</option>
+                            <option value="nature_desert">Desierto / Rocas</option>
+                        </optgroup>
+                        <optgroup label="Urbano & Industrial">
+                            <option value="urban_rooftop">Azotea Urbana (Ciudad)</option>
+                            <option value="urban_street">Callejón / Neón</option>
+                            <option value="industrial">Fábrica Abandonada</option>
+                        </optgroup>
+                        <optgroup label="Interiores & Lujo">
+                            <option value="interior_bedroom">Dormitorio (Mañana)</option>
+                            <option value="interior_hotel">Hotel de Lujo</option>
+                            <option value="interior_locker">Vestuario Deportivo</option>
+                            <option value="interior_studio">Estudio Fotográfico</option>
+                        </optgroup>
                     </select>
                 </div>
             </div>
 
             <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-t border-slate-800 pt-5">
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 text-xs text-slate-400 border border-slate-700 px-3 py-2 rounded-lg bg-slate-900">
-                        <input type="checkbox" id="socks-toggle" checked class="accent-emerald-500">
-                        <label for="socks-toggle" class="cursor-pointer font-semibold">Calcetines</label>
+                <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2 text-xs text-blue-300">
+                        <i class="fa-solid fa-robot"></i>
+                        <span class="font-semibold">Tag Obligatorio Activo:</span>
+                        <code class="bg-blue-900/30 px-2 py-0.5 rounded text-blue-200">"crea 4 imágenes con poses diferentes"</code>
                     </div>
+                    <p class="text-[10px] text-slate-500">Sin poses predefinidas. La IA decide la composición.</p>
                 </div>
 
-                <button onclick="generateDirectorSet()" class="action-btn text-white font-extrabold py-3 px-10 rounded-xl w-full md:w-auto text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
-                    <i class="fa-solid fa-bolt"></i> GENERAR SET
+                <button onclick="generatePrompts()" class="action-btn text-white font-extrabold py-3 px-12 rounded-xl w-full md:w-auto text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-bolt"></i> GENERAR PACK (9)
                 </button>
             </div>
-            
         </div>
 
         <!-- Grid -->
         <div id="grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            <!-- Placeholder -->
             <div class="col-span-full py-20 text-center border-2 border-dashed border-slate-800 rounded-xl bg-slate-900/30">
-                <p class="text-slate-600 font-mono text-sm">Configura tus opciones arriba y presiona Generar...</p>
+                <p class="text-slate-600 font-mono text-sm">Configura y genera para obtener prompts únicos.</p>
             </div>
         </div>
     </main>
 
     <script>
-        // === MALE MUSE V8: CUSTOM ENGINE ===
+        // === MALE MUSE V11: INFINITY ENGINE ===
 
-        // 1. SAFE BULGE TAGS (Engañar a la IA con iluminación y física)
-        // Se usan términos de arte y fotografía para sugerir forma sin ser explícitos.
-        const SAFE_BULGE_TAGS = [
-            "detailed fabric folds", "volumetric lighting on waist", "chiaroscuro shadows on torso",
-            "tight fitting fabric physics", "anatomically correct sculpture reference", 
-            "high contrast shadows", "dramatic side lighting", "form fitting silhouette",
-            "detailed clothing texture", "subtle cloth tension"
+        // TAG OBLIGATORIO
+        const MANDATORY_TAG = "crea 4 imágenes con poses diferentes";
+
+        // 1. BASES DE DATOS EXTENDIDAS
+        
+        // SUJETOS (18-20 Años estrictamente)
+        const SUBJECTS_DB = {
+            latino: { 
+                en: "handsome 19-year-old latino male model, light tanned skin, sharp jawline, short fade haircut, lean athletic build", 
+                es: "Latino 19 Años" 
+            },
+            asian: { 
+                en: "aesthetic 20-year-old asian male model, k-pop idol look, flawless pale skin, trendy hair, slim toned physique", 
+                es: "Asiático 20 Años" 
+            },
+            nordic: { 
+                en: "attractive 18-year-old scandinavian male, platinum blonde hair, piercing blue eyes, pale skin, fit swimmer body", 
+                es: "Nórdico 18 Años" 
+            },
+            brunette: { 
+                en: "cute 19-year-old european male, messy brown hair, green eyes, boy next door look, lightly toned body", 
+                es: "Europeo 19 Años" 
+            },
+            afro: { 
+                en: "striking 20-year-old black male model, short curly hair, smooth dark skin, defined muscles, aesthetic face", 
+                es: "Afro 20 Años" 
+            },
+            ginger: { 
+                en: "unique 18-year-old redhead male, freckles on shoulders, pale skin, messy orange hair, lean build", 
+                es: "Pelirrojo 18 Años" 
+            }
+        };
+
+        // VESTUARIO (Expandido con Cuero, Estampados, Flojos)
+        const WARDROBE_DB = {
+            // Nuevos
+            leather: { 
+                en: "black leather pants, studded leather harness, biker aesthetic", 
+                es: "Cuero Completo" 
+            },
+            leather_pants: {
+                en: "tight black leather trousers, shirtless, rockstar vibe",
+                es: "Pantalones Cuero"
+            },
+            patterned: { 
+                en: "designer briefs with colorful geometric patterns, vibrant colors", 
+                es: "Briefs Estampados" 
+            },
+            floral: {
+                en: "tropical floral print swim briefs, summer vibe",
+                es: "Briefs Florales"
+            },
+            loose: { 
+                en: "loose fitting grey cotton boxer shorts, elastic waistband, relaxed fit", 
+                es: "Boxers Flojos Gris" 
+            },
+            loose_checkered: {
+                en: "loose checkered boxer shorts, casual sleepwear style",
+                es: "Boxers Cuadros Flojos"
+            },
+            // Clásicos
+            white_briefs: { en: "classic white cotton briefs, calvin style", es: "Briefs Blancos" },
+            black_trunks: { en: "tight black square-cut trunks", es: "Trunks Negros" },
+            jockstrap: { en: "athletic mesh jockstrap, sporty look", es: "Jockstrap Deportivo" },
+            grey_sweats: { en: "grey sweatpants worn low, waistband visible", es: "Pantalones Chandal" }
+        };
+
+        // ESCENARIOS (Librería Masiva)
+        const LOCATIONS_DB = {
+            // Naturaleza
+            nature_beach: { en: "secluded beach at golden hour, wet sand, ocean waves in background, warm sunlight", es: "Playa Atardecer" },
+            nature_forest: { en: "misty forest clearing, tall pine trees, dappled sunlight filtering through leaves, mossy ground", es: "Bosque Niebla" },
+            nature_desert: { en: "arid desert landscape, red rocks, bright blue sky, harsh fashion photography shadows", es: "Desierto Rojo" },
+            nature_lake: { en: "wooden dock on a calm lake, mountains in distance, early morning mist", es: "Muelle Lago" },
+            nature_waterfall: { en: "tropical waterfall lagoon, wet rocks, lush green vegetation", es: "Cascada Tropical" },
+            
+            // Urbano
+            urban_rooftop: { en: "city rooftop at dusk, bokeh city lights in background, urban skyline, steel railings", es: "Azotea Ciudad" },
+            urban_street: { en: "rainy city street at night, neon signs reflecting on wet pavement, cyberpunk mood", es: "Calle Neón" },
+            industrial: { en: "abandoned industrial warehouse, rusty metal beams, concrete floor, dramatic shaft of light", es: "Fábrica Abandonada" },
+            urban_stairs: { en: "concrete urban fire escape stairs, brick wall texture, gritty aesthetic", es: "Escaleras Emergencia" },
+            
+            // Interiores
+            interior_bedroom: { en: "messy bedroom, unmade bed with white sheets, morning sunlight streaming through window", es: "Dormitorio Mañana" },
+            interior_hotel: { en: "luxury hotel suite, floor to ceiling windows, velvet armchair, elegant decor", es: "Hotel Lujo" },
+            interior_locker: { en: "tiled locker room, wooden benches, steam in the air, fluorescent lighting", es: "Vestuario" },
+            interior_studio: { en: "minimalist photo studio, infinite white background, softbox lighting equipment visible", es: "Estudio Blanco" },
+            interior_dark: { en: "dark mood room, single directional spotlight, dramatic shadows, noir style", es: "Habitación Oscura" }
+        };
+
+        // DETALLES ALEATORIOS (Para evitar repetición)
+        const LIGHTING_DB = [
+            "cinematic lighting, volumetric fog",
+            "natural soft window light",
+            "hard flash photography, high contrast",
+            "warm golden hour glow",
+            "cool blue moonlight tones",
+            "dramatic chiaroscuro shadows",
+            "rembrandt lighting setup"
         ];
 
-        // 2. SUJETOS (Filtrados: No Morenos oscuros, No Nórdicos pálidos)
-        // Enfocados en: Castaños, Piel clara/oliva, Asiáticos, Latinos claros.
-        const SUBJECTS_DB = {
-            latino: [
-                { en: "handsome 20yo latino male, light olive skin, messy brown hair, clean shaven", es: "Latino 20 años, piel oliva clara" },
-                { en: "cute 19yo hispanic male, smooth skin, short dark hair, boyish face", es: "Hispano 19 años, cara juvenil" },
-                { en: "attractive 21yo argentine male, light skin, dark eyes, clean shaven", es: "Argentino 21 años, piel clara" }
-            ],
-            asian: [
-                { en: "handsome 19yo korean male, k-pop idol style, smooth pale skin, clean shaven", es: "Coreano 19 años, estilo K-Pop" },
-                { en: "cute 20yo japanese male, messy black hair, soft features, slim build", es: "Japonés 20 años, facciones suaves" },
-                { en: "fit 22yo asian male, sharp jawline, clear skin, modern haircut", es: "Asiático 22 años, mandíbula marcada" }
-            ],
-            brunette: [
-                { en: "handsome 21yo brunette male, hazel eyes, light skin, messy hair", es: "Castaño 21 años, ojos avellana" },
-                { en: "cute 20yo french male, brown hair, blue eyes, smooth skin, clean shaven", es: "Francés 20 años, castaño ojos azules" },
-                { en: "attractive 23yo italian male, light brown hair, clean shaven, aesthetic face", es: "Italiano 23 años, pelo castaño claro" }
-            ],
-            mixed: [
-                { en: "handsome 22yo mixed race male, light caramel skin, curly brown hair, clean shaven", es: "Mestizo 22 años, pelo rizado castaño" },
-                { en: "cute 20yo brazilian male, sun kissed light skin, dark eyes, youthful", es: "Brasileño 20 años, piel bronceada clara" }
-            ]
-        };
+        const CAMERA_DB = [
+            "shot on 35mm film, grainy texture",
+            "8k resolution, hyperrealistic, sharp focus",
+            "bokeh depth of field, blurred background",
+            "wide angle lens, dynamic perspective",
+            "portrait lens 85mm, focus on eyes"
+        ];
 
-        // 3. WARDROBE (Añadidos +15 items nuevos)
-        const WARDROBE_DB = {
-            risky: [
-                // Originales
-                { en: "white tight briefs", es: "Trusas blancas ajustadas" },
-                { en: "black low-rise swim briefs", es: "Bañador negro bajo" },
-                // Nuevos (+5)
-                { en: "seamless skin-tone dance belt", es: "Susensorio color piel" },
-                { en: "sheer mesh athletic briefs", es: "Trusa deportiva de malla" },
-                { en: "minimalist string bikini bottom", es: "Bikini minimalista" },
-                { en: "tight latex compression shorts", es: "Shorts de látex compresión" },
-                { en: "semi-transparent white sleep shorts", es: "Shorts de dormir finos" }
-            ],
-            sport: [
-                // Originales
-                { en: "vintage retro running shorts", es: "Shorts running retro" },
-                { en: "tight compression lycra shorts", es: "Mallas cortas lycra" },
-                { en: "professional swimming speedo", es: "Speedo de natación" },
-                // Nuevos (+5)
-                { en: "varsity wrestling singlet bottom", es: "Parte baja de lucha" },
-                { en: "white soccer kit shorts", es: "Shorts de fútbol blancos" },
-                { en: "grey compression base layer shorts", es: "Base layer gris" },
-                { en: "track and field sprinter briefs", es: "Briefs de atletismo" },
-                { en: "cycling bib shorts bottom", es: "Culotte de ciclismo" }
-            ],
-            casual: [
-                // Originales
-                { en: "classic grey cotton boxer briefs", es: "Bóxers grises clásicos" },
-                { en: "loose silk boxer shorts", es: "Bóxers de seda sueltos" },
-                { en: "unbuttoned denim jeans", es: "Jeans desabrochados" },
-                // Nuevos (+5)
-                { en: "white ribbed cotton tank top and briefs", es: "Camiseta tirantes y trusa" },
-                { en: "plaid pajama shorts", es: "Shorts de pijama cuadros" },
-                { en: "tight lounge sweatpants low waist", es: "Pants deportivos bajos" },
-                { en: "towel wrapped around waist", es: "Toalla en la cintura" },
-                { en: "designer waistband trunks", es: "Trunks de diseñador" }
-            ]
-        };
+        function getRandom(obj) {
+            const keys = Object.keys(obj);
+            return keys[Math.floor(Math.random() * keys.length)];
+        }
 
-        // 4. LOCATIONS (Añadidos +15 lugares)
-        const LOCATIONS_DB = {
-            studio: [
-                { en: "minimalist white studio cyclorama", es: "Estudio blanco infinito" },
-                { en: "grey concrete wall background", es: "Pared de concreto gris" },
-                { en: "dramatic spotlight studio dark background", es: "Estudio oscuro con foco" },
-                { en: "soft box lighting setup", es: "Iluminación softbox" },
-                { en: "abstract geometric set", es: "Set geométrico abstracto" }
-            ],
-            home: [
-                { en: "messy bedroom morning light", es: "Dormitorio desordenado mañana" },
-                { en: "modern kitchen counter", es: "Encimera de cocina moderna" },
-                { en: "bathroom mirror selfie reflection", es: "Reflejo espejo baño" },
-                { en: "sunlit living room couch", es: "Sofá sala soleada" },
-                { en: "college dorm room desk", es: "Escritorio dormitorio uni" },
-                { en: "open window with curtains blowing", es: "Ventana abierta cortinas" }
-            ],
-            gym: [
-                { en: "university locker room benches", es: "Bancas vestidor uni" },
-                { en: "empty shower room tiled walls", es: "Duchas vacías azulejos" },
-                { en: "gym workout area mirrors", es: "Espejos zona pesas" },
-                { en: "indoor swimming pool deck", es: "Borde alberca techada" },
-                { en: "sauna wood interior", es: "Interior sauna madera" }
-            ],
-            outdoors: [
-                { en: "rooftop sunset city view", es: "Azotea atardecer ciudad" },
-                { en: "backyard pool summer vibes", es: "Alberca patio trasero" },
-                { en: "forest glade dappled light", es: "Claro de bosque luz" },
-                { en: "desert dunes golden hour", es: "Dunas desierto hora dorada" },
-                { en: "abandoned skate park concrete", es: "Skate park abandonado" },
-                { en: "balcony overlooking street", es: "Balcón vista calle" }
-            ]
-        };
-
-        // 5. CÁMARAS Y TECH (Nuevo)
-        const CAMERAS_DB = {
-            sony: { en: "shot on Sony A7R IV, 85mm f/1.4 GM lens, sharp focus, high contrast, digital photography", es: "Estilo Sony A7R (Nítido)" },
-            fuji: { en: "shot on Fujifilm GFX 100, classic chrome film simulation, soft colors, cinematic look", es: "Estilo Fujifilm (Cine)" },
-            kodak: { en: "shot on Kodak Portra 400 film, 35mm analog grain, warm tones, vintage aesthetic", es: "Estilo Kodak (Analógico)" },
-            iphone: { en: "shot on iPhone 15 Pro, raw candid photo, flash photography, amateur selfie angle", es: "Estilo iPhone (Casual)" }
-        };
-
-        const MANDATORY_POSE = "full body shot, dynamic pose, looking at camera";
-        const BODY_TYPE = "lean athletic build, smooth skin, hairless body, aesthetic physique";
-
-        function getRandom(arr) {
+        function getRandomItem(arr) {
             return arr[Math.floor(Math.random() * arr.length)];
         }
 
-        // Obtener todas las opciones de una categoría si es 'random'
-        function getFromCategory(db, key) {
-            if (key !== 'random' && db[key]) {
-                return getRandom(db[key]);
+        // Función para seleccionar aleatoriamente del grupo si se elige "random"
+        function resolveSelection(selectId, db) {
+            const val = document.getElementById(selectId).value;
+            if (val === 'random') {
+                return getRandom(db);
             }
-            // Si es random, aplanar todas las categorías
-            let allItems = [];
-            Object.keys(db).forEach(k => allItems = allItems.concat(db[k]));
-            return getRandom(allItems);
+            // Si es una categoría de grupo (ej: nature_*) en el select, 
+            // pero queremos más aleatoriedad, podríamos refinar. 
+            // Por ahora el value del select coincide con la key de la DB.
+            // PERO, si el usuario elige una categoría específica en un futuro update,
+            // aquí procesaríamos. Ahora mismo es directo.
+            return val;
         }
 
-        function generateDirectorSet() {
+        function generatePrompts() {
             const container = document.getElementById('grid-container');
-            const useSocks = document.getElementById('socks-toggle').checked;
-
-            // Obtener valores de los selects
-            const selSubj = document.getElementById('sel-subject').value;
-            const selWard = document.getElementById('sel-wardrobe').value;
-            const selLoc = document.getElementById('sel-location').value;
-            const selCam = document.getElementById('sel-camera').value;
-
+            
+            // UI Loading
             container.innerHTML = `
-                <div class="col-span-full py-16 flex flex-col items-center justify-center text-emerald-500">
-                    <i class="fa-solid fa-camera-shutter fa-spin text-4xl mb-4"></i>
-                    <p class="font-mono text-sm animate-pulse">REVELANDO FOTOS...</p>
+                <div class="col-span-full py-16 flex flex-col items-center justify-center text-blue-500">
+                    <i class="fa-solid fa-circle-notch fa-spin text-4xl mb-4"></i>
+                    <p class="font-mono text-sm animate-pulse">GENERANDO COMPOSICIONES ÚNICAS...</p>
                 </div>
             `;
 
             setTimeout(() => {
                 container.innerHTML = '';
                 
+                // Generamos 9 prompts
                 for(let i=0; i<9; i++) {
-                    // Selección de elementos
-                    const subjData = getFromCategory(SUBJECTS_DB, selSubj);
-                    const wardData = getFromCategory(WARDROBE_DB, selWard);
-                    const locData = getFromCategory(LOCATIONS_DB, selLoc);
+                    // Selección Aleatoria para cada tarjeta si está en modo Random
+                    // O mantenemos la selección fija si el usuario eligió algo específico.
+                    // Para que "no sea repetitivo", incluso si eligen "Latino", 
+                    // variaremos los otros factores.
                     
-                    // Selección de Cámara (Manejo especial porque es objeto no array de arrays)
-                    let camData;
-                    if(selCam !== 'random' && CAMERAS_DB[selCam]) {
-                        camData = CAMERAS_DB[selCam];
-                    } else {
-                        const keys = Object.keys(CAMERAS_DB);
-                        camData = CAMERAS_DB[keys[Math.floor(Math.random() * keys.length)]];
-                    }
+                    const selSubjKey = document.getElementById('sel-subject').value === 'random' ? getRandom(SUBJECTS_DB) : document.getElementById('sel-subject').value;
+                    const selWardKey = document.getElementById('sel-wardrobe').value === 'random' ? getRandom(WARDROBE_DB) : document.getElementById('sel-wardrobe').value;
+                    const selLocKey = document.getElementById('sel-location').value === 'random' ? getRandom(LOCATIONS_DB) : document.getElementById('sel-location').value;
 
-                    // Socks Logic
-                    let socksPrompt = "";
-                    let socksTitle = "";
-                    if(useSocks && Math.random() > 0.3) {
-                        const sockTypes = ["white crew socks", "black ankle socks", "sport socks", "white tube socks"];
-                        const s = getRandom(sockTypes);
-                        socksPrompt = `, wearing ${s}`;
-                        socksTitle = " + Calcetines";
-                    }
-
-                    // Safe Bulge Logic
-                    const bulgeTag = getRandom(SAFE_BULGE_TAGS);
-
-                    // Título en Español (Construcción dinámica)
-                    const titleES = `${subjData.es} con ${wardData.es}${socksTitle}.`;
-                    const subTitleES = `${locData.es} | ${camData.es}`;
+                    const subjData = SUBJECTS_DB[selSubjKey];
+                    const wardData = WARDROBE_DB[selWardKey];
+                    const locData = LOCATIONS_DB[selLocKey];
+                    
+                    const lighting = getRandomItem(LIGHTING_DB);
+                    const camera = getRandomItem(CAMERA_DB);
 
                     // Construcción del Prompt
-                    const finalPrompt = `
-(masterpiece, best quality:1.2),
-Subject: ${subjData.en}, ${BODY_TYPE},
-Outfit: (wearing ${wardData.en}:1.2)${socksPrompt},
-Detail: ${bulgeTag},
-Pose: ${MANDATORY_POSE},
+                    // Estructura: TAG OBLIGATORIO + Sujeto + Ropa + Escenario + Detalles Técnicos
+                    const promptText = `
+${MANDATORY_TAG}.
+Subject: ${subjData.en},
+Attire: Wearing ${wardData.en},
 Location: ${locData.en},
-Tech: ${camData.en}
-                    `.replace(/\s+/g, ' ').trim();
+Tech: ${lighting}, ${camera}, masterpiece, best quality, detailed skin texture, anatomic accuracy.
+                    `.trim();
 
-                    // UI Render
+                    // Títulos para la tarjeta
+                    const cardTitle = `${subjData.es}`;
+                    const cardSubtitle = `${wardData.es} • ${locData.es}`;
+
+                    // Render HTML
                     const card = document.createElement('div');
                     card.className = "card-anim bg-slate-900 p-4 rounded-xl flex flex-col h-full relative group shadow-lg";
                     
                     card.innerHTML = `
-                        <div class="mb-3 border-b border-slate-800 pb-2">
-                            <h3 class="text-sm font-bold text-emerald-400 leading-tight mb-1">${titleES}</h3>
-                            <p class="text-[10px] text-slate-500 font-mono uppercase tracking-wide">${subTitleES}</p>
+                        <div class="mb-3 border-b border-slate-800 pb-2 flex justify-between items-start">
+                            <div>
+                                <h3 class="text-sm font-bold text-blue-400 leading-tight mb-1">${cardTitle}</h3>
+                                <p class="text-[10px] text-slate-500 font-mono uppercase tracking-wide truncate max-w-[200px]">${cardSubtitle}</p>
+                            </div>
+                            <span class="text-[9px] bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700">V11</span>
                         </div>
 
-                        <div class="relative bg-black/40 rounded-lg p-3 mb-3 border border-slate-800 flex-grow group-hover:border-emerald-500/30 transition">
-                            <p id="p-${i}" class="mono-font text-[11px] text-slate-300 leading-relaxed select-all whitespace-pre-wrap h-32 overflow-y-auto scroller">${finalPrompt}</p>
+                        <div class="relative bg-black/40 rounded-lg p-3 mb-3 border border-slate-800 flex-grow group-hover:border-blue-500/30 transition">
+                            <p id="p-${i}" class="mono-font text-[11px] text-slate-300 leading-relaxed select-all whitespace-pre-wrap h-32 overflow-y-auto scroller">${promptText}</p>
                         </div>
 
                         <div class="mt-auto flex gap-2">
-                            <button onclick="copyToClipboard('p-${i}', this)" class="flex-grow bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-400 px-3 py-2 rounded-lg transition text-xs flex items-center justify-center gap-2 group border border-slate-700 hover:border-emerald-500 font-semibold">
-                                <span>Copiar Prompt</span> <i class="fa-regular fa-copy"></i>
+                            <button onclick="copyToClipboard('p-${i}', this)" class="flex-grow bg-slate-800 hover:bg-blue-600 hover:text-white text-slate-400 px-3 py-2 rounded-lg transition text-xs flex items-center justify-center gap-2 group border border-slate-700 hover:border-blue-500 font-semibold">
+                                <span>Copiar</span> <i class="fa-regular fa-copy"></i>
                             </button>
                         </div>
                     `;
                     container.appendChild(card);
                 }
-            }, 500);
+            }, 600); // Simular proceso
         }
 
         function copyToClipboard(id, btn) {
@@ -374,29 +371,27 @@ Tech: ${camData.en}
             navigator.clipboard.writeText(text);
             
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<span>Copiado</span> <i class="fa-solid fa-check"></i>`;
-            btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-500');
+            btn.innerHTML = `<span>Listo</span> <i class="fa-solid fa-check"></i>`;
+            btn.classList.add('bg-blue-600', 'text-white', 'border-blue-500');
             btn.classList.remove('bg-slate-800', 'text-slate-400');
             
             setTimeout(() => { 
                 btn.innerHTML = originalHTML;
-                btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-500');
+                btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-500');
                 btn.classList.add('bg-slate-800', 'text-slate-400');
             }, 1000);
         }
 
-        const NEGATIVE_PROMPT = "(beard, mustache, stubble:1.4), (body hair, chest hair, arm hair, leg hair:1.4), (old, wrinkles, mature:1.5), (muscular, bodybuilder:1.2), deformed, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, census, distorted hands, amputation, missing hands, obese, doubled face, double hands, b&w, black and white, sepia";
-
-        function copyNegative() {
-            navigator.clipboard.writeText(NEGATIVE_PROMPT);
-            // Custom toast notification instead of alert could be better, but keeping simple for now
-            const btn = document.querySelector('header button');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado';
-            setTimeout(() => btn.innerHTML = originalText, 1500);
+        function clearGrid() {
+            document.getElementById('grid-container').innerHTML = `
+                <div class="col-span-full py-20 text-center border-2 border-dashed border-slate-800 rounded-xl bg-slate-900/30">
+                    <p class="text-slate-600 font-mono text-sm">Listo para nueva generación.</p>
+                </div>
+            `;
         }
 
-        window.onload = generateDirectorSet;
+        // Autogenerar al cargar para mostrar variedad
+        window.onload = generatePrompts;
     </script>
 </body>
 </html>
