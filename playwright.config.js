@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   use: {
-    baseURL: 'https://tu-usuario.github.io/tu-repo/',  // ¡Cambia esto por tu URL real!
+    baseURL: 'baseURL: 'https://yossfu.github.io/exenArt/',  // ¡Cambia esto por tu URL real!
     headless: true,
   },
 });
