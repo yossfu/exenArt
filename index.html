@@ -9,6 +9,10 @@
     <meta property="og:url" content="https://yossfu.github.io/exenArt/index.html" />
     <meta property="og:image" content="https://files.catbox.moe/ta0lv8.png" />
     
+    <!-- PYSCRIPT: Motor de Python para el navegador -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -68,6 +72,7 @@
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #050505; /* Fondo más oscuro */
+            /* Mantenemos tus gradientes originales */
             background-image: 
                 radial-gradient(circle at 10% 10%, rgba(249, 115, 22, 0.05) 0%, transparent 40%), 
                 radial-gradient(circle at 90% 90%, rgba(124, 58, 237, 0.03) 0%, transparent 40%);
@@ -76,6 +81,18 @@
             padding-bottom: calc(var(--nav-height) + 20px);
             padding-top: var(--header-height);
             overscroll-behavior-y: none;
+        }
+
+        /* CANVAS DE FONDO PARA PYTHON */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Detrás de todo */
+            pointer-events: none; /* Deja pasar los clics */
+            opacity: 0.8; /* Sutil */
         }
 
         /* Scrollbars */
@@ -188,6 +205,9 @@
     </style>
 </head>
 <body class="antialiased selection:bg-orange-500 selection:text-white">
+
+    <!-- CANVAS PARA EL SCRIPT DE PYTHON -->
+    <canvas id="particle-canvas"></canvas>
 
     <div id="initial-loader">
         <img src="https://files.catbox.moe/ap1lh0.png" class="loader-logo mb-4" style="width: 80px; animation: pulse 2s infinite;">
@@ -1075,6 +1095,129 @@
         async function handleConfigImageSelect(event) { const file = event.target.files[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { alert("Máx 5MB"); return; } newProfileFile = file; document.getElementById('config-preview-img').src = URL.createObjectURL(file); document.getElementById('config-upload-status').innerHTML = '<span class="text-orange-400 font-bold">Seleccionada</span>'; }
         async function saveNewProfilePic() { if (!newProfileFile) { closeConfigModal(); return; } const btn = document.getElementById('btn-save-config'); const status = document.getElementById('config-upload-status'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; status.innerHTML = 'Subiendo...'; try { const formData = new FormData(); formData.append('reqtype', 'fileupload'); formData.append('userhash', CATBOX_USERHASH); formData.append('fileToUpload', newProfileFile); const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData }); if (!res.ok) throw new Error("Error de red"); const url = await res.text(); if (url.includes('catbox.moe')) { const finalUrl = url.trim(); if (currentUser) { await db.ref('users/' + currentUser.uid).update({ profilePic: finalUrl }); alert('¡Listo!'); closeConfigModal(); window.location.reload(); } } else { throw new Error("API Error"); } } catch (e) { console.error(e); status.innerHTML = '<span class="text-red-500">Error</span>'; btn.disabled = false; btn.innerHTML = 'Reintentar'; } }
         function logoutUser() { auth.signOut().then(() => { window.location.reload(); }); }
+    </script>
+
+    <!-- SCRIPT DE PYTHON PARA EL FONDO DINÁMICO -->
+    <script type="py">
+from pyscript import window, document
+from pyodide.ffi import create_proxy
+import random
+import math
+
+# Configuración del canvas de fondo
+canvas = document.getElementById("particle-canvas")
+ctx = canvas.getContext("2d")
+
+# Estado global
+mouse = {"x": -1000, "y": -1000}
+particles = []
+
+def resize(event=None):
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+
+resize()
+window.addEventListener("resize", create_proxy(resize))
+
+class Particle:
+    def __init__(self, x, y, is_respawn=False):
+        self.x = x
+        self.y = y
+        self.size = random.random() * 2 + 0.5
+        
+        # Colores temáticos (Naranja Exen y Violeta)
+        # 80% Naranjas/Dorados, 20% Violetas
+        if random.random() > 0.2:
+            # Rango Naranja (Hue ~20-40)
+            h = random.randint(20, 45)
+            s = 90
+            l = 60
+        else:
+            # Rango Violeta (Hue ~260-290)
+            h = random.randint(260, 290)
+            s = 80
+            l = 70
+            
+        self.color = f"hsl({h}, {s}%, {l}%)"
+        
+        # Velocidad suave y flotante
+        self.vx = (random.random() - 0.5) * 0.8
+        self.vy = (random.random() - 0.5) * 0.8
+        
+        # Vida infinita (respawn en bordes)
+        self.alpha = 0 if is_respawn else random.random()
+        self.target_alpha = random.random() * 0.6 + 0.2
+
+    def update(self):
+        # Movimiento fluido
+        self.x += self.vx
+        self.y += self.vy
+        
+        # Efecto de aparición suave
+        if self.alpha < self.target_alpha:
+            self.alpha += 0.01
+
+        # Interacción con ratón (Repulsión suave)
+        dx = mouse["x"] - self.x
+        dy = mouse["y"] - self.y
+        dist = math.sqrt(dx*dx + dy*dy)
+        
+        if dist < 120:
+            force = (120 - dist) / 120
+            angle = math.atan2(dy, dx)
+            # Empujar lejos del ratón
+            self.vx -= math.cos(angle) * force * 0.1
+            self.vy -= math.sin(angle) * force * 0.1
+
+        # Límites (Screen Wrap)
+        if self.x < 0: self.x = canvas.width
+        if self.x > canvas.width: self.x = 0
+        if self.y < 0: self.y = canvas.height
+        if self.y > canvas.height: self.y = 0
+        
+        # Fricción mínima para estabilizar
+        self.vx *= 0.99
+        self.vy *= 0.99
+
+    def draw(self):
+        ctx.save()
+        ctx.globalAlpha = self.alpha
+        ctx.fillStyle = self.color
+        ctx.shadowBlur = 8
+        ctx.shadowColor = self.color
+        ctx.beginPath()
+        ctx.arc(self.x, self.y, self.size, 0, math.pi * 2)
+        ctx.fill()
+        ctx.restore()
+
+def handle_mouse(e):
+    if hasattr(e, 'touches'):
+        mouse["x"] = e.touches.item(0).clientX
+        mouse["y"] = e.touches.item(0).clientY
+    else:
+        mouse["x"] = e.clientX
+        mouse["y"] = e.clientY
+
+# Escuchamos en window para capturar eventos sobre la UI HTML
+mouse_proxy = create_proxy(handle_mouse)
+window.addEventListener("mousemove", mouse_proxy)
+window.addEventListener("touchmove", mouse_proxy)
+
+# Inicializar partículas
+for _ in range(70): # Cantidad moderada para no saturar
+    particles.append(Particle(random.random() * canvas.width, random.random() * canvas.height))
+
+def run_animation(*args):
+    # Limpiar canvas completamente para mantener transparencia del fondo CSS
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    
+    for p in particles:
+        p.update()
+        p.draw()
+    
+    window.requestAnimationFrame(create_proxy(run_animation))
+
+run_animation()
     </script>
 </body>
 </html>
