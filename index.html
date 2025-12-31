@@ -37,13 +37,18 @@
                     },
                     animation: {
                         'float-up': 'floatUp 10s linear forwards',
+                        'shimmer': 'shimmer 1.5s infinite', // Aseguramos que shimmer esté definido
                     },
                     keyframes: {
                         floatUp: {
-                            '0%': { transform: 'translateY(100%) scale(0.8)', opacity: '0' },
-                            '10%': { opacity: '1', transform: 'translateY(80%) scale(1)' },
-                            '90%': { opacity: '0.8' },
-                            '100%': { transform: 'translateY(-20%) scale(1)', opacity: '0' },
+                            '0%': { transform: 'translateY(100%) scale(0.9)', opacity: '0' },
+                            '5%': { opacity: '1', transform: 'translateY(90%) scale(1)' },
+                            '90%': { opacity: '1' },
+                            '100%': { transform: 'translateY(-100px)', opacity: '0' },
+                        },
+                        shimmer: { // Definición de shimmer para los esqueletos
+                            '0%': { backgroundPosition: '200% 0' },
+                            '100%': { backgroundPosition: '-200% 0' },
                         }
                     }
                 }
@@ -72,10 +77,10 @@
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #050505; /* Fondo más oscuro */
-            /* Mantenemos tus gradientes originales */
             background-image: 
-                radial-gradient(circle at 10% 10%, rgba(249, 115, 22, 0.05) 0%, transparent 40%), 
-                radial-gradient(circle at 90% 90%, rgba(124, 58, 237, 0.03) 0%, transparent 40%);
+                radial-gradient(circle at 10% 10%, rgba(249, 115, 22, 0.08) 0%, transparent 40%), 
+                radial-gradient(circle at 90% 90%, rgba(124, 58, 237, 0.05) 0%, transparent 40%),
+                linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, transparent 20%); /* Sutil gradiente para profundidad */
             background-attachment: fixed;
             color: #f3f4f6;
             padding-bottom: calc(var(--nav-height) + 20px);
@@ -92,63 +97,67 @@
             height: 100%;
             z-index: -1; /* Detrás de todo */
             pointer-events: none; /* Deja pasar los clics */
-            opacity: 0.8; /* Sutil */
+            opacity: 0.7; /* Sutil */
         }
 
         /* Scrollbars */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; } /* Más ancho */
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 6px; border: 1px solid #1a1a1a; } /* Más redondeado y con borde */
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); } /* Color al pasar el ratón */
 
         /* --- UI COMPONENTS --- */
         .glass-panel {
-            background: rgba(18, 18, 20, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(18, 18, 20, 0.85); /* Ligeramente más opaco */
+            backdrop-filter: blur(25px); /* Más blur */
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Borde más visible */
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4); /* Sombra más pronunciada */
         }
 
         .glass-header {
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.9); /* Más opaco */
+            backdrop-filter: blur(20px); /* Más blur */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Borde más visible */
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3); /* Sombra para el header */
         }
 
         /* --- TOP USERS --- */
         .top-user-ring {
-            padding: 2px;
+            padding: 3px; /* Más padding */
             border-radius: 50%;
             position: relative;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5); /* Sombra general */
         }
-        .rank-gold { background: linear-gradient(45deg, #ffd700, #b8860b); box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
-        .rank-silver { background: linear-gradient(45deg, #c0c0c0, #7f8c8d); }
-        .rank-bronze { background: linear-gradient(45deg, #cd7f32, #8b4513); }
-        .rank-normal { background: rgba(255,255,255,0.1); }
+        .rank-gold { background: linear-gradient(45deg, #ffeb3b, #fbc02d); box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); } /* Oro más vibrante */
+        .rank-silver { background: linear-gradient(45deg, #e0e0e0, #bdbdbd); box-shadow: 0 0 10px rgba(192, 192, 192, 0.4); }
+        .rank-bronze { background: linear-gradient(45deg, #d7ba8e, #a1887f); box-shadow: 0 0 10px rgba(205, 127, 50, 0.4); }
+        .rank-normal { background: rgba(255,255,255,0.15); } /* Ligeramente más claro */
         
         /* --- FLOATING BUBBLES --- */
         #floating-comments-container {
             position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 15;
-            mask-image: linear-gradient(to top, transparent, black 15%, black 85%, transparent);
-            -webkit-mask-image: linear-gradient(to top, transparent, black 15%, black 85%, transparent);
+            mask-image: linear-gradient(to top, transparent, black 10%, black 90%, transparent); /* Más suave */
+            -webkit-mask-image: linear-gradient(to top, transparent, black 10%, black 90%, transparent);
         }
         .chat-bubble {
             position: absolute;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            padding: 6px 12px;
-            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.7); /* Más opaco */
+            backdrop-filter: blur(6px); /* Más blur */
+            padding: 8px 14px; /* Más padding */
+            border-radius: 25px; /* Más redondeado */
             color: white;
-            font-size: 12px;
-            max-width: 80%;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.1);
-            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; /* Ligeramente más grande */
+            max-width: 70%; /* Un poco más estrecho */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3); /* Sombra más pronunciada */
+            border: 1px solid rgba(255,255,255,0.15); /* Borde más visible */
+            display: flex; align-items: center; gap: 10px; /* Más espacio */
             animation: floatUp 12s linear forwards; /* Animación CSS */
             will-change: transform, opacity;
         }
-        .chat-bubble img { width: 20px; height: 20px; rounded: 50%; border-radius: 50%; object-fit: cover; }
+        .chat-bubble img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); } /* Avatar con borde */
         @keyframes floatUp {
             0% { transform: translateY(100%) scale(0.9); opacity: 0; }
             5% { opacity: 1; transform: translateY(90%) scale(1); }
@@ -158,14 +167,19 @@
 
         /* --- CARDS --- */
         .image-card {
-            border-radius: 12px;
+            border-radius: 16px; /* Más redondeado */
             overflow: hidden;
             background: #121214;
-            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-            will-change: transform;
-            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease; /* Transición para sombra */
+            will-change: transform, box-shadow;
+            border: 1px solid rgba(255,255,255,0.08); /* Borde más visible */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Sombra por defecto */
         }
-        .image-card:active { transform: scale(0.97); }
+        .image-card:hover {
+            transform: translateY(-3px) scale(1.02); /* Efecto hover más pronunciado */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5); /* Sombra más grande en hover */
+        }
+        .image-card:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
         /* --- HERO --- */
         .hero-wrapper {
@@ -174,33 +188,71 @@
             overflow: hidden;
             margin-bottom: 2rem; 
             box-shadow: 0 20px 50px -20px rgba(0,0,0,0.8);
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08); /* Borde más visible */
             display: none;
         }
         .hero-overlay {
             background: linear-gradient(0deg, #050505 0%, rgba(5,5,5,0.8) 20%, rgba(5,5,5,0.2) 60%, rgba(0,0,0,0.4) 100%);
             position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 1.5rem;
         }
+        .hero-slide img {
+            filter: brightness(0.5); /* Imagen más oscura para mejor contraste del texto */
+        }
 
         /* --- BOTTOM NAV --- */
         .bottom-nav { 
             height: var(--nav-height);
-            background: rgba(5, 5, 5, 0.95);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(5, 5, 5, 0.98); /* Más opaco */
+            backdrop-filter: blur(25px); /* Más blur */
+            border-top: 1px solid rgba(255, 255, 255, 0.1); /* Borde más visible */
             padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.4); /* Sombra hacia arriba */
         }
-        .nav-item.active i { color: var(--accent); transform: translateY(-4px); text-shadow: 0 0 15px var(--accent); }
+        .nav-item {
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+        .nav-item:hover {
+            transform: translateY(-2px);
+            color: var(--accent);
+        }
+        .nav-item.active i { 
+            color: var(--accent); 
+            transform: translateY(-6px); /* Más pronunciado */
+            text-shadow: 0 0 20px var(--accent); /* Sombra más grande */
+        }
 
         /* --- MODAL --- */
         .modal-backdrop { 
-            display: none; position: fixed; inset: 0; background: #000; z-index: 5000;
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); /* Fondo más oscuro */
+            z-index: 5000;
             opacity: 0; transition: opacity 0.3s;
         } 
         .modal-backdrop.visible { display: block; opacity: 1; }
+        .modal-backdrop.fullscreen-mode #modal-image-area {
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 5010;
+            background: black;
+        }
+        .modal-backdrop.fullscreen-mode #modal-inner-container {
+            flex-direction: column; /* En fullscreen, el panel de info se va abajo */
+        }
+        .modal-backdrop.fullscreen-mode .modal-close-btn {
+            top: 1rem; right: 1rem;
+        }
+        .modal-backdrop.fullscreen-mode #modal-image {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .modal-backdrop.fullscreen-mode #modal-inner-container > div:last-child {
+            display: none; /* Ocultar panel de info en fullscreen */
+        }
         
         /* Utils */
-        .skeleton { background: linear-gradient(90deg, #1f1f22 25%, #2a2a2e 50%, #1f1f22 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        .skeleton { background: linear-gradient(90deg, #1f1f22 25%, #2a2a2e 50%, #1f1f22 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; } /* Más redondeado */
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
@@ -209,9 +261,9 @@
     <!-- CANVAS PARA EL SCRIPT DE PYTHON -->
     <canvas id="particle-canvas"></canvas>
 
-    <div id="initial-loader">
+    <div id="initial-loader" class="fixed inset-0 flex flex-col items-center justify-center bg-dark-900 z-[9999] transition-opacity duration-500">
         <img src="https://files.catbox.moe/ap1lh0.png" class="loader-logo mb-4" style="width: 80px; animation: pulse 2s infinite;">
-        <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+        <div class="w-10 h-10 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
     </div>
 
     <div id="app-content" style="display: block;">
@@ -219,31 +271,31 @@
         <!-- HEADER -->
         <header class="fixed top-0 left-0 right-0 z-50 glass-header h-[var(--header-height)] px-4 flex justify-between items-center">
             <div class="relative">
-                <button id="user-profile-btn" onclick="toggleProfileMenu()" class="w-10 h-10 rounded-full overflow-hidden border border-white/10 active:scale-95 transition">
+                <button id="user-profile-btn" onclick="toggleProfileMenu()" class="w-10 h-10 rounded-full overflow-hidden border border-white/10 active:scale-95 transition duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
                     <img id="header-user-img" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
                 </button>
-                <div id="profile-menu" class="fixed top-[60px] left-4 w-56 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-left z-[5001]">
+                <div id="profile-menu" class="fixed top-[70px] left-4 w-56 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-left z-[5001]">
                     <div class="p-4 border-b border-white/5"><span class="text-xs font-bold text-gray-400 uppercase">Mi Cuenta</span></div>
                     <div class="p-2">
-                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer text-sm text-gray-300" onclick="if(requireLogin()) openConfigModal()"><i class="fas fa-cog"></i> Configurar</div>
-                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer text-sm text-gray-300" onclick="window.location.href='profile.html'"><i class="fas fa-user"></i> Ver Perfil</div>
-                        <div class="flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-lg cursor-pointer text-sm text-red-400" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</div>
+                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer text-sm text-gray-300 transition" onclick="if(requireLogin()) openConfigModal()"><i class="fas fa-cog w-5 text-center"></i> Configurar</div>
+                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer text-sm text-gray-300 transition" onclick="window.location.href='profile.html'"><i class="fas fa-user w-5 text-center"></i> Ver Perfil</div>
+                        <div class="flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-lg cursor-pointer text-sm text-red-400 transition" onclick="logoutUser()"><i class="fas fa-sign-out-alt w-5 text-center"></i> Cerrar Sesión</div>
                     </div>
                 </div>
             </div>
 
             <div class="flex flex-col items-center opacity-90">
-                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-6 w-auto drop-shadow-md">
+                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-7 w-auto drop-shadow-md hover:scale-105 transition-transform duration-200">
             </div>
             
             <div class="relative">
-                <button onclick="toggleNotifications()" class="notif-btn w-10 h-10 flex items-center justify-center text-gray-300 active:text-white transition">
+                <button onclick="toggleNotifications()" class="notif-btn w-10 h-10 flex items-center justify-center text-gray-300 hover:text-white active:scale-95 transition duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
                     <i class="far fa-bell text-xl"></i>
                     <div id="notif-badge" class="absolute top-2 right-2 w-2.5 h-2.5 bg-orange-500 rounded-full hidden border border-black"></div>
                 </button>
-                <div id="notification-dropdown" class="fixed top-[60px] right-4 w-80 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-right z-[5001] max-h-[60vh] overflow-hidden flex flex-col">
+                <div id="notification-dropdown" class="fixed top-[70px] right-4 w-80 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-right z-[5001] max-h-[60vh] overflow-hidden flex flex-col">
                     <div class="p-4 border-b border-white/5"><span class="text-sm font-bold text-white">Notificaciones</span></div>
-                    <div id="notif-list" class="overflow-y-auto p-2"></div>
+                    <div id="notif-list" class="overflow-y-auto p-2 custom-scrollbar"></div>
                 </div>
             </div>
         </header>
@@ -260,15 +312,15 @@
                         <!-- Skeletons por defecto -->
                         <div class="flex flex-col items-center gap-1 min-w-[60px] animate-pulse">
                             <div class="w-[56px] h-[56px] rounded-full bg-gray-800"></div>
-                            <div class="w-10 h-2 bg-gray-800 rounded"></div>
+                            <div class="w-10 h-2 bg-gray-800 rounded mt-1"></div>
                         </div>
                         <div class="flex flex-col items-center gap-1 min-w-[60px] animate-pulse delay-75">
                             <div class="w-[56px] h-[56px] rounded-full bg-gray-800"></div>
-                            <div class="w-10 h-2 bg-gray-800 rounded"></div>
+                            <div class="w-10 h-2 bg-gray-800 rounded mt-1"></div>
                         </div>
                         <div class="flex flex-col items-center gap-1 min-w-[60px] animate-pulse delay-150">
                             <div class="w-[56px] h-[56px] rounded-full bg-gray-800"></div>
-                            <div class="w-10 h-2 bg-gray-800 rounded"></div>
+                            <div class="w-10 h-2 bg-gray-800 rounded mt-1"></div>
                         </div>
                     </div>
                 </section>
@@ -281,7 +333,7 @@
                         </div>
                         <input type="text" id="search-input" placeholder="Buscar..." 
                                class="w-full bg-[#121214] border border-white/5 rounded-2xl py-3 pl-10 pr-10 text-white text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 transition shadow-lg">
-                        <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-3 hidden text-gray-500 hover:text-white"><i class="fas fa-times"></i></button>
+                        <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-3 hidden text-gray-500 hover:text-white transition"><i class="fas fa-times"></i></button>
                     </div>
                 </form>
 
@@ -324,7 +376,7 @@
                                 <i class="fas fa-lock text-3xl text-orange-500 mb-3"></i>
                                 <h3 class="text-lg font-bold text-white mb-2">Más contenido</h3>
                                 <p class="text-gray-400 text-xs mb-4">Regístrate para ver toda la galería.</p>
-                                <button onclick="window.location.href='login.html'" class="w-full py-3 rounded-xl bg-orange-600 text-white font-bold text-sm shadow-lg">Crear Cuenta</button>
+                                <button onclick="window.location.href='login.html'" class="w-full py-3 rounded-xl bg-orange-600 text-white font-bold text-sm shadow-lg hover:bg-orange-700 transition">Crear Cuenta</button>
                             </div>
                         </div>
 
@@ -337,7 +389,7 @@
         
         <!-- MODAL VISOR -->
         <div id="modal" class="modal-backdrop">
-            <button onclick="closeModal()" class="absolute top-4 right-4 z-[5020] w-10 h-10 rounded-full bg-black/50 text-white backdrop-blur border border-white/10 flex items-center justify-center active:scale-90 transition"><i class="fas fa-times"></i></button>
+            <button onclick="closeModal()" class="modal-close-btn absolute top-4 right-4 z-[5020] w-10 h-10 rounded-full bg-black/50 text-white backdrop-blur border border-white/10 flex items-center justify-center active:scale-90 hover:bg-black/70 transition"><i class="fas fa-times"></i></button>
 
             <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black">
                 
@@ -349,23 +401,23 @@
                     <div id="floating-comments-container"></div>
 
                     <!-- Controles -->
-                    <button id="prev-image" class="absolute left-2 z-20 w-10 h-10 rounded-full bg-black/30 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fas fa-chevron-left"></i></button>
-                    <button id="next-image" class="absolute right-2 z-20 w-10 h-10 rounded-full bg-black/30 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fas fa-chevron-right"></i></button>
-                    <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-black/50 text-white p-2 rounded backdrop-blur"><i class="fas fa-expand text-xs"></i></button>
+                    <button id="prev-image" class="absolute left-2 z-20 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-black/60"><i class="fas fa-chevron-left text-lg"></i></button>
+                    <button id="next-image" class="absolute right-2 z-20 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-black/60"><i class="fas fa-chevron-right text-lg"></i></button>
+                    <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-black/50 text-white p-2 rounded-lg backdrop-blur border border-white/10 hover:bg-black/70 transition"><i class="fas fa-expand text-xs"></i></button>
                 </div>
 
                 <!-- Panel Info -->
                 <div class="bg-[#121214] w-full lg:w-[380px] h-[40vh] lg:h-full flex flex-col z-30 relative border-l border-white/5 shadow-[-10px_0_40px_rgba(0,0,0,0.5)]">
                     
-                    <div class="p-3 border-b border-white/5 flex items-center justify-between bg-[#18181b]">
+                    <div class="p-3 border-b border-white/5 flex items-center justify-between bg-[#18181b] shadow-md">
                         <div class="flex items-center gap-3">
-                            <img id="modal-user-avatar" src="" class="w-9 h-9 rounded-full object-cover border border-white/10">
+                            <img id="modal-user-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-white/10 cursor-pointer hover:scale-105 transition">
                             <div>
                                 <h4 id="modal-image-title" class="font-bold text-white text-sm leading-tight line-clamp-1"></h4>
-                                <span id="modal-user-name" class="text-[10px] text-gray-400"></span>
+                                <span id="modal-user-name" class="text-[10px] text-gray-400 cursor-pointer hover:text-orange-400 transition"></span>
                             </div>
                         </div>
-                        <button id="modal-like-btn" class="flex flex-col items-center justify-center w-10 h-10 rounded active:bg-white/5 transition">
+                        <button id="modal-like-btn" class="flex flex-col items-center justify-center w-10 h-10 rounded active:bg-white/5 active:scale-95 transition">
                             <i class="far fa-heart text-lg mb-0.5"></i>
                             <span id="modal-like-count" class="text-[9px] font-bold text-gray-400">0</span>
                         </button>
@@ -373,12 +425,12 @@
 
                     <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#09090b]">
                         <div class="mb-4">
-                             <div id="modal-character-tag" class="hidden inline-block bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase mb-2"></div>
+                             <div id="modal-character-tag" class="hidden inline-block bg-orange-500/10 text-orange-400 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase mb-2"><i class="fas fa-tag mr-1"></i></div>
                              <p id="modal-desc" class="text-xs text-gray-300 leading-relaxed font-light whitespace-pre-wrap"></p>
                         </div>
 
                         <div class="mb-4">
-                            <button onclick="toggleTags()" id="tags-toggle-btn" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 hover:text-white transition mb-2"><span>Etiquetas</span> <i class="fas fa-chevron-down"></i></button>
+                            <button onclick="toggleTags()" id="tags-toggle-btn" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 hover:text-white transition mb-2"><span>Etiquetas</span> <i class="fas fa-chevron-down text-xs"></i></button>
                             <div id="modal-tags" class="hidden flex flex-wrap gap-2 mt-2"></div>
                         </div>
                         
@@ -393,9 +445,9 @@
                         </div>
                     </div>
 
-                    <div class="p-2 bg-[#121214] border-t border-white/5 safe-bottom">
+                    <div class="p-2 bg-[#121214] border-t border-white/5 safe-bottom shadow-lg">
                         <form id="comment-form" class="flex gap-2 relative">
-                            <input type="text" id="comment-input" class="w-full bg-[#1c1c1f] border border-white/5 rounded-full px-4 py-2.5 text-xs text-white focus:border-orange-500 focus:outline-none pr-9" placeholder="Comentar..." autocomplete="off">
+                            <input type="text" id="comment-input" class="w-full bg-[#1c1c1f] border border-white/5 rounded-full px-4 py-2.5 text-xs text-white focus:border-orange-500 focus:outline-none pr-9 shadow-inner" placeholder="Comentar..." autocomplete="off">
                             <button type="submit" class="absolute right-1 top-1 text-orange-500 p-1.5 hover:bg-white/5 rounded-full transition"><i class="fas fa-paper-plane text-xs"></i></button>
                         </form>
                     </div>
@@ -408,21 +460,21 @@
             <div class="bg-[#18181b] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
                 <h3 class="text-lg font-bold text-white mb-4 text-center">Editar Perfil</h3>
                 <div class="flex flex-col items-center gap-4">
-                    <div class="relative w-24 h-24 group cursor-pointer">
+                    <div class="relative w-28 h-28 group cursor-pointer">
                         <img id="config-preview-img" src="" class="w-full h-full rounded-full object-cover border-2 border-dashed border-gray-600 group-hover:border-orange-500 transition">
-                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition"><i class="fas fa-camera text-white"></i></div>
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition"><i class="fas fa-camera text-white text-xl"></i></div>
                         <input type="file" id="config-file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="handleConfigImageSelect(event)">
                     </div>
                     <p id="config-upload-status" class="text-xs text-gray-400">Toca para cambiar</p>
                     <div class="flex gap-2 w-full mt-2">
-                        <button onclick="closeConfigModal()" class="flex-1 py-2 rounded-lg bg-zinc-800 text-gray-300 text-sm">Cancelar</button>
-                        <button id="btn-save-config" onclick="saveNewProfilePic()" class="flex-1 py-2 rounded-lg bg-orange-600 text-white font-bold text-sm">Guardar</button>
+                        <button onclick="closeConfigModal()" class="flex-1 py-2 rounded-lg bg-zinc-800 text-gray-300 text-sm hover:bg-zinc-700 transition">Cancelar</button>
+                        <button id="btn-save-config" onclick="saveNewProfilePic()" class="flex-1 py-2 rounded-lg bg-orange-600 text-white font-bold text-sm shadow-md hover:bg-orange-700 transition">Guardar</button>
                     </div>
                 </div>
             </div>
         </div>
         
-        <button id="scrollToTopBtn" class="fixed bottom-[80px] right-4 h-10 w-10 rounded-full bg-zinc-800 text-white shadow-lg border border-white/10 z-[100] flex items-center justify-center active:scale-90 transition opacity-0 pointer-events-none translate-y-4" onclick="window.scrollTo(0,0)"><i class="fas fa-arrow-up text-xs"></i></button>
+        <button id="scrollToTopBtn" class="fixed bottom-[80px] right-4 h-12 w-12 rounded-full bg-zinc-800 text-white shadow-lg border border-white/10 z-[100] flex items-center justify-center active:scale-90 transition-all duration-300 opacity-0 pointer-events-none translate-y-4 hover:bg-zinc-700" onclick="window.scrollTo(0,0)"><i class="fas fa-arrow-up text-sm"></i></button>
 
         <!-- NAV -->
         <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[4000] flex justify-around items-center px-4">
@@ -610,7 +662,7 @@
                         <img src="${user.profilePic || 'https://placehold.co/100'}" class="w-full h-full rounded-full object-cover border-2 border-[#050505]">
                         ${icon}
                     </div>
-                    <span class="text-[9px] text-gray-400 font-bold truncate max-w-[60px]">${user.username}</span>
+                    <span class="text-[9px] text-gray-400 font-bold truncate max-w-[60px] mt-1">${user.username}</span>
                 `;
                 container.appendChild(div);
             });
@@ -709,7 +761,7 @@
                 slide.className = `hero-slide absolute inset-0 opacity-0 transition-opacity duration-700 z-10 ${index === 0 ? 'active opacity-100 z-20' : ''}`;
                 slide.setAttribute('onclick', `if(requireLogin(event)) openModal('${img.id}', 'main')`);
                 const displayUrl = img.thumbnailUrl || img.url; 
-                slide.innerHTML = `<img src="${displayUrl}" class="w-full h-full object-cover filter brightness-[0.6]"><div class="hero-overlay"><div class="w-full"><span class="bg-orange-500 text-white font-bold tracking-wider uppercase mb-2 text-[9px] px-2 py-0.5 rounded inline-block">Destacado</span><h2 class="text-2xl font-black text-white leading-none mb-1 uppercase line-clamp-2 italic">${img.title}</h2><p class="text-gray-300 text-xs flex items-center gap-1 mb-4"><i class="fas fa-user-circle"></i> ${img.user.name}</p></div></div>`;
+                slide.innerHTML = `<img src="${displayUrl}" class="w-full h-full object-cover filter brightness-[0.6]"><div class="hero-overlay"><div class="w-full"><span class="bg-orange-500 text-white font-bold tracking-wider uppercase mb-2 text-[9px] px-2 py-0.5 rounded inline-block">Destacado</span><h2 class="text-2xl font-black text-white leading-none mb-1 uppercase line-clamp-2 italic text-shadow-lg">${img.title}</h2><p class="text-gray-300 text-xs flex items-center gap-1 mb-4"><i class="fas fa-user-circle"></i> ${img.user.name}</p></div></div>`;
                 container.appendChild(slide);
                 const dot = document.createElement('div'); 
                 dot.className = `w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer ${index === 0 ? 'bg-orange-500 w-4' : 'bg-white/50'}`;
@@ -753,7 +805,7 @@
                 else reactionCount = allReactionCounts[item.id] || 0;
                 const isLiked = userReactions[item.id] === 'like';
                 const isVerified = (item.type === 'gallery');
-                div.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80"></div>${isVerified ? '<div class="absolute top-2 left-2 z-10 bg-white/10 backdrop-blur-md border border-white/20 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">Oficial</div>' : ''}<div class="absolute bottom-0 left-0 p-3 w-full"><h4 class="truncate font-bold text-white text-xs mb-0.5 tracking-tight">${item.title}</h4>${!isVerified ? `<p class="text-[9px] text-gray-400 truncate flex items-center gap-1"><img src="${item.user.avatar}" class="w-3 h-3 rounded-full"> ${item.user.name}</p>` : ''}</div><div class="absolute top-2 right-2 flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded-md backdrop-blur-sm border border-white/5"><i class="fas fa-heart text-[9px] ${isLiked ? 'text-red-500' : 'text-gray-300'}"></i><span class="text-[9px] text-white font-bold">${reactionCount}</span></div>`; 
+                div.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80"></div>${isVerified ? '<div class="absolute top-2 left-2 z-10 bg-white/10 backdrop-blur-md border border-white/20 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">Oficial</div>' : ''}<div class="absolute bottom-0 left-0 p-3 w-full"><h4 class="truncate font-bold text-white text-xs mb-0.5 tracking-tight">${item.title}</h4>${!isVerified ? `<p class="text-[9px] text-gray-400 truncate flex items-center gap-1"><img src="${item.user.avatar}" class="w-3 h-3 rounded-full border border-white/10"> ${item.user.name}</p>` : ''}</div><div class="absolute top-2 right-2 flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded-md backdrop-blur-sm border border-white/5"><i class="fas fa-heart text-[9px] ${isLiked ? 'text-red-500' : 'text-gray-300'}"></i><span class="text-[9px] text-white font-bold">${reactionCount}</span></div>`; 
                 grid.appendChild(div); 
             }); 
         }
@@ -887,7 +939,7 @@
                     if (n.type === 'like') { icon = '<i class="fas fa-heart text-red-500"></i>'; }
                     else if (n.type === 'comment') { icon = '<i class="fas fa-comment text-blue-500"></i>'; }
                     else if (n.type === 'follow') { icon = '<i class="fas fa-user-plus text-green-500"></i>'; }
-                    item.innerHTML = `<div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">${icon}</div><div class="flex-1"><p class="text-xs text-gray-300"><b>${n.fromUserName}</b> ${n.type === 'like' ? 'te dio like.' : n.type === 'comment' ? 'comentó.' : 'te sigue.'}</p><span class="text-[9px] text-gray-600">${timeAgo(n.timestamp)}</span></div>`;
+                    item.innerHTML = `<div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">${icon}</div><div class="flex-1"><p class="text-xs text-gray-300"><b>${n.fromUserName}</b> ${n.type === 'like' ? 'te dio like.' : n.type === 'comment' ? 'comentó.' : 'te sigue.'}</p><span class="text-[9px] text-zinc-600">${timeAgo(n.timestamp)}</span></div>`;
                     item.onclick = () => { markAsRead(n.key, item); if(n.postId) openModal(n.postId, 'main'); };
                     list.appendChild(item);
                 });
@@ -945,7 +997,7 @@
             } else { charTag.classList.add('hidden'); charTag.classList.remove('inline-block'); }
 
             const tagsDiv = document.getElementById('modal-tags'); const tagsBtn = document.getElementById('tags-toggle-btn');
-            tagsDiv.classList.add('hidden'); tagsBtn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down"></i>'; tagsDiv.innerHTML = '';
+            tagsDiv.classList.add('hidden'); tagsBtn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down text-xs"></i>'; tagsDiv.innerHTML = '';
             
             if (img.tags && img.tags.length > 0) {
                 tagsBtn.style.display = 'flex';
@@ -992,7 +1044,7 @@
             });
         }
         
-        function toggleTags() { const div = document.getElementById('modal-tags'); const btn = document.getElementById('tags-toggle-btn'); if (div.classList.contains('hidden')) { div.classList.remove('hidden'); btn.innerHTML = '<span>Ocultar</span> <i class="fas fa-chevron-up"></i>'; } else { div.classList.add('hidden'); btn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down"></i>'; } }
+        function toggleTags() { const div = document.getElementById('modal-tags'); const btn = document.getElementById('tags-toggle-btn'); if (div.classList.contains('hidden')) { div.classList.remove('hidden'); btn.innerHTML = '<span>Ocultar</span> <i class="fas fa-chevron-up text-xs"></i>'; } else { div.classList.add('hidden'); btn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down text-xs"></i>'; } }
         function navigateToNext() { if(currentIndex < currentPlaylist.length - 1) { stopFloatingComments(); currentIndex++; updateModalContent(currentPlaylist[currentIndex]); initFloatingComments(currentPlaylist[currentIndex].id, currentPlaylist[currentIndex].type); } }
         function navigateToPrevious() { if(currentIndex > 0) { stopFloatingComments(); currentIndex--; updateModalContent(currentPlaylist[currentIndex]); initFloatingComments(currentPlaylist[currentIndex].id, currentPlaylist[currentIndex].type); } }
         const imageArea = document.getElementById('modal-image-area'); 
@@ -1041,7 +1093,7 @@
                 const comments = []; snap.forEach(child => comments.push(child.val())); 
                 comments.reverse().forEach(c => { 
                     const div = document.createElement('div'); div.className = "flex gap-2 items-start";
-                    div.innerHTML = `<img src="${c.userAvatar || 'https://placehold.co/50'}" class="w-6 h-6 rounded-full mt-1 border border-zinc-700 object-cover"><div class="bg-[#1c1c1f] p-2.5 rounded-2xl rounded-tl-sm border border-white/5 w-full"><div class="flex justify-between items-center mb-0.5"><span class="font-bold text-gray-400 text-[10px]">${c.userName || c.name || 'Anónimo'}</span><span class="text-[9px] text-zinc-600">${timeAgo(c.timestamp)}</span></div><p class="text-gray-300 text-xs leading-snug break-words">${c.text || ''}</p></div>`; 
+                    div.innerHTML = `<img src="${c.userAvatar || 'https://placehold.co/50'}" class="w-7 h-7 rounded-full mt-1 border border-zinc-700 object-cover"><div class="bg-[#1c1c1f] p-2.5 rounded-2xl rounded-tl-sm border border-white/5 w-full"><div class="flex justify-between items-center mb-0.5"><span class="font-bold text-gray-400 text-[10px]">${c.userName || c.name || 'Anónimo'}</span><span class="text-[9px] text-zinc-600">${timeAgo(c.timestamp)}</span></div><p class="text-gray-300 text-xs leading-snug break-words">${c.text || ''}</p></div>`; 
                     container.appendChild(div); 
                 }); 
             }); 
@@ -1069,7 +1121,7 @@
             currentSearchResults = [...matchedUsers, ...matchedGallery]; displaySearchResultsPage(1); 
         }
         function displaySearchResultsPage(page) { searchCurrentPage = page; const start = (page - 1) * searchResultsPerPage; const items = currentSearchResults.slice(start, start + searchResultsPerPage); displaySearchResults(items, 'search-results-grid', false, 'search'); renderPaginationControls(); }
-        function renderPaginationControls(){ const container = document.getElementById('search-pagination'); const total = Math.ceil(currentSearchResults.length / searchResultsPerPage); container.innerHTML = ''; if (total <= 1) return; container.innerHTML = `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-zinc-800 rounded-lg" ${searchCurrentPage === 1 ? 'disabled' : ''}>Prev</button><span class="text-gray-400 self-center"> ${searchCurrentPage}/${total}</span><button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-zinc-800 rounded-lg" ${searchCurrentPage === total ? 'disabled' : ''}>Next</button>`; }
+        function renderPaginationControls(){ const container = document.getElementById('search-pagination'); const total = Math.ceil(currentSearchResults.length / searchResultsPerPage); container.innerHTML = ''; if (total <= 1) return; container.innerHTML = `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition" ${searchCurrentPage === 1 ? 'disabled' : ''}>Prev</button><span class="text-gray-400 self-center"> ${searchCurrentPage}/${total}</span><button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition" ${searchCurrentPage === total ? 'disabled' : ''}>Next</button>`; }
         function resetSearchView(){ document.getElementById('search-input').value = ''; document.getElementById('search-results-container').classList.add('hidden'); document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden'); document.getElementById('top-users-section').classList.remove('hidden'); document.getElementById('hero-wrapper').classList.remove('hidden'); const clearBtn = document.getElementById('clear-search-btn'); clearBtn.classList.add('hidden'); clearBtn.classList.remove('block'); }
         
         function setupEventListeners() { 
@@ -1221,3 +1273,4 @@ run_animation()
     </script>
 </body>
 </html>
+ 

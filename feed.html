@@ -22,10 +22,15 @@
         :root { 
             --accent: #f97316; 
             --accent-hover: #ea580c;
+            /* MEJORA: Nuevas variables de color para mayor flexibilidad */
+            --accent-light: #ff8c42; 
+            --accent-gradient-start: #f97316; 
+            --accent-gradient-end: #ea580c;
             --bg-dark: #09090b;
             --bg-card: #121214;
             --border-color: rgba(255, 255, 255, 0.08);
             --body-font: 'Inter', sans-serif;
+            --heading-font: 'Poppins', sans-serif; /* MEJORA: Fuente para títulos */
         }
 
         /* Ajustes Globales */
@@ -35,7 +40,11 @@
         }
         body { 
             font-family: var(--body-font); 
-            background-image: radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.06) 0%, transparent 50%);
+            /* MEJORA: Añadir una sutil textura de ruido al fondo */
+            background-image: radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.06) 0%, transparent 50%), 
+                              url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVDb2xvck1hdHJpeCBpbiA9ICJTb3VyY2VHcmFwaGljIiB0eXBlPSJtYXRyaXgiIHZhbHVlcz0iLjMzMzMgLjMzMzMgLjMzMzMgMCAwIC4zMzMzIC4zMzMzIC4zMzMzIDAgMCAuMzMzMyAuMzMzMyAuMzMzMyAwIDAgMCAwIDAgMSAwIi8+PGZlQ29sb3JNYXRyaXggaW4gPSAiU291cmNlR3JhcGhpYyIgdHlwZT0ibWF0cml4IiB2YWx1ZXM9IjAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIC4wNSAwIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMwOTAwMGIiLz48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0idXJsKCNncmFkKSIvPjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSJ1cmwoI25vaXNlKSIvPjwvc3ZnPg==');
+            background-size: cover, 100px 100px; 
+            background-blend-mode: overlay;
             color: #f3f4f6; padding-bottom: 90px; min-height: 100vh;
         }
 
@@ -51,34 +60,102 @@
             min-width: 90px; width: 90px; aspect-ratio: 1/1;
             border-radius: 0.5rem; overflow: hidden; position: relative;
             flex-shrink: 0; scroll-snap-align: start;
-            border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s;
+            border: 1px solid rgba(255,255,255,0.1); 
+            /* MEJORA: Transiciones más completas para hover */
+            transition: transform 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out;
             background-color: #1a1a1c;
         }
-        .similar-card:active { transform: scale(0.95); border-color: var(--accent); }
+        /* MEJORA: Efecto hover para similar-card */
+        .similar-card:hover {
+            transform: scale(1.03);
+            border-color: var(--accent-light);
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.3);
+        }
+        .similar-card:active { 
+            transform: scale(0.95); 
+            border-color: var(--accent); 
+            box-shadow: 0 0 5px rgba(249, 115, 22, 0.2); /* MEJORA: Sombra al activar */
+        }
         .similar-card img { width: 100%; height: 100%; object-fit: cover; }
 
         /* Loaders & Auth */
         #initial-loader { position: fixed; inset: 0; z-index: 10000; background-color: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
-        .loader-logo { width: 80px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
+        .loader-logo { 
+            width: 80px; height: auto; margin-bottom: 20px; 
+            filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); 
+            /* MEJORA: Curva de animación más suave y sombra adicional */
+            animation: pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1); 
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.3); 
+            border-radius: 50%;
+        }
+        @keyframes pulse { 
+            0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 20px rgba(249, 115, 22, 0.3); } 
+            50% { transform: scale(1.08); opacity: 0.85; box-shadow: 0 0 35px rgba(249, 115, 22, 0.6); } /* MEJORA: Más pronunciado */
+        }
         
-        .feed-card { background-color: #18181b; border: 1px solid var(--border-color); border-radius: 1rem; margin-bottom: 1.5rem; position: relative; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-        .upload-card { overflow: visible !important; background: linear-gradient(145deg, #18181b, #121212); border: 1px solid rgba(249, 115, 22, 0.15); z-index: 50; }
+        .feed-card { 
+            background-color: #18181b; border: 1px solid var(--border-color); border-radius: 1rem; margin-bottom: 1.5rem; position: relative; width: 100%; 
+            /* MEJORA: Sombra más compleja y transición para hover */
+            box-shadow: 0 6px 25px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.15); 
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+        /* MEJORA: Efecto hover para feed-card */
+        .feed-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 35px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .upload-card { 
+            overflow: visible !important; 
+            /* MEJORA: Usar variables de color para el gradiente */
+            background: linear-gradient(145deg, var(--bg-card), #0f0f10); 
+            border: 1px solid rgba(249, 115, 22, 0.15); 
+            z-index: 50; 
+            /* MEJORA: Sombra para la tarjeta de subida */
+            box-shadow: 0 8px 30px rgba(249, 115, 22, 0.15);
+        }
         
-        .animate-enter { animation: slideUpFade 0.4s ease-out forwards; }
-        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* MEJORA: Animación de entrada más rápida y pronunciada */
+        .animate-enter { animation: slideUpFade 0.3s ease-out forwards; } 
+        @keyframes slideUpFade { 
+            from { opacity: 0; transform: translateY(30px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
 
         /* Upload Area */
         #extra-fields { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease; }
         #extra-fields.expanded { max-height: 1000px; opacity: 1; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); overflow: visible !important; }
-        .custom-input { background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; transition: all 0.3s; }
-        .custom-input:focus { outline: none; border-color: var(--accent); background: rgba(0,0,0,0.4); }
+        .custom-input { 
+            background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; 
+            transition: all 0.3s; 
+            /* MEJORA: Sombra interna para profundidad */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .custom-input:focus { 
+            outline: none; border-color: var(--accent); background: rgba(0,0,0,0.4); 
+            /* MEJORA: Sombra de enfoque más clara */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 0 2px rgba(249, 115, 22, 0.3);
+        }
 
         /* Dropdowns */
         .custom-select-container { position: relative; width: 100%; }
-        .custom-select-trigger { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; border-radius: 10px; color: #9ca3af; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; min-height: 44px; }
-        .custom-select-trigger:active, .custom-select-trigger.active { border-color: var(--accent); color: white; background: rgba(0,0,0,0.4); }
-        .custom-select-options { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #1c1c1f; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; z-index: 1000; max-height: 0; overflow: hidden; opacity: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8); transform-origin: top center; transform: scaleY(0.95); }
+        .custom-select-trigger { 
+            background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; border-radius: 10px; color: #9ca3af; cursor: pointer; 
+            transition: all 0.2s; font-size: 0.9rem; min-height: 44px; 
+            /* MEJORA: Sombra interna */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .custom-select-trigger:active, .custom-select-trigger.active { 
+            border-color: var(--accent); color: white; background: rgba(0,0,0,0.4); 
+            /* MEJORA: Sombra de enfoque */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 0 2px rgba(249, 115, 22, 0.3);
+        }
+        .custom-select-options { 
+            position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #1c1c1f; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; z-index: 1000; max-height: 0; overflow: hidden; opacity: 0; 
+            /* MEJORA: Animación más elástica y sombra más profunda */
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.8); 
+            transform-origin: top center; transform: scaleY(0.95); 
+        }
         .custom-select-options.show { max-height: 300px; opacity: 1; overflow-y: auto; transform: scaleY(1); }
         .option-item { padding: 14px 16px; cursor: pointer; color: #d1d5db; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; align-items: center; gap: 10px; }
         .option-item:active { background: rgba(249, 115, 22, 0.2); color: white; }
@@ -98,9 +175,31 @@
         /* Grid & Layouts */
         .grid-mode-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; }
         .grid-item { aspect-ratio: 1/1; overflow: hidden; position: relative; background-color: #222; cursor: pointer; }
-        .grid-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-        .grid-item:active img { transform: scale(0.96); opacity: 0.8; }
-        .grid-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%); display: flex; align-items: flex-end; padding: 4px; opacity: 1; }
+        .grid-item img { 
+            width: 100%; height: 100%; object-fit: cover; 
+            /* MEJORA: Transición más suave para la imagen */
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out; 
+        }
+        /* MEJORA: Efecto hover para grid-item */
+        .grid-item:hover img {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+        .grid-item:active img { 
+            transform: scale(0.96); 
+            opacity: 0.8; 
+        }
+        .grid-overlay { 
+            position: absolute; inset: 0; 
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%); 
+            display: flex; align-items: flex-end; padding: 4px; 
+            opacity: 0; /* MEJORA: Inicia oculto */
+            transition: opacity 0.3s ease-out; /* MEJORA: Transición para el overlay */
+        }
+        /* MEJORA: Mostrar overlay en hover */
+        .grid-item:hover .grid-overlay {
+            opacity: 1;
+        }
 
         /* Multi-Image */
         .multi-image-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; aspect-ratio: 3/1.3; margin-top: 0.5rem; border-radius: 0.5rem; overflow: hidden; }
@@ -119,19 +218,82 @@
 
         /* Navbar & Botones */
         .bottom-nav { background-color: rgba(9, 9, 11, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--border-color); z-index: 3000; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { color: #71717a; transition: all 0.3s ease; }
-        .nav-item.active { color: var(--accent); }
-        .toggle-btn { background: transparent; border: 1px solid #333; color: #666; transition: all 0.2s; }
-        .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+        .nav-item { 
+            color: #71717a; 
+            /* MEJORA: Transición más suave y posición relativa para el subrayado */
+            transition: all 0.3s ease-out; 
+            position: relative;
+        }
+        .nav-item.active { 
+            color: var(--accent); 
+            /* MEJORA: Ligeramente levantado cuando activo */
+            transform: translateY(-2px);
+        }
+        /* MEJORA: Efecto hover para nav-item */
+        .nav-item:hover:not(.active) {
+            color: #a1a1aa; 
+            transform: translateY(-1px);
+        }
+        /* MEJORA: Indicador de activo/hover */
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background-color: var(--accent);
+            transition: width 0.3s ease-out;
+        }
+        .nav-item.active::after,
+        .nav-item:hover::after {
+            width: 70%; 
+        }
+
+        .toggle-btn { 
+            background: transparent; border: 1px solid #333; color: #666; 
+            transition: all 0.2s ease-out; 
+        }
+        .toggle-btn.active { 
+            background: var(--accent); border-color: var(--accent); color: white; 
+            /* MEJORA: Sombra para el botón activo */
+            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+        }
+        /* MEJORA: Efecto hover para toggle-btn */
+        .toggle-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.05);
+            color: #999;
+        }
 
         /* Notificaciones & Follow */
         .notif-btn { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: #ccc; transition: all 0.2s; }
         .notif-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
         
         /* Ajuste: Punto rojo solo indicador (Facebook style) */
-        .notif-badge { position: absolute; top: 0px; right: 0px; width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; border: 2px solid var(--bg-dark); box-shadow: 0 0 5px rgba(249, 115, 22, 0.8); }
+        .notif-badge { 
+            position: absolute; top: 0px; right: 0px; width: 10px; height: 10px; 
+            background-color: var(--accent); border-radius: 50%; 
+            border: 2px solid var(--bg-dark); 
+            box-shadow: 0 0 5px rgba(249, 115, 22, 0.8);
+            /* MEJORA: Animación de pulso para el badge */
+            animation: badgePulse 1.5s infinite ease-out; 
+        }
+        /* MEJORA: Keyframes para la animación del badge */
+        @keyframes badgePulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
         
-        .notification-dropdown { position: fixed; top: 60px; right: 10px; left: 10px; max-width: 400px; margin: 0 auto; background: #1c1c1f; border: 1px solid var(--border-color); border-radius: 16px; z-index: 5000; box-shadow: 0 10px 40px rgba(0,0,0,0.8); max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: top right; transform: scale(0.95); }
+        .notification-dropdown { 
+            position: fixed; top: 60px; right: 10px; left: 10px; max-width: 400px; margin: 0 auto; background: #1c1c1f; border: 1px solid var(--border-color); border-radius: 16px; z-index: 5000; 
+            /* MEJORA: Sombra más profunda y animación elástica */
+            box-shadow: 0 15px 50px rgba(0,0,0,0.9); 
+            max-height: 0; overflow: hidden; opacity: 0; 
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+            transform-origin: top right; transform: scale(0.95); 
+        }
         .notification-dropdown.visible { max-height: 400px; opacity: 1; transform: scale(1); }
         
         .notif-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; cursor: pointer; transition: background 0.2s; background: transparent; }
@@ -147,22 +309,108 @@
 
         /* Visor */
         .modal-backdrop { display: none; position: fixed; inset: 0; background-color: #000; z-index: 7000; } 
-        .modal-backdrop.visible { display: block; animation: fadeIn 0.3s forwards; }
+        /* MEJORA: Animación de entrada más suave */
+        .modal-backdrop.visible { display: block; animation: fadeIn 0.3s ease-out forwards; }
+        /* MEJORA: Transición para el contenedor del modal */
+        #modal-inner-container { transition: all 0.3s ease-out; }
         .fullscreen-mode .info-panel { display: none !important; }
-        .fullscreen-mode .image-area { width: 100% !important; height: 100vh !important; flex: none !important; }
-        .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 20; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); border-radius: 50%; color: white; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s; font-size: 1.2rem; }
-        .nav-arrow:active { background: var(--accent); }
+        .fullscreen-mode .image-area { 
+            width: 100% !important; height: 100vh !important; flex: none !important; 
+            /* MEJORA: Asegurar transición al fullscreen */
+            transition: all 0.3s ease-out; 
+        }
+        .nav-arrow { 
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 20; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); border-radius: 50%; color: white; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; 
+            /* MEJORA: Transición más completa */
+            transition: all 0.2s ease-out, background 0.2s ease-out; 
+            font-size: 1.2rem; 
+        }
+        /* MEJORA: Efecto hover para nav-arrow */
+        .nav-arrow:hover {
+            background: rgba(0,0,0,0.7);
+            transform: translateY(-50%) scale(1.05);
+        }
+        .nav-arrow:active { 
+            background: var(--accent); 
+            /* MEJORA: Ligeramente más pequeño al activar */
+            transform: translateY(-50%) scale(0.95); 
+        }
         .nav-prev { left: 15px; } .nav-next { right: 15px; }
         
-        .options-menu { display: none; position: absolute; top: 40px; right: 10px; background: #1c1c1f; border: 1px solid #333; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 50; min-width: 150px; }
-        .options-menu.show { display: block; animation: popIn 0.2s; }
+        .options-menu { display: none; position: absolute; top: 40px; right: 10px; background: #1c1c1f; border: 1px solid #333; border-radius: 12px; 
+            /* MEJORA: Sombra más profunda */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9); 
+            z-index: 50; min-width: 150px; 
+        }
+        /* MEJORA: Animación popIn más elástica */
+        .options-menu.show { display: block; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .options-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #ccc; font-size: 0.95rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .options-item:last-child { border-bottom: none; }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        /* MEJORA: Keyframes para popIn */
+        @keyframes popIn { 
+            from { opacity: 0; transform: scale(0.8); } 
+            to { opacity: 1; transform: scale(1); } 
+        }
         
-        .like-anim { animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes likeBounce { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+        .like-anim { 
+            /* MEJORA: Animación likeBounce más intensa */
+            animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        /* MEJORA: Keyframes para likeBounce */
+        @keyframes likeBounce { 
+            0% { transform: scale(1); } 
+            30% { transform: scale(1.4); color: #ef4444; } 
+            70% { transform: scale(0.9); } 
+            100% { transform: scale(1); } 
+        }
         .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); pointer-events: none; }
+
+        /* MEJORA: Estilos para botones generales */
+        button {
+            transition: all 0.2s ease-out;
+        }
+        button:hover:not(.btn-disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        button:active:not(.btn-disabled) {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        /* MEJORA: Estilos específicos para el botón de publicar */
+        #publish-btn {
+            background: linear-gradient(to right, var(--accent-gradient-start), var(--accent-gradient-end));
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+            transition: all 0.3s ease-out;
+        }
+        #publish-btn:hover:not(.btn-disabled) {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.6);
+        }
+        #publish-btn:active:not(.btn-disabled) {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+        }
+
+        /* MEJORA: Animación para el spinner de carga */
+        #scroll-spinner {
+            animation: spinFadeIn 1s infinite linear;
+        }
+        @keyframes spinFadeIn {
+            0% { transform: rotate(0deg) scale(0.8); opacity: 0.7; }
+            50% { transform: rotate(180deg) scale(1.1); opacity: 1; }
+            100% { transform: rotate(360deg) scale(0.8); opacity: 0.7; }
+        }
+
+        /* MEJORA: Animación elástica para el toast */
+        #toast-container {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* MEJORA: Animación popIn para los modales de alerta/confirmación */
+        #custom-alert > div, #custom-confirm > div {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -1315,3 +1563,4 @@
     </script>
 </body>
 </html>
+ 
