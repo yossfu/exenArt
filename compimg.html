@@ -1,102 +1,110 @@
-INSTRUCCIONES PARA MIGRAR AL NUEVO LOGIN CON GOOGLE
+El error "Failed to fetch" persiste porque la mayoría de las APIs públicas de generación de imágenes, incluso las gratuitas como Raphael AI, no permiten llamadas directas desde el navegador debido a restricciones CORS (Cross-Origin Resource Sharing). Esto es una medida de seguridad que impide que páginas web hagan peticiones a dominios externos sin permiso explícito.
 
-Sigue estos pasos archivo por archivo. El objetivo es centralizar todo el acceso en login.html.
+ 
 
-GENERAL (Concepto)
+Solución definitiva para hacer funcionar la generación real de imágenes desde un HTML:
 
-Ya no existen modales de "Registro" ni "Login" dentro de index, feed o profile.
+1. Necesitas un backend proxy que haga la llamada a la API y devuelva la imagen al frontend.
 
-Cualquier botón que antes decía "Entrar" o "Registrarse" ahora debe simplemente redirigir a 'login.html'.
+El navegador hará la petición a tu backend (que está en el mismo origen o que controla CORS).
+El backend hará la petición a la API externa (sin restricciones CORS).
+El backend devuelve la respuesta al navegador.
 
-La función de Google Sign-In ya está completa en el archivo login.html que te acabo de entregar.
+ 
 
-ARCHIVO: index.html
+2. Ejemplo básico de backend proxy en Node.js con Express
 
-ACCIÓN 1: Eliminar el HTML del Auth Overlay antiguo
+ 
+// server.js
+const express = require('express');
+const fetch = require('node-fetch');
+const cors = require('cors');
 
-Busca el <div id="auth-overlay">...</div> y elimínalo por completo (o coméntalo).
+const app = express();
+app.use(cors()); // Permitir CORS para frontend
+app.use(express.json());
 
-Busca el <div id="gallery-register-gate">...</div>.
+app.post('/generate-image', async (req, res) => {
+  const { prompt, negative_prompt } = req.body;
 
-CAMBIO: Dentro de este div, el botón que dice "Crear Cuenta", cambia su onclick para que sea:
+  try {
+    const response = await fetch('https://api.raphael.app/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, negative_prompt }),
+    });
 
-onclick="window.location.href='login.html'"
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'Error en API externa' });
+    }
 
-ACCIÓN 2: Modificar Scripts (Función requireLogin)
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-Busca la función requireLogin(event).
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor proxy escuchando en puerto ${PORT}`);
+});
+ 
 
-Reemplaza su contenido para que redirija en lugar de abrir el overlay.
+ 
 
-CÓDIGO NUEVO:
+3. Modificación del HTML para llamar a tu backend proxy
 
-function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } // Redirigir al nuevo login window.location.href = 'login.html'; return false; } return true; } 
+ 
+<script>
+  const generateBtn = document.getElementById('generateBtn');
+  const promptPositive = document.getElementById('promptPositive');
+  const promptNegative = document.getElementById('promptNegative');
+  const resultDiv = document.getElementById('result');
+  const loadingDiv = document.getElementById('loading');
 
-ACCIÓN 3: Modificar Header (Botón de Perfil)
+  generateBtn.addEventListener('click', async () => {
+    const positive = promptPositive.value.trim();
+    const negative = promptNegative.value.trim();
 
-Busca <div class="user-profile-btn" onclick="if(requireLogin(event)) openConfigModal()">.
+    if (!positive) {
+      alert('Por favor, ingresa un prompt positivo.');
+      return;
+    }
 
-Asegúrate de que requireLogin ahora redirige (como hiciste en el paso 2), así que si no está logueado, lo mandará a login.html.
+    resultDiv.innerHTML = '';
+    loadingDiv.style.display = 'block';
 
-ARCHIVO: feed.html
+    try {
+      // Cambia la URL al endpoint de tu backend proxy
+      const response = await fetch('http://localhost:3000/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: positive, negative_prompt: negative }),
+      });
 
-ACCIÓN 1: Eliminar Auth Overlay
+      if (!response.ok) {
+        throw new Error(`Error en el servidor: ${response.statusText}`);
+      }
 
-Busca y elimina todo el bloque <div id="auth-overlay">...</div> (líneas aprox 85-110).
+      const data = await response.json();
 
-ACCIÓN 2: Modificar Scripts
+      if (!data.image_url) {
+        throw new Error('No se recibió URL de imagen');
+      }
 
-Busca la función switchAuthTab. Puedes eliminarla, ya no se usará.
+      const img = document.createElement('img');
+      img.src = data.image_url;
+      img.alt = 'Imagen generada';
+      resultDiv.appendChild(img);
 
-Al inicio del script, donde dice auth.onAuthStateChanged(user => { ... }):
+    } catch (error) {
+      alert('Error al generar la imagen: ' + error.message);
+    } finally {
+      loadingDiv.style.display = 'none';
+    }
+  });
+</script>
+ 
 
-En el else (cuando no hay usuario), elimina la línea document.getElementById('auth-overlay').style.display = 'flex';.
-
-Si el usuario no está logueado en Feed, tal vez quieras redirigirlo inmediatamente o dejarlo ver pero no tocar.
-
-RECOMENDACIÓN: Si intentan interactuar (dar like, comentar), usa una función requireLogin similar a la de index.html.
-
-ACCIÓN 3: Redirección al cargar (Opcional)
-
-Si quieres que Feed sea PRIVADO (solo logueados), añade esto dentro del else del onAuthStateChanged:
-
-window.location.href = 'login.html';
-
-Si quieres que sea PÚBLICO (lectura), asegúrate de que los botones de Like/Comentar verifiquen if(!currentUser) window.location.href='login.html'.
-
-ARCHIVO: profile.html
-
-ACCIÓN 1: Eliminar Auth Overlay
-
-Elimina el <div id="auth-overlay">...</div>.
-
-ACCIÓN 2: Lógica de Usuario
-
-En auth.onAuthStateChanged:
-
-En el else (no hay usuario), donde antes se hacía document.getElementById('auth-overlay').style.display = 'flex';:
-
-CÁMBIALO POR: window.location.href = 'login.html';
-
-Esto protegerá el perfil. Si alguien intenta entrar sin sesión, lo manda al login.
-
-ACCIÓN 3: Botón Logout
-
-Busca la función logout() o logoutUser().
-
-Asegúrate de que tras el auth.signOut(), redirija al login:
-
-function logout() { auth.signOut().then(() => { window.location.href = 'login.html'; }); } 
-
-NOTAS SOBRE LA "MIGRACIÓN" DE CUENTAS
-
-Firebase Auth, por defecto, intenta vincular cuentas si el correo es el mismo.
-
-Si un usuario tenía "usuario@gmail.com" con contraseña, y ahora entra con el botón de Google (que usa "usuario@gmail.com"):
-
-Si tu configuración de Firebase Console tiene activado "One account per email address" (Una cuenta por correo), Firebase los vinculará automáticamente. El usuario conservará sus datos (fotos, perfil).
-
-Si no está activado, podría crear un usuario duplicado.
-
-El código de login.html que he generado maneja el inicio de sesión estándar. Si el correo coincide, debería funcionar transparentemente para el usuario.
-
+ 

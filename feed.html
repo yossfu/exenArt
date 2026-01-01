@@ -918,13 +918,15 @@
                         let q = 0.9, attempts=0;
                         const tryC = () => {
                             canvas.toBlob(blob => {
-                                if(!blob) reject("Error canvas");
+                                if(!blob) reject(new Error("Error al procesar el canvas de la imagen"));
                                 if(blob.size/1024 <= maxSizeKB || q<=0.1 || attempts++>20) resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {type:"image/jpeg", lastModified:Date.now()}));
                                 else { q-=0.05; tryC(); }
                             }, 'image/jpeg', q);
                         }; tryC();
-                    }; img.onerror=reject;
-                }; reader.onerror=reject;
+                    }; 
+                    img.onerror = () => reject(new Error("La imagen está dañada o el formato no es soportado."));
+                }; 
+                reader.onerror = () => reject(new Error("Error al leer el archivo. Intenta seleccionar otra imagen."));
             });
         }
         
@@ -1015,7 +1017,12 @@
                         formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', processedFile);
                         const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
                         const txt = await r.text();
-                        if(txt.includes('catbox.moe')) uploadedUrls.push(txt.trim());
+                        if(txt.includes('catbox.moe')) {
+                            uploadedUrls.push(txt.trim());
+                        } else {
+                            // Si la API devuelve un error (no es una URL), lanzamos error para verlo en el catch
+                            throw new Error("Error en la subida a Catbox: " + txt.substring(0, 50));
+                        }
                     }
                 }
                 
@@ -1054,7 +1061,11 @@
 
                 collapsePostArea(true); showToast("¡Publicado!");
 
-            } catch(e) { showAlert("Error: " + e.message); }
+            } catch(e) { 
+                console.error(e);
+                // Aseguramos que siempre haya un mensaje, incluso si e no es un Error estándar
+                showAlert("Error: " + (e.message || e || "Error desconocido")); 
+            }
             finally { 
                 btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = 'Publicar'; 
                 progress.classList.add('hidden'); 
@@ -1563,4 +1574,3 @@
     </script>
 </body>
 </html>
- 
