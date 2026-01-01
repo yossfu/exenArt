@@ -906,16 +906,16 @@
         }
 
         function compressImage(file) {
-            return new Promise((resolve, reject) => {
-                // Estrategia Mejorada:
-                // 1. Si es pequeño (< 350KB) y no es PNG (para evitar problemas de transparencia pesada), pasar directo.
-                // 2. Si es grande, redimensionar a max 1920px (Full HD) preservando aspect ratio.
-                // 3. Convertir a WebP para optimizar peso manteniendo calidad.
+            return new Promise((resolve) => { // NOTA: Quitamos reject, siempre resolvemos algo (aunque sea el original)
+                // Estrategia Mejorada y Robusta:
+                // 1. Intentar compresión WebP
+                // 2. Si falla WebP, intentar JPEG
+                // 3. Si falla carga o canvas, devolver ORIGINAL (Fallback Supremo)
                 
-                const maxSizeKB = 350; // Límite objetivo (flexible)
-                const maxDimension = 1920; // Límite de resolución (Full HD)
+                const maxSizeKB = 350; 
+                const maxDimension = 1920; 
 
-                // Si ya es pequeño y no es PNG (a veces los PNG pequeños engañan y son pesados al renderizar), resolvemos.
+                // Optimización rápida: Si ya es pequeño y compatible, pasar directo
                 if (file.size / 1024 <= maxSizeKB && file.type !== 'image/png') { 
                     resolve(file); 
                     return; 
@@ -930,8 +930,7 @@
                     let width = img.width;
                     let height = img.height;
 
-                    // 1. Redimensionamiento (Downscaling)
-                    // Esto reduce drásticamente el peso sin pixelar, a diferencia de bajar solo la calidad JPEG.
+                    // Redimensionamiento
                     if (width > maxDimension || height > maxDimension) {
                         if (width > height) {
                             height = Math.round((height * maxDimension) / width);
@@ -948,39 +947,52 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // 2. Compresión Inteligente usando WebP
-                    // WebP es superior a JPEG para web. Soporta transparencia y mejor compresión.
-                    let quality = 0.85; // Calidad inicial buena
-                    
-                    const tryCompression = () => {
-                        canvas.toBlob(blob => {
-                            if (!blob) {
-                                reject(new Error("Error al procesar la imagen en el navegador."));
-                                return;
-                            }
-                            
-                            // Si cumple el tamaño O la calidad ya es muy baja (para no buclear infinito), terminamos.
-                            if (blob.size / 1024 <= maxSizeKB || quality <= 0.5) {
-                                // Crear archivo final WebP
-                                const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), {
-                                    type: "image/webp",
-                                    lastModified: Date.now()
-                                });
-                                resolve(newFile);
-                            } else {
-                                // Reducir calidad y reintentar
-                                quality -= 0.15; // Saltos más grandes para ser más rápido
-                                tryCompression();
-                            }
-                        }, 'image/webp', quality);
+                    // Función de Compresión Recursiva con Fallback de Formato
+                    const attemptCompression = (format, quality) => {
+                        try {
+                            canvas.toBlob(blob => {
+                                if (!blob) {
+                                    // Si WebP falla (return null en algunos browsers), intentar JPEG
+                                    if (format === 'image/webp') {
+                                        console.warn("WebP no soportado, intentando JPEG...");
+                                        attemptCompression('image/jpeg', 0.9);
+                                    } else {
+                                        // Si JPEG también falla, devolver original
+                                        console.warn("Compresión fallida en ambos formatos. Usando original.");
+                                        resolve(file);
+                                    }
+                                    return;
+                                }
+                                
+                                // Éxito o seguir comprimiendo
+                                if (blob.size / 1024 <= maxSizeKB || quality <= 0.5) {
+                                    const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, format === 'image/webp' ? ".webp" : ".jpg"), {
+                                        type: format,
+                                        lastModified: Date.now()
+                                    });
+                                    resolve(newFile);
+                                } else {
+                                    // Reducir calidad y reintentar
+                                    attemptCompression(format, quality - 0.15);
+                                }
+                            }, format, quality);
+                        } catch (e) {
+                            console.error("Error en canvas.toBlob:", e);
+                            resolve(file); // Fallback por error de canvas
+                        }
                     };
 
-                    tryCompression();
+                    // Iniciar intento con WebP
+                    attemptCompression('image/webp', 0.85);
                 };
 
                 img.onerror = () => {
                     URL.revokeObjectURL(url);
-                    reject(new Error("No se pudo cargar la imagen para compresión."));
+                    // AQUÍ ESTÁ LA SOLUCIÓN AL ERROR:
+                    // En lugar de rechazar la promesa (lo que causaba el alert),
+                    // resolvemos con el archivo original.
+                    console.warn("No se pudo procesar la imagen (posible formato corrupto o no soportado). Enviando original.");
+                    resolve(file); 
                 };
 
                 img.src = url;
