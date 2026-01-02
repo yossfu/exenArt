@@ -22,186 +22,395 @@
         :root { 
             --accent: #f97316; 
             --accent-hover: #ea580c;
+            /* MEJORA: Nuevas variables de color para mayor flexibilidad */
+            --accent-light: #ff8c42; 
+            --accent-gradient-start: #f97316; 
+            --accent-gradient-end: #ea580c;
             --bg-dark: #09090b;
             --bg-card: #121214;
             --border-color: rgba(255, 255, 255, 0.08);
             --body-font: 'Inter', sans-serif;
-            --heading-font: 'Poppins', sans-serif;
+            --heading-font: 'Poppins', sans-serif; /* MEJORA: Fuente para títulos */
         }
 
-        /* --- Estilos Base --- */
+        /* Ajustes Globales */
         html, body {
-            overflow-x: hidden; 
-            width: 100%; 
-            background-color: var(--bg-dark);
-            overscroll-behavior-y: none; 
-            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden; width: 100%; background-color: var(--bg-dark);
+            overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent;
         }
-        
         body { 
             font-family: var(--body-font); 
+            /* MEJORA: Añadir una sutil textura de ruido al fondo */
             background-image: radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.06) 0%, transparent 50%), 
                               url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVDb2xvck1hdHJpeCBpbiA9ICJTb3VyY2VHcmFwaGljIiB0eXBlPSJtYXRyaXgiIHZhbHVlcz0iLjMzMzMgLjMzMzMgLjMzMzMgMCAwIC4zMzMzIC4zMzMzIC4zMzMzIDAgMCAuMzMzMyAuMzMzMyAuMzMzMyAwIDAgMCAwIDAgMSAwIi8+PGZlQ29sb3JNYXRyaXggaW4gPSAiU291cmNlR3JhcGhpYyIgdHlwZT0ibWF0cml4IiB2YWx1ZXM9IjAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIC4wNSAwIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMwOTAwMGIiLz48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0idXJsKCNncmFkKSIvPjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSJ1cmwoI25vaXNlKSIvPjwvc3ZnPg==');
             background-size: cover, 100px 100px; 
             background-blend-mode: overlay;
-            color: #f3f4f6; 
-            padding-bottom: 90px; 
-            min-height: 100vh;
+            color: #f3f4f6; padding-bottom: 90px; min-height: 100vh;
         }
 
-        /* --- Scrollbars --- */
+        /* Scrollbars */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* --- Imágenes Similares (Portrait Grande) --- */
+        /* Similar Slider Styles (Ported form Index) */
         .similar-card {
-            min-width: 110px; 
-            width: 110px; 
-            height: 165px; /* Formato Portrait más grande */
-            border-radius: 0.5rem; 
-            overflow: hidden; 
-            position: relative;
-            flex-shrink: 0; 
-            scroll-snap-align: start;
+            min-width: 90px; width: 90px; aspect-ratio: 1/1;
+            border-radius: 0.5rem; overflow: hidden; position: relative;
+            flex-shrink: 0; scroll-snap-align: start;
             border: 1px solid rgba(255,255,255,0.1); 
+            /* MEJORA: Transiciones más completas para hover */
             transition: transform 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out;
             background-color: #1a1a1c;
         }
+        /* MEJORA: Efecto hover para similar-card */
         .similar-card:hover {
             transform: scale(1.03);
-            border-color: var(--accent);
+            border-color: var(--accent-light);
             box-shadow: 0 0 15px rgba(249, 115, 22, 0.3);
+        }
+        .similar-card:active { 
+            transform: scale(0.95); 
+            border-color: var(--accent); 
+            box-shadow: 0 0 5px rgba(249, 115, 22, 0.2); /* MEJORA: Sombra al activar */
         }
         .similar-card img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- Loader Inicial --- */
+        /* Loaders & Auth */
         #initial-loader { position: fixed; inset: 0; z-index: 10000; background-color: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         .loader-logo { 
             width: 80px; height: auto; margin-bottom: 20px; 
             filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4)); 
+            /* MEJORA: Curva de animación más suave y sombra adicional */
             animation: pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1); 
             box-shadow: 0 0 20px rgba(249, 115, 22, 0.3); 
             border-radius: 50%;
         }
         @keyframes pulse { 
             0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 20px rgba(249, 115, 22, 0.3); } 
-            50% { transform: scale(1.08); opacity: 0.85; box-shadow: 0 0 35px rgba(249, 115, 22, 0.6); }
+            50% { transform: scale(1.08); opacity: 0.85; box-shadow: 0 0 35px rgba(249, 115, 22, 0.6); } /* MEJORA: Más pronunciado */
         }
         
-        /* --- Tarjetas del Feed --- */
         .feed-card { 
             background-color: #18181b; border: 1px solid var(--border-color); border-radius: 1rem; margin-bottom: 1.5rem; position: relative; width: 100%; 
+            /* MEJORA: Sombra más compleja y transición para hover */
             box-shadow: 0 6px 25px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.15); 
             transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
         }
-        .feed-card:hover { transform: translateY(-3px); box-shadow: 0 10px 35px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.2); }
+        /* MEJORA: Efecto hover para feed-card */
+        .feed-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 35px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .upload-card { 
+            overflow: visible !important; 
+            /* MEJORA: Usar variables de color para el gradiente */
+            background: linear-gradient(145deg, var(--bg-card), #0f0f10); 
+            border: 1px solid rgba(249, 115, 22, 0.15); 
+            z-index: 50; 
+            /* MEJORA: Sombra para la tarjeta de subida */
+            box-shadow: 0 8px 30px rgba(249, 115, 22, 0.15);
+        }
         
-        /* --- Tarjeta de Subida --- */
-        .upload-card { overflow: visible !important; background: linear-gradient(145deg, var(--bg-card), #0f0f10); border: 1px solid rgba(249, 115, 22, 0.15); z-index: 50; box-shadow: 0 8px 30px rgba(249, 115, 22, 0.15); }
-        
+        /* MEJORA: Animación de entrada más rápida y pronunciada */
         .animate-enter { animation: slideUpFade 0.3s ease-out forwards; } 
-        @keyframes slideUpFade { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUpFade { 
+            from { opacity: 0; transform: translateY(30px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
 
-        /* --- Área de Inputs Expandible --- */
+        /* Upload Area */
         #extra-fields { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease; }
         #extra-fields.expanded { max-height: 1000px; opacity: 1; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); overflow: visible !important; }
-        
-        .custom-input { background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; transition: all 0.3s; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
-        .custom-input:focus { outline: none; border-color: var(--accent); background: rgba(0,0,0,0.4); box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 0 2px rgba(249, 115, 22, 0.3); }
+        .custom-input { 
+            background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; 
+            transition: all 0.3s; 
+            /* MEJORA: Sombra interna para profundidad */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .custom-input:focus { 
+            outline: none; border-color: var(--accent); background: rgba(0,0,0,0.4); 
+            /* MEJORA: Sombra de enfoque más clara */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 0 2px rgba(249, 115, 22, 0.3);
+        }
 
-        /* --- Dropdowns Personalizados --- */
+        /* Dropdowns */
         .custom-select-container { position: relative; width: 100%; }
-        .custom-select-trigger { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; border-radius: 10px; color: #9ca3af; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; min-height: 44px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
-        .custom-select-trigger:active, .custom-select-trigger.active { border-color: var(--accent); color: white; background: rgba(0,0,0,0.4); box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 0 2px rgba(249, 115, 22, 0.3); }
-        
-        .custom-select-options { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #1c1c1f; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; z-index: 1000; max-height: 0; overflow: hidden; opacity: 0; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.8); transform-origin: top center; transform: scaleY(0.95); }
+        .custom-select-trigger { 
+            background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; border-radius: 10px; color: #9ca3af; cursor: pointer; 
+            transition: all 0.2s; font-size: 0.9rem; min-height: 44px; 
+            /* MEJORA: Sombra interna */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .custom-select-trigger:active, .custom-select-trigger.active { 
+            border-color: var(--accent); color: white; background: rgba(0,0,0,0.4); 
+            /* MEJORA: Sombra de enfoque */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 0 2px rgba(249, 115, 22, 0.3);
+        }
+        .custom-select-options { 
+            position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #1c1c1f; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; z-index: 1000; max-height: 0; overflow: hidden; opacity: 0; 
+            /* MEJORA: Animación más elástica y sombra más profunda */
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.8); 
+            transform-origin: top center; transform: scaleY(0.95); 
+        }
         .custom-select-options.show { max-height: 300px; opacity: 1; overflow-y: auto; transform: scaleY(1); }
-        
         .option-item { padding: 14px 16px; cursor: pointer; color: #d1d5db; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; align-items: center; gap: 10px; }
         .option-item:active { background: rgba(249, 115, 22, 0.2); color: white; }
         .special-option { color: var(--accent); font-weight: 600; background: rgba(249, 115, 22, 0.05); }
 
-        /* --- Sugerencias --- */
+        /* Filter Select */
+        .filter-select .custom-select-trigger { background: rgba(9, 9, 11, 0.8); padding: 8px 12px; min-height: 36px; font-size: 0.8rem; border-radius: 8px; color: #d1d5db; }
+        .filter-select .custom-select-trigger.active { border-color: var(--accent); color: var(--accent); }
+        .filter-select .custom-select-options { top: calc(100% + 4px); }
+
+        /* Suggestions */
         .suggestions-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: rgba(24, 24, 27, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 10px 10px; z-index: 50; max-height: 200px; overflow-y: auto; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); display: none; }
         .suggestions-dropdown.visible { display: block; animation: fadeIn 0.2s ease-out; }
         .suggestion-item { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .suggestion-item:active { background: rgba(249, 115, 22, 0.1); }
 
-        /* --- Grillas e Imágenes --- */
+        /* Grid & Layouts */
         .grid-mode-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; }
         .grid-item { aspect-ratio: 1/1; overflow: hidden; position: relative; background-color: #222; cursor: pointer; }
-        .grid-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease-out, opacity 0.3s ease-out; }
-        .grid-item:hover img { transform: scale(1.05); opacity: 0.9; }
-        .grid-item:active img { transform: scale(0.96); opacity: 0.8; }
-        .grid-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%); display: flex; align-items: flex-end; padding: 4px; opacity: 0; transition: opacity 0.3s ease-out; }
-        .grid-item:hover .grid-overlay { opacity: 1; }
+        .grid-item img { 
+            width: 100%; height: 100%; object-fit: cover; 
+            /* MEJORA: Transición más suave para la imagen */
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out; 
+        }
+        /* MEJORA: Efecto hover para grid-item */
+        .grid-item:hover img {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+        .grid-item:active img { 
+            transform: scale(0.96); 
+            opacity: 0.8; 
+        }
+        .grid-overlay { 
+            position: absolute; inset: 0; 
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%); 
+            display: flex; align-items: flex-end; padding: 4px; 
+            opacity: 0; /* MEJORA: Inicia oculto */
+            transition: opacity 0.3s ease-out; /* MEJORA: Transición para el overlay */
+        }
+        /* MEJORA: Mostrar overlay en hover */
+        .grid-item:hover .grid-overlay {
+            opacity: 1;
+        }
 
+        /* Multi-Image */
         .multi-image-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; aspect-ratio: 3/1.3; margin-top: 0.5rem; border-radius: 0.5rem; overflow: hidden; }
         .multi-image-row img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; transition: opacity 0.2s; }
+        .multi-image-row img:active { opacity: 0.8; }
         .single-image-container { width: 100%; margin-top: 0.5rem; border-radius: 0.5rem; overflow: hidden; background: #000; display: flex; justify-content: center; }
         .single-image-container img { max-height: 500px; width: auto; max-width: 100%; object-fit: contain; }
         .two-image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 0.5rem; border-radius: 0.5rem; overflow: hidden; aspect-ratio: 2/1; }
         .two-image-grid img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- Preview de Archivos --- */
-        #preview-stack { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-top: 12px; margin-bottom: 8px; width: 100%; min-height: 80px; /* Asegura altura mínima */ }
+        /* Preview Stack */
+        #preview-stack { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-top: 12px; margin-bottom: 8px; width: 100%; min-height: 0; }
         .preview-thumb { position: relative; width: 70px; height: 70px; flex-shrink: 0; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); animation: fadeIn 0.3s ease; background-color: #222; }
         .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
         .remove-thumb-btn { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; z-index: 10; backdrop-filter: blur(2px); }
 
-        /* --- Navegación --- */
+        /* Navbar & Botones */
         .bottom-nav { background-color: rgba(9, 9, 11, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--border-color); z-index: 3000; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { color: #71717a; transition: all 0.3s ease-out; position: relative; }
-        .nav-item.active { color: var(--accent); transform: translateY(-2px); }
-        .nav-item:hover:not(.active) { color: #a1a1aa; transform: translateY(-1px); }
-        .nav-item::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background-color: var(--accent); transition: width 0.3s ease-out; }
-        .nav-item.active::after, .nav-item:hover::after { width: 70%; }
+        .nav-item { 
+            color: #71717a; 
+            /* MEJORA: Transición más suave y posición relativa para el subrayado */
+            transition: all 0.3s ease-out; 
+            position: relative;
+        }
+        .nav-item.active { 
+            color: var(--accent); 
+            /* MEJORA: Ligeramente levantado cuando activo */
+            transform: translateY(-2px);
+        }
+        /* MEJORA: Efecto hover para nav-item */
+        .nav-item:hover:not(.active) {
+            color: #a1a1aa; 
+            transform: translateY(-1px);
+        }
+        /* MEJORA: Indicador de activo/hover */
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background-color: var(--accent);
+            transition: width 0.3s ease-out;
+        }
+        .nav-item.active::after,
+        .nav-item:hover::after {
+            width: 70%; 
+        }
 
-        /* --- Botones --- */
-        .toggle-btn { background: transparent; border: 1px solid #333; color: #666; transition: all 0.2s ease-out; }
-        .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3); }
-        
+        .toggle-btn { 
+            background: transparent; border: 1px solid #333; color: #666; 
+            transition: all 0.2s ease-out; 
+        }
+        .toggle-btn.active { 
+            background: var(--accent); border-color: var(--accent); color: white; 
+            /* MEJORA: Sombra para el botón activo */
+            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+        }
+        /* MEJORA: Efecto hover para toggle-btn */
+        .toggle-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.05);
+            color: #999;
+        }
+
+        /* Notificaciones & Follow */
         .notif-btn { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: #ccc; transition: all 0.2s; }
         .notif-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
-        .notif-badge { position: absolute; top: 0px; right: 0px; width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; border: 2px solid var(--bg-dark); box-shadow: 0 0 5px rgba(249, 115, 22, 0.8); animation: badgePulse 1.5s infinite ease-out; }
-        @keyframes badgePulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
         
-        .notification-dropdown { position: fixed; top: 60px; right: 10px; left: 10px; max-width: 400px; margin: 0 auto; background: #1c1c1f; border: 1px solid var(--border-color); border-radius: 16px; z-index: 5000; box-shadow: 0 15px 50px rgba(0,0,0,0.9); max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: top right; transform: scale(0.95); }
+        /* Ajuste: Punto rojo solo indicador (Facebook style) */
+        .notif-badge { 
+            position: absolute; top: 0px; right: 0px; width: 10px; height: 10px; 
+            background-color: var(--accent); border-radius: 50%; 
+            border: 2px solid var(--bg-dark); 
+            box-shadow: 0 0 5px rgba(249, 115, 22, 0.8);
+            /* MEJORA: Animación de pulso para el badge */
+            animation: badgePulse 1.5s infinite ease-out; 
+        }
+        /* MEJORA: Keyframes para la animación del badge */
+        @keyframes badgePulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .notification-dropdown { 
+            position: fixed; top: 60px; right: 10px; left: 10px; max-width: 400px; margin: 0 auto; background: #1c1c1f; border: 1px solid var(--border-color); border-radius: 16px; z-index: 5000; 
+            /* MEJORA: Sombra más profunda y animación elástica */
+            box-shadow: 0 15px 50px rgba(0,0,0,0.9); 
+            max-height: 0; overflow: hidden; opacity: 0; 
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+            transform-origin: top right; transform: scale(0.95); 
+        }
         .notification-dropdown.visible { max-height: 400px; opacity: 1; transform: scale(1); }
         
         .notif-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; cursor: pointer; transition: background 0.2s; background: transparent; }
         .notif-item:active { background: rgba(255,255,255,0.1) !important; }
+        
+        /* Estilo para NO leídas (Persistente) */
         .notif-item.unread { background: rgba(249, 115, 22, 0.08); border-left: 3px solid var(--accent); }
         .notif-item.read { opacity: 0.7; }
 
-        /* --- Modal Visor --- */
+        .follow-btn { padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; transition: all 0.2s; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid transparent; }
+        .follow-btn.not-following { background: var(--accent); color: white; box-shadow: 0 2px 10px rgba(249, 115, 22, 0.3); }
+        .follow-btn.following { background: transparent; border-color: #444; color: #888; }
+
+        /* Visor */
         .modal-backdrop { display: none; position: fixed; inset: 0; background-color: #000; z-index: 7000; } 
+        /* MEJORA: Animación de entrada más suave */
         .modal-backdrop.visible { display: block; animation: fadeIn 0.3s ease-out forwards; }
+        /* MEJORA: Transición para el contenedor del modal */
         #modal-inner-container { transition: all 0.3s ease-out; }
         .fullscreen-mode .info-panel { display: none !important; }
-        .fullscreen-mode .image-area { width: 100% !important; height: 100vh !important; flex: none !important; transition: all 0.3s ease-out; }
-        .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 20; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); border-radius: 50%; color: white; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s ease-out, background 0.2s ease-out; font-size: 1.2rem; }
-        .nav-arrow:hover { background: rgba(0,0,0,0.7); transform: translateY(-50%) scale(1.05); }
+        .fullscreen-mode .image-area { 
+            width: 100% !important; height: 100vh !important; flex: none !important; 
+            /* MEJORA: Asegurar transición al fullscreen */
+            transition: all 0.3s ease-out; 
+        }
+        .nav-arrow { 
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 20; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); border-radius: 50%; color: white; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; 
+            /* MEJORA: Transición más completa */
+            transition: all 0.2s ease-out, background 0.2s ease-out; 
+            font-size: 1.2rem; 
+        }
+        /* MEJORA: Efecto hover para nav-arrow */
+        .nav-arrow:hover {
+            background: rgba(0,0,0,0.7);
+            transform: translateY(-50%) scale(1.05);
+        }
+        .nav-arrow:active { 
+            background: var(--accent); 
+            /* MEJORA: Ligeramente más pequeño al activar */
+            transform: translateY(-50%) scale(0.95); 
+        }
         .nav-prev { left: 15px; } .nav-next { right: 15px; }
         
-        .like-anim { animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes likeBounce { 0% { transform: scale(1); } 30% { transform: scale(1.4); color: #ef4444; } 70% { transform: scale(0.9); } 100% { transform: scale(1); } }
+        .options-menu { display: none; position: absolute; top: 40px; right: 10px; background: #1c1c1f; border: 1px solid #333; border-radius: 12px; 
+            /* MEJORA: Sombra más profunda */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9); 
+            z-index: 50; min-width: 150px; 
+        }
+        /* MEJORA: Animación popIn más elástica */
+        .options-menu.show { display: block; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .options-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #ccc; font-size: 0.95rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .options-item:last-child { border-bottom: none; }
+        /* MEJORA: Keyframes para popIn */
+        @keyframes popIn { 
+            from { opacity: 0; transform: scale(0.8); } 
+            to { opacity: 1; transform: scale(1); } 
+        }
+        
+        .like-anim { 
+            /* MEJORA: Animación likeBounce más intensa */
+            animation: likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        /* MEJORA: Keyframes para likeBounce */
+        @keyframes likeBounce { 
+            0% { transform: scale(1); } 
+            30% { transform: scale(1.4); color: #ef4444; } 
+            70% { transform: scale(0.9); } 
+            100% { transform: scale(1); } 
+        }
         .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); pointer-events: none; }
 
-        button { transition: all 0.2s ease-out; }
-        button:active:not(.btn-disabled) { transform: translateY(0); box-shadow: none; }
-        #publish-btn { background: linear-gradient(to right, var(--accent-gradient-start), var(--accent-gradient-end)); box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4); transition: all 0.3s ease-out; }
-        #publish-btn:hover:not(.btn-disabled) { transform: translateY(-2px) scale(1.01); box-shadow: 0 8px 20px rgba(249, 115, 22, 0.6); }
+        /* MEJORA: Estilos para botones generales */
+        button {
+            transition: all 0.2s ease-out;
+        }
+        button:hover:not(.btn-disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        button:active:not(.btn-disabled) {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        /* MEJORA: Estilos específicos para el botón de publicar */
+        #publish-btn {
+            background: linear-gradient(to right, var(--accent-gradient-start), var(--accent-gradient-end));
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+            transition: all 0.3s ease-out;
+        }
+        #publish-btn:hover:not(.btn-disabled) {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.6);
+        }
+        #publish-btn:active:not(.btn-disabled) {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+        }
 
-        #scroll-spinner { animation: spinFadeIn 1s infinite linear; }
-        @keyframes spinFadeIn { 0% { transform: rotate(0deg) scale(0.8); opacity: 0.7; } 50% { transform: rotate(180deg) scale(1.1); opacity: 1; } 100% { transform: rotate(360deg) scale(0.8); opacity: 0.7; } }
+        /* MEJORA: Animación para el spinner de carga */
+        #scroll-spinner {
+            animation: spinFadeIn 1s infinite linear;
+        }
+        @keyframes spinFadeIn {
+            0% { transform: rotate(0deg) scale(0.8); opacity: 0.7; }
+            50% { transform: rotate(180deg) scale(1.1); opacity: 1; }
+            100% { transform: rotate(360deg) scale(0.8); opacity: 0.7; }
+        }
 
-        #toast-container { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        #custom-alert > div, #custom-confirm > div { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        /* MEJORA: Animación elástica para el toast */
+        #toast-container {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* MEJORA: Animación popIn para los modales de alerta/confirmación */
+        #custom-alert > div, #custom-confirm > div {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -231,11 +440,14 @@
             </div>
             
             <div class="flex items-center gap-4">
+                <!-- SISTEMA DE NOTIFICACIONES -->
                 <div class="relative">
                     <button onclick="toggleNotifications()" class="notif-btn">
                         <i class="far fa-bell text-lg"></i>
+                        <!-- El badge ahora es solo un indicador visual que desaparece al abrir -->
                         <div id="notif-badge" class="notif-badge hidden"></div>
                     </button>
+                    <!-- DROPDOWN LAZY LOAD -->
                     <div id="notification-dropdown" class="notification-dropdown custom-scrollbar">
                         <div class="p-3 border-b border-white/5 flex justify-between items-center bg-[#18181b]">
                             <span class="text-sm font-bold text-white">Notificaciones</span>
@@ -271,7 +483,6 @@
                         </label>
                     </div>
                     
-                    <!-- Contenedor de Previsualización: Asegurado que se muestre -->
                     <div id="preview-stack" style="display: none;"></div>
                     
                     <div id="extra-fields">
@@ -402,7 +613,7 @@
                             <div id="modal-tags" class="hidden flex flex-wrap gap-2 mt-3"></div>
                         </div>
 
-                        <!-- Imágenes Similares -->
+                        <!-- Imágenes Similares (ADDED) -->
                         <div class="mb-6 border-b border-zinc-800 pb-4">
                             <h4 class="text-[11px] font-bold text-gray-500 uppercase mb-3 tracking-widest flex items-center gap-2"><i class="fas fa-th-large"></i> Similares</h4>
                             <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-3 snap-x no-scrollbar"></div>
@@ -449,7 +660,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE IA (AUTO-TAGGING) -->
+    <!-- SCRIPT DE IA -->
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
         const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
@@ -501,6 +712,7 @@
         const POSTS_PER_PAGE = 10;
         let characterStatsCache = {};
         
+        // Cache de a quién sigo
         let followingCache = {};
 
         let currentViewPosts = [];
@@ -515,12 +727,14 @@
         let confirmCallback = null;
         const userProfileCache = {};
 
+        // --- AUTH CHECK INMEDIATO ---
         auth.onAuthStateChanged(user => {
             const loader = document.getElementById('initial-loader');
             if (user && !user.isAnonymous) {
                 currentUser = user;
                 document.getElementById('app-content').style.display = 'block'; 
                 
+                // Cargar datos de usuario
                 db.ref('users/' + user.uid).on('value', snap => { 
                     const d = snap.val(); if(d) {
                         currentUserData = d; 
@@ -528,12 +742,15 @@
                     }
                 });
 
+                // Cargar lista de seguidos (ONCE para evitar repintados agresivos)
                 db.ref('follows/' + user.uid).once('value', snap => {
                     followingCache = snap.val() || {};
                     initFeedOnce(); 
                 });
 
+                // INICIAR SISTEMA DE NOTIFICACIONES CORREGIDO
                 initNotificationSystem(user.uid);
+
                 loadUserCollectionsSelect();
                 initCharacterStatsListener();
                 
@@ -544,16 +761,162 @@
             }
         });
 
-        // --- SISTEMA DE COMPRESIÓN "A PRUEBA DE BALAS" (Expandido) ---
-        // Intenta 3 niveles de compresión antes de rendirse y enviar el original
-        function compressImage(file) {
-            return new Promise((resolve) => {
-                const maxSizeKB = 450; 
-                const maxDimension = 1920; 
+        // --- SISTEMA DE NOTIFICACIONES (Estilo Facebook) ---
+        function initNotificationSystem(uid) {
+            const badge = document.getElementById('notif-badge');
+            // Escuchar SOLO la última notificación para decidir si mostrar el badge (Lazy Check)
+            db.ref('notifications/' + uid).orderByKey().limitToLast(1).on('child_added', snap => {
+                if(!snap.exists()) return;
+                const lastNotif = snap.val();
+                const lastSeenTimestamp = localStorage.getItem('lastSeenNotif_' + uid) || 0;
+                
+                // Si la última notificación es más nueva que la última vez que abrimos el menú
+                if (lastNotif.timestamp > lastSeenTimestamp) {
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            });
+        }
 
-                // Si ya es pequeño y compatible, no tocar
-                if (file.size / 1024 <= maxSizeKB && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp')) { 
-                    console.log("Imagen pequeña, enviando original");
+        function toggleNotifications() {
+            const dd = document.getElementById('notification-dropdown');
+            const badge = document.getElementById('notif-badge');
+            
+            if (dd.classList.contains('visible')) {
+                // Cerrar
+                dd.classList.remove('visible');
+            } else {
+                // Abrir
+                dd.classList.add('visible');
+                
+                // 1. Ocultar Badge inmediatamente (ya se vio el menú)
+                badge.classList.add('hidden');
+                
+                // 2. Guardar timestamp actual como "Visto"
+                if(currentUser) {
+                    localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now());
+                }
+
+                // 3. Cargar lista (Lazy Load & Refresh)
+                loadNotifications();
+            }
+        }
+
+        function loadNotifications() {
+            const list = document.getElementById('notif-list');
+            // Cargar historial de notificaciones (persisten aunque se recargue)
+            db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
+                list.innerHTML = '';
+                if (!snap.exists()) {
+                    list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones recientes.</div>';
+                    return;
+                }
+                const notifs = [];
+                snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
+                
+                // Ordenar: más nuevas primero
+                notifs.reverse().forEach(n => {
+                    const item = document.createElement('div');
+                    // Clase 'unread' si read=false en DB (para color resaltado)
+                    // Clase 'read' si read=true en DB (para color normal)
+                    const isUnread = !n.read; 
+                    item.className = `notif-item ${isUnread ? 'unread' : 'read'}`;
+                    item.id = `notif-item-${n.key}`;
+                    
+                    let icon = 'fas fa-bell';
+                    let text = 'Nueva interacción';
+                    let linkFn = '';
+
+                    if (n.type === 'like') { icon = 'fas fa-heart text-red-500'; text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
+                    else if (n.type === 'comment') { icon = 'fas fa-comment text-blue-400'; text = `<b>${n.fromUserName}</b> comentó tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
+                    else if (n.type === 'follow') { icon = 'fas fa-user-plus text-green-400'; text = `<b>${n.fromUserName}</b> empezó a seguirte.`; linkFn = `goToProfile('${n.fromUserId}')`; }
+
+                    item.innerHTML = `
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 flex-shrink-0"><i class="${icon}"></i></div>
+                        <div class="flex-1 text-sm text-gray-300 leading-tight">${text} <br><span class="text-[10px] text-gray-500">${timeAgo(n.timestamp)}</span></div>
+                        ${isUnread ? '<div class="w-2 h-2 rounded-full bg-orange-500"></div>' : ''} 
+                    `;
+                    
+                    // Al hacer click: Marcar como leída en DB y visualmente
+                    item.onclick = () => {
+                        markAsRead(n.key, item);
+                        eval(linkFn);
+                        document.getElementById('notification-dropdown').classList.remove('visible');
+                    };
+                    list.appendChild(item);
+                });
+            });
+        }
+
+        function markAsRead(key, element) {
+            // Actualizar DB
+            db.ref(`notifications/${currentUser.uid}/${key}/read`).set(true);
+            // Actualizar Visualmente (Quitar highlight)
+            element.classList.remove('unread');
+            element.classList.add('read');
+            // Quitar el puntito naranja interno si existe
+            const dot = element.querySelector('.bg-orange-500');
+            if(dot) dot.remove();
+        }
+
+        function sendNotification(targetUid, type, postId = null) {
+            if (targetUid === currentUser.uid) return;
+            const notifRef = db.ref(`notifications/${targetUid}`).push();
+            notifRef.set({
+                type: type,
+                fromUserId: currentUser.uid,
+                fromUserName: (currentUserData && currentUserData.username) ? currentUserData.username : 'Alguien',
+                postId: postId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                read: false
+            });
+        }
+
+        // --- UTILS ---
+        function showToast(msg) {
+            const t = document.getElementById('toast-container');
+            document.getElementById('toast-message').innerText = msg;
+            t.classList.remove('opacity-0', 'translate-y-4');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3000);
+        }
+        function showAlert(msg) {
+            document.getElementById('custom-alert-msg').innerText = msg;
+            document.getElementById('custom-alert').classList.remove('hidden'); document.getElementById('custom-alert').classList.add('flex');
+        }
+        function closeCustomAlert() { document.getElementById('custom-alert').classList.add('hidden'); document.getElementById('custom-alert').classList.remove('flex'); }
+        function showConfirm(msg, callback, title="¿Estás seguro?") {
+            confirmCallback = callback;
+            document.getElementById('custom-confirm-title').innerText = title;
+            document.getElementById('custom-confirm-msg').innerText = msg;
+            document.getElementById('custom-confirm').classList.remove('hidden'); document.getElementById('custom-confirm').classList.add('flex');
+        }
+        function closeCustomConfirm(res) {
+            document.getElementById('custom-confirm').classList.add('hidden'); document.getElementById('custom-confirm').classList.remove('flex');
+            if(res && confirmCallback) confirmCallback(); confirmCallback = null;
+        }
+
+        function requireLogin(event) {
+            if (!currentUser) {
+                if(event) { event.preventDefault(); event.stopPropagation(); }
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                // Estrategia Mejorada:
+                // 1. Si es pequeño (< 350KB) y no es PNG (para evitar problemas de transparencia pesada), pasar directo.
+                // 2. Si es grande, redimensionar a max 1920px (Full HD) preservando aspect ratio.
+                // 3. Convertir a WebP para optimizar peso manteniendo calidad.
+                
+                const maxSizeKB = 350; // Límite objetivo (flexible)
+                const maxDimension = 1920; // Límite de resolución (Full HD)
+
+                // Si ya es pequeño y no es PNG (a veces los PNG pequeños engañan y son pesados al renderizar), resolvemos.
+                if (file.size / 1024 <= maxSizeKB && file.type !== 'image/png') { 
                     resolve(file); 
                     return; 
                 }
@@ -562,11 +925,13 @@
                 const url = URL.createObjectURL(file);
                 
                 img.onload = () => {
-                    URL.revokeObjectURL(url);
+                    URL.revokeObjectURL(url); // Liberar memoria
+                    
                     let width = img.width;
                     let height = img.height;
 
-                    // Redimensionar si es muy grande
+                    // 1. Redimensionamiento (Downscaling)
+                    // Esto reduce drásticamente el peso sin pixelar, a diferencia de bajar solo la calidad JPEG.
                     if (width > maxDimension || height > maxDimension) {
                         if (width > height) {
                             height = Math.round((height * maxDimension) / width);
@@ -583,59 +948,94 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // INTENTO 1: WebP (Mejor compresión)
-                    canvas.toBlob(blobWebP => {
-                        if (blobWebP && blobWebP.size > 0) {
-                            console.log("Compresión WebP exitosa");
-                            resolve(new File([blobWebP], file.name.replace(/\.[^/.]+$/, ".webp"), { type: 'image/webp', lastModified: Date.now() }));
-                        } else {
-                            // INTENTO 2: JPEG (Compatibilidad si falla WebP)
-                            console.warn("Falló WebP, intentando JPEG...");
-                            canvas.toBlob(blobJpeg => {
-                                if (blobJpeg && blobJpeg.size > 0) {
-                                    resolve(new File([blobJpeg], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg', lastModified: Date.now() }));
-                                } else {
-                                    // INTENTO 3: Original (Fallback final si fallan ambos)
-                                    console.error("Falló compresión en canvas, enviando original.");
-                                    resolve(file);
-                                }
-                            }, 'image/jpeg', 0.85);
-                        }
-                    }, 'image/webp', 0.8);
+                    // 2. Compresión Inteligente usando WebP
+                    // WebP es superior a JPEG para web. Soporta transparencia y mejor compresión.
+                    let quality = 0.85; // Calidad inicial buena
+                    
+                    const tryCompression = () => {
+                        canvas.toBlob(blob => {
+                            if (!blob) {
+                                reject(new Error("Error al procesar la imagen en el navegador."));
+                                return;
+                            }
+                            
+                            // Si cumple el tamaño O la calidad ya es muy baja (para no buclear infinito), terminamos.
+                            if (blob.size / 1024 <= maxSizeKB || quality <= 0.5) {
+                                // Crear archivo final WebP
+                                const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), {
+                                    type: "image/webp",
+                                    lastModified: Date.now()
+                                });
+                                resolve(newFile);
+                            } else {
+                                // Reducir calidad y reintentar
+                                quality -= 0.15; // Saltos más grandes para ser más rápido
+                                tryCompression();
+                            }
+                        }, 'image/webp', quality);
+                    };
+
+                    tryCompression();
                 };
 
                 img.onerror = () => {
                     URL.revokeObjectURL(url);
-                    console.error("Error al cargar imagen para compresión. Enviando original.");
-                    resolve(file); // Fallback si la imagen está corrupta o no carga en canvas
+                    reject(new Error("No se pudo cargar la imagen para compresión."));
                 };
 
                 img.src = url;
             });
         }
-
-        // --- SUBIDA DE POST CON REINTENTOS (Robustez de Red) ---
-        async function uploadWithRetry(formData, retries = 2) {
-            try {
-                const response = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
-                
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
-                const text = await response.text();
-                // Validar que la respuesta sea una URL de catbox
-                if (!text.includes('catbox.moe')) throw new Error("Respuesta inválida de API: " + text.substring(0, 50));
-                
-                return text.trim();
-            } catch (err) {
-                if (retries > 0) {
-                    console.warn(`Reintentando subida... (${retries} restantes)`);
-                    await new Promise(r => setTimeout(r, 1500)); // Esperar 1.5s antes de reintentar
-                    return uploadWithRetry(formData, retries - 1);
-                }
-                throw err;
-            }
+        
+        // --- MANEJO DE ARCHIVOS MÚLTIPLES ---
+        function expandPostArea() { 
+            document.getElementById('extra-fields').classList.add('expanded'); 
+            document.getElementById('post-text').rows = 3; 
+        }
+        
+        function collapsePostArea(force=false) { 
+            const reset = () => {
+                document.getElementById('extra-fields').classList.remove('expanded'); document.getElementById('post-text').rows = 1;
+                selectedFiles = []; 
+                renderPreviewStack(); 
+                document.getElementById('post-text').value = ''; document.getElementById('post-title').value = '';
+                document.getElementById('post-character').value = ''; document.getElementById('post-tags').value = '';
+                selectCustomOption('dropdown-collection', '', '<i class="fas fa-folder mr-2 text-xs text-orange-500"></i> Álbum');
+                selectCustomOption('dropdown-category', '', '<i class="fas fa-tag mr-2 text-xs text-orange-500"></i> Categoría');
+                document.getElementById('new-collection-name').value = '';
+                document.getElementById('character-suggestions').classList.remove('visible'); 
+                document.getElementById('publish-btn').disabled = false; document.getElementById('publish-btn').classList.remove('btn-disabled');
+            };
+            if(force || (selectedFiles.length === 0 && !document.getElementById('post-text').value)) reset();
+            else showConfirm("¿Descartar publicación?", reset);
+        }
+        
+        function handleFileSelect(e) {
+            expandPostArea();
+            const newFiles = Array.from(e.target.files);
+            if (!newFiles.length) return;
+            newFiles.forEach(file => { if (selectedFiles.length < 3) selectedFiles.push(file); });
+            if (selectedFiles.length === 3) showToast("Máximo 3 imágenes alcanzado");
+            renderPreviewStack();
+            if (selectedFiles.length > 0 && window.runAutoTagging) { try { window.runAutoTagging(selectedFiles[selectedFiles.length - 1]); } catch(e) {} }
+            e.target.value = ""; 
         }
 
+        function renderPreviewStack() {
+            const container = document.getElementById('preview-stack');
+            container.innerHTML = '';
+            if (selectedFiles.length === 0) { container.style.display = 'none'; return; }
+            container.style.display = 'flex';
+            selectedFiles.forEach((file, index) => {
+                const url = URL.createObjectURL(file);
+                const thumb = document.createElement('div'); thumb.className = 'preview-thumb';
+                thumb.innerHTML = `<img src="${url}"><div class="remove-thumb-btn" onclick="removeFile(${index})"><i class="fas fa-times"></i></div>`;
+                container.appendChild(thumb);
+            });
+        }
+        function removeFile(index) { selectedFiles.splice(index, 1); renderPreviewStack(); }
+
+        // --- SUBIDA DE POST ---
         async function uploadPost() {
             if(!requireLogin()) return;
 
@@ -653,44 +1053,33 @@
 
             const btn = document.getElementById('publish-btn');
             const progress = document.getElementById('upload-progress');
-            btn.disabled = true; 
-            btn.classList.add('btn-disabled'); 
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Subiendo...';
+            btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Subiendo...';
             progress.classList.remove('hidden');
             
             try {
                 let colName = null;
-                // Crear colección si es nueva
                 if (colId === 'new') {
                     const ref = db.ref('collections/' + currentUser.uid).push();
-                    colId = ref.key; 
-                    colName = newColName;
+                    colId = ref.key; colName = newColName;
                     await ref.set({ name: newColName, createdAt: firebase.database.ServerValue.TIMESTAMP, cover: 'pending', previews: [] });
                 } else if (colId) {
-                    const snap = await db.ref(`collections/${currentUser.uid}/${colId}/name`).once('value'); 
-                    colName = snap.val();
+                    const snap = await db.ref(`collections/${currentUser.uid}/${colId}/name`).once('value'); colName = snap.val();
                 }
 
                 let uploadedUrls = [];
-                // Proceso de subida de imágenes
                 if (selectedFiles.length > 0) {
                     for (const file of selectedFiles) {
-                        // 1. Compresión Segura
                         let processedFile = await compressImage(file);
-                        
-                        // 2. Validación de tamaño final (Guardrail)
-                        if (processedFile.size > 4.5 * 1024 * 1024) {
-                            throw new Error("La imagen es demasiado grande incluso después de comprimir. Intenta con otra.");
-                        }
-
                         const formData = new FormData(); 
-                        formData.append('reqtype','fileupload'); 
-                        formData.append('userhash',CATBOX_USERHASH); 
-                        formData.append('fileToUpload', processedFile);
-                        
-                        // 3. Subida con Reintentos
-                        const url = await uploadWithRetry(formData);
-                        uploadedUrls.push(url);
+                        formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', processedFile);
+                        const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
+                        const txt = await r.text();
+                        if(txt.includes('catbox.moe')) {
+                            uploadedUrls.push(txt.trim());
+                        } else {
+                            // Si la API devuelve un error (no es una URL), lanzamos error para verlo en el catch
+                            throw new Error("Error en la subida a Catbox: " + txt.substring(0, 50));
+                        }
                     }
                 }
                 
@@ -704,242 +1093,420 @@
                     text, 
                     imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
                     imageUrls: uploadedUrls,
-                    title, 
-                    tags, 
-                    category, 
-                    characterName,
-                    userId: currentUser.uid, 
-                    userName: finalUserName, 
-                    userAvatar: finalUserAvatar,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
-                    likes: 0,
-                    collectionId: colId || null, 
-                    collectionName: colName || null
+                    title, tags, category, characterName,
+                    userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0,
+                    collectionId: colId || null, collectionName: colName || null
                 };
                 
                 await newPostRef.set(postData);
 
-                // Actualizar UI localmente
+                // ACTUALIZACIÓN LOCAL INMEDIATA
                 const localPost = { ...postData, id: newPostId, timestamp: Date.now() }; 
                 allPostsCache.unshift(localPost);
                 applyFiltersAndRender(); 
                 
-                // Actualizar Estadísticas
                 if (characterName) {
                     const normalizedChar = characterName.toLowerCase().replace(/[.#$\[\]]/g, ""); 
                     const charRef = db.ref(`stats/characters/${normalizedChar}`);
-                    charRef.transaction((currentData) => { 
-                        return { count: (currentData ? currentData.count : 0) + 1, displayName: characterName }; 
-                    });
+                    charRef.transaction((currentData) => { return { count: (currentData ? currentData.count : 0) + 1, displayName: characterName }; });
                 }
 
                 if (colId && uploadedUrls.length > 0) {
                     await updateCollectionPreviews(currentUser.uid, colId, uploadedUrls[0]);
                 }
 
-                collapsePostArea(true); 
-                showToast("¡Publicado!");
+                collapsePostArea(true); showToast("¡Publicado!");
 
             } catch(e) { 
                 console.error(e);
-                showAlert("Error: " + (e.message || "Error de conexión. Intenta de nuevo.")); 
+                // Aseguramos que siempre haya un mensaje, incluso si e no es un Error estándar
+                showAlert("Error: " + (e.message || e || "Error desconocido")); 
             }
             finally { 
-                btn.disabled = false; 
-                btn.classList.remove('btn-disabled'); 
-                btn.innerHTML = 'Publicar'; 
+                btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = 'Publicar'; 
                 progress.classList.add('hidden'); 
             }
         }
 
-        // --- MANEJO DE PREVISUALIZACIÓN DE ARCHIVOS ---
-        function expandPostArea() { 
-            document.getElementById('extra-fields').classList.add('expanded'); 
-            document.getElementById('post-text').rows = 3; 
-        }
-        
-        function collapsePostArea(force=false) { 
-            const reset = () => { 
-                document.getElementById('extra-fields').classList.remove('expanded'); 
-                document.getElementById('post-text').rows = 1; 
-                selectedFiles = []; 
-                renderPreviewStack(); 
-                document.getElementById('post-text').value = ''; 
-                document.getElementById('post-title').value = ''; 
-                document.getElementById('post-character').value = ''; 
-                document.getElementById('post-tags').value = ''; 
-                selectCustomOption('dropdown-collection', '', '<i class="fas fa-folder mr-2 text-xs text-orange-500"></i> Álbum'); 
-                selectCustomOption('dropdown-category', '', '<i class="fas fa-tag mr-2 text-xs text-orange-500"></i> Categoría'); 
-                document.getElementById('new-collection-name').value = ''; 
-                document.getElementById('character-suggestions').classList.remove('visible'); 
-                document.getElementById('publish-btn').disabled = false; 
-                document.getElementById('publish-btn').classList.remove('btn-disabled'); 
-            }; 
-            if(force || (selectedFiles.length === 0 && !document.getElementById('post-text').value)) reset(); 
-            else showConfirm("¿Descartar publicación?", reset); 
-        }
-        
-        function handleFileSelect(e) { 
-            expandPostArea(); 
-            const newFiles = Array.from(e.target.files); 
-            if (!newFiles.length) return; 
-            
-            newFiles.forEach(file => { 
-                if (selectedFiles.length < 3) selectedFiles.push(file); 
-            }); 
-            
-            if (selectedFiles.length === 3) showToast("Máximo 3 imágenes alcanzado"); 
-            renderPreviewStack(); 
-            
-            if (selectedFiles.length > 0 && window.runAutoTagging) { 
-                try { window.runAutoTagging(selectedFiles[selectedFiles.length - 1]); } catch(e) {} 
-            } 
-            e.target.value = ""; 
-        }
-        
-        function renderPreviewStack() { 
-            const container = document.getElementById('preview-stack'); 
-            container.innerHTML = ''; 
-            
-            if (selectedFiles.length === 0) { 
-                container.style.display = 'none'; 
-                return; 
-            } 
-            container.style.display = 'flex'; 
-            
-            selectedFiles.forEach((file, index) => { 
-                const url = URL.createObjectURL(file); 
-                const thumb = document.createElement('div'); 
-                thumb.className = 'preview-thumb'; 
-                thumb.innerHTML = `<img src="${url}"><div class="remove-thumb-btn" onclick="removeFile(${index})"><i class="fas fa-times"></i></div>`; 
-                container.appendChild(thumb); 
-            }); 
-        }
-        
-        function removeFile(index) { 
-            selectedFiles.splice(index, 1); 
-            renderPreviewStack(); 
-        }
-
-        // --- OTRAS FUNCIONES ---
-        function initNotificationSystem(uid) {
-            const badge = document.getElementById('notif-badge');
-            db.ref('notifications/' + uid).orderByKey().limitToLast(1).on('child_added', snap => {
-                if(!snap.exists()) return;
-                const lastNotif = snap.val();
-                const lastSeenTimestamp = localStorage.getItem('lastSeenNotif_' + uid) || 0;
-                if (lastNotif.timestamp > lastSeenTimestamp) { badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
+        // --- FEED LOGIC (ONCE) ---
+        function initFeedOnce() {
+            db.ref('feed_posts').limitToLast(200).once('value').then(snapshot => {
+                if(!snapshot.exists()) { allPostsCache = []; applyFiltersAndRender(); return; }
+                const tempPosts = [];
+                snapshot.forEach(child => { tempPosts.push({ id: child.key, ...child.val() }); });
+                // Orden inicial por timestamp inverso
+                allPostsCache = tempPosts.sort((a,b) => b.timestamp - a.timestamp);
+                applyFiltersAndRender();
             });
         }
 
-        function toggleNotifications() {
-            const dd = document.getElementById('notification-dropdown');
-            const badge = document.getElementById('notif-badge');
-            if (dd.classList.contains('visible')) { dd.classList.remove('visible'); } else { dd.classList.add('visible'); badge.classList.add('hidden'); if(currentUser) { localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now()); } loadNotifications(); }
-        }
-
-        function loadNotifications() {
-            const list = document.getElementById('notif-list');
-            db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
-                list.innerHTML = '';
-                if (!snap.exists()) { list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones recientes.</div>'; return; }
-                const notifs = [];
-                snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
-                notifs.reverse().forEach(n => {
-                    const item = document.createElement('div');
-                    const isUnread = !n.read; 
-                    item.className = `notif-item ${isUnread ? 'unread' : 'read'}`;
-                    item.id = `notif-item-${n.key}`;
-                    let icon = 'fas fa-bell'; let text = 'Nueva interacción'; let linkFn = '';
-                    if (n.type === 'like') { icon = 'fas fa-heart text-red-500'; text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
-                    else if (n.type === 'comment') { icon = 'fas fa-comment text-blue-400'; text = `<b>${n.fromUserName}</b> comentó tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
-                    else if (n.type === 'follow') { icon = 'fas fa-user-plus text-green-400'; text = `<b>${n.fromUserName}</b> empezó a seguirte.`; linkFn = `goToProfile('${n.fromUserId}')`; }
-                    item.innerHTML = `<div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 flex-shrink-0"><i class="${icon}"></i></div><div class="flex-1 text-sm text-gray-300 leading-tight">${text} <br><span class="text-[10px] text-gray-500">${timeAgo(n.timestamp)}</span></div>${isUnread ? '<div class="w-2 h-2 rounded-full bg-orange-500"></div>' : ''}`;
-                    item.onclick = () => { markAsRead(n.key, item); eval(linkFn); document.getElementById('notification-dropdown').classList.remove('visible'); };
-                    list.appendChild(item);
-                });
+        function initCharacterStatsListener() {
+            db.ref('stats/characters').on('value', snapshot => {
+                if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; }
             });
         }
-
-        function markAsRead(key, element) { db.ref(`notifications/${currentUser.uid}/${key}/read`).set(true); element.classList.remove('unread'); element.classList.add('read'); const dot = element.querySelector('.bg-orange-500'); if(dot) dot.remove(); }
-        function sendNotification(targetUid, type, postId = null) { if (targetUid === currentUser.uid) return; const notifRef = db.ref(`notifications/${targetUid}`).push(); notifRef.set({ type: type, fromUserId: currentUser.uid, fromUserName: (currentUserData && currentUserData.username) ? currentUserData.username : 'Alguien', postId: postId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false }); }
-
-        function showToast(msg) { const t = document.getElementById('toast-container'); document.getElementById('toast-message').innerText = msg; t.classList.remove('opacity-0', 'translate-y-4'); setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3000); }
-        function showAlert(msg) { document.getElementById('custom-alert-msg').innerText = msg; document.getElementById('custom-alert').classList.remove('hidden'); document.getElementById('custom-alert').classList.add('flex'); }
-        function closeCustomAlert() { document.getElementById('custom-alert').classList.add('hidden'); document.getElementById('custom-alert').classList.remove('flex'); }
-        function showConfirm(msg, callback, title="¿Estás seguro?") { confirmCallback = callback; document.getElementById('custom-confirm-title').innerText = title; document.getElementById('custom-confirm-msg').innerText = msg; document.getElementById('custom-confirm').classList.remove('hidden'); document.getElementById('custom-confirm').classList.add('flex'); }
-        function closeCustomConfirm(res) { document.getElementById('custom-confirm').classList.add('hidden'); document.getElementById('custom-confirm').classList.remove('flex'); if(res && confirmCallback) confirmCallback(); confirmCallback = null; }
-        function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } window.location.href = 'login.html'; return false; } return true; }
         
-        function initFeedOnce() { db.ref('feed_posts').limitToLast(200).once('value').then(snapshot => { if(!snapshot.exists()) { allPostsCache = []; applyFiltersAndRender(); return; } const tempPosts = []; snapshot.forEach(child => { tempPosts.push({ id: child.key, ...child.val() }); }); allPostsCache = tempPosts.sort((a,b) => b.timestamp - a.timestamp); applyFiltersAndRender(); }); }
-        function initCharacterStatsListener() { db.ref('stats/characters').on('value', snapshot => { if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; } }); }
-        
+        // --- SISTEMA INTELIGENTE DE ORDENAMIENTO (Smart Mix) ---
         function applyFiltersAndRender() {
             let filtered = [...allPostsCache];
             const filterBar = document.getElementById('filter-bar');
-            if (currentFilterTag) { const term = currentFilterTag.toLowerCase(); if (currentFilterType === 'character') { filtered = filtered.filter(p => p.characterName && p.characterName.toLowerCase() === term); document.getElementById('active-filter-tag').innerHTML = `<i class="fas fa-user-tag"></i> ${currentFilterTag}`; } else { filtered = filtered.filter(p => (p.tags||'').toLowerCase().includes(term) || (p.text||'').toLowerCase().includes('#'+term)); document.getElementById('active-filter-tag').innerText = '#' + currentFilterTag; } filterBar.classList.remove('hidden'); } else { filterBar.classList.add('hidden'); }
-            if (currentSortOrder === 'newest') { const myPosts = []; const followedPosts = []; const otherPosts = []; filtered.forEach(post => { if (post.userId === currentUser.uid) { myPosts.push(post); } else if (followingCache[post.userId]) { followedPosts.push(post); } else { otherPosts.push(post); } }); myPosts.sort((a, b) => b.timestamp - a.timestamp); followedPosts.sort((a, b) => b.timestamp - a.timestamp); otherPosts.sort((a, b) => b.timestamp - a.timestamp); const mixed = []; let fIndex = 0; let oIndex = 0; while(fIndex < followedPosts.length || oIndex < otherPosts.length) { for(let i=0; i<3 && fIndex < followedPosts.length; i++) mixed.push(followedPosts[fIndex++]); if(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]); if(fIndex >= followedPosts.length && oIndex < otherPosts.length) while(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]); if(oIndex >= otherPosts.length && fIndex < followedPosts.length) while(fIndex < followedPosts.length) mixed.push(followedPosts[fIndex++]); } displayedPosts = [...myPosts, ...mixed]; } else if (currentSortOrder === 'oldest') { displayedPosts = filtered.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)); } else if (currentSortOrder === 'likes') { displayedPosts = filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0)); }
+            
+            if (currentFilterTag) {
+                const term = currentFilterTag.toLowerCase();
+                if (currentFilterType === 'character') {
+                    filtered = filtered.filter(p => p.characterName && p.characterName.toLowerCase() === term);
+                    document.getElementById('active-filter-tag').innerHTML = `<i class="fas fa-user-tag"></i> ${currentFilterTag}`;
+                } else {
+                    filtered = filtered.filter(p => (p.tags||'').toLowerCase().includes(term) || (p.text||'').toLowerCase().includes('#'+term));
+                    document.getElementById('active-filter-tag').innerText = '#' + currentFilterTag;
+                }
+                filterBar.classList.remove('hidden');
+            } else {
+                filterBar.classList.add('hidden');
+            }
+
+            if (currentSortOrder === 'newest') {
+                const myPosts = [];
+                const followedPosts = [];
+                const otherPosts = [];
+
+                filtered.forEach(post => {
+                    if (post.userId === currentUser.uid) {
+                        myPosts.push(post);
+                    } else if (followingCache[post.userId]) {
+                        followedPosts.push(post);
+                    } else {
+                        otherPosts.push(post);
+                    }
+                });
+
+                myPosts.sort((a, b) => b.timestamp - a.timestamp);
+                followedPosts.sort((a, b) => b.timestamp - a.timestamp);
+                otherPosts.sort((a, b) => b.timestamp - a.timestamp);
+
+                const mixed = [];
+                let fIndex = 0;
+                let oIndex = 0;
+                
+                while(fIndex < followedPosts.length || oIndex < otherPosts.length) {
+                    for(let i=0; i<3 && fIndex < followedPosts.length; i++) mixed.push(followedPosts[fIndex++]);
+                    if(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]);
+                    if(fIndex >= followedPosts.length && oIndex < otherPosts.length) 
+                        while(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]);
+                    if(oIndex >= otherPosts.length && fIndex < followedPosts.length) 
+                        while(fIndex < followedPosts.length) mixed.push(followedPosts[fIndex++]);
+                }
+
+                displayedPosts = [...myPosts, ...mixed];
+
+            } else if (currentSortOrder === 'oldest') {
+                displayedPosts = filtered.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            } else if (currentSortOrder === 'likes') {
+                displayedPosts = filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+            }
+
             resetFeedView();
         }
         
-        function resetFeedView() { const feedContainer = document.getElementById('feed-list-container'); const gridContainer = document.getElementById('grid-view-container'); feedContainer.innerHTML = ''; gridContainer.innerHTML = ''; currentRenderIndex = 0; if (displayedPosts.length === 0) { feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10 flex flex-col items-center"><i class="fas fa-ghost text-4xl mb-2 opacity-50"></i><p>No hay publicaciones aún.</p></div>`; document.getElementById('scroll-spinner').style.opacity = '0'; return; } loadMorePosts(); }
-        function loadMorePosts() { if (currentRenderIndex >= displayedPosts.length) { document.getElementById('scroll-spinner').style.opacity = '0'; return; } document.getElementById('scroll-spinner').style.opacity = '1'; const nextIndex = currentRenderIndex + POSTS_PER_PAGE; const chunk = displayedPosts.slice(currentRenderIndex, nextIndex); const feedContainer = document.getElementById('feed-list-container'); const gridContainer = document.getElementById('grid-view-container'); chunk.forEach(post => { if(!document.getElementById(`post-card-${post.id}`)) { feedContainer.appendChild(createPostCard(post)); } const imgs = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []); if (imgs.length > 0) { gridContainer.appendChild(createGridItem(post, imgs[0])); } updateUserAvatarInUI(post.userId); }); currentRenderIndex = nextIndex; if (currentRenderIndex >= displayedPosts.length) document.getElementById('scroll-spinner').style.opacity = '0'; }
-        const scrollObserver = new IntersectionObserver((entries) => { if (entries[0].isIntersecting && currentRenderIndex < displayedPosts.length) setTimeout(() => loadMorePosts(), 500); }, { rootMargin: '100px' });
+        function resetFeedView() {
+            const feedContainer = document.getElementById('feed-list-container');
+            const gridContainer = document.getElementById('grid-view-container');
+            feedContainer.innerHTML = ''; gridContainer.innerHTML = ''; currentRenderIndex = 0;
+            if (displayedPosts.length === 0) {
+                feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10 flex flex-col items-center"><i class="fas fa-ghost text-4xl mb-2 opacity-50"></i><p>No hay publicaciones aún.</p></div>`;
+                document.getElementById('scroll-spinner').style.opacity = '0'; return;
+            }
+            loadMorePosts();
+        }
+        
+        function loadMorePosts() {
+            if (currentRenderIndex >= displayedPosts.length) { document.getElementById('scroll-spinner').style.opacity = '0'; return; }
+            document.getElementById('scroll-spinner').style.opacity = '1';
+            const nextIndex = currentRenderIndex + POSTS_PER_PAGE;
+            const chunk = displayedPosts.slice(currentRenderIndex, nextIndex);
+            const feedContainer = document.getElementById('feed-list-container');
+            const gridContainer = document.getElementById('grid-view-container');
+            
+            chunk.forEach(post => {
+                if(!document.getElementById(`post-card-${post.id}`)) {
+                    feedContainer.appendChild(createPostCard(post));
+                }
+                const imgs = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
+                if (imgs.length > 0) {
+                     gridContainer.appendChild(createGridItem(post, imgs[0]));
+                }
+                updateUserAvatarInUI(post.userId);
+            });
+            currentRenderIndex = nextIndex;
+            if (currentRenderIndex >= displayedPosts.length) document.getElementById('scroll-spinner').style.opacity = '0';
+        }
+        
+        const scrollObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && currentRenderIndex < displayedPosts.length) setTimeout(() => loadMorePosts(), 500);
+        }, { rootMargin: '100px' });
         document.addEventListener('DOMContentLoaded', () => { const t = document.getElementById('load-more-trigger'); if(t) scrollObserver.observe(t); });
 
-        function toggleFollow(targetUid, btn) { if (!requireLogin()) return; if (targetUid === currentUser.uid) return; const isFollowing = followingCache[targetUid]; if (isFollowing) { delete followingCache[targetUid]; db.ref(`follows/${currentUser.uid}/${targetUid}`).remove(); db.ref(`followers/${targetUid}/${currentUser.uid}`).remove(); if(btn) { btn.classList.remove('following'); btn.classList.add('not-following'); btn.innerHTML = 'Seguir'; } } else { followingCache[targetUid] = true; db.ref(`follows/${currentUser.uid}/${targetUid}`).set(true); db.ref(`followers/${targetUid}/${currentUser.uid}`).set(true); sendNotification(targetUid, 'follow'); if(btn) { btn.classList.remove('not-following'); btn.classList.add('following'); btn.innerHTML = 'Siguiendo'; } } }
+        // --- FOLLOW SYSTEM OPTIMIZADO ---
+        function toggleFollow(targetUid, btn) {
+            if (!requireLogin()) return;
+            if (targetUid === currentUser.uid) return;
 
-        function createPostCard(post) {
-            const div = document.createElement('div'); div.className = "feed-card opacity-0 animate-enter"; div.id = `post-card-${post.id}`;
-            let textHtml = ''; if (post.text) { const fullText = post.text; if (fullText.length > 150) { textHtml = `<div class="mt-2"><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light" id="text-short-${post.id}">${fullText.substring(0, 150)}... <button onclick="expandText('${post.id}')" class="text-orange-500 font-bold hover:underline text-xs ml-1">Ver más</button></p><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light hidden" id="text-full-${post.id}">${fullText}</p></div>`; } else { textHtml = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-2 font-light">${fullText}</p>`; } }
-            let metaHtml = '<div class="mt-3 flex flex-wrap items-center gap-2">'; if (post.characterName) metaHtml += `<button onclick="filterByCharacter('${post.characterName}')" class="text-[10px] bg-indigo-900/40 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/30 uppercase font-bold tracking-wide hover:bg-indigo-500/20 active:scale-95 transition flex items-center gap-1"><i class="fas fa-user-circle"></i> ${post.characterName}</button>`; if (post.collectionName) { metaHtml += `<button onclick="window.location.href='profile.html?uid=${post.userId}&collection=${post.collectionId}'" class="text-[10px] bg-zinc-800 text-gray-400 px-2 py-0.5 rounded border border-zinc-700 font-medium hover:text-white hover:border-orange-500 transition"><i class="fas fa-folder text-orange-500 mr-1"></i> ${post.collectionName}</button>`; } if (post.category) metaHtml += `<span class="text-[10px] bg-orange-900/40 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30 uppercase font-bold tracking-wide">${post.category}</span>`; metaHtml += '</div>';
-            const isOwner = currentUser && currentUser.uid === post.userId; let optionsBtn = isOwner ? `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 p-2 hover:text-white"><i class="fas fa-ellipsis-v"></i></button><div id="options-menu-${post.id}" class="options-menu"><div class="options-item text-red-400 hover:bg-red-900/20" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>` : '';
-            let followBtnHtml = ''; if (!isOwner) { const isFollowing = followingCache[post.userId]; const btnClass = isFollowing ? 'following' : 'not-following'; const btnText = isFollowing ? 'Siguiendo' : 'Seguir'; followBtnHtml = `<button onclick="toggleFollow('${post.userId}', this)" class="follow-btn ${btnClass} ml-2">${btnText}</button>`; }
-            let imagesHtml = ''; const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []); if (images.length > 0) { if (images.length === 1) imagesHtml = `<div class="single-image-container" onclick="openMainViewerById('${post.id}', 0)"><img src="${images[0]}" loading="lazy"></div>`; else if (images.length === 2) imagesHtml = `<div class="two-image-grid"><img src="${images[0]}" onclick="openMainViewerById('${post.id}', 0)" loading="lazy"><img src="${images[1]}" onclick="openMainViewerById('${post.id}', 1)" loading="lazy"></div>`; else imagesHtml = `<div class="multi-image-row"><img src="${images[0]}" onclick="openMainViewerById('${post.id}', 0)" loading="lazy"><img src="${images[1]}" onclick="openMainViewerById('${post.id}', 1)" loading="lazy"><img src="${images[2]}" onclick="openMainViewerById('${post.id}', 2)" loading="lazy"></div>`; }
-            div.innerHTML = `<div class="p-4 pb-2"><div class="flex justify-between items-start relative"><div class="flex items-center gap-2"><div class="flex gap-3 items-center" onclick="goToProfile('${post.userId}')" style="cursor:pointer;"><img src="${post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-10 h-10 rounded-full object-cover border border-zinc-700 user-avatar-${post.userId} bg-zinc-800"><div class="flex flex-col"><span class="font-bold text-gray-200 text-sm hover:text-orange-400 transition flex items-center gap-2">${post.userName}</span><span class="text-[10px] text-gray-500 font-medium">${timeAgo(post.timestamp)}</span></div></div>${followBtnHtml}</div>${optionsBtn}</div>${post.title ? `<h4 class="font-bold text-white mt-3 text-sm tracking-wide">${post.title}</h4>` : ''}${textHtml}${metaHtml}</div>${imagesHtml}<div class="px-4 py-3 flex items-center gap-6 border-t border-white/5 mt-1 bg-[#1a1a1c]"><button id="like-btn-${post.id}" onclick="toggleLike('${post.id}', '${post.userId}')" class="flex items-center gap-2 text-gray-400 active:text-red-500 hover:text-red-400 transition group active:scale-95"><i class="far fa-heart text-lg group-active:scale-125 transition-transform"></i><span class="text-xs font-bold" id="likes-count-${post.id}">${post.likes || 0}</span></button><button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-white transition active:scale-95"><i class="far fa-comment text-lg"></i><span class="text-xs font-bold" id="comments-count-${post.id}">0</span></button></div><div id="comments-${post.id}" class="hidden px-4 py-3 bg-[#0f0f10] border-t border-white/5"><div id="comments-list-${post.id}" class="flex flex-col gap-3 mb-3 max-h-60 overflow-y-auto custom-scrollbar"></div><form onsubmit="postComment(event, '${post.id}', '${post.userId}')" class="flex gap-2 relative"><input type="text" id="comment-input-${post.id}" maxlength="200" class="w-full bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2.5 text-sm text-white focus:border-orange-500 focus:outline-none pr-10" placeholder="Escribe..." autocomplete="off"><button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 active:scale-90 transition"><i class="fas fa-paper-plane"></i></button></form></div>`;
-            checkLikeStatus(post.id); checkCommentStatus(post.id); return div;
+            const isFollowing = followingCache[targetUid];
+            
+            if (isFollowing) {
+                delete followingCache[targetUid]; 
+                db.ref(`follows/${currentUser.uid}/${targetUid}`).remove();
+                db.ref(`followers/${targetUid}/${currentUser.uid}`).remove();
+                if(btn) {
+                    btn.classList.remove('following'); btn.classList.add('not-following');
+                    btn.innerHTML = 'Seguir';
+                }
+            } else {
+                followingCache[targetUid] = true; 
+                db.ref(`follows/${currentUser.uid}/${targetUid}`).set(true);
+                db.ref(`followers/${targetUid}/${currentUser.uid}`).set(true);
+                sendNotification(targetUid, 'follow');
+                if(btn) {
+                    btn.classList.remove('not-following'); btn.classList.add('following');
+                    btn.innerHTML = 'Siguiendo';
+                }
+            }
         }
 
-        function createGridItem(post, imgUrl) { const div = document.createElement('div'); div.className = 'grid-item group'; div.onclick = () => openMainViewerById(post.id, 0); const multipleIcon = (post.imageUrls && post.imageUrls.length > 1) ? '<i class="fas fa-clone absolute top-2 right-2 text-white drop-shadow-md text-xs"></i>' : ''; div.innerHTML = `<img src="${imgUrl}" loading="lazy">${multipleIcon}<div class="grid-overlay opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-white text-[10px] font-bold drop-shadow-md"><i class="fas fa-heart text-white text-[9px]"></i> ${post.likes || 0}</span></div>`; return div; }
+        // --- CREAR TARJETA ---
+        function createPostCard(post) {
+            const div = document.createElement('div'); div.className = "feed-card opacity-0 animate-enter";
+            div.id = `post-card-${post.id}`;
+            
+            let textHtml = '';
+            if (post.text) {
+                const fullText = post.text;
+                if (fullText.length > 150) {
+                    textHtml = `<div class="mt-2"><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light" id="text-short-${post.id}">${fullText.substring(0, 150)}... <button onclick="expandText('${post.id}')" class="text-orange-500 font-bold hover:underline text-xs ml-1">Ver más</button></p><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light hidden" id="text-full-${post.id}">${fullText}</p></div>`;
+                } else { textHtml = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-2 font-light">${fullText}</p>`; }
+            }
+            
+            let metaHtml = '<div class="mt-3 flex flex-wrap items-center gap-2">';
+            if (post.characterName) metaHtml += `<button onclick="filterByCharacter('${post.characterName}')" class="text-[10px] bg-indigo-900/40 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/30 uppercase font-bold tracking-wide hover:bg-indigo-500/20 active:scale-95 transition flex items-center gap-1"><i class="fas fa-user-circle"></i> ${post.characterName}</button>`;
+            
+            if (post.collectionName) {
+                metaHtml += `<button onclick="window.location.href='profile.html?uid=${post.userId}&collection=${post.collectionId}'" class="text-[10px] bg-zinc-800 text-gray-400 px-2 py-0.5 rounded border border-zinc-700 font-medium hover:text-white hover:border-orange-500 transition"><i class="fas fa-folder text-orange-500 mr-1"></i> ${post.collectionName}</button>`;
+            }
+
+            if (post.category) metaHtml += `<span class="text-[10px] bg-orange-900/40 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30 uppercase font-bold tracking-wide">${post.category}</span>`;
+            metaHtml += '</div>';
+            
+            const isOwner = currentUser && currentUser.uid === post.userId;
+            let optionsBtn = isOwner ? `<button onclick="toggleOptionsMenu('${post.id}')" class="options-trigger text-gray-400 p-2 hover:text-white"><i class="fas fa-ellipsis-v"></i></button><div id="options-menu-${post.id}" class="options-menu"><div class="options-item text-red-400 hover:bg-red-900/20" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i> Eliminar</div></div>` : '';
+
+            let followBtnHtml = '';
+            if (!isOwner) {
+                const isFollowing = followingCache[post.userId];
+                const btnClass = isFollowing ? 'following' : 'not-following';
+                const btnText = isFollowing ? 'Siguiendo' : 'Seguir';
+                followBtnHtml = `<button onclick="toggleFollow('${post.userId}', this)" class="follow-btn ${btnClass} ml-2">${btnText}</button>`;
+            }
+
+            let imagesHtml = '';
+            const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
+            if (images.length > 0) {
+                if (images.length === 1) imagesHtml = `<div class="single-image-container" onclick="openMainViewerById('${post.id}', 0)"><img src="${images[0]}" loading="lazy"></div>`;
+                else if (images.length === 2) imagesHtml = `<div class="two-image-grid"><img src="${images[0]}" onclick="openMainViewerById('${post.id}', 0)" loading="lazy"><img src="${images[1]}" onclick="openMainViewerById('${post.id}', 1)" loading="lazy"></div>`;
+                else imagesHtml = `<div class="multi-image-row"><img src="${images[0]}" onclick="openMainViewerById('${post.id}', 0)" loading="lazy"><img src="${images[1]}" onclick="openMainViewerById('${post.id}', 1)" loading="lazy"><img src="${images[2]}" onclick="openMainViewerById('${post.id}', 2)" loading="lazy"></div>`;
+            }
+
+            div.innerHTML = `
+                <div class="p-4 pb-2">
+                    <div class="flex justify-between items-start relative">
+                        <div class="flex items-center gap-2">
+                            <div class="flex gap-3 items-center" onclick="goToProfile('${post.userId}')" style="cursor:pointer;">
+                                <img src="${post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U'}" class="w-10 h-10 rounded-full object-cover border border-zinc-700 user-avatar-${post.userId} bg-zinc-800">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-gray-200 text-sm hover:text-orange-400 transition flex items-center gap-2">${post.userName}</span>
+                                    <span class="text-[10px] text-gray-500 font-medium">${timeAgo(post.timestamp)}</span>
+                                </div>
+                            </div>
+                            ${followBtnHtml}
+                        </div>
+                        ${optionsBtn}
+                    </div>
+                    ${post.title ? `<h4 class="font-bold text-white mt-3 text-sm tracking-wide">${post.title}</h4>` : ''}
+                    ${textHtml}
+                    ${metaHtml}
+                </div>
+                ${imagesHtml}
+                <div class="px-4 py-3 flex items-center gap-6 border-t border-white/5 mt-1 bg-[#1a1a1c]">
+                    <button id="like-btn-${post.id}" onclick="toggleLike('${post.id}', '${post.userId}')" class="flex items-center gap-2 text-gray-400 active:text-red-500 hover:text-red-400 transition group active:scale-95"><i class="far fa-heart text-lg group-active:scale-125 transition-transform"></i><span class="text-xs font-bold" id="likes-count-${post.id}">${post.likes || 0}</span></button>
+                    <button onclick="toggleComments('${post.id}')" class="flex items-center gap-2 text-gray-400 hover:text-white transition active:scale-95"><i class="far fa-comment text-lg"></i><span class="text-xs font-bold" id="comments-count-${post.id}">0</span></button>
+                </div>
+                <div id="comments-${post.id}" class="hidden px-4 py-3 bg-[#0f0f10] border-t border-white/5"><div id="comments-list-${post.id}" class="flex flex-col gap-3 mb-3 max-h-60 overflow-y-auto custom-scrollbar"></div><form onsubmit="postComment(event, '${post.id}', '${post.userId}')" class="flex gap-2 relative"><input type="text" id="comment-input-${post.id}" maxlength="200" class="w-full bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2.5 text-sm text-white focus:border-orange-500 focus:outline-none pr-10" placeholder="Escribe..." autocomplete="off"><button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 active:scale-90 transition"><i class="fas fa-paper-plane"></i></button></form></div>`;
+            checkLikeStatus(post.id); checkCommentStatus(post.id);
+            return div;
+        }
+
+        function createGridItem(post, imgUrl) { 
+            const div = document.createElement('div'); div.className = 'grid-item group'; 
+            div.onclick = () => openMainViewerById(post.id, 0); 
+            const multipleIcon = (post.imageUrls && post.imageUrls.length > 1) ? '<i class="fas fa-clone absolute top-2 right-2 text-white drop-shadow-md text-xs"></i>' : '';
+            div.innerHTML = `<img src="${imgUrl}" loading="lazy">${multipleIcon}<div class="grid-overlay opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-white text-[10px] font-bold drop-shadow-md"><i class="fas fa-heart text-white text-[9px]"></i> ${post.likes || 0}</span></div>`; return div; 
+        }
+
         function expandText(id) { document.getElementById(`text-short-${id}`).classList.add('hidden'); document.getElementById(`text-full-${id}`).classList.remove('hidden'); }
+
+        // --- VIEWER ---
+        // Helper para texto
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
 
         function openMainViewerById(postId, imgIndex = 0) {
-            let index = displayedPosts.findIndex(p => p.id === postId); let sourceList = displayedPosts;
-            if (index === -1) { index = allPostsCache.findIndex(p => p.id === postId); if (index !== -1) { sourceList = allPostsCache; } else { return; } }
-            currentViewPosts = sourceList; currentPostIndex = index; window.currentInternalIndex = imgIndex;
-            updateViewerContent(); const modal = document.getElementById('modal'); modal.classList.add('visible'); modal.classList.remove('fullscreen-mode'); document.body.style.overflow = 'hidden';
+            let index = displayedPosts.findIndex(p => p.id === postId);
+            let sourceList = displayedPosts;
+            
+            // Si no está en la lista mostrada (por filtros), buscar en el cache global
+            if (index === -1) {
+                index = allPostsCache.findIndex(p => p.id === postId);
+                if (index !== -1) {
+                    sourceList = allPostsCache;
+                } else {
+                    return; // No encontrado
+                }
+            }
+            
+            currentViewPosts = sourceList;
+            currentPostIndex = index;
+            window.currentInternalIndex = imgIndex;
+            updateViewerContent();
+            const modal = document.getElementById('modal');
+            modal.classList.add('visible'); modal.classList.remove('fullscreen-mode');
+            document.body.style.overflow = 'hidden';
         }
 
         function updateViewerContent() {
             if (currentPostIndex < 0 || currentPostIndex >= currentViewPosts.length) return;
-            const post = currentViewPosts[currentPostIndex]; const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []); let imgToShow = ""; if (images.length > 0) { if (typeof window.currentInternalIndex === 'undefined' || window.currentInternalIndex >= images.length) window.currentInternalIndex = 0; imgToShow = images[window.currentInternalIndex]; }
-            document.getElementById('modal-image').src = imgToShow; document.getElementById('modal-title').textContent = post.title || 'Sin título'; document.getElementById('modal-desc').innerHTML = (post.text || '').replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>'); document.getElementById('modal-user-name').textContent = post.userName || 'Usuario'; document.getElementById('modal-user-pic').src = post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U';
-            const charTag = document.getElementById('modal-character-tag'); if(post.characterName) { charTag.classList.remove('hidden'); document.getElementById('modal-character-name').textContent = post.characterName; } else { charTag.classList.add('hidden'); }
-            const delBtn = document.getElementById('modal-delete-btn'); if (currentUser && currentUser.uid === post.userId) { delBtn.classList.remove('hidden'); delBtn.onclick = () => deletePost(post.id); } else { delBtn.classList.add('hidden'); }
-            const tagsDiv = document.getElementById('modal-tags'); const tagsBtn = document.getElementById('tags-toggle-btn'); tagsDiv.classList.add('hidden'); tagsDiv.innerHTML = ''; if (post.tags && post.tags.trim().length > 0) { tagsBtn.style.display = 'flex'; post.tags.split(',').forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 text-gray-300 px-2.5 py-1 rounded-full border border-zinc-700 font-medium cursor-pointer hover:border-orange-500" onclick="filterByTagFromModal('${t.trim()}')">#${t.trim()}</span>`; }); } else { tagsBtn.style.display = 'none'; }
-            const likeBtn = document.getElementById('modal-like-btn'); const likesCount = document.getElementById('modal-likes-count'); likeBtn.onclick = () => toggleLike(post.id, post.userId); const uid = currentUser ? currentUser.uid : deviceID;
-            db.ref(`feed_likes/${post.id}`).off(); db.ref(`feed_posts/${post.id}/likes`).off(); db.ref(`feed_likes/${post.id}/${uid}`).on('value', s => { if(s.exists()) { likeBtn.classList.add('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim"; } else { likeBtn.classList.remove('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400"; } }); db.ref(`feed_posts/${post.id}/likes`).on('value', s => likesCount.innerText = s.val() || 0);
+            const post = currentViewPosts[currentPostIndex];
+            const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
+            let imgToShow = "";
+            if (images.length > 0) {
+                if (typeof window.currentInternalIndex === 'undefined' || window.currentInternalIndex >= images.length) window.currentInternalIndex = 0;
+                imgToShow = images[window.currentInternalIndex];
+            }
+            
+            document.getElementById('modal-image').src = imgToShow;
+            document.getElementById('modal-title').textContent = post.title || 'Sin título';
+            document.getElementById('modal-desc').innerHTML = (post.text || '').replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
+            document.getElementById('modal-user-name').textContent = post.userName || 'Usuario';
+            document.getElementById('modal-user-pic').src = post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U';
+            
+            const charTag = document.getElementById('modal-character-tag');
+            if(post.characterName) { charTag.classList.remove('hidden'); document.getElementById('modal-character-name').textContent = post.characterName; } else { charTag.classList.add('hidden'); }
+            
+            const delBtn = document.getElementById('modal-delete-btn');
+            if (currentUser && currentUser.uid === post.userId) { delBtn.classList.remove('hidden'); delBtn.onclick = () => deletePost(post.id); } else { delBtn.classList.add('hidden'); }
+
+            const tagsDiv = document.getElementById('modal-tags'); const tagsBtn = document.getElementById('tags-toggle-btn');
+            tagsDiv.classList.add('hidden'); tagsDiv.innerHTML = '';
+            if (post.tags && post.tags.trim().length > 0) {
+                tagsBtn.style.display = 'flex';
+                post.tags.split(',').forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 text-gray-300 px-2.5 py-1 rounded-full border border-zinc-700 font-medium cursor-pointer hover:border-orange-500" onclick="filterByTagFromModal('${t.trim()}')">#${t.trim()}</span>`; });
+            } else { tagsBtn.style.display = 'none'; }
+
+            const likeBtn = document.getElementById('modal-like-btn'); const likesCount = document.getElementById('modal-likes-count');
+            likeBtn.onclick = () => toggleLike(post.id, post.userId);
+            const uid = currentUser ? currentUser.uid : deviceID;
+            
+            db.ref(`feed_likes/${post.id}`).off(); db.ref(`feed_posts/${post.id}/likes`).off();
+            db.ref(`feed_likes/${post.id}/${uid}`).on('value', s => { if(s.exists()) { likeBtn.classList.add('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim"; } else { likeBtn.classList.remove('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400"; } });
+            db.ref(`feed_posts/${post.id}/likes`).on('value', s => likesCount.innerText = s.val() || 0);
+            
+            // Cargar imágenes similares con reglas de peso
             loadSimilarImagesInSlider(post.tags, post.id, post.characterName, post.userId);
-            const commentsList = document.getElementById('modal-comments-list'); commentsList.innerHTML = ''; db.ref(`feed_comments/${post.id}`).off(); db.ref(`feed_comments/${post.id}`).on('child_added', s => { const c = s.val(); const div = document.createElement('div'); div.className = "flex gap-3 items-start text-sm animate-enter"; div.innerHTML = `<img src="${c.userAvatar}" class="w-8 h-8 rounded-full mt-1 border border-zinc-700 object-cover flex-shrink-0 cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800/50 p-3 rounded-2xl rounded-tl-none border border-zinc-700/50 w-full"><span class="font-bold text-gray-300 block text-xs mb-1 hover:text-orange-400 cursor-pointer" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 leading-snug block break-words font-light">${c.text}</span></div>`; commentsList.appendChild(div); });
-            document.getElementById('modal-prev').style.display = (currentPostIndex > 0 || window.currentInternalIndex > 0) ? 'flex' : 'none'; const isLastImg = window.currentInternalIndex === images.length - 1; const isLastPost = currentPostIndex === currentViewPosts.length - 1; document.getElementById('modal-next').style.display = (!isLastImg || !isLastPost) ? 'flex' : 'none';
+
+            const commentsList = document.getElementById('modal-comments-list'); commentsList.innerHTML = '';
+            db.ref(`feed_comments/${post.id}`).off();
+            db.ref(`feed_comments/${post.id}`).on('child_added', s => { const c = s.val(); const div = document.createElement('div'); div.className = "flex gap-3 items-start text-sm animate-enter"; div.innerHTML = `<img src="${c.userAvatar}" class="w-8 h-8 rounded-full mt-1 border border-zinc-700 object-cover flex-shrink-0 cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800/50 p-3 rounded-2xl rounded-tl-none border border-zinc-700/50 w-full"><span class="font-bold text-gray-300 block text-xs mb-1 hover:text-orange-400 cursor-pointer" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 leading-snug block break-words font-light">${c.text}</span></div>`; commentsList.appendChild(div); });
+
+            document.getElementById('modal-prev').style.display = (currentPostIndex > 0 || window.currentInternalIndex > 0) ? 'flex' : 'none';
+            const isLastImg = window.currentInternalIndex === images.length - 1; const isLastPost = currentPostIndex === currentViewPosts.length - 1;
+            document.getElementById('modal-next').style.display = (!isLastImg || !isLastPost) ? 'flex' : 'none';
         }
         
+        // --- FUNCIÓN IMÁGENES SIMILARES (UPDATED WITH RULES) ---
         function loadSimilarImagesInSlider(tagsStr, currentId, currentCharacterName, currentUserId) {
-            const container = document.getElementById('similar-grid'); container.innerHTML = '';
+            const container = document.getElementById('similar-grid');
+            container.innerHTML = '';
+            
+            // Usar allPostsCache para buscar candidatos
+            // Filtrar post actual y asegurar que tengan imagen
             const candidates = allPostsCache.filter(p => p.id !== currentId && (p.imageUrls || p.imageUrl));
-            if (candidates.length === 0) { container.innerHTML = '<span class="text-xs text-gray-500 italic px-2 self-center">No hay similares.</span>'; return; }
-            const currentTags = tagsStr ? tagsStr.split(',').map(t => normalize(t)) : []; const normCharName = normalize(currentCharacterName);
-            const scoredCandidates = candidates.map(p => { let score = 0; if (normCharName && p.characterName && normalize(p.characterName) === normCharName) { score += 100; if (p.userId !== currentUserId) { score += 50; } } if (p.tags) { const pTags = p.tags.split(',').map(t => normalize(t)); const common = pTags.filter(t => currentTags.includes(t)); score += common.length; } return { post: p, score: score }; });
-            const finalResults = scoredCandidates.filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.post).slice(0, 15);
-            if (finalResults.length === 0) { container.innerHTML = '<span class="text-xs text-gray-500 italic px-2 self-center">No hay similares.</span>'; return; }
+            
+            if (candidates.length === 0) {
+                 container.innerHTML = '<span class="text-xs text-gray-500 italic px-2 self-center">No hay similares.</span>';
+                 return;
+            }
+
+            const currentTags = tagsStr ? tagsStr.split(',').map(t => normalize(t)) : [];
+            const normCharName = normalize(currentCharacterName);
+
+            // Calcular puntajes
+            const scoredCandidates = candidates.map(p => {
+                let score = 0;
+                
+                // Regla 1: Peso por Personaje (Prioridad Alta)
+                if (normCharName && p.characterName && normalize(p.characterName) === normCharName) {
+                    score += 100; // Gran peso base por personaje
+                    
+                    // Regla 2: Prioridad a diferentes usuarios con mismo personaje
+                    if (p.userId !== currentUserId) {
+                        score += 50; // Bonus por diversidad de usuario
+                    }
+                }
+
+                // Regla 3: Tags (Prioridad Baja)
+                if (p.tags) {
+                    const pTags = p.tags.split(',').map(t => normalize(t));
+                    const common = pTags.filter(t => currentTags.includes(t));
+                    score += common.length; // +1 por cada tag coincidente
+                }
+
+                return { post: p, score: score };
+            });
+
+            // Filtrar los que tienen score > 0 y ordenar
+            const finalResults = scoredCandidates
+                .filter(item => item.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .map(item => item.post)
+                .slice(0, 15); // Mostrar top 15
+
+            if (finalResults.length === 0) {
+                container.innerHTML = '<span class="text-xs text-gray-500 italic px-2 self-center">No hay similares.</span>';
+                return;
+            }
+            
+            // Asegurar que el contenedor sea visible
             container.closest('.mb-6').style.display = 'block';
-            finalResults.forEach(post => { const div = document.createElement('div'); div.className = "similar-card cursor-pointer group"; div.onclick = () => openMainViewerById(post.id, 0); const imgUrl = (post.imageUrls && post.imageUrls.length > 0) ? post.imageUrls[0] : post.imageUrl; div.innerHTML = `<img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`; container.appendChild(div); });
+
+            finalResults.forEach(post => {
+                const div = document.createElement('div');
+                div.className = "similar-card cursor-pointer group";
+                div.onclick = () => openMainViewerById(post.id, 0); 
+                
+                const imgUrl = (post.imageUrls && post.imageUrls.length > 0) ? post.imageUrls[0] : post.imageUrl;
+                
+                div.innerHTML = `<img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
+                container.appendChild(div);
+            });
         }
 
         function navigateModal(dir) {
             const post = currentViewPosts[currentPostIndex]; const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
-            if (dir === 1) { if (window.currentInternalIndex < images.length - 1) window.currentInternalIndex++; else { if (currentPostIndex < currentViewPosts.length - 1) { currentPostIndex++; window.currentInternalIndex = 0; } } } else { if (window.currentInternalIndex > 0) window.currentInternalIndex--; else { if (currentPostIndex > 0) { currentPostIndex--; window.currentInternalIndex = 0; } } }
+            if (dir === 1) {
+                if (window.currentInternalIndex < images.length - 1) window.currentInternalIndex++;
+                else { if (currentPostIndex < currentViewPosts.length - 1) { currentPostIndex++; window.currentInternalIndex = 0; } }
+            } else {
+                if (window.currentInternalIndex > 0) window.currentInternalIndex--;
+                else { if (currentPostIndex > 0) { currentPostIndex--; window.currentInternalIndex = 0; } }
+            }
             updateViewerContent();
         }
 
@@ -951,20 +1518,44 @@
         modalEl.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; if (Math.abs(touchEndX - touchStartX) > 50) { if (touchEndX < touchStartX) navigateModal(1); else navigateModal(-1); } }, {passive:true});
         document.getElementById('close-modal').onclick = () => { document.getElementById('modal').classList.remove('visible'); document.body.style.overflow = 'auto'; };
 
-        function toggleCustomSelect(id) { const el = document.getElementById(id); const list = el.querySelector('.custom-select-options'); const trigger = el.querySelector('.custom-select-trigger'); document.querySelectorAll('.custom-select-options.show').forEach(opt => { if(opt !== list) { opt.classList.remove('show'); opt.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); } }); list.classList.toggle('show'); trigger.classList.toggle('active'); }
-        function selectCustomOption(containerId, value, displayText) { const container = document.getElementById(containerId); container.querySelector('input[type="hidden"]').value = value; container.querySelector('.custom-select-trigger span').innerHTML = displayText; container.querySelector('.custom-select-trigger').classList.remove('active'); container.querySelector('.custom-select-options').classList.remove('show'); if (containerId === 'dropdown-collection') toggleCollectionInput(); }
+        // --- COMUNES ---
+        function toggleCustomSelect(id) {
+            const el = document.getElementById(id); const list = el.querySelector('.custom-select-options'); const trigger = el.querySelector('.custom-select-trigger');
+            document.querySelectorAll('.custom-select-options.show').forEach(opt => { if(opt !== list) { opt.classList.remove('show'); opt.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); } });
+            list.classList.toggle('show'); trigger.classList.toggle('active');
+        }
+        function selectCustomOption(containerId, value, displayText) {
+            const container = document.getElementById(containerId); container.querySelector('input[type="hidden"]').value = value; container.querySelector('.custom-select-trigger span').innerHTML = displayText; container.querySelector('.custom-select-trigger').classList.remove('active'); container.querySelector('.custom-select-options').classList.remove('show');
+            if (containerId === 'dropdown-collection') toggleCollectionInput();
+        }
         function changeSortOrder(value, displayText) { currentSortOrder = value; const container = document.getElementById('dropdown-sort'); container.querySelector('#display-sort').innerText = displayText; toggleCustomSelect('dropdown-sort'); applyFiltersAndRender(); }
         window.addEventListener('click', function(e) { if (!e.target.closest('.custom-select-container')) { document.querySelectorAll('.custom-select-options.show').forEach(el => { el.classList.remove('show'); el.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); }); } });
         window.addEventListener('click', function(e) { if (!e.target.closest('.relative') || e.target.closest('.notif-item')) { const d = document.getElementById('notification-dropdown'); if(d && !e.target.closest('.notif-btn')) d.classList.remove('visible'); } });
 
-        function loadUserCollectionsSelect() { if (!currentUser) return; db.ref('collections/' + currentUser.uid).on('value', snap => { let html = `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '', '<i class=\\'fas fa-folder mr-2 text-xs text-orange-500\\'></i> Álbum')">Ningún Álbum</div><div class="option-item special-option" onclick="selectCustomOption('dropdown-collection', 'new', '➕ Crear Nueva Colección...')">➕ Crear Nueva Colección...</div>`; snap.forEach(child => { html += `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '${child.key}', '📁 ${child.val().name}')">📁 ${child.val().name}</div>`; }); const el = document.getElementById('collection-options-list'); if(el) el.innerHTML = html; }); }
+        function loadUserCollectionsSelect() {
+            if (!currentUser) return;
+            db.ref('collections/' + currentUser.uid).on('value', snap => {
+                let html = `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '', '<i class=\\'fas fa-folder mr-2 text-xs text-orange-500\\'></i> Álbum')">Ningún Álbum</div><div class="option-item special-option" onclick="selectCustomOption('dropdown-collection', 'new', '➕ Crear Nueva Colección...')">➕ Crear Nueva Colección...</div>`;
+                snap.forEach(child => { html += `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '${child.key}', '📁 ${child.val().name}')">📁 ${child.val().name}</div>`; });
+                const el = document.getElementById('collection-options-list'); if(el) el.innerHTML = html;
+            });
+        }
         function toggleCollectionInput() { const v = document.getElementById('post-collection').value; const c = document.getElementById('new-collection-container'); if(v==='new') c.classList.remove('hidden'); else c.classList.add('hidden'); }
         async function updateCollectionPreviews(uid, cid, url) { if(!cid||cid==='new'||!url)return; const r=db.ref(`collections/${uid}/${cid}/previews`); await r.transaction(l=>{ l=l||[]; if(!Array.isArray(l))l=[]; l.unshift(url); return l.slice(0,4); }); db.ref(`collections/${uid}/${cid}/cover`).set(url); }
 
         function switchView(mode) { const f=document.getElementById('feed-list-container'), g=document.getElementById('grid-view-container'), bf=document.getElementById('btn-view-feed'), bg=document.getElementById('btn-view-grid'); if(mode==='feed'){f.classList.remove('hidden');g.classList.add('hidden');bf.classList.add('active');bg.classList.remove('active');}else{f.classList.add('hidden');g.classList.remove('hidden');bf.classList.remove('active');bg.classList.add('active');} }
         function filterByTagFromModal(t) { document.getElementById('close-modal').click(); currentFilterTag=t.replace('#','').trim(); currentFilterType='tag'; applyFiltersAndRender(); window.scrollTo({top:0,behavior:'smooth'}); }
-        function filterByCharacterFromModal() { const name = document.getElementById('modal-character-name').innerText; document.getElementById('close-modal').click(); filterByCharacter(name); }
-        function filterByCharacter(name) { currentFilterTag=name; currentFilterType='character'; applyFiltersAndRender(); document.getElementById('modal').classList.remove('visible'); document.body.style.overflow = 'auto'; window.scrollTo({top:0,behavior:'smooth'}); }
+        function filterByCharacterFromModal() {
+            const name = document.getElementById('modal-character-name').innerText;
+            document.getElementById('close-modal').click();
+            filterByCharacter(name);
+        }
+        function filterByCharacter(name) { 
+            currentFilterTag=name; currentFilterType='character'; applyFiltersAndRender(); 
+            document.getElementById('modal').classList.remove('visible');
+            document.body.style.overflow = 'auto';
+            window.scrollTo({top:0,behavior:'smooth'}); 
+        }
         function clearTagFilter() { currentFilterTag=null; applyFiltersAndRender(); }
         function goToProfile(uid) { window.location.href=`profile.html?uid=${uid}`; }
         function visitProfileFromModal() { const p = currentViewPosts[currentPostIndex]; if(p) goToProfile(p.userId); }
@@ -972,20 +1563,69 @@
         window.onclick = e => { if(!e.target.closest('.options-trigger')) document.querySelectorAll('.options-menu').forEach(m=>m.classList.remove('show')); };
         function deletePost(id) { showConfirm("¿Eliminar publicación?", () => { db.ref('feed_posts/'+id).remove().then(()=>{ showToast("Eliminado"); document.getElementById('modal').classList.remove('visible'); document.body.style.overflow='auto'; initFeedOnce(); }); }); }
         
-        function toggleLike(id, postOwnerId) { if(!requireLogin()) return; const uid = currentUser.uid; const ref = db.ref(`feed_likes/${id}/${uid}`); ref.once('value', s => { if(s.exists()) { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } else { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); sendNotification(postOwnerId, 'like', id); } }); }
+        function toggleLike(id, postOwnerId) { 
+            if(!requireLogin()) return; 
+            const uid = currentUser.uid; 
+            const ref = db.ref(`feed_likes/${id}/${uid}`); 
+            ref.once('value', s => { 
+                if(s.exists()) { 
+                    ref.remove(); 
+                    db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); 
+                } else { 
+                    ref.set(true); 
+                    db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1);
+                    sendNotification(postOwnerId, 'like', id);
+                } 
+            }); 
+        }
         function checkLikeStatus(id) { const uid = currentUser ? currentUser.uid : deviceID; db.ref(`feed_likes/${id}/${uid}`).on('value', s => { const btn = document.getElementById(`like-btn-${id}`); if(btn) { if(s.exists()) { btn.classList.add('text-red-500'); btn.querySelector('i').className = 'fas fa-heart text-lg like-anim'; } else { btn.classList.remove('text-red-500'); btn.querySelector('i').className = 'far fa-heart text-lg'; } } }); db.ref(`feed_posts/${id}/likes`).on('value', s => { const el = document.getElementById(`likes-count-${id}`); if(el) el.innerText = s.val() || 0; }); }
         function checkCommentStatus(id) { db.ref(`feed_comments/${id}`).on('value', s => { const c = s.numChildren(); const el = document.getElementById(`comments-count-${id}`); if(el) { el.innerText = c || 0; if(c>0) el.classList.add('text-white'); else el.classList.remove('text-white'); } }); }
         function toggleComments(id) { const el = document.getElementById(`comments-${id}`); if(el.classList.contains('hidden')) { el.classList.remove('hidden'); db.ref(`feed_comments/${id}`).off(); document.getElementById(`comments-list-${id}`).innerHTML = ''; db.ref(`feed_comments/${id}`).on('child_added', s => { const c = s.val(); const div = document.createElement('div'); div.className = "flex gap-2 items-start text-sm animate-enter"; div.innerHTML = `<img src="${c.userAvatar}" class="w-6 h-6 rounded-full mt-1 border border-zinc-700 object-cover cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800 p-2.5 rounded-2xl rounded-tl-none"><span class="font-bold text-gray-300 block text-xs mb-0.5 cursor-pointer hover:text-orange-400" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 font-light">${c.text}</span></div>`; document.getElementById(`comments-list-${id}`).appendChild(div); }); } else el.classList.add('hidden'); }
         
-        function postComment(e, id, postOwnerId) { e.preventDefault(); if(!requireLogin()) return; const input = document.getElementById(`comment-input-${id}`); if(!input.value.trim()) return; const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; db.ref(`feed_comments/${id}`).push({ text:input.value, userId:currentUser.uid, userName:uN, userAvatar:uA, timestamp:Date.now() }); sendNotification(postOwnerId, 'comment', id); input.value=''; }
-        function postCommentInModal(e) { e.preventDefault(); if(!requireLogin()) return; const input = document.getElementById('modal-comment-input'); const post = currentViewPosts[currentPostIndex]; if(!input.value.trim() || !post) return; const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; db.ref(`feed_comments/${post.id}`).push({ text:input.value, userId:currentUser.uid, userName:uN, userAvatar:uA, timestamp:Date.now() }); sendNotification(post.userId, 'comment', post.id); input.value=''; }
+        function postComment(e, id, postOwnerId) { 
+            e.preventDefault(); if(!requireLogin()) return; 
+            const input = document.getElementById(`comment-input-${id}`); 
+            if(!input.value.trim()) return; 
+            const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); 
+            const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; 
+            db.ref(`feed_comments/${id}`).push({ text:input.value, userId:currentUser.uid, userName:uN, userAvatar:uA, timestamp:Date.now() }); 
+            sendNotification(postOwnerId, 'comment', id);
+            input.value=''; 
+        }
+        function postCommentInModal(e) { 
+            e.preventDefault(); if(!requireLogin()) return; 
+            const input = document.getElementById('modal-comment-input'); 
+            const post = currentViewPosts[currentPostIndex]; 
+            if(!input.value.trim() || !post) return; 
+            const uN = (currentUserData&&currentUserData.username)?currentUserData.username:(currentUser?.displayName||'Anónimo'); 
+            const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; 
+            db.ref(`feed_comments/${post.id}`).push({ text:input.value, userId:currentUser.uid, userName:uN, userAvatar:uA, timestamp:Date.now() }); 
+            sendNotification(post.userId, 'comment', post.id);
+            input.value=''; 
+        }
         function updateUserAvatarInUI(uid) { if(!userProfileCache[uid]) db.ref(`users/${uid}/profilePic`).once('value', s => { const url = s.val()||'https://placehold.co/100x100/333/fff?text=U'; userProfileCache[uid]=url; document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = url); }); else document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = userProfileCache[uid]); }
         function timeAgo(ts) { if(!ts) return ''; const s = Math.floor((Date.now()-ts)/1000); if(s<60) return 'Hace un momento'; if(s<3600) return Math.floor(s/60)+'m'; if(s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; }
 
-        const charInput = document.getElementById('post-character'); const suggestionsBox = document.getElementById('character-suggestions');
-        charInput.addEventListener('input', (e) => { const val = e.target.value.trim().toLowerCase(); if (!val) { suggestionsBox.classList.remove('visible'); return; } const allChars = Object.entries(characterStatsCache).map(([key, data]) => ({ id: key, name: data.displayName, count: data.count || 0 })); const matches = allChars.filter(c => c.name.toLowerCase().includes(val)).sort((a, b) => b.count - a.count).slice(0, 3); if (matches.length > 0) { renderSuggestions(matches); suggestionsBox.classList.add('visible'); } else { suggestionsBox.classList.remove('visible'); } });
+        // --- SUGGESTIONS ---
+        const charInput = document.getElementById('post-character');
+        const suggestionsBox = document.getElementById('character-suggestions');
+        charInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim().toLowerCase();
+            if (!val) { suggestionsBox.classList.remove('visible'); return; }
+            const allChars = Object.entries(characterStatsCache).map(([key, data]) => ({ id: key, name: data.displayName, count: data.count || 0 }));
+            const matches = allChars.filter(c => c.name.toLowerCase().includes(val)).sort((a, b) => b.count - a.count).slice(0, 3);
+            if (matches.length > 0) { renderSuggestions(matches); suggestionsBox.classList.add('visible'); } else { suggestionsBox.classList.remove('visible'); }
+        });
         document.addEventListener('click', (e) => { if (!charInput.contains(e.target) && !suggestionsBox.contains(e.target)) { suggestionsBox.classList.remove('visible'); } });
-        function renderSuggestions(matches) { suggestionsBox.innerHTML = ''; matches.forEach((match, index) => { const isTop = index === 0; const countDisplay = formatCount(match.count); const div = document.createElement('div'); div.className = 'suggestion-item'; div.onclick = () => selectSuggestion(match.name); div.innerHTML = `<span class="suggestion-name flex items-center gap-2 text-white">${match.name}${isTop && match.count > 0 ? '<i class="fas fa-check-circle verified-badge text-green-400 text-xs"></i>' : ''}</span><span class="text-xs text-gray-500">${countDisplay} usos</span>`; suggestionsBox.appendChild(div); }); }
+        function renderSuggestions(matches) {
+            suggestionsBox.innerHTML = '';
+            matches.forEach((match, index) => {
+                const isTop = index === 0; const countDisplay = formatCount(match.count);
+                const div = document.createElement('div'); div.className = 'suggestion-item'; div.onclick = () => selectSuggestion(match.name);
+                div.innerHTML = `<span class="suggestion-name flex items-center gap-2 text-white">${match.name}${isTop && match.count > 0 ? '<i class="fas fa-check-circle verified-badge text-green-400 text-xs"></i>' : ''}</span><span class="text-xs text-gray-500">${countDisplay} usos</span>`;
+                suggestionsBox.appendChild(div);
+            });
+        }
         function formatCount(num) { if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M...'; if (num >= 1000) return (num / 1000).toFixed(1) + 'k...'; return num; }
         function selectSuggestion(name) { charInput.value = name; suggestionsBox.classList.remove('visible'); }
     </script>
