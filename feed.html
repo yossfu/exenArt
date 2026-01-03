@@ -1035,6 +1035,42 @@
         }
         function removeFile(index) { selectedFiles.splice(index, 1); renderPreviewStack(); }
 
+        // --- FUNCIÓN DE SUBIDA ROBUSTA (CATBOX + FALLBACK) ---
+        // Esta función intenta subir la imagen usando múltiples proxies para evitar el "Fetch Error"
+        async function uploadToCatboxWithFallback(file) {
+            const formData = new FormData();
+            formData.append('reqtype', 'fileupload');
+            formData.append('userhash', CATBOX_USERHASH);
+            formData.append('fileToUpload', file);
+
+            // Intento 1: CorsProxy.io (Standard)
+            try {
+                const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData });
+                if (r.ok) {
+                    const txt = await r.text();
+                    if (txt.includes('catbox.moe')) return txt.trim();
+                }
+            } catch (e) { console.warn("Fallo Proxy 1, intentando respaldo...", e); }
+
+            // Intento 2: CodeTabs (Fallback fiable para POST cuando el primero falla)
+            try {
+                // Re-creamos FormData para asegurar limpieza
+                const fd2 = new FormData();
+                fd2.append('reqtype', 'fileupload');
+                fd2.append('userhash', CATBOX_USERHASH);
+                fd2.append('fileToUpload', file);
+                
+                // CodeTabs usa el parametro 'quest'
+                const r = await fetch("https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent("https://catbox.moe/user/api.php"), { method: 'POST', body: fd2 });
+                if (r.ok) {
+                    const txt = await r.text();
+                    if (txt.includes('catbox.moe')) return txt.trim();
+                }
+            } catch (e) { console.warn("Fallo Proxy 2", e); }
+
+            throw new Error("No se pudo conectar con el servidor de imágenes. Intenta más tarde.");
+        }
+
         // --- SUBIDA DE POST ---
         async function uploadPost() {
             if(!requireLogin()) return;
@@ -1070,16 +1106,9 @@
                 if (selectedFiles.length > 0) {
                     for (const file of selectedFiles) {
                         let processedFile = await compressImage(file);
-                        const formData = new FormData(); 
-                        formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', processedFile);
-                        const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
-                        const txt = await r.text();
-                        if(txt.includes('catbox.moe')) {
-                            uploadedUrls.push(txt.trim());
-                        } else {
-                            // Si la API devuelve un error (no es una URL), lanzamos error para verlo en el catch
-                            throw new Error("Error en la subida a Catbox: " + txt.substring(0, 50));
-                        }
+                        // Usamos la nueva función con fallback
+                        const url = await uploadToCatboxWithFallback(processedFile);
+                        uploadedUrls.push(url);
                     }
                 }
                 
