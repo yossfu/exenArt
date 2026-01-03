@@ -1,20 +1,26 @@
-
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
+    <!-- Viewport optimizado para móviles (evita zoom accidental y ajusta al notch) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
-    <title>exen-E | Galería</title>
-    <meta property="og:title" content="exen-E | Galería" />
+    <title>exen-E | Galería Premium</title>
+    
+    <!-- Meta Tags para Redes Sociales -->
+    <meta property="og:title" content="exen-E | Galería Visual" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://yossfu.github.io/exenArt/index.html" />
     <meta property="og:image" content="https://files.catbox.moe/tb432l.png" />
-    
-    <!-- PYSCRIPT: Motor de Python para el navegador -->
+    <meta name="theme-color" content="#000000">
+
+    <!-- PYSCRIPT: Motor de Python para el fondo de partículas -->
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configuración extendida de Tailwind para efectos visuales avanzados -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -22,34 +28,54 @@
                 extend: {
                     colors: {
                         dark: {
-                            900: '#000000',
-                            800: '#09090b',
-                            700: '#121214',
-                            600: '#1c1c1f'
+                            950: '#020202', // Fondo ultra oscuro
+                            900: '#0a0a0c',
+                            800: '#121214',
+                            700: '#1c1c1f',
+                            600: '#27272a'
                         },
                         accent: {
-                            DEFAULT: '#f97316',
-                            glow: 'rgba(249, 115, 22, 0.5)'
+                            DEFAULT: '#f97316', // Naranja base
+                            500: '#f97316',
+                            600: '#ea580c',
+                            glow: 'rgba(249, 115, 22, 0.6)',
+                            dim: 'rgba(249, 115, 22, 0.1)'
                         }
                     },
                     fontFamily: {
                         title: ['Poppins', 'sans-serif'],
-                        body: ['Inter', 'sans-serif']
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    },
+                    boxShadow: {
+                        'neon': '0 0 20px rgba(249, 115, 22, 0.3)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                        'card': '0 10px 30px -10px rgba(0, 0, 0, 0.5)'
                     },
                     animation: {
-                        'float-up': 'floatUp 10s linear forwards',
-                        'shimmer': 'shimmer 1.5s infinite', // Aseguramos que shimmer esté definido
+                        'float-slow': 'float 8s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'shimmer': 'shimmer 2s infinite linear',
+                        'spin-slow': 'spin 12s linear infinite',
+                        'enter-up': 'enterUp 0.6s ease-out forwards',
+                        'scale-in': 'scaleIn 0.3s ease-out forwards',
                     },
                     keyframes: {
-                        floatUp: {
-                            '0%': { transform: 'translateY(100%) scale(0.9)', opacity: '0' },
-                            '5%': { opacity: '1', transform: 'translateY(90%) scale(1)' },
-                            '90%': { opacity: '1' },
-                            '100%': { transform: 'translateY(-100px)', opacity: '0' },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
                         },
-                        shimmer: { // Definición de shimmer para los esqueletos
+                        shimmer: {
                             '0%': { backgroundPosition: '200% 0' },
                             '100%': { backgroundPosition: '-200% 0' },
+                        },
+                        enterUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
                         }
                     }
                 }
@@ -57,448 +83,657 @@
         }
     </script>
     
+    <!-- Fuentes y Iconos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
     <style>
+        /* --- VARIABLES GLOBALES --- */
         :root { 
             --accent: #f97316; 
+            --accent-glow: rgba(249, 115, 22, 0.4);
+            --bg-deep: #020202;
             --nav-height: 70px;
             --header-height: 64px;
+            --glass-border: rgba(255, 255, 255, 0.08);
         }
 
-        /* --- BASE & SCROLL --- */
-        html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+        /* --- BASE & SMOOTHNESS --- */
+        html { 
+            scroll-behavior: smooth; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #050505; /* Fondo más oscuro */
-            background-image: 
-                radial-gradient(circle at 10% 10%, rgba(249, 115, 22, 0.08) 0%, transparent 40%), 
-                radial-gradient(circle at 90% 90%, rgba(124, 58, 237, 0.05) 0%, transparent 40%),
-                linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, transparent 20%); /* Sutil gradiente para profundidad */
-            background-attachment: fixed;
+            background-color: var(--bg-deep);
             color: #f3f4f6;
             padding-bottom: calc(var(--nav-height) + 20px);
-            padding-top: var(--header-height);
-            overscroll-behavior-y: none;
+            /* Padding top se maneja dinámicamente o por clases */
+            overscroll-behavior-y: none; /* Evita el rebote de scroll en iOS */
+            overflow-x: hidden;
+            position: relative;
         }
 
-        /* CANVAS DE FONDO PARA PYTHON */
+        /* Textura de ruido sutil para dar calidad visual */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* --- CANVAS PY-SCRIPT --- */
         #particle-canvas {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1; /* Detrás de todo */
-            pointer-events: none; /* Deja pasar los clics */
-            opacity: 0.7; /* Sutil */
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            opacity: 0.8;
+            /* Gradiente de fondo base para mezclar con PyScript */
+            background: radial-gradient(circle at top right, rgba(20,20,30,1) 0%, rgba(2,2,2,1) 100%);
         }
 
-        /* Scrollbars */
+        /* --- SCROLLBAR PERSONALIZADO --- */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; } /* Más ancho */
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 6px; border: 1px solid #1a1a1a; } /* Más redondeado y con borde */
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); } /* Color al pasar el ratón */
+        .custom-scrollbar::-webkit-scrollbar-thumb { 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 10px; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        /* --- UI COMPONENTS --- */
+        /* --- GLASSMORPHISM AVANZADO --- */
         .glass-panel {
-            background: rgba(18, 18, 20, 0.85); /* Ligeramente más opaco */
-            backdrop-filter: blur(25px); /* Más blur */
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Borde más visible */
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4); /* Sombra más pronunciada */
+            background: rgba(18, 18, 20, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
         .glass-header {
-            background: rgba(0, 0, 0, 0.9); /* Más opaco */
-            backdrop-filter: blur(20px); /* Más blur */
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Borde más visible */
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3); /* Sombra para el header */
+            background: rgba(2, 2, 2, 0.0); /* Inicial transparente */
+            backdrop-filter: blur(0px);
+            border-bottom: 1px solid transparent;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .glass-header.scrolled {
+            background: rgba(5, 5, 5, 0.85);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
 
-        /* --- TOP USERS --- */
-        .top-user-ring {
-            padding: 3px; /* Más padding */
-            border-radius: 50%;
-            position: relative;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5); /* Sombra general */
-        }
-        .rank-gold { background: linear-gradient(45deg, #ffeb3b, #fbc02d); box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); } /* Oro más vibrante */
-        .rank-silver { background: linear-gradient(45deg, #e0e0e0, #bdbdbd); box-shadow: 0 0 10px rgba(192, 192, 192, 0.4); }
-        .rank-bronze { background: linear-gradient(45deg, #d7ba8e, #a1887f); box-shadow: 0 0 10px rgba(205, 127, 50, 0.4); }
-        .rank-normal { background: rgba(255,255,255,0.15); } /* Ligeramente más claro */
+        /* --- COMPONENTES UI --- */
         
-        /* --- FLOATING BUBBLES --- */
-        #floating-comments-container {
-            position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 15;
-            mask-image: linear-gradient(to top, transparent, black 10%, black 90%, transparent); /* Más suave */
-            -webkit-mask-image: linear-gradient(to top, transparent, black 10%, black 90%, transparent);
+        /* Efecto Ripple al hacer click */
+        .ripple-effect {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            background-color: rgba(255, 255, 255, 0.3);
+            pointer-events: none;
         }
+        @keyframes ripple {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* Top Users Ring Animation */
+        .story-ring {
+            position: relative;
+            z-index: 1;
+        }
+        .story-ring::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0%, var(--accent) 50%, transparent 100%);
+            z-index: -1;
+            animation: spin-slow 4s linear infinite;
+            opacity: 0.8;
+        }
+        .story-ring.gold::before { background: conic-gradient(from 0deg, #ffd700, #ffaa00, #ffd700); }
+        .story-ring.silver::before { background: conic-gradient(from 0deg, #e0e0e0, #ffffff, #e0e0e0); }
+
+        /* Banner Hero 3D */
+        .hero-wrapper {
+            position: relative;
+            height: 380px; /* Más alto para impacto */
+            width: 100%;
+            perspective: 1000px;
+            overflow: hidden;
+            border-radius: 24px;
+            margin-bottom: 2rem;
+            /* Máscara para suavizar bordes inferiores */
+            mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+        }
+        
+        .hero-slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0; left: 0;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
+            opacity: 0;
+            transform: scale(1.1); /* Zoom sutil inicial */
+            z-index: 1;
+        }
+        
+        .hero-slide.active {
+            opacity: 1;
+            transform: scale(1);
+            z-index: 2;
+        }
+        
+        .hero-content-layer {
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.6s ease 0.3s; /* Delay para aparecer después de la imagen */
+        }
+        .hero-slide.active .hero-content-layer {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .progress-bar {
+            height: 3px;
+            background: rgba(255,255,255,0.2);
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+        }
+        .hero-slide.active .progress-bar-fill {
+            animation: progressFill 6s linear forwards;
+        }
+        @keyframes progressFill { from { width: 0%; } to { width: 100%; } }
+
+        /* Cards & Grid */
+        .image-card {
+            background: #121214;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .image-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 2;
+        }
+        .image-card:active {
+            transform: scale(0.96);
+        }
+
+        /* Elementos que aparecen al Scroll */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .scroll-reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Burbujas de Chat Flotantes */
         .chat-bubble {
             position: absolute;
-            background: rgba(0, 0, 0, 0.7); /* Más opaco */
-            backdrop-filter: blur(6px); /* Más blur */
-            padding: 8px 14px; /* Más padding */
-            border-radius: 25px; /* Más redondeado */
-            color: white;
-            font-size: 13px; /* Ligeramente más grande */
-            max-width: 70%; /* Un poco más estrecho */
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3); /* Sombra más pronunciada */
-            border: 1px solid rgba(255,255,255,0.15); /* Borde más visible */
-            display: flex; align-items: center; gap: 10px; /* Más espacio */
-            animation: floatUp 12s linear forwards; /* Animación CSS */
-            will-change: transform, opacity;
+            background: rgba(10, 10, 10, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 8px 12px;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 12px;
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: floatBubble 10s linear forwards;
+            pointer-events: none;
+            z-index: 20;
+            max-width: 200px;
         }
-        .chat-bubble img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); } /* Avatar con borde */
-        @keyframes floatUp {
-            0% { transform: translateY(100%) scale(0.9); opacity: 0; }
-            5% { opacity: 1; transform: translateY(90%) scale(1); }
+        @keyframes floatBubble {
+            0% { transform: translateY(100px) scale(0.8); opacity: 0; }
+            10% { opacity: 1; transform: translateY(80px) scale(1); }
             90% { opacity: 1; }
-            100% { transform: translateY(-100px); opacity: 0; }
+            100% { transform: translateY(-150px) scale(0.9); opacity: 0; }
         }
 
-        /* --- CARDS --- */
-        .image-card {
-            border-radius: 16px; /* Más redondeado */
-            overflow: hidden;
-            background: #121214;
-            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease; /* Transición para sombra */
-            will-change: transform, box-shadow;
-            border: 1px solid rgba(255,255,255,0.08); /* Borde más visible */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Sombra por defecto */
-        }
-        .image-card:hover {
-            transform: translateY(-3px) scale(1.02); /* Efecto hover más pronunciado */
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5); /* Sombra más grande en hover */
-        }
-        .image-card:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-
-        /* --- HERO --- */
-        .hero-wrapper {
-            position: relative; width: 100%; height: 320px; 
-            border-radius: 24px; 
-            overflow: hidden;
-            margin-bottom: 2rem; 
-            box-shadow: 0 20px 50px -20px rgba(0,0,0,0.8);
-            border: 1px solid rgba(255,255,255,0.08); /* Borde más visible */
-            display: none;
-        }
-        .hero-overlay {
-            background: linear-gradient(0deg, #050505 0%, rgba(5,5,5,0.8) 20%, rgba(5,5,5,0.2) 60%, rgba(0,0,0,0.4) 100%);
-            position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 1.5rem;
-        }
-        .hero-slide img {
-            filter: brightness(0.5); /* Imagen más oscura para mejor contraste del texto */
-        }
-
-        /* --- BOTTOM NAV --- */
-        .bottom-nav { 
-            height: var(--nav-height);
-            background: rgba(5, 5, 5, 0.98); /* Más opaco */
-            backdrop-filter: blur(25px); /* Más blur */
-            border-top: 1px solid rgba(255, 255, 255, 0.1); /* Borde más visible */
+        /* Navigation Bottom */
+        .bottom-nav {
+            background: rgba(10, 10, 12, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-top: 1px solid rgba(255,255,255,0.08);
             padding-bottom: env(safe-area-inset-bottom);
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.4); /* Sombra hacia arriba */
         }
-        .nav-item {
-            transition: transform 0.2s ease, color 0.2s ease;
-        }
-        .nav-item:hover {
-            transform: translateY(-2px);
-            color: var(--accent);
-        }
-        .nav-item.active i { 
-            color: var(--accent); 
-            transform: translateY(-6px); /* Más pronunciado */
-            text-shadow: 0 0 20px var(--accent); /* Sombra más grande */
+        .nav-indicator {
+            position: absolute;
+            top: -1px;
+            height: 2px;
+            background: var(--accent);
+            width: 40px;
+            border-radius: 2px;
+            box-shadow: 0 2px 10px var(--accent);
+            transition: left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        /* --- MODAL --- */
-        .modal-backdrop { 
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); /* Fondo más oscuro */
-            z-index: 5000;
-            opacity: 0; transition: opacity 0.3s;
-        } 
-        .modal-backdrop.visible { display: block; opacity: 1; }
-        .modal-backdrop.fullscreen-mode #modal-image-area {
-            height: 100vh;
-            width: 100vw;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 5010;
-            background: black;
+        /* Modal Fullscreen */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.3s, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .modal-exit { opacity: 1; transform: scale(1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: opacity 0.2s, transform 0.2s; }
+
+        /* Loader Inicial Optimizado */
+        #splash-screen {
+            background: #020202;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s;
         }
-        .modal-backdrop.fullscreen-mode #modal-inner-container {
-            flex-direction: column; /* En fullscreen, el panel de info se va abajo */
+        #splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
-        .modal-backdrop.fullscreen-mode .modal-close-btn {
-            top: 1rem; right: 1rem;
-        }
-        .modal-backdrop.fullscreen-mode #modal-image {
-            max-width: 100%;
-            max-height: 100%;
-        }
-        .modal-backdrop.fullscreen-mode #modal-inner-container > div:last-child {
-            display: none; /* Ocultar panel de info en fullscreen */
-        }
-        
-        /* Utils */
-        .skeleton { background: linear-gradient(90deg, #1f1f22 25%, #2a2a2e 50%, #1f1f22 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; } /* Más redondeado */
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
 <body class="antialiased selection:bg-orange-500 selection:text-white">
 
-    <!-- CANVAS PARA EL SCRIPT DE PYTHON -->
+    <!-- CANVAS PARA EL SCRIPT DE PYTHON (FONDO) -->
     <canvas id="particle-canvas"></canvas>
 
-    <div id="initial-loader" class="fixed inset-0 flex flex-col items-center justify-center bg-dark-900 z-[9999] transition-opacity duration-500">
-        <img src="https://files.catbox.moe/ap1lh0.png" class="loader-logo mb-4" style="width: 80px; animation: pulse 2s infinite;">
-        <div class="w-10 h-10 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+    <!-- PANTALLA DE CARGA INICIAL (SPLASH SCREEN) -->
+    <div id="splash-screen" class="fixed inset-0 flex flex-col items-center justify-center">
+        <div class="relative w-24 h-24 mb-6">
+            <div class="absolute inset-0 rounded-full border-2 border-t-orange-500 border-r-transparent border-b-orange-500 border-l-transparent animate-spin"></div>
+            <div class="absolute inset-2 rounded-full border-2 border-r-white border-t-transparent border-l-white border-b-transparent animate-spin-slow"></div>
+            <img src="https://files.catbox.moe/ap1lh0.png" class="absolute inset-0 m-auto w-12 h-12 object-contain animate-pulse">
+        </div>
+        <h1 class="text-white font-title font-bold text-xl tracking-[0.2em] uppercase opacity-80">Cargando</h1>
     </div>
 
-    <div id="app-content" style="display: block;">
+    <!-- CONTENIDO PRINCIPAL DE LA APP -->
+    <div id="app-content" class="opacity-0 transition-opacity duration-700 delay-200">
         
         <!-- HEADER -->
-        <header class="fixed top-0 left-0 right-0 z-50 glass-header h-[var(--header-height)] px-4 flex justify-between items-center">
-            <div class="relative">
-                <button id="user-profile-btn" onclick="toggleProfileMenu()" class="w-10 h-10 rounded-full overflow-hidden border border-white/10 active:scale-95 transition duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
-                    <img id="header-user-img" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
+        <header id="main-header" class="fixed top-0 left-0 right-0 z-50 glass-header h-[var(--header-height)] px-4 flex justify-between items-center transition-all duration-300">
+            <!-- User Profile (Izquierda) -->
+            <div class="relative group">
+                <button id="user-profile-btn" onclick="toggleProfileMenu()" class="relative w-9 h-9 rounded-full overflow-hidden border border-white/20 active:scale-90 transition-transform duration-200">
+                    <img id="header-user-img" src="https://placehold.co/100x100/18181b/ffffff?text=U" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/10 hover:bg-transparent transition"></div>
                 </button>
-                <div id="profile-menu" class="fixed top-[70px] left-4 w-56 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-left z-[5001]">
-                    <div class="p-4 border-b border-white/5"><span class="text-xs font-bold text-gray-400 uppercase">Mi Cuenta</span></div>
-                    <div class="p-2">
-                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer text-sm text-gray-300 transition" onclick="if(requireLogin()) openConfigModal()"><i class="fas fa-cog w-5 text-center"></i> Configurar</div>
-                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer text-sm text-gray-300 transition" onclick="window.location.href='profile.html'"><i class="fas fa-user w-5 text-center"></i> Ver Perfil</div>
-                        <div class="flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-lg cursor-pointer text-sm text-red-400 transition" onclick="logoutUser()"><i class="fas fa-sign-out-alt w-5 text-center"></i> Cerrar Sesión</div>
+                
+                <!-- Menú desplegable Perfil -->
+                <div id="profile-menu" class="absolute top-12 left-0 w-60 bg-[#121214]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-left overflow-hidden">
+                    <div class="bg-gradient-to-r from-orange-600/20 to-transparent p-4 border-b border-white/5">
+                        <span class="text-xs font-bold text-orange-400 uppercase tracking-wider">Mi Cuenta</span>
+                    </div>
+                    <div class="p-2 space-y-1">
+                        <button onclick="if(requireLogin()) openConfigModal()" class="w-full flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl text-sm text-gray-300 transition text-left ripple-parent relative overflow-hidden">
+                            <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center"><i class="fas fa-cog text-xs"></i></div>
+                            Configurar
+                        </button>
+                        <button onclick="window.location.href='profile.html'" class="w-full flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl text-sm text-gray-300 transition text-left ripple-parent relative overflow-hidden">
+                            <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center"><i class="fas fa-user text-xs"></i></div>
+                            Ver Perfil
+                        </button>
+                        <div class="h-px bg-white/5 my-1"></div>
+                        <button onclick="logoutUser()" class="w-full flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-xl text-sm text-red-400 transition text-left ripple-parent relative overflow-hidden">
+                            <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center"><i class="fas fa-sign-out-alt text-xs"></i></div>
+                            Cerrar Sesión
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="flex flex-col items-center opacity-90">
-                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-7 w-auto drop-shadow-md hover:scale-105 transition-transform duration-200">
+            <!-- Logo (Centro) -->
+            <div class="flex flex-col items-center absolute left-1/2 transform -translate-x-1/2 cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-8 w-auto drop-shadow-[0_0_15px_rgba(249,115,22,0.5)] hover:scale-105 transition-transform duration-300">
             </div>
             
+            <!-- Notificaciones (Derecha) -->
             <div class="relative">
-                <button onclick="toggleNotifications()" class="notif-btn w-10 h-10 flex items-center justify-center text-gray-300 hover:text-white active:scale-95 transition duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <button onclick="toggleNotifications()" class="notif-btn relative w-10 h-10 flex items-center justify-center text-gray-300 hover:text-white transition active:scale-90 ripple-parent overflow-hidden rounded-full">
                     <i class="far fa-bell text-xl"></i>
-                    <div id="notif-badge" class="absolute top-2 right-2 w-2.5 h-2.5 bg-orange-500 rounded-full hidden border border-black"></div>
+                    <span id="notif-badge" class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-orange-500 rounded-full border-2 border-black hidden animate-bounce"></span>
                 </button>
-                <div id="notification-dropdown" class="fixed top-[70px] right-4 w-80 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-right z-[5001] max-h-[60vh] overflow-hidden flex flex-col">
-                    <div class="p-4 border-b border-white/5"><span class="text-sm font-bold text-white">Notificaciones</span></div>
-                    <div id="notif-list" class="overflow-y-auto p-2 custom-scrollbar"></div>
+                
+                <!-- Dropdown Notificaciones -->
+                <div id="notification-dropdown" class="absolute top-12 right-0 w-80 bg-[#121214]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-right overflow-hidden flex flex-col max-h-[60vh]">
+                    <div class="p-4 border-b border-white/5 bg-[#18181b]/50 flex justify-between items-center">
+                        <span class="text-xs font-bold text-white uppercase tracking-wider">Actividad</span>
+                        <span class="text-[10px] text-gray-500 cursor-pointer hover:text-white">Marcar leídas</span>
+                    </div>
+                    <div id="notif-list" class="overflow-y-auto p-0 custom-scrollbar flex-1">
+                        <!-- Se llena con JS -->
+                    </div>
                 </div>
             </div>
         </header>
 
-        <main class="w-full pb-8">
-            <div class="container mx-auto px-4 sm:px-6">
+        <!-- MAIN CONTENT CONTAINER -->
+        <main class="w-full relative z-10 pt-[var(--header-height)]">
+            <div class="container mx-auto px-4 sm:px-6 pb-20">
 
-                <!-- TOP USUARIOS SECTION (Nuevo) -->
-                <section id="top-users-section" class="py-4 mt-2">
-                    <div class="flex items-center justify-between mb-3 px-1">
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fas fa-crown text-orange-500 mr-1"></i> Top Creadores</h3>
+                <!-- 1. TOP CREADORES (Estilo Stories) -->
+                <section id="top-users-section" class="py-6 scroll-reveal">
+                    <div class="flex items-center justify-between mb-4 px-1">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
+                            Top Creadores
+                        </h3>
                     </div>
-                    <div id="top-users-container" class="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
-                        <!-- Skeletons por defecto -->
-                        <div class="flex flex-col items-center gap-1 min-w-[60px] animate-pulse">
-                            <div class="w-[56px] h-[56px] rounded-full bg-gray-800"></div>
-                            <div class="w-10 h-2 bg-gray-800 rounded mt-1"></div>
+                    <div id="top-users-container" class="flex gap-5 overflow-x-auto hide-scrollbar py-2 px-1 snap-x">
+                        <!-- Skeletons de carga -->
+                        <div class="flex flex-col items-center gap-2 min-w-[68px] animate-pulse">
+                            <div class="w-[64px] h-[64px] rounded-full bg-zinc-800"></div>
+                            <div class="w-12 h-2 bg-zinc-800 rounded"></div>
                         </div>
-                        <div class="flex flex-col items-center gap-1 min-w-[60px] animate-pulse delay-75">
-                            <div class="w-[56px] h-[56px] rounded-full bg-gray-800"></div>
-                            <div class="w-10 h-2 bg-gray-800 rounded mt-1"></div>
+                         <div class="flex flex-col items-center gap-2 min-w-[68px] animate-pulse delay-75">
+                            <div class="w-[64px] h-[64px] rounded-full bg-zinc-800"></div>
+                            <div class="w-12 h-2 bg-zinc-800 rounded"></div>
                         </div>
-                        <div class="flex flex-col items-center gap-1 min-w-[60px] animate-pulse delay-150">
-                            <div class="w-[56px] h-[56px] rounded-full bg-gray-800"></div>
-                            <div class="w-10 h-2 bg-gray-800 rounded mt-1"></div>
+                         <div class="flex flex-col items-center gap-2 min-w-[68px] animate-pulse delay-100">
+                            <div class="w-[64px] h-[64px] rounded-full bg-zinc-800"></div>
+                            <div class="w-12 h-2 bg-zinc-800 rounded"></div>
                         </div>
                     </div>
                 </section>
 
-                <!-- SEARCH -->
-                <form id="search-form" class="mb-6 relative z-30">
-                    <div class="relative group">
+                <!-- 2. SEARCH BAR -->
+                <div class="mb-8 relative z-30 px-1 scroll-reveal">
+                    <form id="search-form" class="relative group">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-gray-500 group-focus-within:text-orange-500 transition"></i>
+                            <i class="fas fa-search text-zinc-500 group-focus-within:text-orange-500 transition-colors duration-300"></i>
                         </div>
-                        <input type="text" id="search-input" placeholder="Buscar..." 
-                               class="w-full bg-[#121214] border border-white/5 rounded-2xl py-3 pl-10 pr-10 text-white text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 transition shadow-lg">
-                        <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-3 hidden text-gray-500 hover:text-white transition"><i class="fas fa-times"></i></button>
+                        <input type="text" id="search-input" placeholder="Buscar arte, etiquetas o usuarios..." 
+                               class="w-full bg-[#18181b] border border-white/5 rounded-2xl py-4 pl-12 pr-12 text-gray-200 text-sm placeholder-zinc-600 focus:bg-[#1f1f22] focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/20 transition-all duration-300 shadow-lg">
+                        <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-3 hidden text-zinc-500 hover:text-white transition w-10 h-full flex items-center justify-center"><i class="fas fa-times"></i></button>
+                    </form>
+                </div>
+
+                <!-- 3. HERO BANNER (3D Effect) -->
+                <div id="hero-section" class="mb-10 scroll-reveal">
+                    <div class="flex items-center justify-between mb-4 px-1">
+                        <h3 class="text-xl font-title font-bold text-white flex items-center gap-2">
+                            Destacados
+                            <span class="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-sans font-bold uppercase tracking-wider">Hot</span>
+                        </h3>
                     </div>
-                </form>
-
-                <!-- HERO SLIDER (Diseño Mejorado) -->
-                <div id="hero-wrapper" class="hero-wrapper group">
-                    <div id="hero-slides-container" class="w-full h-full relative"></div>
-                    <div id="hero-indicators" class="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-30"></div>
+                    
+                    <div id="hero-wrapper" class="hero-wrapper group border border-white/5 shadow-card bg-[#0a0a0c]">
+                        <div id="hero-slides-container" class="w-full h-full relative">
+                            <!-- Slides generados por JS -->
+                            <div class="flex items-center justify-center h-full text-zinc-700 animate-pulse">
+                                <i class="fas fa-image text-4xl"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Controles Hero -->
+                        <div class="absolute bottom-6 right-6 flex gap-2 z-30">
+                            <button onclick="prevHeroSlide()" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-all active:scale-90"><i class="fas fa-arrow-left"></i></button>
+                            <button onclick="nextHeroSlide()" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-all active:scale-90"><i class="fas fa-arrow-right"></i></button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- SEARCH RESULTS -->
-                <div id="search-results-container" class="hidden">
-                    <h2 class="text-lg font-bold text-white mb-4">Resultados</h2>
-                    <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
-                    <div id="search-pagination" class="mt-8 flex justify-center gap-4 text-sm"></div>
+                <!-- SEARCH RESULTS CONTAINER -->
+                <div id="search-results-container" class="hidden min-h-[50vh]">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-white">Resultados</h2>
+                        <button onclick="resetSearchView()" class="text-orange-500 text-sm font-bold hover:underline">Volver</button>
+                    </div>
+                    <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+                    <div id="search-pagination" class="mt-8 flex justify-center gap-4 text-sm py-4"></div>
                 </div>
 
-                <div id="main-content-sections" class="flex flex-col gap-8">
+                <!-- MAIN SECTIONS -->
+                <div id="main-content-sections" class="flex flex-col gap-10">
+                    
                     <!-- Para Ti -->
-                    <section id="for-you-section">
-                        <h3 class="text-base font-bold text-white mb-3 font-title border-l-4 border-orange-500 pl-3">Para Ti</h3>
-                        <div id="for-you-grid" class="grid grid-cols-3 gap-2 sm:gap-3"></div>
+                    <section id="for-you-section" class="scroll-reveal">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-1 h-6 bg-gradient-to-b from-orange-400 to-orange-600 rounded-full"></div>
+                            <h3 class="text-lg font-bold text-white font-title">Recomendado para Ti</h3>
+                        </div>
+                        <div id="for-you-grid" class="grid grid-cols-3 gap-3">
+                            <!-- Skeletons -->
+                            <div class="aspect-[3/4] rounded-xl bg-zinc-800 animate-pulse"></div>
+                            <div class="aspect-[3/4] rounded-xl bg-zinc-800 animate-pulse delay-100"></div>
+                            <div class="aspect-[3/4] rounded-xl bg-zinc-800 animate-pulse delay-200"></div>
+                        </div>
                     </section>
                     
-                    <!-- Comunidad -->
-                    <section id="community-section">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-base font-bold text-white font-title border-l-4 border-orange-500 pl-3">Tendencias</h3>
-                            <a href="feed.html" class="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-full hover:bg-orange-500 hover:text-white transition">Ver todo</a>
+                    <!-- Comunidad / Tendencias -->
+                    <section id="community-section" class="scroll-reveal">
+                        <div class="flex justify-between items-end mb-4 px-1">
+                            <div>
+                                <h3 class="text-lg font-bold text-white font-title">Tendencias</h3>
+                                <p class="text-xs text-zinc-500">Lo más popular de la comunidad hoy</p>
+                            </div>
+                            <a href="feed.html" class="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-3 py-1.5 rounded-full hover:bg-orange-500 hover:text-white transition duration-300">Ver todo</a>
                         </div>
-                        <div id="community-grid" class="flex gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x px-1"></div>
+                        <div id="community-grid" class="flex gap-4 overflow-x-auto pb-6 pt-2 hide-scrollbar snap-x px-1">
+                            <!-- JS Renders here -->
+                        </div>
                     </section>
 
-                    <!-- Galería Principal -->
-                    <section id="gallery">
-                        <h3 class="text-base font-bold text-white mb-3 font-title border-l-4 border-orange-500 pl-3">Explorar</h3>
-                        <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-                        
-                        <div id="gallery-register-gate" class="mt-8 hidden">
-                            <div class="glass-panel rounded-2xl p-6 text-center border border-orange-500/20">
-                                <i class="fas fa-lock text-3xl text-orange-500 mb-3"></i>
-                                <h3 class="text-lg font-bold text-white mb-2">Más contenido</h3>
-                                <p class="text-gray-400 text-xs mb-4">Regístrate para ver toda la galería.</p>
-                                <button onclick="window.location.href='login.html'" class="w-full py-3 rounded-xl bg-orange-600 text-white font-bold text-sm shadow-lg hover:bg-orange-700 transition">Crear Cuenta</button>
+                    <!-- Galería Principal (Infinite Scroll) -->
+                    <section id="gallery" class="scroll-reveal">
+                        <div class="flex items-center gap-3 mb-5 sticky top-[var(--header-height)] z-20 py-2 bg-[#020202]/80 backdrop-blur-sm -mx-4 px-4 border-b border-white/5">
+                            <div class="w-1 h-6 bg-zinc-600 rounded-full"></div>
+                            <h3 class="text-lg font-bold text-white font-title">Explorar Galería</h3>
+                            <div class="ml-auto flex gap-2">
+                                <button class="w-8 h-8 rounded bg-zinc-800 text-zinc-400 flex items-center justify-center text-xs hover:text-white"><i class="fas fa-filter"></i></button>
+                                <button class="w-8 h-8 rounded bg-zinc-800 text-zinc-400 flex items-center justify-center text-xs hover:text-white"><i class="fas fa-sort-amount-down"></i></button>
                             </div>
                         </div>
 
-                        <div id="loader" class="py-8 grid grid-cols-2 gap-3" style="display: none;"></div>
-                        <div id="load-more-trigger" class="h-20 w-full"></div>
+                        <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <!-- Images go here -->
+                        </div>
+                        
+                        <!-- Bloqueo para invitados -->
+                        <div id="gallery-register-gate" class="mt-12 hidden scroll-reveal">
+                            <div class="glass-panel rounded-3xl p-8 text-center border border-orange-500/30 relative overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-transparent opacity-0 group-hover:opacity-100 transition duration-700"></div>
+                                <div class="relative z-10">
+                                    <div class="w-16 h-16 rounded-full bg-orange-500/10 mx-auto flex items-center justify-center mb-4">
+                                        <i class="fas fa-lock text-3xl text-orange-500"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-white mb-2 font-title">Desbloquea Todo</h3>
+                                    <p class="text-gray-400 text-sm mb-6 max-w-xs mx-auto">Regístrate gratis para acceder a miles de imágenes exclusivas y unirte a la comunidad.</p>
+                                    <button onclick="window.location.href='login.html'" class="px-8 py-3 rounded-xl bg-gradient-to-r from-orange-600 to-orange-500 text-white font-bold text-sm shadow-lg hover:shadow-orange-500/30 hover:scale-105 transition duration-300">Crear Cuenta Gratis</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Loader infinito -->
+                        <div id="loader" class="py-12 flex flex-col items-center justify-center gap-3" style="display: none;">
+                            <div class="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span class="text-xs text-zinc-500 animate-pulse">Cargando más arte...</span>
+                        </div>
+                        <div id="load-more-trigger" class="h-24 w-full opacity-0"></div>
                     </section>
                 </div>
             </div>
         </main>
         
-        <!-- MODAL VISOR -->
-        <div id="modal" class="modal-backdrop">
-            <button onclick="closeModal()" class="modal-close-btn absolute top-4 right-4 z-[5020] w-10 h-10 rounded-full bg-black/50 text-white backdrop-blur border border-white/10 flex items-center justify-center active:scale-90 hover:bg-black/70 transition"><i class="fas fa-times"></i></button>
+        <!-- MODAL VISOR DE IMAGEN (MEJORADO) -->
+        <div id="modal" class="fixed inset-0 z-[5000] hidden opacity-0 transition-opacity duration-300">
+            <div class="absolute inset-0 bg-black/95 backdrop-blur-md" onclick="closeModal()"></div>
+            
+            <button onclick="closeModal()" class="absolute top-4 right-4 z-[5020] w-10 h-10 rounded-full bg-black/50 text-white border border-white/10 flex items-center justify-center hover:bg-red-500/80 hover:border-red-500 hover:rotate-90 transition duration-300 group">
+                <i class="fas fa-times group-hover:scale-110"></i>
+            </button>
 
-            <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black">
+            <div id="modal-content-wrapper" class="absolute inset-0 flex flex-col lg:flex-row pointer-events-none">
                 
-                <!-- Área Imagen con Chat Bubbles -->
-                <div id="modal-image-area" class="relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[60vh] lg:h-full group">
-                    <img id="modal-image" src="" class="max-w-full max-h-full object-contain shadow-2xl transition-transform duration-300 z-10 relative">
+                <!-- Área Imagen -->
+                <div id="modal-image-area" class="relative flex-1 flex items-center justify-center bg-black/20 pointer-events-auto overflow-hidden group">
+                    <!-- Imagen -->
+                    <img id="modal-image" src="" class="max-w-full max-h-[70vh] lg:max-h-[90vh] object-contain shadow-2xl transition-transform duration-500 z-10 select-none">
                     
-                    <!-- CONTENEDOR DE BURBUJAS DE CHAT (NUEVO) -->
-                    <div id="floating-comments-container"></div>
+                    <!-- Burbujas Flotantes -->
+                    <div id="floating-comments-container" class="absolute inset-0 overflow-hidden pointer-events-none z-20"></div>
 
-                    <!-- Controles -->
-                    <button id="prev-image" class="absolute left-2 z-20 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-black/60"><i class="fas fa-chevron-left text-lg"></i></button>
-                    <button id="next-image" class="absolute right-2 z-20 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-black/60"><i class="fas fa-chevron-right text-lg"></i></button>
-                    <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-black/50 text-white p-2 rounded-lg backdrop-blur border border-white/10 hover:bg-black/70 transition"><i class="fas fa-expand text-xs"></i></button>
+                    <!-- Navegación -->
+                    <button id="prev-image" class="absolute left-4 z-30 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-orange-500 hover:scale-110 backdrop-blur-sm border border-white/10 hidden lg:flex"><i class="fas fa-chevron-left"></i></button>
+                    <button id="next-image" class="absolute right-4 z-30 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-orange-500 hover:scale-110 backdrop-blur-sm border border-white/10 hidden lg:flex"><i class="fas fa-chevron-right"></i></button>
                 </div>
 
-                <!-- Panel Info -->
-                <div class="bg-[#121214] w-full lg:w-[380px] h-[40vh] lg:h-full flex flex-col z-30 relative border-l border-white/5 shadow-[-10px_0_40px_rgba(0,0,0,0.5)]">
+                <!-- Panel Info Lateral/Inferior -->
+                <div class="pointer-events-auto bg-[#121214] w-full lg:w-[400px] h-[40vh] lg:h-full flex flex-col z-30 border-t lg:border-t-0 lg:border-l border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] transition-transform duration-300 transform translate-y-0">
                     
-                    <div class="p-3 border-b border-white/5 flex items-center justify-between bg-[#18181b] shadow-md">
+                    <!-- Info Header -->
+                    <div class="p-4 border-b border-white/5 flex items-center justify-between bg-[#18181b] z-10">
                         <div class="flex items-center gap-3">
-                            <img id="modal-user-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-white/10 cursor-pointer hover:scale-105 transition">
+                            <img id="modal-user-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-white/10 p-0.5 cursor-pointer hover:border-orange-500 transition">
                             <div>
                                 <h4 id="modal-image-title" class="font-bold text-white text-sm leading-tight line-clamp-1"></h4>
-                                <span id="modal-user-name" class="text-[10px] text-gray-400 cursor-pointer hover:text-orange-400 transition"></span>
+                                <span id="modal-user-name" class="text-[10px] text-zinc-400 uppercase tracking-wider font-bold cursor-pointer hover:text-orange-400 transition"></span>
                             </div>
                         </div>
-                        <button id="modal-like-btn" class="flex flex-col items-center justify-center w-10 h-10 rounded active:bg-white/5 active:scale-95 transition">
-                            <i class="far fa-heart text-lg mb-0.5"></i>
-                            <span id="modal-like-count" class="text-[9px] font-bold text-gray-400">0</span>
+                        <button id="modal-like-btn" class="group flex flex-col items-center justify-center w-10 h-10 rounded-lg active:bg-white/5 transition relative overflow-hidden ripple-parent">
+                            <i class="far fa-heart text-xl text-gray-400 group-hover:text-red-500 transition-colors duration-300"></i>
+                            <span id="modal-like-count" class="text-[9px] font-bold text-gray-500 mt-0.5">0</span>
                         </button>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#09090b]">
-                        <div class="mb-4">
-                             <div id="modal-character-tag" class="hidden inline-block bg-orange-500/10 text-orange-400 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase mb-2"><i class="fas fa-tag mr-1"></i></div>
+                    <!-- Scroll Area -->
+                    <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#0f0f11]">
+                        <!-- Tags & Desc -->
+                        <div class="mb-6">
+                             <div id="modal-character-tag" class="hidden inline-flex items-center gap-1 bg-orange-500/10 text-orange-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase mb-3 border border-orange-500/20"><i class="fas fa-tag"></i> <span></span></div>
                              <p id="modal-desc" class="text-xs text-gray-300 leading-relaxed font-light whitespace-pre-wrap"></p>
                         </div>
 
-                        <div class="mb-4">
-                            <button onclick="toggleTags()" id="tags-toggle-btn" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 hover:text-white transition mb-2"><span>Etiquetas</span> <i class="fas fa-chevron-down text-xs"></i></button>
-                            <div id="modal-tags" class="hidden flex flex-wrap gap-2 mt-2"></div>
+                        <!-- Tags Expandable -->
+                        <div class="mb-6 border-b border-white/5 pb-4">
+                            <button onclick="toggleTags()" id="tags-toggle-btn" class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 hover:text-white transition mb-3 w-full group">
+                                <span>Etiquetas</span> <i class="fas fa-chevron-down text-xs group-hover:translate-y-0.5 transition-transform"></i>
+                            </button>
+                            <div id="modal-tags" class="hidden flex flex-wrap gap-2 animate-enter-up"></div>
                         </div>
                         
-                        <div class="mb-4">
-                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-2">Similares</h4>
+                        <!-- Similar -->
+                        <div class="mb-6">
+                            <h4 class="text-[10px] font-bold text-zinc-600 uppercase mb-3 tracking-wider">Relacionado</h4>
                             <div id="similar-grid" class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar snap-x"></div>
                         </div>
 
+                        <!-- Comentarios -->
                         <div>
-                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-2">Comentarios</h4>
-                            <div id="comments" class="flex flex-col gap-3 pb-2"></div>
+                            <h4 class="text-[10px] font-bold text-zinc-600 uppercase mb-3 tracking-wider">Comentarios</h4>
+                            <div id="comments" class="flex flex-col gap-4 pb-2"></div>
                         </div>
                     </div>
 
-                    <div class="p-2 bg-[#121214] border-t border-white/5 safe-bottom shadow-lg">
-                        <form id="comment-form" class="flex gap-2 relative">
-                            <input type="text" id="comment-input" class="w-full bg-[#1c1c1f] border border-white/5 rounded-full px-4 py-2.5 text-xs text-white focus:border-orange-500 focus:outline-none pr-9 shadow-inner" placeholder="Comentar..." autocomplete="off">
-                            <button type="submit" class="absolute right-1 top-1 text-orange-500 p-1.5 hover:bg-white/5 rounded-full transition"><i class="fas fa-paper-plane text-xs"></i></button>
+                    <!-- Input Comentario -->
+                    <div class="p-3 bg-[#121214] border-t border-white/5 safe-bottom z-10">
+                        <form id="comment-form" class="flex gap-2 relative group">
+                            <input type="text" id="comment-input" class="w-full bg-[#1c1c1f] border border-white/5 rounded-full px-5 py-3 text-xs text-white focus:border-orange-500 focus:bg-[#27272a] focus:outline-none pr-10 transition-all shadow-inner" placeholder="Escribe un comentario..." autocomplete="off">
+                            <button type="submit" class="absolute right-1.5 top-1.5 text-zinc-400 hover:text-orange-500 p-1.5 hover:bg-white/10 rounded-full transition w-8 h-8 flex items-center justify-center"><i class="fas fa-paper-plane text-xs"></i></button>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- MODAL CONFIG -->
-        <div id="config-modal" class="hidden fixed inset-0 z-[6000] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-[#18181b] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-                <h3 class="text-lg font-bold text-white mb-4 text-center">Editar Perfil</h3>
-                <div class="flex flex-col items-center gap-4">
-                    <div class="relative w-28 h-28 group cursor-pointer">
-                        <img id="config-preview-img" src="" class="w-full h-full rounded-full object-cover border-2 border-dashed border-gray-600 group-hover:border-orange-500 transition">
-                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition"><i class="fas fa-camera text-white text-xl"></i></div>
-                        <input type="file" id="config-file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="handleConfigImageSelect(event)">
+        <!-- MODAL CONFIGURACIÓN (SUBIDA DE FOTO) -->
+        <div id="config-modal" class="hidden fixed inset-0 z-[6000] flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" onclick="closeConfigModal()"></div>
+            <div class="relative bg-[#18181b] border border-white/10 rounded-3xl p-8 w-full max-w-sm shadow-2xl transform scale-95 opacity-0 transition-all duration-300" id="config-modal-content">
+                <h3 class="text-xl font-bold text-white mb-6 text-center font-title">Editar Perfil</h3>
+                <div class="flex flex-col items-center gap-6">
+                    <div class="relative w-32 h-32 group cursor-pointer">
+                        <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-orange-500 to-purple-600 animate-spin-slow opacity-50 blur-md"></div>
+                        <img id="config-preview-img" src="" class="relative w-full h-full rounded-full object-cover border-4 border-[#18181b] group-hover:border-orange-500 transition duration-300 z-10">
+                        <div class="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition backdrop-blur-[2px]">
+                            <i class="fas fa-camera text-white text-2xl"></i>
+                        </div>
+                        <input type="file" id="config-file-input" accept="image/*" class="absolute inset-0 z-30 opacity-0 cursor-pointer w-full h-full" onchange="handleConfigImageSelect(event)">
                     </div>
-                    <p id="config-upload-status" class="text-xs text-gray-400">Toca para cambiar</p>
-                    <div class="flex gap-2 w-full mt-2">
-                        <button onclick="closeConfigModal()" class="flex-1 py-2 rounded-lg bg-zinc-800 text-gray-300 text-sm hover:bg-zinc-700 transition">Cancelar</button>
-                        <button id="btn-save-config" onclick="saveNewProfilePic()" class="flex-1 py-2 rounded-lg bg-orange-600 text-white font-bold text-sm shadow-md hover:bg-orange-700 transition">Guardar</button>
+                    <p id="config-upload-status" class="text-xs text-gray-400">Toca la imagen para cambiarla</p>
+                    <div class="flex gap-3 w-full mt-2">
+                        <button onclick="closeConfigModal()" class="flex-1 py-3 rounded-xl bg-zinc-800 text-gray-300 text-sm font-medium hover:bg-zinc-700 transition">Cancelar</button>
+                        <button id="btn-save-config" onclick="saveNewProfilePic()" class="flex-1 py-3 rounded-xl bg-orange-600 text-white font-bold text-sm shadow-lg shadow-orange-600/20 hover:bg-orange-700 transition transform active:scale-95">Guardar Cambios</button>
                     </div>
                 </div>
             </div>
         </div>
         
-        <button id="scrollToTopBtn" class="fixed bottom-[80px] right-4 h-12 w-12 rounded-full bg-zinc-800 text-white shadow-lg border border-white/10 z-[100] flex items-center justify-center active:scale-90 transition-all duration-300 opacity-0 pointer-events-none translate-y-4 hover:bg-zinc-700" onclick="window.scrollTo(0,0)"><i class="fas fa-arrow-up text-sm"></i></button>
+        <!-- BUTTON TO TOP -->
+        <button id="scrollToTopBtn" class="fixed bottom-[90px] right-4 h-12 w-12 rounded-full bg-zinc-800/90 backdrop-blur text-white shadow-lg border border-white/10 z-[100] flex items-center justify-center active:scale-90 transition-all duration-500 opacity-0 pointer-events-none translate-y-10 hover:bg-orange-500" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+            <i class="fas fa-arrow-up text-sm"></i>
+        </button>
 
-        <!-- NAV -->
-        <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[4000] flex justify-around items-center px-4">
-            <a href="index.html" class="nav-item active flex flex-col items-center justify-center w-16 h-full transition"><i class="fas fa-home text-xl text-gray-500"></i></a>
-            <a href="feed.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center w-16 h-full transition"><i class="fas fa-globe-americas text-xl text-gray-500"></i></a>
-            <a href="profile.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center w-16 h-full transition"><i class="far fa-user text-xl text-gray-500"></i></a>
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[4000] flex justify-around items-center px-4 h-[var(--nav-height)]">
+            <!-- Indicador activo dinámico -->
+            <div id="nav-indicator" class="nav-indicator hidden"></div>
+            
+            <a href="index.html" class="nav-item flex flex-col items-center justify-center w-16 h-full transition group relative">
+                <i class="fas fa-home text-xl text-orange-500 transition-transform duration-300 group-active:scale-90"></i>
+                <span class="text-[9px] text-orange-500 font-bold mt-1 opacity-100 transition-opacity">Inicio</span>
+            </a>
+            <a href="feed.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center w-16 h-full transition group">
+                <i class="fas fa-globe-americas text-xl text-gray-500 group-hover:text-orange-400 transition-colors duration-300 group-active:scale-90"></i>
+                <span class="text-[9px] text-gray-500 font-medium mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-3">Social</span>
+            </a>
+            <a href="profile.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center w-16 h-full transition group">
+                <i class="far fa-user text-xl text-gray-500 group-hover:text-orange-400 transition-colors duration-300 group-active:scale-90"></i>
+                <span class="text-[9px] text-gray-500 font-medium mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-3">Perfil</span>
+            </a>
         </nav>
     </div>
 
     <script>
         "use strict";
+        
+        /* --- CONFIGURACIÓN E INICIALIZACIÓN --- */
         const firebaseConfig = { apiKey: "AIzaSyBB7y-V0P_gKPWH-shvwrmZxHbdq-ASmj8", authDomain: "exene-53e6b.firebaseapp.com", databaseURL: "https://exene-53e6b-default-rtdb.firebaseio.com", projectId: "exene-53e6b", storageBucket: "exene-53e6b.appspot.com", messagingSenderId: "481369419867", appId: "1:481369419867:web:ac5db24c436344262c8f7e" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
         const CATBOX_USERHASH = "341adb9d3c2d09d0485aa908c";
 
+        /* --- ESTADO GLOBAL --- */
         let currentUser = null; 
         let deviceID = localStorage.getItem('deviceID'); 
         if (!deviceID) { deviceID = Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('deviceID', deviceID); }
         
         let userDataCache = {};
-        
         const imagesPerLoad = 21; 
         let allImages = []; 
         let fullGalleryCache = []; 
@@ -522,46 +757,140 @@
         const searchResultsPerPage = 21; 
         let touchStartX = 0, touchEndX = 0, touchStartY = 0, touchEndY = 0; 
         const swipeThreshold = 50;
-        let adminUserId = null;
 
         window.forYouList = [];
         window.communityList = [];
         
-        // --- CHAT BUBBLES VARS ---
         let bubbleInterval = null;
         let fetchedCommentsForBubbles = [];
 
-        auth.onAuthStateChanged(user => {
-            const loader = document.getElementById('initial-loader');
-            const appContent = document.getElementById('app-content');
+        /* --- LOGICA DE CARGA OPTIMIZADA --- */
+        
+        // Se ejecuta tan pronto el DOM está listo, sin esperar a Firebase
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animación de entrada
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                const content = document.getElementById('app-content');
+                
+                splash.style.opacity = '0';
+                content.style.opacity = '1';
+                
+                setTimeout(() => { 
+                    splash.classList.add('hidden'); 
+                    // Inicializar observadores de scroll una vez visible
+                    initScrollReveal();
+                }, 500);
+            }, 800); // Pequeño delay artificial para que se vea el logo branding
 
+            // Cargar esqueletos inmediatamente
+            loadSkeletons('grid', 12);
+            loadSkeletons('for-you-grid', 3);
+            
+            // Inicializar eventos UI
+            setupEventListeners();
+            setupHeaderScroll();
+            
+            // Inicializar Firebase logic
+            initializeApp();
+        });
+
+        // Autenticación asíncrona (no bloquea UI)
+        auth.onAuthStateChanged(user => {
             if (user && !user.isAnonymous) {
                 currentUser = user;
-                appContent.style.display = 'block';
                 loadUserProfile(user.uid);
                 document.getElementById('gallery-register-gate').style.display = 'none';
                 initNotificationSystem(user.uid);
             } else {
                 currentUser = null;
-                appContent.style.display = 'block';
+                // Mostrar gate de registro eventualmente
             }
-
-            if (loader) { loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 500); }
-            if(feedCache.length > 0) renderCommunitySection();
-            if(user) fetchUserReactions().then(() => loadForYouImages());
+            // Recargar datos dependientes del usuario sin limpiar grilla
+            if(unifiedGalleryData.length > 0) fetchUserReactions();
         });
 
         async function initializeApp() {
-            await cacheAllDataForSearch(); 
-            renderTopUsers(); // RENDERIZAR TOP USUARIOS DESPUES DEL CACHÉ
-            await Promise.all([ fetchUserReactions(), cacheAllReactionCounts() ]);
-            loadHeroBanner(); 
-            loadInitialImages();
-            loadForYouImages(); 
-            renderCommunitySection(); 
-            setupEventListeners();
+            try {
+                // Paralelizar cargas críticas
+                await Promise.all([
+                    cacheAllDataForSearch(),
+                    fetchUserReactions(),
+                    cacheAllReactionCounts()
+                ]);
+                
+                // Renderizar contenido real
+                renderTopUsers();
+                loadHeroBanner(); 
+                loadInitialImages();
+                loadForYouImages(); 
+                renderCommunitySection();
+                
+            } catch (e) {
+                console.error("Error inicializando app:", e);
+                // Fallback UI si falla
+            }
         }
-        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        /* --- VISUAL EFFECTS & ANIMATIONS --- */
+
+        function initScrollReveal() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Solo animar una vez
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+
+            document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+        }
+
+        function setupHeaderScroll() {
+            window.addEventListener('scroll', () => {
+                const header = document.getElementById('main-header');
+                if (window.scrollY > 20) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+                
+                // Botón top
+                const btn = document.getElementById('scrollToTopBtn');
+                if (window.scrollY > 400) {
+                    btn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-10');
+                } else {
+                    btn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-10');
+                }
+            });
+        }
+
+        // Efecto Ripple JS
+        function createRipple(event) {
+            const button = event.currentTarget;
+            const circle = document.createElement("span");
+            const diameter = Math.max(button.clientWidth, button.clientHeight);
+            const radius = diameter / 2;
+            const rect = button.getBoundingClientRect();
+            
+            circle.style.width = circle.style.height = `${diameter}px`;
+            circle.style.left = `${event.clientX - rect.left - radius}px`;
+            circle.style.top = `${event.clientY - rect.top - radius}px`;
+            circle.classList.add("ripple-effect");
+            
+            const ripple = button.getElementsByClassName("ripple-effect")[0];
+            if (ripple) ripple.remove();
+            
+            button.appendChild(circle);
+        }
+        // Aplicar a botones con clase ripple-parent
+        document.addEventListener('click', (e) => {
+            const target = e.target.closest('.ripple-parent');
+            if (target) createRipple(e);
+        });
+
+        /* --- LOGICA DE DATOS --- */
 
         async function cacheAllDataForSearch() { 
             const snapshot = await db.ref('images').once('value'); 
@@ -581,7 +910,6 @@
                     const uid = child.key;
                     uData.push({ id: uid, type: 'user', ...userData }); 
                     userMap[uid] = userData; 
-                    if (userData.email === 'ezequiel@exen.com') adminUserId = uid;
                 });
                 usersCache = uData;
             }
@@ -615,16 +943,18 @@
                 });
                 feedCache = fData;
             }
+            // Mezclar y ordenar por fecha
             unifiedGalleryData = [...fullGalleryCache, ...feedCache].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            // Actualizar fullGalleryCache para búsquedas
             fullGalleryCache = unifiedGalleryData; 
         }
-        
-        // --- NUEVA FUNCIÓN: RENDERIZAR TOP USUARIOS ---
+
+        /* --- RENDERIZADO UI --- */
+
         function renderTopUsers() {
             const container = document.getElementById('top-users-container');
             container.innerHTML = '';
 
-            // Calcular Top Usuarios basado en imágenes publicadas (feed)
             const userCounts = {};
             unifiedGalleryData.forEach(img => {
                 if (img.type === 'feed' && img.userId) {
@@ -632,42 +962,223 @@
                 }
             });
 
-            // Convertir a array y ordenar
             const sortedUsers = Object.keys(userCounts)
                 .map(uid => {
                     const user = usersCache.find(u => u.id === uid);
                     return user ? { ...user, count: userCounts[uid] } : null;
                 })
-                .filter(u => u) // Eliminar nulos
+                .filter(u => u)
                 .sort((a, b) => b.count - a.count)
-                .slice(0, 10); // Top 10
+                .slice(0, 10);
 
             if (sortedUsers.length === 0) {
-                container.innerHTML = '<span class="text-xs text-gray-500 px-4">Sin actividad reciente.</span>';
+                container.innerHTML = '<span class="text-xs text-gray-500 px-4">Próximamente.</span>';
                 return;
             }
 
             sortedUsers.forEach((user, index) => {
-                let rankClass = 'rank-normal';
-                let icon = '';
-                if(index === 0) { rankClass = 'rank-gold'; icon = '<i class="fas fa-crown text-[8px] text-yellow-900 absolute -bottom-1 bg-yellow-400 rounded-full w-3 h-3 flex items-center justify-center border border-black"></i>'; }
-                else if(index === 1) { rankClass = 'rank-silver'; }
-                else if(index === 2) { rankClass = 'rank-bronze'; }
-
+                let ringClass = 'story-ring';
+                if(index === 0) ringClass += ' gold';
+                else if(index === 1) ringClass += ' silver';
+                
                 const div = document.createElement('div');
-                div.className = "flex flex-col items-center gap-1 min-w-[60px] cursor-pointer group";
+                div.className = "flex flex-col items-center gap-2 min-w-[70px] cursor-pointer group animate-enter-up";
+                div.style.animationDelay = `${index * 50}ms`;
                 div.onclick = () => window.location.href = `profile.html?uid=${user.id}`;
                 
                 div.innerHTML = `
-                    <div class="w-[56px] h-[56px] ${rankClass} top-user-ring flex items-center justify-center transition transform group-active:scale-95">
-                        <img src="${user.profilePic || 'https://placehold.co/100'}" class="w-full h-full rounded-full object-cover border-2 border-[#050505]">
-                        ${icon}
+                    <div class="w-[64px] h-[64px] rounded-full p-[3px] ${ringClass} transition-transform duration-300 group-hover:scale-105">
+                        <img src="${user.profilePic || 'https://placehold.co/100'}" class="w-full h-full rounded-full object-cover border-2 border-[#020202]">
                     </div>
-                    <span class="text-[9px] text-gray-400 font-bold truncate max-w-[60px] mt-1">${user.username}</span>
+                    <span class="text-[10px] text-zinc-400 font-medium truncate max-w-[70px] group-hover:text-orange-400 transition-colors">${user.username}</span>
                 `;
                 container.appendChild(div);
             });
         }
+
+        /* --- HERO BANNER 3D LOGIC --- */
+        let currentHeroIndex = 0;
+        let heroSlidesData = [];
+        let heroInterval;
+
+        function loadHeroBanner() {
+            const userImages = unifiedGalleryData.filter(img => img.type === 'feed');
+            if (userImages.length === 0) return;
+            
+            // Randomize y seleccionar
+            heroSlidesData = [...userImages].sort(() => 0.5 - Math.random()).slice(0, 5);
+            renderHeroSlides();
+            startHeroTimer();
+        }
+
+        function renderHeroSlides() {
+            const container = document.getElementById('hero-slides-container');
+            container.innerHTML = '';
+            
+            heroSlidesData.forEach((img, index) => {
+                const slide = document.createElement('div');
+                slide.className = `hero-slide ${index === currentHeroIndex ? 'active' : ''}`;
+                slide.onclick = () => { if(requireLogin()) openModal(img.id, 'main'); };
+                
+                slide.innerHTML = `
+                    <img src="${img.thumbnailUrl || img.url}" class="w-full h-full object-cover filter brightness-[0.6]">
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#020202] via-transparent to-transparent opacity-90"></div>
+                    
+                    <div class="absolute bottom-0 left-0 w-full p-6 hero-content-layer">
+                        <div class="flex items-center gap-2 mb-2">
+                            <img src="${img.user.avatar}" class="w-6 h-6 rounded-full border border-white/20">
+                            <span class="text-xs text-zinc-300 font-medium">${img.user.name}</span>
+                        </div>
+                        <h2 class="text-2xl font-bold text-white leading-tight font-title italic mb-1 line-clamp-2 drop-shadow-lg">${img.title}</h2>
+                        <div class="flex gap-2 mt-3">
+                            ${img.tags && img.tags.length > 0 ? `<span class="text-[9px] border border-white/20 px-2 py-0.5 rounded text-zinc-400">#${img.tags[0]}</span>` : ''}
+                            <span class="text-[9px] border border-white/20 px-2 py-0.5 rounded text-zinc-400"><i class="fas fa-heart text-[8px] mr-1"></i> ${img.likes || 0}</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-bar-fill"></div></div>
+                `;
+                container.appendChild(slide);
+            });
+        }
+
+        function nextHeroSlide() {
+            currentHeroIndex = (currentHeroIndex + 1) % heroSlidesData.length;
+            updateHeroClasses();
+            resetHeroTimer();
+        }
+        function prevHeroSlide() {
+            currentHeroIndex = (currentHeroIndex - 1 + heroSlidesData.length) % heroSlidesData.length;
+            updateHeroClasses();
+            resetHeroTimer();
+        }
+        function updateHeroClasses() {
+            const slides = document.querySelectorAll('.hero-slide');
+            slides.forEach((slide, index) => {
+                if(index === currentHeroIndex) slide.classList.add('active');
+                else slide.classList.remove('active');
+            });
+        }
+        function startHeroTimer() {
+            if(heroInterval) clearInterval(heroInterval);
+            heroInterval = setInterval(nextHeroSlide, 6000);
+        }
+        function resetHeroTimer() {
+            startHeroTimer();
+        }
+
+
+        /* --- GALERÍA & CARGA INFINITA --- */
+        
+        function loadInitialImages() { 
+            if (isLoading) return; 
+            isLoading = true; 
+            const grid = document.getElementById('grid'); 
+            grid.innerHTML = ''; // Limpiar esqueletos
+            
+            allImages = unifiedGalleryData.slice(0, imagesPerLoad); 
+            if (allImages.length > 0) {
+                displaySearchResults(allImages, 'grid', false, 'main'); 
+            } else {
+                grid.innerHTML = '<div class="col-span-full py-10 text-center text-zinc-600">No hay imágenes disponibles.</div>';
+            }
+            isLoading = false; 
+        }
+
+        function loadMoreImages() { 
+            if (isLoading || noMoreImages) return; 
+            
+            // Lógica de Guest Gate
+            if (!currentUser && scrollLoadCount >= MAX_GUEST_LOADS) { 
+                document.getElementById('loader').style.display = 'none'; 
+                document.getElementById('gallery-register-gate').style.display = 'block'; 
+                document.getElementById('gallery-register-gate').classList.add('visible'); // Forzar reveal
+                noMoreImages = true; 
+                return; 
+            }
+            
+            isLoading = true; 
+            const loaderContainer = document.getElementById('loader'); 
+            loaderContainer.style.display = 'flex'; 
+            
+            setTimeout(() => { // Pequeño delay artificial para ver el loader
+                const currentLoadedCount = allImages.length; 
+                const newImages = unifiedGalleryData.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); 
+                
+                if (newImages.length === 0) { 
+                    noMoreImages = true; 
+                    loaderContainer.style.display = 'none';
+                } else { 
+                    allImages = allImages.concat(newImages); 
+                    displaySearchResults(newImages, 'grid', true, 'main'); 
+                    scrollLoadCount++; 
+                } 
+                loaderContainer.style.display = 'none'; 
+                isLoading = false; 
+            }, 800);
+        }
+
+        /* --- LOGICA DE DISPLAY (GRID) --- */
+
+        function displaySearchResults(items, containerId, append = false, sourceContext = 'search') { 
+            const grid = document.getElementById(containerId); 
+            if (!append) grid.innerHTML = ''; 
+            
+            if (items.length === 0 && !append) { 
+                grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-500">Sin resultados.</div>`; 
+                return; 
+            } 
+            
+            items.forEach((item, index) => { 
+                if (!item || item.type === 'user' || !item.url) return;
+
+                // Feedback card insertion logic
+                if (sourceContext === 'main' && !append && index === 5) {
+                    const fb = document.createElement('div');
+                    fb.className = "image-card group relative aspect-[2/3] cursor-pointer flex flex-col items-center justify-center text-center p-4 border border-orange-500/30 bg-gradient-to-br from-[#1a1a1c] to-[#000] scroll-reveal";
+                    fb.onclick = () => window.location.href = 'fadeback.html';
+                    fb.innerHTML = `<div class="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition border border-orange-500/20"><i class="fas fa-lightbulb text-orange-500"></i></div><h4 class="text-white font-bold text-sm mb-1">Feedback</h4><p class="text-zinc-500 text-[10px] leading-tight">Tu opinión nos ayuda a mejorar.</p>`;
+                    grid.appendChild(fb);
+                }
+
+                const div = document.createElement('div'); 
+                // Añadir clases base y de animación
+                div.className = 'image-card group relative aspect-[2/3] cursor-pointer bg-zinc-900 scroll-reveal';
+                // Añadir delay escalonado si es carga inicial
+                if(!append && index < 8) div.style.transitionDelay = `${index * 50}ms`;
+
+                div.setAttribute('onclick', `if(requireLogin(event)) openModal('${item.id}', '${sourceContext}')`); 
+                
+                let reactionCount = (item.type === 'feed') ? (item.likes || 0) : (allReactionCounts[item.id] || 0);
+                const isLiked = userReactions[item.id] === 'like';
+                const isVerified = (item.type === 'gallery');
+
+                div.innerHTML = `
+                    <img src="${item.thumbnailUrl || item.url}" loading="lazy" class="h-full w-full object-cover transition duration-700 group-hover:scale-110 group-hover:rotate-1">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                    
+                    ${isVerified ? '<div class="absolute top-2 left-2 z-10 bg-black/40 backdrop-blur-md border border-white/10 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide shadow-lg"><i class="fas fa-check-circle text-orange-500 mr-1"></i>Oficial</div>' : ''}
+                    
+                    <div class="absolute bottom-0 left-0 p-3 w-full transform translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                        <h4 class="truncate font-bold text-white text-xs mb-0.5 tracking-tight font-title">${item.title}</h4>
+                        ${!isVerified ? `<div class="flex items-center gap-1.5 opacity-80"><img src="${item.user.avatar}" class="w-3.5 h-3.5 rounded-full border border-white/10 object-cover"> <span class="text-[9px] text-gray-300 truncate">${item.user.name}</span></div>` : ''}
+                    </div>
+                    
+                    <div class="absolute top-2 right-2 flex items-center gap-1 bg-black/50 px-2 py-1 rounded-full backdrop-blur-sm border border-white/5 shadow-lg group-hover:bg-orange-500/90 group-hover:border-orange-500 transition-colors">
+                        <i class="fas fa-heart text-[10px] ${isLiked ? 'text-red-500' : 'text-white'}"></i>
+                        <span class="text-[10px] text-white font-bold">${reactionCount}</span>
+                    </div>
+                `; 
+                grid.appendChild(div);
+                
+                // Observar el nuevo elemento si fue agregado después del load
+                if(append) {
+                    const observer = new IntersectionObserver(e => { if(e[0].isIntersecting) { e[0].target.classList.add('visible'); observer.disconnect(); } });
+                    observer.observe(div);
+                }
+            }); 
+        }
+
+        /* --- CARGA DE DATOS SECUNDARIOS --- */
 
         async function fetchUserReactions() { 
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
@@ -692,21 +1203,34 @@
         function renderCommunitySection() {
             const container = document.getElementById('community-grid');
             container.innerHTML = '';
+            // Ordenar por popularidad (likes)
             let sortedFeed = [...feedCache].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-            let filteredFeed = sortedFeed.slice(0, 20);
+            let filteredFeed = sortedFeed.slice(0, 15);
             window.communityList = filteredFeed;
-            filteredFeed.forEach(post => {
+            
+            filteredFeed.forEach((post, i) => {
                 const card = document.createElement('div');
-                card.className = "relative min-w-[100px] w-[100px] h-[140px] rounded-xl overflow-hidden flex-shrink-0 snap-start cursor-pointer group shadow-lg border border-white/5";
+                card.className = "relative min-w-[110px] w-[110px] h-[150px] rounded-2xl overflow-hidden flex-shrink-0 snap-start cursor-pointer group shadow-lg border border-white/5 animate-enter-up";
+                card.style.animationDelay = `${i * 50}ms`;
                 card.onclick = (e) => { e.stopPropagation(); if(requireLogin(e)) openModal(post.id, 'community'); };
-                card.innerHTML = `<img src="${post.thumbnailUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" loading="lazy"><div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div><div class="absolute bottom-2 left-1 right-1"><p class="text-white text-[8px] font-bold truncate text-center">${post.user.name}</p></div>`;
+                
+                card.innerHTML = `
+                    <img src="${post.thumbnailUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" loading="lazy">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
+                    <div class="absolute bottom-2 left-2 right-2 text-center">
+                        <div class="w-6 h-6 rounded-full border border-orange-500 mx-auto mb-1 overflow-hidden">
+                            <img src="${post.user.avatar}" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-white text-[9px] font-bold truncate">${post.user.name}</p>
+                    </div>
+                `;
                 container.appendChild(card);
             });
         }
 
         async function loadForYouImages() {
             const grid = document.getElementById('for-you-grid');
-            generateSkeletons(grid, 6);
+            // Logica básica de recomendación basada en tags
             let tagScores = {};
             unifiedGalleryData.forEach(img => {
                 if (userReactions[img.id] === 'like') {
@@ -718,7 +1242,7 @@
             let scoredImages = unifiedGalleryData.filter(img => userReactions[img.id] !== 'like').map(img => {
                 let score = 0;
                 if (img.tags && Array.isArray(img.tags)) { img.tags.forEach(tag => { const normTag = normalize(tag); if (tagScores[normTag]) score += tagScores[normTag]; }); }
-                score += Math.random() * 2;
+                score += Math.random() * 2; // Factor aleatorio para frescura
                 return { img, score };
             });
             scoredImages.sort((a, b) => b.score - a.score);
@@ -727,229 +1251,12 @@
             displaySearchResults(finalSelection, 'for-you-grid', false, 'foryou');
         }
 
-        function loadInitialImages() { 
-            if (isLoading) return; isLoading = true; 
-            const grid = document.getElementById('grid'); generateSkeletons(grid, imagesPerLoad); 
-            allImages = unifiedGalleryData.slice(0, imagesPerLoad); 
-            if (allImages.length > 0) displaySearchResults(allImages, 'grid', false, 'main'); else grid.innerHTML = ''; 
-            isLoading = false; 
-        }
-
-        function loadMoreImages() { 
-            if (isLoading || noMoreImages) return; 
-            if (!currentUser && scrollLoadCount >= MAX_GUEST_LOADS) { document.getElementById('loader').style.display = 'none'; document.getElementById('gallery-register-gate').style.display = 'block'; noMoreImages = true; return; }
-            isLoading = true; 
-            const loaderContainer = document.getElementById('loader'); loaderContainer.style.display = 'grid'; generateSkeletons(loaderContainer, 3); 
-            const currentLoadedCount = allImages.length; 
-            const newImages = unifiedGalleryData.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); 
-            if (newImages.length === 0) { noMoreImages = true; } 
-            else { allImages = allImages.concat(newImages); displaySearchResults(newImages, 'grid', true, 'main'); scrollLoadCount++; } 
-            loaderContainer.style.display = 'none'; isLoading = false; 
-        }
-
-        function loadHeroBanner() {
-            const userImages = unifiedGalleryData.filter(img => img.type === 'feed');
-            if (userImages.length === 0) return;
-            let shuffled = [...userImages].sort(() => 0.5 - Math.random());
-            const heroImages = shuffled.slice(0, 5);
-            const container = document.getElementById('hero-slides-container');
-            const indicatorsContainer = document.getElementById('hero-indicators');
-            const heroWrapper = document.getElementById('hero-wrapper');
-            heroWrapper.style.display = 'block'; container.innerHTML = ''; indicatorsContainer.innerHTML = '';
-            
-            heroImages.forEach((img, index) => {
-                const slide = document.createElement('div');
-                slide.className = `hero-slide absolute inset-0 opacity-0 transition-opacity duration-700 z-10 ${index === 0 ? 'active opacity-100 z-20' : ''}`;
-                slide.setAttribute('onclick', `if(requireLogin(event)) openModal('${img.id}', 'main')`);
-                const displayUrl = img.thumbnailUrl || img.url; 
-                slide.innerHTML = `<img src="${displayUrl}" class="w-full h-full object-cover filter brightness-[0.6]"><div class="hero-overlay"><div class="w-full"><span class="bg-orange-500 text-white font-bold tracking-wider uppercase mb-2 text-[9px] px-2 py-0.5 rounded inline-block">Destacado</span><h2 class="text-2xl font-black text-white leading-none mb-1 uppercase line-clamp-2 italic text-shadow-lg">${img.title}</h2><p class="text-gray-300 text-xs flex items-center gap-1 mb-4"><i class="fas fa-user-circle"></i> ${img.user.name}</p></div></div>`;
-                container.appendChild(slide);
-                const dot = document.createElement('div'); 
-                dot.className = `w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer ${index === 0 ? 'bg-orange-500 w-4' : 'bg-white/50'}`;
-                dot.addEventListener('click', (e) => { e.stopPropagation(); manualSlide(index); });
-                indicatorsContainer.appendChild(dot);
-            });
-            startHeroInterval();
-        }
-        let heroInterval;
-        function startHeroInterval() { if (heroInterval) clearInterval(heroInterval); heroInterval = setInterval(() => { const slides = document.querySelectorAll('.hero-slide'); if(slides.length === 0) return; let current = 0; slides.forEach((s, i) => { if(s.classList.contains('active')) current = i; }); const next = (current + 1) % slides.length; manualSlide(next); }, 6000); }
-        function manualSlide(index) { 
-            const slides = document.querySelectorAll('.hero-slide'); 
-            const dots = document.getElementById('hero-indicators').children; 
-            if (!slides.length) return; 
-            slides.forEach(s => {s.classList.remove('active'); s.classList.remove('opacity-100'); s.classList.remove('z-20');}); 
-            Array.from(dots).forEach(d => { d.className = 'w-1.5 h-1.5 rounded-full bg-white/50 transition-all duration-300 cursor-pointer'; }); 
-            slides[index].classList.add('active', 'opacity-100', 'z-20'); 
-            dots[index].className = 'w-4 h-1.5 rounded-full bg-orange-500 transition-all duration-300 cursor-pointer'; 
-        }
-
-        function displaySearchResults(items, containerId, append = false, sourceContext = 'search') { 
-            const grid = document.getElementById(containerId); 
-            if (!append) grid.innerHTML = ''; 
-            if (items.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No hay contenido disponible.</div>`; return; } 
-            items.forEach((item, index) => { 
-                if (!item) return;
-                if (sourceContext === 'main' && !append && index === 4) {
-                    const feedbackCard = document.createElement('div');
-                    feedbackCard.className = "image-card group relative aspect-[2/3] cursor-pointer flex flex-col items-center justify-center text-center p-4 border border-orange-500/30 bg-gradient-to-br from-[#1a1a1c] to-[#000]";
-                    feedbackCard.onclick = () => window.location.href = 'fadeback.html';
-                    feedbackCard.innerHTML = `<div class="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center mb-2 group-hover:scale-110 transition"><i class="fas fa-lightbulb text-orange-500"></i></div><h4 class="text-white font-bold text-xs mb-1">Feedback</h4><p class="text-gray-500 text-[9px] leading-tight">Tu opinión importa.</p>`;
-                    grid.appendChild(feedbackCard);
-                }
-                if (item.type === 'user') { return; }
-                if (!item.url) return;
-                const div = document.createElement('div'); 
-                div.className = 'image-card group relative aspect-[2/3] cursor-pointer bg-zinc-900'; 
-                div.setAttribute('onclick', `if(requireLogin(event)) openModal('${item.id}', '${sourceContext}')`); 
-                let reactionCount = 0;
-                if (item.type === 'feed') reactionCount = item.likes || 0;
-                else reactionCount = allReactionCounts[item.id] || 0;
-                const isLiked = userReactions[item.id] === 'like';
-                const isVerified = (item.type === 'gallery');
-                div.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80"></div>${isVerified ? '<div class="absolute top-2 left-2 z-10 bg-white/10 backdrop-blur-md border border-white/20 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">Oficial</div>' : ''}<div class="absolute bottom-0 left-0 p-3 w-full"><h4 class="truncate font-bold text-white text-xs mb-0.5 tracking-tight">${item.title}</h4>${!isVerified ? `<p class="text-[9px] text-gray-400 truncate flex items-center gap-1"><img src="${item.user.avatar}" class="w-3 h-3 rounded-full border border-white/10"> ${item.user.name}</p>` : ''}</div><div class="absolute top-2 right-2 flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded-md backdrop-blur-sm border border-white/5"><i class="fas fa-heart text-[9px] ${isLiked ? 'text-red-500' : 'text-gray-300'}"></i><span class="text-[9px] text-white font-bold">${reactionCount}</span></div>`; 
-                grid.appendChild(div); 
-            }); 
-        }
-
-        // --- FUNCIONES CHAT BUBBLES ---
-        function initFloatingComments(id, context) {
-            const container = document.getElementById('floating-comments-container');
-            container.innerHTML = '';
-            fetchedCommentsForBubbles = [];
-            
-            if (bubbleInterval) clearInterval(bubbleInterval);
-
-            // Fetch SOLO UNA VEZ (.once) al abrir
-            let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`;
-            db.ref(path).limitToLast(15).once('value', snap => {
-                if(snap.exists()) {
-                    snap.forEach(c => fetchedCommentsForBubbles.push(c.val()));
-                    // Iniciar el loop visual si hay comentarios
-                    if(fetchedCommentsForBubbles.length > 0) {
-                        startBubbleLoop();
-                    }
-                }
-            });
-        }
-
-        function startBubbleLoop() {
-            const container = document.getElementById('floating-comments-container');
-            
-            // Función para crear una burbuja
-            const createBubble = () => {
-                if(fetchedCommentsForBubbles.length === 0) return;
-                // Elegir comentario al azar o secuencial
-                const comment = fetchedCommentsForBubbles[Math.floor(Math.random() * fetchedCommentsForBubbles.length)];
-                
-                const bubble = document.createElement('div');
-                bubble.className = 'chat-bubble';
-                // Posición horizontal aleatoria (evitando bordes extremos)
-                const randomLeft = Math.floor(Math.random() * 60) + 10; // 10% a 70%
-                bubble.style.left = `${randomLeft}%`;
-                bubble.style.bottom = '-50px'; // Empezar fuera
-
-                bubble.innerHTML = `
-                    <img src="${comment.userAvatar || 'https://placehold.co/50'}" alt="">
-                    <span>${comment.text ? comment.text.substring(0, 30) + (comment.text.length > 30 ? '...' : '') : '...'}</span>
-                `;
-
-                container.appendChild(bubble);
-
-                // Limpiar burbuja del DOM cuando termine la animación (12s definido en CSS)
-                setTimeout(() => {
-                    if(bubble && bubble.parentNode) bubble.parentNode.removeChild(bubble);
-                }, 12000);
-            };
-
-            // Crear burbuja inicial
-            createBubble();
-
-            // Intervalo para nuevas burbujas (cada 2.5s)
-            bubbleInterval = setInterval(createBubble, 2500);
-        }
-
-        function stopFloatingComments() {
-            if (bubbleInterval) clearInterval(bubbleInterval);
-            document.getElementById('floating-comments-container').innerHTML = '';
-        }
-
-        // --- SISTEMA DE MENÚ ---
-        function toggleProfileMenu() {
-            const menu = document.getElementById('profile-menu');
-            const notifDropdown = document.getElementById('notification-dropdown');
-            notifDropdown.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100'); 
-            notifDropdown.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            
-            if (menu.classList.contains('opacity-0')) {
-                menu.classList.remove('opacity-0', 'pointer-events-none', 'scale-90');
-                menu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
-            } else {
-                menu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
-                menu.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            }
-        }
+        /* --- MODAL SYSTEM --- */
         
-        function toggleNotifications() {
-            const dd = document.getElementById('notification-dropdown');
-            const menu = document.getElementById('profile-menu');
-            menu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100'); 
-            menu.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            
-            if (dd.classList.contains('opacity-0')) {
-                dd.classList.remove('opacity-0', 'pointer-events-none', 'scale-90');
-                dd.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
-                document.getElementById('notif-badge').classList.add('hidden');
-                if(currentUser) localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now());
-                loadNotifications();
-            } else {
-                dd.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
-                dd.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            }
-        }
-        window.addEventListener('click', (e) => {
-            if (!e.target.closest('#user-profile-btn') && !e.target.closest('#profile-menu')) {
-                document.getElementById('profile-menu').classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
-                document.getElementById('profile-menu').classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            }
-            if (!e.target.closest('.notif-btn') && !e.target.closest('#notification-dropdown')) {
-                document.getElementById('notification-dropdown').classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
-                document.getElementById('notification-dropdown').classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            }
-        });
-
-        function initNotificationSystem(uid) {
-            const badge = document.getElementById('notif-badge');
-            db.ref('notifications/' + uid).orderByKey().limitToLast(1).on('child_added', snap => {
-                if(!snap.exists()) return;
-                const lastNotif = snap.val();
-                const lastSeenTimestamp = localStorage.getItem('lastSeenNotif_' + uid) || 0;
-                if (lastNotif.timestamp > lastSeenTimestamp) badge.classList.remove('hidden');
-                else badge.classList.add('hidden');
-            });
-        }
-        function loadNotifications() {
-            const list = document.getElementById('notif-list');
-            db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
-                list.innerHTML = '';
-                if (!snap.exists()) { list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">Sin notificaciones.</div>'; return; }
-                const notifs = []; snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
-                notifs.reverse().forEach(n => {
-                    const item = document.createElement('div');
-                    item.className = `flex gap-3 p-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition items-center ${!n.read ? 'bg-orange-500/5' : ''}`;
-                    let icon = ''; 
-                    if (n.type === 'like') { icon = '<i class="fas fa-heart text-red-500"></i>'; }
-                    else if (n.type === 'comment') { icon = '<i class="fas fa-comment text-blue-500"></i>'; }
-                    else if (n.type === 'follow') { icon = '<i class="fas fa-user-plus text-green-500"></i>'; }
-                    item.innerHTML = `<div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">${icon}</div><div class="flex-1"><p class="text-xs text-gray-300"><b>${n.fromUserName}</b> ${n.type === 'like' ? 'te dio like.' : n.type === 'comment' ? 'comentó.' : 'te sigue.'}</p><span class="text-[9px] text-zinc-600">${timeAgo(n.timestamp)}</span></div>`;
-                    item.onclick = () => { markAsRead(n.key, item); if(n.postId) openModal(n.postId, 'main'); };
-                    list.appendChild(item);
-                });
-            });
-        }
-        function markAsRead(key, element) { db.ref(`notifications/${currentUser.uid}/${key}/read`).set(true); element.classList.remove('bg-orange-500/5'); }
-
         async function openModal(id, context) {
             if(!requireLogin()) return;
+            
+            // Determinar playlist
             if(context === 'main') currentPlaylist = unifiedGalleryData; 
             else if(context === 'foryou') currentPlaylist = window.forYouList;
             else if(context === 'community') currentPlaylist = window.communityList;
@@ -961,61 +1268,352 @@
 
             let img = currentPlaylist[currentIndex];
             currentImageId = id; currentContext = img.type;
+            
+            // Renderizar contenido
             updateModalContent(img);
-            document.getElementById('modal').classList.add('visible'); 
+            
+            // Mostrar modal
+            const modal = document.getElementById('modal');
+            modal.classList.remove('hidden');
+            // Force reflow
+            void modal.offsetWidth; 
+            modal.classList.remove('opacity-0');
+            
+            // Animación del panel
+            document.querySelector('#modal-content-wrapper > div:last-child').classList.remove('translate-y-full');
+            
             document.body.style.overflow = 'hidden';
             
-            // INICIAR BURBUJAS DE CHAT
+            // Iniciar burbujas
             initFloatingComments(id, context);
+        }
+
+        function closeModal() { 
+            const modal = document.getElementById('modal');
+            modal.classList.add('opacity-0');
+            
+            stopFloatingComments();
+            
+            setTimeout(() => { 
+                modal.classList.add('hidden'); 
+                document.getElementById('modal-image').src = ''; 
+            }, 300);
+            document.body.style.overflow = 'auto'; 
         }
 
         function updateModalContent(img) {
             document.getElementById('modal-image-title').textContent = img.title;
-            document.getElementById('modal-desc').textContent = img.desc || 'Sin descripción.';
+            document.getElementById('modal-desc').textContent = img.desc || 'Sin descripción detallada.';
+            
             const avatarEl = document.getElementById('modal-user-avatar');
             const nameEl = document.getElementById('modal-user-name');
             const modalImg = document.getElementById('modal-image');
             
+            // Cargar imagen de baja res primero o directa
+            modalImg.style.opacity = '0';
             modalImg.src = img.thumbnailUrl || img.url;
+            modalImg.onload = () => { modalImg.style.opacity = '1'; };
+            
+            // Cargar alta resolución en background
             if (img.thumbnailUrl && img.thumbnailUrl !== img.url) {
                 const highRes = new Image(); highRes.src = img.url;
                 highRes.onload = () => { if (currentImageId === img.id) modalImg.src = img.url; };
             }
 
             if (img.type === 'gallery') {
-                nameEl.textContent = "Galería Oficial"; avatarEl.src = "https://files.catbox.moe/ap1lh0.png";
+                nameEl.textContent = "Oficial exen-E"; 
+                avatarEl.src = "https://files.catbox.moe/ap1lh0.png";
                 nameEl.onclick = null; avatarEl.onclick = null;
             } else {
-                nameEl.textContent = img.user.name; avatarEl.src = img.user.avatar;
+                nameEl.textContent = img.user.name; 
+                avatarEl.src = img.user.avatar;
                 const goToProfile = () => window.location.href = `profile.html?uid=${img.userId}`;
                 nameEl.onclick = goToProfile; avatarEl.onclick = goToProfile;
             }
 
+            // Tags
             const charTag = document.getElementById('modal-character-tag');
             if (img.characterName) {
-                charTag.classList.remove('hidden'); charTag.classList.add('inline-block');
-                charTag.innerHTML = `<i class="fas fa-tag mr-1"></i> ${img.characterName}`;
-            } else { charTag.classList.add('hidden'); charTag.classList.remove('inline-block'); }
+                charTag.classList.remove('hidden'); charTag.classList.add('inline-flex');
+                charTag.querySelector('span').textContent = img.characterName;
+            } else { 
+                charTag.classList.add('hidden'); charTag.classList.remove('inline-flex'); 
+            }
 
-            const tagsDiv = document.getElementById('modal-tags'); const tagsBtn = document.getElementById('tags-toggle-btn');
-            tagsDiv.classList.add('hidden'); tagsBtn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down text-xs"></i>'; tagsDiv.innerHTML = '';
+            const tagsDiv = document.getElementById('modal-tags'); 
+            const tagsBtn = document.getElementById('tags-toggle-btn');
+            tagsDiv.classList.add('hidden'); 
+            tagsDiv.innerHTML = '';
             
             if (img.tags && img.tags.length > 0) {
                 tagsBtn.style.display = 'flex';
-                img.tags.forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 border border-zinc-700 px-2.5 py-1 rounded-full text-gray-400">#${t.trim()}</span>`; });
+                img.tags.forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-full text-zinc-300">#${t.trim()}</span>`; });
             } else { tagsBtn.style.display = 'none'; }
 
+            // Likes & Comments
             const modalLikeBtn = document.getElementById('modal-like-btn');
             modalLikeBtn.onclick = () => toggleReactionInModal(img.id);
             updateModalLikeUI(img.id);
-            
-            // Cargar comentarios en panel lateral (usando ONCE si se requiere estricto, pero usaremos ONCE aqui tambien para consistencia con burbujas segun peticion)
             loadComments(img.id, currentContext);
             loadSimilarImagesInSlider(img.tags || [], img.id, img.characterName);
 
-            document.getElementById('prev-image').style.display = currentIndex > 0 ? 'flex' : 'none';
-            document.getElementById('next-image').style.display = currentIndex < currentPlaylist.length - 1 ? 'flex' : 'none';
+            // Nav Buttons
+            const prevBtn = document.getElementById('prev-image');
+            const nextBtn = document.getElementById('next-image');
+            if (prevBtn) prevBtn.style.display = currentIndex > 0 ? 'flex' : 'none';
+            if (nextBtn) nextBtn.style.display = currentIndex < currentPlaylist.length - 1 ? 'flex' : 'none';
         }
+
+        /* --- CHAT BUBBLES --- */
+        function initFloatingComments(id, context) {
+            const container = document.getElementById('floating-comments-container');
+            container.innerHTML = '';
+            fetchedCommentsForBubbles = [];
+            
+            if (bubbleInterval) clearInterval(bubbleInterval);
+
+            let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`;
+            db.ref(path).limitToLast(15).once('value', snap => {
+                if(snap.exists()) {
+                    snap.forEach(c => fetchedCommentsForBubbles.push(c.val()));
+                    if(fetchedCommentsForBubbles.length > 0) startBubbleLoop();
+                }
+            });
+        }
+        function startBubbleLoop() {
+            const container = document.getElementById('floating-comments-container');
+            const createBubble = () => {
+                if(fetchedCommentsForBubbles.length === 0) return;
+                const comment = fetchedCommentsForBubbles[Math.floor(Math.random() * fetchedCommentsForBubbles.length)];
+                
+                const bubble = document.createElement('div');
+                bubble.className = 'chat-bubble backdrop-blur-md';
+                // Posición aleatoria
+                const randomLeft = Math.floor(Math.random() * 60) + 10; 
+                bubble.style.left = `${randomLeft}%`;
+                bubble.style.bottom = '-50px';
+
+                bubble.innerHTML = `
+                    <img src="${comment.userAvatar || 'https://placehold.co/50'}" class="w-5 h-5 rounded-full border border-white/20">
+                    <span class="truncate max-w-[150px]">${comment.text ? comment.text.substring(0, 30) : '...'}</span>
+                `;
+                container.appendChild(bubble);
+
+                setTimeout(() => { if(bubble.parentNode) bubble.parentNode.removeChild(bubble); }, 10000);
+            };
+            createBubble();
+            bubbleInterval = setInterval(createBubble, 3000);
+        }
+        function stopFloatingComments() {
+            if (bubbleInterval) clearInterval(bubbleInterval);
+            document.getElementById('floating-comments-container').innerHTML = '';
+        }
+
+        /* --- UTILS & HELPERS --- */
+        function toggleTags() { 
+            const div = document.getElementById('modal-tags'); 
+            div.classList.toggle('hidden'); 
+        }
+
+        // Swipe Logic
+        const imageArea = document.getElementById('modal-image-area'); 
+        imageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
+        imageArea.addEventListener('touchend', e => { 
+            touchEndX = e.changedTouches[0].screenX; 
+            touchEndY = e.changedTouches[0].screenY; 
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            
+            if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX < 0) navigateToNext(); else navigateToPrevious();
+            } else if (Math.abs(deltaY) > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX)) {
+                if (deltaY > 0) closeModal(); // Swipe Down to close
+            }
+        }, {passive: true});
+
+        function navigateToNext() { 
+            if(currentIndex < currentPlaylist.length - 1) { 
+                stopFloatingComments(); 
+                currentIndex++; 
+                const nextImg = currentPlaylist[currentIndex];
+                updateModalContent(nextImg); 
+                initFloatingComments(nextImg.id, nextImg.type); 
+            } 
+        }
+        function navigateToPrevious() { 
+            if(currentIndex > 0) { 
+                stopFloatingComments(); 
+                currentIndex--; 
+                const prevImg = currentPlaylist[currentIndex];
+                updateModalContent(prevImg); 
+                initFloatingComments(prevImg.id, prevImg.type); 
+            } 
+        }
+
+        function loadSkeletons(id, count) {
+            const el = document.getElementById(id);
+            if(!el) return;
+            el.innerHTML = '';
+            for(let i=0; i<count; i++) {
+                el.innerHTML += `<div class="aspect-[2/3] bg-zinc-800 rounded-xl animate-pulse"></div>`;
+            }
+        }
+
+        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
+        function timeAgo(ts) { if(!ts) return ''; const s = Math.floor((Date.now()-ts)/1000); if(s<60) return 'Ahora'; if(s<3600) return Math.floor(s/60)+' min'; if(s<86400) return Math.floor(s/3600)+' h'; return Math.floor(s/86400)+' d'; }
+        
+        /* --- AUTH & USER --- */
+        function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } window.location.href = 'login.html'; return false; } return true; }
+        function loadUserProfile(uid) { db.ref('users/' + uid).once('value', snap => { if (snap.exists()) { const data = snap.val(); document.getElementById('header-user-img').src = data.profilePic || 'https://placehold.co/100x100'; userDataCache = data; } }); }
+        
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            const notif = document.getElementById('notification-dropdown');
+            notif.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+            notif.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
+            
+            if(menu.classList.contains('opacity-0')) {
+                menu.classList.remove('opacity-0', 'pointer-events-none', 'scale-90');
+                menu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+            } else {
+                menu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+                menu.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
+            }
+        }
+
+        function toggleNotifications() {
+            const notif = document.getElementById('notification-dropdown');
+            const menu = document.getElementById('profile-menu');
+            menu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+            menu.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
+            
+            if(notif.classList.contains('opacity-0')) {
+                notif.classList.remove('opacity-0', 'pointer-events-none', 'scale-90');
+                notif.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+                document.getElementById('notif-badge').classList.add('hidden');
+                if(currentUser) loadNotifications();
+            } else {
+                notif.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+                notif.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
+            }
+        }
+
+        /* --- NOTIFICACIONES & COMENTARIOS (Misma lógica existente, UI mejorada) --- */
+        function initNotificationSystem(uid) {
+            const badge = document.getElementById('notif-badge');
+            db.ref('notifications/' + uid).orderByKey().limitToLast(1).on('child_added', snap => {
+                if(!snap.exists()) return;
+                const lastNotif = snap.val();
+                const lastSeenTimestamp = localStorage.getItem('lastSeenNotif_' + uid) || 0;
+                if (lastNotif.timestamp > lastSeenTimestamp) badge.classList.remove('hidden');
+            });
+        }
+        function loadNotifications() {
+            const list = document.getElementById('notif-list');
+            db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
+                list.innerHTML = '';
+                if (!snap.exists()) { list.innerHTML = '<div class="p-6 text-center text-zinc-500 text-xs">Sin notificaciones recientes.</div>'; return; }
+                const notifs = []; snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
+                notifs.reverse().forEach(n => {
+                    const item = document.createElement('div');
+                    item.className = `flex gap-3 p-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition items-center ${!n.read ? 'bg-orange-500/5' : ''}`;
+                    let icon = ''; 
+                    if (n.type === 'like') icon = '<i class="fas fa-heart text-red-500"></i>';
+                    else if (n.type === 'comment') icon = '<i class="fas fa-comment text-blue-500"></i>';
+                    else if (n.type === 'follow') icon = '<i class="fas fa-user-plus text-green-500"></i>';
+                    
+                    item.innerHTML = `
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 text-xs border border-white/5">${icon}</div>
+                        <div class="flex-1">
+                            <p class="text-xs text-zinc-300"><b>${n.fromUserName}</b> ${n.type === 'like' ? 'te dio like.' : n.type === 'comment' ? 'comentó tu publicación.' : 'comenzó a seguirte.'}</p>
+                            <span class="text-[9px] text-zinc-600 block mt-1">${timeAgo(n.timestamp)}</span>
+                        </div>
+                    `;
+                    item.onclick = () => { if(n.postId) openModal(n.postId, 'main'); };
+                    list.appendChild(item);
+                });
+                localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now());
+            });
+        }
+
+        // Logic comments/likes remains structurally same but mapped to new UI IDs
+        function toggleReactionInModal(id) {
+            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
+            const ref = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
+            
+            // Animacion boton
+            const btnIcon = document.querySelector('#modal-like-btn i');
+            btnIcon.classList.add('scale-125');
+            setTimeout(() => btnIcon.classList.remove('scale-125'), 200);
+
+            ref.once('value', s => {
+                if(s.exists()) { 
+                    if(currentContext === 'feed') { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } else { ref.remove(); } 
+                    userReactions[id] = null; 
+                } else { 
+                    if(currentContext === 'feed') { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } else { ref.set('like'); } 
+                    userReactions[id] = 'like'; 
+                    // Notificar si aplica...
+                }
+            });
+        }
+
+        function updateModalLikeUI(id) {
+            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
+            const modalLikeBtn = document.getElementById('modal-like-btn');
+            const modalLikeCount = document.getElementById('modal-like-count');
+            
+            db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`).on('value', s => {
+                 const i = modalLikeBtn.querySelector('i');
+                 if((currentContext === 'feed' && s.exists()) || (currentContext !== 'feed' && s.val() === 'like')) { 
+                     i.className = "fas fa-heart text-xl mb-0.5 text-red-500 animate-pulse-slow"; 
+                 } else { 
+                     i.className = "far fa-heart text-xl mb-0.5 text-gray-400"; 
+                 }
+            });
+            const pathCount = currentContext === 'feed' ? `feed_posts/${id}/likes` : `reactions/${id}`;
+            db.ref(pathCount).on('value', s => {
+                 let count = 0; if(currentContext === 'feed') count = s.val() || 0; else if(s.val()) Object.values(s.val()).forEach(v => { if(v === 'like') count++; });
+                 modalLikeCount.innerText = count; 
+            });
+        }
+
+        function loadComments(id, context) { 
+            let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; 
+            const container = document.getElementById('comments'); 
+            db.ref(path).orderByChild('timestamp').limitToLast(50).once('value', snap => { 
+                container.innerHTML = !snap.exists() ? '<p class="text-center text-zinc-600 text-[10px] py-2 italic">Sé el primero en comentar.</p>' : ''; 
+                const comments = []; snap.forEach(child => comments.push(child.val())); 
+                comments.reverse().forEach(c => { 
+                    const div = document.createElement('div'); 
+                    div.className = "flex gap-3 items-start animate-enter-up";
+                    div.innerHTML = `
+                        <img src="${c.userAvatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full border border-zinc-700 object-cover mt-1">
+                        <div class="bg-[#1c1c1f] p-3 rounded-2xl rounded-tl-sm border border-white/5 w-full shadow-sm">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-gray-300 text-[11px] hover:text-orange-400 cursor-pointer transition">${c.userName || 'Anónimo'}</span>
+                                <span class="text-[9px] text-zinc-600">${timeAgo(c.timestamp)}</span>
+                            </div>
+                            <p class="text-zinc-300 text-xs leading-relaxed break-words font-light">${c.text || ''}</p>
+                        </div>
+                    `; 
+                    container.appendChild(div); 
+                }); 
+            }); 
+        }
+
+        document.getElementById('comment-form').addEventListener('submit', (e) => {
+             e.preventDefault(); const input = document.getElementById('comment-input'); const text = input.value.trim(); if(!text) return;
+             const path = currentContext === 'feed' ? `feed_comments/${currentImageId}` : `comments/${currentImageId}`;
+             const finalUserName = (currentUser && userDataCache.username) ? userDataCache.username : (currentUser?.displayName || 'Anónimo');
+             const finalUserAvatar = (currentUser && userDataCache.profilePic) ? userDataCache.profilePic : 'https://placehold.co/100x100';
+             
+             db.ref(path).push({ text: text, userId: currentUser ? currentUser.uid : 'anon', userName: finalUserName, name: finalUserName, userAvatar: finalUserAvatar, timestamp: Date.now() }).then(() => {
+                 loadComments(currentImageId, currentContext);
+                 initFloatingComments(currentImageId, currentContext); 
+             }); 
+             input.value = '';
+        });
 
         function loadSimilarImagesInSlider(tags, currentId, currentCharacterName) {
             const container = document.getElementById('similar-grid');
@@ -1023,6 +1621,7 @@
             const candidates = unifiedGalleryData.filter(p => p.id !== currentId && p.url);
             let finalResults = []; let addedIds = new Set();
             const normCharName = normalize(currentCharacterName);
+            
             if (normCharName) {
                 const charMatches = candidates.filter(p => p.characterName && normalize(p.characterName) === normCharName).slice(0, 5);
                 charMatches.forEach(p => { finalResults.push(p); addedIds.add(p.id); });
@@ -1035,122 +1634,87 @@
                     }).filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.post);
                 finalResults = finalResults.concat(tagMatches);
             }
-            if (finalResults.length === 0) { container.innerHTML = '<span class="text-[10px] text-gray-500 italic px-2">No hay similares.</span>'; return; }
+            
+            if (finalResults.length === 0) { container.innerHTML = '<span class="text-[10px] text-zinc-600 italic px-2">No hay resultados similares.</span>'; return; }
+            
             finalResults.slice(0, 10).forEach(post => {
                 const div = document.createElement('div'); 
-                div.className = "relative min-w-[70px] w-[70px] h-[70px] rounded-lg overflow-hidden flex-shrink-0 cursor-pointer border border-white/5 opacity-80 hover:opacity-100 hover:border-orange-500/50 transition"; 
+                div.className = "relative min-w-[80px] w-[80px] h-[80px] rounded-xl overflow-hidden flex-shrink-0 cursor-pointer border border-white/5 opacity-80 hover:opacity-100 hover:border-orange-500 transition group"; 
                 div.onclick = () => { stopFloatingComments(); updateModalContent(post); initFloatingComments(post.id, post.type); };
-                div.innerHTML = `<img src="${post.thumbnailUrl || post.url}" loading="lazy" class="w-full h-full object-cover">`;
+                div.innerHTML = `<img src="${post.thumbnailUrl || post.url}" loading="lazy" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">`;
                 container.appendChild(div);
             });
         }
         
-        function toggleTags() { const div = document.getElementById('modal-tags'); const btn = document.getElementById('tags-toggle-btn'); if (div.classList.contains('hidden')) { div.classList.remove('hidden'); btn.innerHTML = '<span>Ocultar</span> <i class="fas fa-chevron-up text-xs"></i>'; } else { div.classList.add('hidden'); btn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down text-xs"></i>'; } }
-        function navigateToNext() { if(currentIndex < currentPlaylist.length - 1) { stopFloatingComments(); currentIndex++; updateModalContent(currentPlaylist[currentIndex]); initFloatingComments(currentPlaylist[currentIndex].id, currentPlaylist[currentIndex].type); } }
-        function navigateToPrevious() { if(currentIndex > 0) { stopFloatingComments(); currentIndex--; updateModalContent(currentPlaylist[currentIndex]); initFloatingComments(currentPlaylist[currentIndex].id, currentPlaylist[currentIndex].type); } }
-        const imageArea = document.getElementById('modal-image-area'); 
-        imageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
-        imageArea.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; touchEndY = e.changedTouches[0].screenY; handleSwipe(); }, {passive: true});
-        function handleSwipe() { const deltaX = touchEndX - touchStartX; const deltaY = touchEndY - touchStartY; if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > Math.abs(deltaY)) { if (deltaX < 0) navigateToNext(); else navigateToPrevious(); } else if (Math.abs(deltaY) > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX)) { if (deltaY > 0) closeModal(); } }
-        function toggleFullScreen() { document.getElementById('modal').classList.toggle('fullscreen-mode'); }
+        function logoutUser() { auth.signOut().then(() => { window.location.reload(); }); }
         
-        function closeModal() { 
-            const modal = document.getElementById('modal');
-            modal.classList.remove('visible'); 
-            stopFloatingComments(); // DETENER BURBUJAS
-            setTimeout(() => { modal.classList.remove('fullscreen-mode'); document.getElementById('modal-image').src = ''; }, 300);
-            document.body.style.overflow = 'auto'; 
-        }
-
-        function toggleReactionInModal(id) {
-            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
-            const ref = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
-            ref.once('value', s => {
-                if(s.exists()) { if(currentContext === 'feed') { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } else { ref.remove(); } userReactions[id] = null; } 
-                else { if(currentContext === 'feed') { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } else { ref.set('like'); } userReactions[id] = 'like'; }
-            });
-        }
-        function updateModalLikeUI(id) {
-            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
-            const modalLikeBtn = document.getElementById('modal-like-btn');
-            const modalLikeCount = document.getElementById('modal-like-count');
-            db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`).on('value', s => {
-                 if((currentContext === 'feed' && s.exists()) || (currentContext !== 'feed' && s.val() === 'like')) { modalLikeBtn.querySelector('i').className = "fas fa-heart text-lg mb-0.5 text-red-500"; } 
-                 else { modalLikeBtn.querySelector('i').className = "far fa-heart text-lg mb-0.5 text-gray-400"; }
-            });
-            const pathCount = currentContext === 'feed' ? `feed_posts/${id}/likes` : `reactions/${id}`;
-            db.ref(pathCount).on('value', s => {
-                 let count = 0; if(currentContext === 'feed') count = s.val() || 0; else if(s.val()) Object.values(s.val()).forEach(v => { if(v === 'like') count++; });
-                 modalLikeCount.innerText = count; 
-            });
-        }
-
-        function loadComments(id, context) { 
-            let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; 
-            const container = document.getElementById('comments'); 
-            // CAMBIO: USAR ONCE EN LUGAR DE ON PARA EVITAR LISTENERS ONLINE SEGUN PETICION
-            db.ref(path).orderByChild('timestamp').limitToLast(50).once('value', snap => { 
-                container.innerHTML = !snap.exists() ? '<p class="text-center text-gray-600 text-[10px] py-4 italic">Aún no hay comentarios.</p>' : ''; 
-                const comments = []; snap.forEach(child => comments.push(child.val())); 
-                comments.reverse().forEach(c => { 
-                    const div = document.createElement('div'); div.className = "flex gap-2 items-start";
-                    div.innerHTML = `<img src="${c.userAvatar || 'https://placehold.co/50'}" class="w-7 h-7 rounded-full mt-1 border border-zinc-700 object-cover"><div class="bg-[#1c1c1f] p-2.5 rounded-2xl rounded-tl-sm border border-white/5 w-full"><div class="flex justify-between items-center mb-0.5"><span class="font-bold text-gray-400 text-[10px]">${c.userName || c.name || 'Anónimo'}</span><span class="text-[9px] text-zinc-600">${timeAgo(c.timestamp)}</span></div><p class="text-gray-300 text-xs leading-snug break-words">${c.text || ''}</p></div>`; 
-                    container.appendChild(div); 
-                }); 
-            }); 
-        }
-        document.getElementById('comment-form').addEventListener('submit', (e) => {
-             e.preventDefault(); const input = document.getElementById('comment-input'); const text = input.value.trim(); if(!text) return;
-             const path = currentContext === 'feed' ? `feed_comments/${currentImageId}` : `comments/${currentImageId}`;
-             const finalUserName = (currentUser && userDataCache.username) ? userDataCache.username : (currentUser?.displayName || 'Anónimo');
-             const finalUserAvatar = (currentUser && userDataCache.profilePic) ? userDataCache.profilePic : 'https://placehold.co/100x100';
-             db.ref(path).push({ text: text, userId: currentUser ? currentUser.uid : 'anon', userName: finalUserName, name: finalUserName, userAvatar: finalUserAvatar, timestamp: Date.now() }).then(() => {
-                 // Recargar comentarios manualmente al comentar ya que quitamos el listener
-                 loadComments(currentImageId, currentContext);
-                 initFloatingComments(currentImageId, currentContext); // Actualizar burbujas
-             }); 
-             input.value = '';
-        });
-
-        // Utils
-        function executeSearch(query) { 
-            document.getElementById('main-content-sections').classList.add('hidden'); document.getElementById('gallery').classList.add('hidden'); document.getElementById('top-users-section').classList.add('hidden'); document.getElementById('hero-wrapper').classList.add('hidden'); // Ocultar nuevos elementos
-            document.getElementById('search-results-container').classList.remove('hidden'); 
-            document.getElementById('clear-search-btn').classList.remove('hidden'); document.getElementById('clear-search-btn').classList.add('block');
-            const matchedUsers = usersCache.filter(u => (u.username && normalize(u.username).includes(query))); 
-            const matchedGallery = unifiedGalleryData.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.user && i.user.name && normalize(i.user.name).includes(query))); 
-            currentSearchResults = [...matchedUsers, ...matchedGallery]; displaySearchResultsPage(1); 
-        }
-        function displaySearchResultsPage(page) { searchCurrentPage = page; const start = (page - 1) * searchResultsPerPage; const items = currentSearchResults.slice(start, start + searchResultsPerPage); displaySearchResults(items, 'search-results-grid', false, 'search'); renderPaginationControls(); }
-        function renderPaginationControls(){ const container = document.getElementById('search-pagination'); const total = Math.ceil(currentSearchResults.length / searchResultsPerPage); container.innerHTML = ''; if (total <= 1) return; container.innerHTML = `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition" ${searchCurrentPage === 1 ? 'disabled' : ''}>Prev</button><span class="text-gray-400 self-center"> ${searchCurrentPage}/${total}</span><button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition" ${searchCurrentPage === total ? 'disabled' : ''}>Next</button>`; }
-        function resetSearchView(){ document.getElementById('search-input').value = ''; document.getElementById('search-results-container').classList.add('hidden'); document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden'); document.getElementById('top-users-section').classList.remove('hidden'); document.getElementById('hero-wrapper').classList.remove('hidden'); const clearBtn = document.getElementById('clear-search-btn'); clearBtn.classList.add('hidden'); clearBtn.classList.remove('block'); }
-        
-        function setupEventListeners() { 
+        // Search & Event Utils
+        function setupEventListeners() {
             document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); executeSearch(normalize(document.getElementById('search-input').value)); });
             document.getElementById('clear-search-btn').addEventListener('click', resetSearchView);
-            const obs = new IntersectionObserver(e => { if(e[0].isIntersecting) loadMoreImages(); }); obs.observe(document.getElementById('load-more-trigger'));
-            document.getElementById('next-image').onclick = navigateToNext; document.getElementById('prev-image').onclick = navigateToPrevious;
+            
+            // Infinite scroll
+            const obs = new IntersectionObserver(e => { if(e[0].isIntersecting) loadMoreImages(); }); 
+            obs.observe(document.getElementById('load-more-trigger'));
+            
+            // Teclado
+            document.getElementById('next-image').onclick = navigateToNext; 
+            document.getElementById('prev-image').onclick = navigateToPrevious;
             document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
-            window.addEventListener('scroll', () => { const btn = document.getElementById('scrollToTopBtn'); if (window.scrollY > 300) { btn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4'); } else { btn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4'); } });
         }
 
-        function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton aspect-[2/3] rounded-lg'; } }
-        function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
-        function timeAgo(ts) { if(!ts) return ''; const s = Math.floor((Date.now()-ts)/1000); if(s<60) return 'Ahora'; if(s<3600) return Math.floor(s/60)+' min'; if(s<86400) return Math.floor(s/3600)+' h'; return Math.floor(s/86400)+' d'; }
+        function executeSearch(query) { 
+            if(!query) return;
+            document.getElementById('main-content-sections').classList.add('hidden'); 
+            document.getElementById('top-users-section').classList.add('hidden'); 
+            document.getElementById('hero-section').classList.add('hidden');
+            
+            document.getElementById('search-results-container').classList.remove('hidden'); 
+            document.getElementById('clear-search-btn').classList.remove('hidden'); document.getElementById('clear-search-btn').classList.add('flex');
+            
+            const matchedUsers = usersCache.filter(u => (u.username && normalize(u.username).includes(query))); 
+            const matchedGallery = unifiedGalleryData.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.user && i.user.name && normalize(i.user.name).includes(query))); 
+            
+            currentSearchResults = [...matchedUsers, ...matchedGallery]; 
+            displaySearchResultsPage(1); 
+        }
+        function displaySearchResultsPage(page) { 
+            searchCurrentPage = page; 
+            const start = (page - 1) * searchResultsPerPage; 
+            const items = currentSearchResults.slice(start, start + searchResultsPerPage); 
+            displaySearchResults(items, 'search-results-grid', false, 'search'); 
+            renderPaginationControls(); 
+        }
+        function renderPaginationControls(){ 
+            const container = document.getElementById('search-pagination'); 
+            const total = Math.ceil(currentSearchResults.length / searchResultsPerPage); 
+            if (total <= 1) { container.innerHTML = ''; return; }
+            container.innerHTML = `
+                <button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition disabled:opacity-50" ${searchCurrentPage === 1 ? 'disabled' : ''}>Prev</button>
+                <span class="text-zinc-400 self-center font-mono"> ${searchCurrentPage} / ${total}</span>
+                <button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition disabled:opacity-50" ${searchCurrentPage === total ? 'disabled' : ''}>Next</button>
+            `; 
+        }
+        function resetSearchView(){ 
+            document.getElementById('search-input').value = ''; 
+            document.getElementById('search-results-container').classList.add('hidden'); 
+            document.getElementById('main-content-sections').classList.remove('hidden'); 
+            document.getElementById('top-users-section').classList.remove('hidden'); 
+            document.getElementById('hero-section').classList.remove('hidden');
+            const clearBtn = document.getElementById('clear-search-btn'); 
+            clearBtn.classList.add('hidden'); clearBtn.classList.remove('flex'); 
+        }
         
-        function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } window.location.href = 'login.html'; return false; } return true; }
-        
-        function loadUserProfile(uid) { db.ref('users/' + uid).once('value', snap => { if (snap.exists()) { const data = snap.val(); document.getElementById('header-user-img').src = data.profilePic || 'https://placehold.co/100x100/333/fff?text=U'; userDataCache = data; } }); }
-        
+        // Config Image Logic (Mantenida)
         let newProfileFile = null;
-        function openConfigModal() { document.getElementById('profile-menu').classList.remove('opacity-100', 'pointer-events-auto', 'scale-100'); document.getElementById('profile-menu').classList.add('opacity-0', 'pointer-events-none', 'scale-90'); document.getElementById('config-modal').classList.remove('hidden'); document.getElementById('config-preview-img').src = document.getElementById('header-user-img').src; document.getElementById('config-upload-status').innerHTML = 'Toca para cambiar'; document.getElementById('btn-save-config').disabled = false; document.getElementById('btn-save-config').innerHTML = 'Guardar'; newProfileFile = null; }
-        function closeConfigModal() { document.getElementById('config-modal').classList.add('hidden'); }
-        async function handleConfigImageSelect(event) { const file = event.target.files[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { alert("Máx 5MB"); return; } newProfileFile = file; document.getElementById('config-preview-img').src = URL.createObjectURL(file); document.getElementById('config-upload-status').innerHTML = '<span class="text-orange-400 font-bold">Seleccionada</span>'; }
-        async function saveNewProfilePic() { if (!newProfileFile) { closeConfigModal(); return; } const btn = document.getElementById('btn-save-config'); const status = document.getElementById('config-upload-status'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; status.innerHTML = 'Subiendo...'; try { const formData = new FormData(); formData.append('reqtype', 'fileupload'); formData.append('userhash', CATBOX_USERHASH); formData.append('fileToUpload', newProfileFile); const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData }); if (!res.ok) throw new Error("Error de red"); const url = await res.text(); if (url.includes('catbox.moe')) { const finalUrl = url.trim(); if (currentUser) { await db.ref('users/' + currentUser.uid).update({ profilePic: finalUrl }); alert('¡Listo!'); closeConfigModal(); window.location.reload(); } } else { throw new Error("API Error"); } } catch (e) { console.error(e); status.innerHTML = '<span class="text-red-500">Error</span>'; btn.disabled = false; btn.innerHTML = 'Reintentar'; } }
-        function logoutUser() { auth.signOut().then(() => { window.location.reload(); }); }
+        function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); document.getElementById('config-modal-content').classList.remove('scale-95', 'opacity-0'); document.getElementById('config-preview-img').src = document.getElementById('header-user-img').src; newProfileFile = null; }
+        function closeConfigModal() { document.getElementById('config-modal').classList.add('hidden'); document.getElementById('config-modal-content').classList.add('scale-95', 'opacity-0'); }
+        async function handleConfigImageSelect(event) { const file = event.target.files[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { alert("Máx 5MB"); return; } newProfileFile = file; document.getElementById('config-preview-img').src = URL.createObjectURL(file); document.getElementById('config-upload-status').innerHTML = '<span class="text-orange-400 font-bold">Imagen seleccionada</span>'; }
+        async function saveNewProfilePic() { if (!newProfileFile) { closeConfigModal(); return; } const btn = document.getElementById('btn-save-config'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'; try { const formData = new FormData(); formData.append('reqtype', 'fileupload'); formData.append('userhash', CATBOX_USERHASH); formData.append('fileToUpload', newProfileFile); const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData }); if (!res.ok) throw new Error("Error de red"); const url = await res.text(); if (url.includes('catbox.moe')) { const finalUrl = url.trim(); if (currentUser) { await db.ref('users/' + currentUser.uid).update({ profilePic: finalUrl }); closeConfigModal(); window.location.reload(); } } else { throw new Error("API Error"); } } catch (e) { console.error(e); alert('Error al subir'); btn.disabled = false; btn.innerHTML = 'Reintentar'; } }
+
     </script>
 
-    <!-- SCRIPT DE PYTHON PARA EL FONDO DINÁMICO -->
+    <!-- SCRIPT DE PYTHON PARA EL FONDO DINÁMICO (Optimizado para no bloquear) -->
     <script type="py">
 from pyscript import window, document
 from pyodide.ffi import create_proxy
@@ -1178,57 +1742,51 @@ class Particle:
         self.y = y
         self.size = random.random() * 2 + 0.5
         
-        # Colores temáticos (Naranja Exen y Violeta)
-        # 80% Naranjas/Dorados, 20% Violetas
-        if random.random() > 0.2:
-            # Rango Naranja (Hue ~20-40)
-            h = random.randint(20, 45)
+        # Colores temáticos Exen (Naranja fuego y violeta místico)
+        if random.random() > 0.3:
+            h = random.randint(20, 40) # Naranja
             s = 90
             l = 60
         else:
-            # Rango Violeta (Hue ~260-290)
-            h = random.randint(260, 290)
-            s = 80
+            h = random.randint(260, 280) # Violeta
+            s = 70
             l = 70
             
         self.color = f"hsl({h}, {s}%, {l}%)"
         
-        # Velocidad suave y flotante
-        self.vx = (random.random() - 0.5) * 0.8
-        self.vy = (random.random() - 0.5) * 0.8
+        # Velocidad muy suave (tipo polvo flotando)
+        self.vx = (random.random() - 0.5) * 0.5
+        self.vy = (random.random() - 0.5) * 0.5
         
-        # Vida infinita (respawn en bordes)
-        self.alpha = 0 if is_respawn else random.random()
-        self.target_alpha = random.random() * 0.6 + 0.2
+        self.alpha = 0 if is_respawn else random.random() * 0.5
+        self.target_alpha = random.random() * 0.6 + 0.1
 
     def update(self):
-        # Movimiento fluido
         self.x += self.vx
         self.y += self.vy
         
-        # Efecto de aparición suave
+        # Efecto fade-in suave
         if self.alpha < self.target_alpha:
-            self.alpha += 0.01
+            self.alpha += 0.005
 
-        # Interacción con ratón (Repulsión suave)
+        # Interacción sutil con el mouse
         dx = mouse["x"] - self.x
         dy = mouse["y"] - self.y
         dist = math.sqrt(dx*dx + dy*dy)
         
-        if dist < 120:
-            force = (120 - dist) / 120
+        if dist < 100:
+            force = (100 - dist) / 100
             angle = math.atan2(dy, dx)
-            # Empujar lejos del ratón
-            self.vx -= math.cos(angle) * force * 0.1
-            self.vy -= math.sin(angle) * force * 0.1
+            self.vx -= math.cos(angle) * force * 0.05
+            self.vy -= math.sin(angle) * force * 0.05
 
-        # Límites (Screen Wrap)
+        # Screen Wrap
         if self.x < 0: self.x = canvas.width
         if self.x > canvas.width: self.x = 0
         if self.y < 0: self.y = canvas.height
         if self.y > canvas.height: self.y = 0
         
-        # Fricción mínima para estabilizar
+        # Estabilización
         self.vx *= 0.99
         self.vy *= 0.99
 
@@ -1236,7 +1794,7 @@ class Particle:
         ctx.save()
         ctx.globalAlpha = self.alpha
         ctx.fillStyle = self.color
-        ctx.shadowBlur = 8
+        ctx.shadowBlur = 4
         ctx.shadowColor = self.color
         ctx.beginPath()
         ctx.arc(self.x, self.y, self.size, 0, math.pi * 2)
@@ -1251,27 +1809,22 @@ def handle_mouse(e):
         mouse["x"] = e.clientX
         mouse["y"] = e.clientY
 
-# Escuchamos en window para capturar eventos sobre la UI HTML
 mouse_proxy = create_proxy(handle_mouse)
 window.addEventListener("mousemove", mouse_proxy)
 window.addEventListener("touchmove", mouse_proxy)
 
-# Inicializar partículas
-for _ in range(70): # Cantidad moderada para no saturar
+# Inicializar partículas (menos cantidad para rendimiento móvil)
+for _ in range(50):
     particles.append(Particle(random.random() * canvas.width, random.random() * canvas.height))
 
 def run_animation(*args):
-    # Limpiar canvas completamente para mantener transparencia del fondo CSS
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    
     for p in particles:
         p.update()
         p.draw()
-    
     window.requestAnimationFrame(create_proxy(run_animation))
 
 run_animation()
     </script>
 </body>
 </html>
- 
