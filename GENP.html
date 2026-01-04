@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador Maestro de Prompts</title>
+    <!-- 
+        RESPUESTA AL USUARIO:
+        Disculpa la confusión anterior. Aquí está la herramienta específica
+        que buscabas: Un Generador de Prompts Estructurados.
+        
+        Toda la lógica de construcción de prompts está en el script al final.
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#0B0F19',
+                            card: '#151B2B',
+                            accent: '#6366F1', // Indigo
+                            success: '#10B981',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0B0F19; color: #E2E8F0; }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #151B2B; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        .glass-panel {
+            background: rgba(21, 27, 43, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden selection:bg-brand-accent selection:text-white">
+
+    <!-- Header -->
+    <header class="h-16 border-b border-slate-800 bg-brand-dark flex items-center justify-between px-6 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-accent to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i class="fa-solid fa-wand-magic-sparkles text-white text-sm"></i>
+            </div>
+            <h1 class="font-bold text-lg tracking-tight">Prompt<span class="text-brand-accent">Smith</span> <span class="text-xs font-normal text-slate-500 ml-2 border border-slate-700 px-2 py-0.5 rounded-full">v2.0</span></h1>
+        </div>
+        <div class="flex gap-4 text-sm">
+            <button onclick="cargarEjemplo('codigo')" class="text-slate-400 hover:text-white transition-colors">Ej. Código</button>
+            <button onclick="cargarEjemplo('escritura')" class="text-slate-400 hover:text-white transition-colors">Ej. Escritura</button>
+            <button onclick="limpiarTodo()" class="text-red-400 hover:text-red-300 transition-colors ml-2"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- COLUMNA IZQUIERDA: Formulario de Configuración -->
+        <section class="w-full md:w-1/2 lg:w-5/12 flex flex-col border-r border-slate-800 overflow-y-auto p-6 gap-6 bg-brand-card">
+            
+            <!-- 1. PERSONA / ROL -->
+            <div class="group">
+                <label class="block text-xs font-bold text-brand-accent uppercase tracking-wider mb-2">
+                    <i class="fa-solid fa-user-astronaut mr-1"></i> 1. Rol / Persona
+                </label>
+                <p class="text-xs text-slate-400 mb-2">¿Quién debe ser la IA?</p>
+                <input type="text" id="role" placeholder="Ej: Desarrollador Senior de Python, Experto en Marketing..." 
+                    class="w-full bg-slate-900 border border-slate-700 rounded p-3 text-sm focus:border-brand-accent focus:ring-1 focus:ring-brand-accent outline-none transition-all placeholder-slate-600">
+            </div>
+
+            <!-- 2. TAREA / OBJETIVO -->
+            <div class="group">
+                <label class="block text-xs font-bold text-brand-accent uppercase tracking-wider mb-2">
+                    <i class="fa-solid fa-bullseye mr-1"></i> 2. Tarea Principal
+                </label>
+                <p class="text-xs text-slate-400 mb-2">¿Qué debe hacer exactamente?</p>
+                <textarea id="task" rows="3" placeholder="Ej: Escribir una función recursiva para ordenar, Crear un plan de dieta de 30 días..." 
+                    class="w-full bg-slate-900 border border-slate-700 rounded p-3 text-sm focus:border-brand-accent focus:ring-1 focus:ring-brand-accent outline-none transition-all placeholder-slate-600 resize-none"></textarea>
+            </div>
+
+            <!-- 3. CONTEXTO -->
+            <div class="group">
+                <label class="block text-xs font-bold text-brand-accent uppercase tracking-wider mb-2">
+                    <i class="fa-solid fa-layer-group mr-1"></i> 3. Contexto
+                </label>
+                <p class="text-xs text-slate-400 mb-2">Información de fondo necesaria.</p>
+                <textarea id="context" rows="3" placeholder="Ej: El usuario es principiante, El código debe correr en un servidor Linux antiguo..." 
+                    class="w-full bg-slate-900 border border-slate-700 rounded p-3 text-sm focus:border-brand-accent focus:ring-1 focus:ring-brand-accent outline-none transition-all placeholder-slate-600 resize-none"></textarea>
+            </div>
+
+            <!-- 4. RESTRICCIONES Y FORMATO -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-brand-accent uppercase tracking-wider mb-2">
+                        <i class="fa-solid fa-ban mr-1"></i> Restricciones
+                    </label>
+                    <input type="text" id="constraints" placeholder="Ej: Sin markdown, Max 100 palabras..." 
+                        class="w-full bg-slate-900 border border-slate-700 rounded p-3 text-sm focus:border-brand-accent outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-brand-accent uppercase tracking-wider mb-2">
+                        <i class="fa-solid fa-file-export mr-1"></i> Formato Salida
+                    </label>
+                    <select id="format" class="w-full bg-slate-900 border border-slate-700 rounded p-3 text-sm focus:border-brand-accent outline-none text-slate-300">
+                        <option value="markdown">Markdown</option>
+                        <option value="plain">Texto Plano</option>
+                        <option value="json">JSON</option>
+                        <option value="html">HTML</option>
+                        <option value="list">Lista con Viñetas</option>
+                        <option value="table">Tabla</option>
+                        <option value="step-by-step">Paso a Paso</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- GENERATE BUTTON (Mobile mainly, but useful visually) -->
+            <button onclick="generarPrompt()" class="mt-4 bg-brand-accent hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded shadow-lg shadow-indigo-900/30 transition-all transform active:scale-98 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-bolt"></i> Generar Prompt
+            </button>
+        </section>
+
+        <!-- COLUMNA DERECHA: Resultado -->
+        <section class="w-full md:w-1/2 lg:w-7/12 bg-slate-900/50 flex flex-col relative">
+            
+            <!-- Etiqueta flotante -->
+            <div class="absolute top-4 right-4 z-10">
+                <span id="status-badge" class="bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded border border-slate-700">Esperando entrada...</span>
+            </div>
+
+            <!-- Área de Texto del Prompt -->
+            <div class="flex-1 p-6 flex flex-col">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex justify-between items-center">
+                    <span><i class="fa-solid fa-code mr-2"></i>Resultado Generado</span>
+                    <span class="text-[10px] text-slate-500 font-mono">TOKENS ESTIMADOS: <span id="token-count">0</span></span>
+                </label>
+                
+                <div class="flex-1 relative group">
+                    <textarea id="output" readonly 
+                        class="w-full h-full bg-slate-950 border border-slate-800 rounded-lg p-6 font-mono text-sm leading-relaxed text-emerald-300 focus:outline-none resize-none shadow-inner"
+                        placeholder="// El prompt generado aparecerá aquí..."></textarea>
+                    
+                    <!-- Botón de copiado flotante -->
+                    <button onclick="copiarAlPortapapeles()" class="absolute top-4 right-4 bg-slate-800 hover:bg-slate-700 text-white p-2 rounded shadow border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel inferior de acciones -->
+            <div class="h-16 border-t border-slate-800 bg-brand-dark px-6 flex items-center justify-between shrink-0">
+                <div class="text-xs text-slate-500">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Usa este prompt en ChatGPT, Claude o Gemini.
+                </div>
+                <button onclick="copiarAlPortapapeles()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold py-2 px-6 rounded transition-colors flex items-center gap-2">
+                    <i class="fa-regular fa-clipboard"></i> Copiar Prompt
+                </button>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- NOTIFICACIÓN TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="bg-slate-800 border-l-4 border-emerald-500 text-white px-6 py-4 rounded shadow-2xl flex items-center gap-3">
+            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+            <div>
+                <h4 class="font-bold text-sm">Éxito</h4>
+                <p class="text-xs text-slate-300">Prompt copiado al portapapeles</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ELEMENTOS DEL DOM
+        const inputs = {
+            role: document.getElementById('role'),
+            task: document.getElementById('task'),
+            context: document.getElementById('context'),
+            constraints: document.getElementById('constraints'),
+            format: document.getElementById('format')
+        };
+        const output = document.getElementById('output');
+        const tokenDisplay = document.getElementById('token-count');
+        const statusBadge = document.getElementById('status-badge');
+
+        // EJEMPLOS PREDEFINIDOS
+        const ejemplos = {
+            codigo: {
+                role: "Ingeniero de Software Senior especializado en React y Optimización de Rendimiento",
+                task: "Refactorizar un componente de React legacy que usa Class Components a Hooks modernos y TypeScript.",
+                context: "El código actual es lento porque hace re-renders innecesarios. Es parte de una aplicación financiera grande.",
+                constraints: "No usar librerías externas para el estado. Mantener estrictamente el tipado.",
+                format: "markdown"
+            },
+            escritura: {
+                role: "Editor Jefe de una revista de tecnología futurista",
+                task: "Escribir un editorial provocativo sobre la ética de la IA en la educación.",
+                context: "La audiencia son profesores universitarios escépticos. El tono debe ser respetuoso pero firme sobre la inevitabilidad del cambio.",
+                constraints: "Máximo 300 palabras. Usar al menos una metáfora sobre la revolución industrial.",
+                format: "plain"
+            }
+        };
+
+        // EVENT LISTENERS: Auto-generar al escribir
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', generarPrompt);
+        });
+
+        // FUNCIÓN PRINCIPAL DE GENERACIÓN
+        function generarPrompt() {
+            const role = inputs.role.value.trim();
+            const task = inputs.task.value.trim();
+            const context = inputs.context.value.trim();
+            const constraints = inputs.constraints.value.trim();
+            const format = inputs.format.value;
+
+            if (!role && !task && !context) {
+                output.value = "";
+                statusBadge.innerText = "Esperando entrada...";
+                statusBadge.className = "bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded border border-slate-700";
+                tokenDisplay.innerText = "0";
+                return;
+            }
+
+            statusBadge.innerText = "Generando en tiempo real...";
+            statusBadge.className = "bg-brand-accent/20 text-brand-accent text-xs px-2 py-1 rounded border border-brand-accent/30 animate-pulse";
+
+            // CONSTRUCCIÓN DEL PROMPT ESTRUCTURADO
+            // Usamos una técnica de delimitadores claros para mejorar la comprensión de la IA
+            let promptConstruido = "";
+
+            if (role) {
+                promptConstruido += `### ROLE\nAct as a ${role}.\n\n`;
+            }
+
+            if (context) {
+                promptConstruido += `### CONTEXT\n${context}\n\n`;
+            }
+
+            if (task) {
+                promptConstruido += `### TASK\n${task}\n\n`;
+            }
+
+            // Sección de formato y restricciones combinadas
+            promptConstruido += `### REQUIREMENTS & FORMAT\n`;
+            if (constraints) promptConstruido += `- Constraints: ${constraints}\n`;
+            
+            // Lógica de formato
+            let formatInstruction = "";
+            switch(format) {
+                case 'markdown': formatInstruction = "Use Markdown formatting (headers, code blocks, bold text)."; break;
+                case 'json': formatInstruction = "Output ONLY valid JSON code. No conversational text."; break;
+                case 'html': formatInstruction = "Output clean, semantic HTML5 code."; break;
+                case 'list': formatInstruction = "Output as a concise bulleted list."; break;
+                case 'table': formatInstruction = "Organize the data in a structured table."; break;
+                case 'step-by-step': formatInstruction = "Break down the response into numbered, logical steps."; break;
+                default: formatInstruction = "Use plain text.";
+            }
+            promptConstruido += `- Output Format: ${formatInstruction}\n`;
+            
+            // Cierre fuerte
+            promptConstruido += `\n### INSTRUCTION\nTake a deep breath and work on this step-by-step to ensure high quality. Start your response now.`;
+
+            output.value = promptConstruido;
+            
+            // Estimación simple de tokens (aprox 4 chars = 1 token)
+            const tokenCount = Math.ceil(promptConstruido.length / 4);
+            tokenDisplay.innerText = tokenCount;
+        }
+
+        // FUNCIONES AUXILIARES
+        function cargarEjemplo(tipo) {
+            const data = ejemplos[tipo];
+            inputs.role.value = data.role;
+            inputs.task.value = data.task;
+            inputs.context.value = data.context;
+            inputs.constraints.value = data.constraints;
+            inputs.format.value = data.format;
+            generarPrompt();
+            mostrarNotificacion("Ejemplo cargado", "info");
+        }
+
+        function limpiarTodo() {
+            Object.values(inputs).forEach(input => input.value = "");
+            inputs.format.value = "markdown";
+            output.value = "";
+            tokenDisplay.innerText = "0";
+            statusBadge.innerText = "Limpio";
+            statusBadge.className = "bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded border border-slate-700";
+        }
+
+        function copiarAlPortapapeles() {
+            if (!output.value) return;
+            
+            output.select();
+            document.execCommand('copy'); // Fallback clásico para iframes
+            
+            // Intentar API moderna si está disponible
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(output.value).catch(err => console.log('Error clipboard api', err));
+            }
+            
+            mostrarNotificacion("Prompt copiado al portapapeles", "success");
+        }
+
+        function mostrarNotificacion(msg, tipo) {
+            const toast = document.getElementById('toast');
+            const toastText = toast.querySelector('p');
+            const toastTitle = toast.querySelector('h4');
+            const icon = toast.querySelector('i');
+
+            toastText.innerText = msg;
+            
+            if (tipo === 'info') {
+                toastTitle.innerText = "Información";
+                icon.className = "fa-solid fa-circle-info text-blue-400";
+                toast.querySelector('div').className = "bg-slate-800 border-l-4 border-blue-500 text-white px-6 py-4 rounded shadow-2xl flex items-center gap-3";
+            } else {
+                toastTitle.innerText = "Éxito";
+                icon.className = "fa-solid fa-circle-check text-emerald-400";
+                toast.querySelector('div').className = "bg-slate-800 border-l-4 border-emerald-500 text-white px-6 py-4 rounded shadow-2xl flex items-center gap-3";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        // Inicializar
+        generarPrompt();
+    </script>
+</body>
+</html>
