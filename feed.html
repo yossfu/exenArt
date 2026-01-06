@@ -270,10 +270,9 @@
                             
                             <div class="hidden"><input type="text" id="post-tags" placeholder="Auto-tagging..." readonly></div>
                             
-                            <!-- NUEVO CAMPO VISIBLE PARA WD TAGGER -->
+                            <!-- NUEVO CAMPO VISIBLE PARA MOAT TAGGER -->
                             <div class="relative w-full mb-1">
-                                <input type="text" id="post-description" placeholder="Analizando detalles..." class="custom-input bg-black/40 border-zinc-700 text-xs pl-2 text-gray-300" readonly>
-                                <div class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-gray-500 font-bold bg-black/50 px-2 py-0.5 rounded">WD TAGGER</div>
+                                <input type="text" id="post-description" placeholder="Analizando..." class="custom-input bg-black/40 border-zinc-700 text-xs pl-2 text-gray-300" readonly>
                             </div>
 
                             <div class="flex flex-col sm:flex-row gap-3">
@@ -438,15 +437,17 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE IA -->
+    <!-- SCRIPT DE IA (ACTUALIZADO: MOAT TAGGER + FALLBACK) -->
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
-        const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
         
-        // WD Tagger Config (SmilingWolf)
-        // Usa el espacio oficial y parámetros típicos de este modelo
-        const WD_SPACE_URL = "https://smilingwolf-wd-tagger.hf.space";
-        const WD_CONFIG = { gen_threshold: 0.35, char_threshold: 0.85 };
+        // CONFIGURACIÓN MOAT TAGGER (SmilingWolf)
+        const MOAT_SPACE = "SmilingWolf/wd-v1-4-moat-tagger-v2";
+        const MOAT_CONFIG = { gen_threshold: 0.35, char_threshold: 0.85 };
+
+        // CONFIGURACIÓN DEEPDANBOORU (Fallback)
+        const DEEP_SPACE = "Jossle/deepdanbooru_online_Exen";
+        const DEEP_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
 
         async function resizeImageForApi(file) {
             if (file.size <= 1024 * 1024) return file;
@@ -461,7 +462,7 @@
         
         window.runAutoTagging = async function(originalFile) {
             const tagInput = document.getElementById('post-tags'); 
-            const descInput = document.getElementById('post-description'); // Nuevo campo descriptivo
+            const descInput = document.getElementById('post-description'); 
             const publishBtn = document.getElementById('publish-btn');
             
             tagInput.value = ""; 
@@ -472,47 +473,48 @@
             try {
                 const processedFile = await resizeImageForApi(originalFile);
                 
-                // Ejecutamos ambos en paralelo (Promise.allSettled permite que uno falle sin detener al otro)
-                const [resultDeep, resultWD] = await Promise.allSettled([
-                    // Tagger 1: DeepDanbooru
-                    Client.connect("Jossle/deepdanbooru_online_Exen").then(client => 
-                        client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend])
-                    ),
-                    // Tagger 2: WD Tagger
-                    Client.connect(WD_SPACE_URL).then(client => 
-                        client.predict(0, [processedFile, WD_CONFIG.gen_threshold, WD_CONFIG.char_threshold])
-                    )
-                ]);
-
-                // Procesar DeepDanbooru
-                if (resultDeep.status === 'fulfilled' && resultDeep.value && resultDeep.value.data) {
-                    tagInput.value = resultDeep.value.data[0];
-                }
-
-                // Procesar WD Tagger
-                if (resultWD.status === 'fulfilled' && resultWD.value && resultWD.value.data) {
-                    const labelData = resultWD.value.data[0]; // WD devuelve un objeto { tag: confianza }
-                    if (labelData && typeof labelData === 'object') {
-                        // Ordenamos por confianza y filtramos
+                // INTENTO 1: MOAT TAGGER (Mejor calidad)
+                try {
+                    const client = await Client.connect(MOAT_SPACE);
+                    const result = await client.predict(0, [processedFile, MOAT_CONFIG.gen_threshold, MOAT_CONFIG.char_threshold]);
+                    
+                    if (result && result.data && result.data[0]) {
+                        const labelData = result.data[0]; 
+                        // Procesar etiquetas ordenadas por confianza
                         const sortedTags = Object.entries(labelData)
-                            .filter(([tag, conf]) => conf > WD_CONFIG.gen_threshold)
+                            .filter(([tag, conf]) => conf > MOAT_CONFIG.gen_threshold)
                             .sort((a, b) => b[1] - a[1])
-                            .map(([tag]) => tag.replaceAll('_', ' ')); // Formatear "red_eyes" -> "red eyes"
+                            .map(([tag]) => tag.replaceAll('_', ' ')); 
                         
                         if (sortedTags.length > 0) {
                             descInput.value = sortedTags.join(", ");
+                            // Rellenar también el campo oculto de tags para búsqueda
+                            tagInput.value = sortedTags.join(", "); 
                         } else {
-                            descInput.value = "Sin detalles detectados.";
+                            descInput.value = "Sin detalles claros.";
                         }
+                    } else {
+                        throw new Error("Respuesta vacía de MOAT");
                     }
-                } else {
-                    console.warn("WD Tagger falló o no respondió:", resultWD.reason);
-                    descInput.value = "WD Tagger no disponible (Posible sobrecarga)";
+                } catch (moatError) {
+                    console.warn("MOAT Tagger no disponible, usando fallback...", moatError);
+                    
+                    // INTENTO 2: DEEPDANBOORU (Fallback)
+                    const clientFallback = await Client.connect(DEEP_SPACE);
+                    const resultFallback = await clientFallback.predict(0, [processedFile, DEEP_CONFIG.threshold, DEEP_CONFIG.useSpace, DEEP_CONFIG.useEscape, DEEP_CONFIG.keepConfidences, DEEP_CONFIG.descend]);
+                    
+                    if (resultFallback && resultFallback.data && resultFallback.data[0]) {
+                        tagInput.value = resultFallback.data[0];
+                        // Usar los mismos tags para descripción en caso de fallback
+                        descInput.value = resultFallback.data[0].replaceAll('_', ' '); 
+                    } else {
+                        descInput.value = "Análisis fallido (Servidores ocupados)";
+                    }
                 }
 
             } catch (error) {
-                console.error("Error General Tagging:", error); 
-                if(!tagInput.value) tagInput.value = "Error en análisis";
+                console.error("Error crítico en tagging:", error); 
+                descInput.value = "Error de conexión";
             } finally {
                 publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
                 publishBtn.innerHTML = '<span>Publicar</span> <i class="fas fa-paper-plane text-xs"></i>';
