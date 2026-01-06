@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
@@ -8,12 +7,8 @@
     <meta property="og:title" content="exen-E | Galería" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://yossfu.github.io/exenArt/index.html" />
-    <meta property="og:image" content="https://files.catbox.moe/rjb6p1.png" />
     
-    <!-- PYSCRIPT: Motor de Python para el navegador -->
-    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
-    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
-
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -29,6 +24,7 @@
                         },
                         accent: {
                             DEFAULT: '#f97316',
+                            hover: '#fb923c',
                             glow: 'rgba(249, 115, 22, 0.5)'
                         }
                     },
@@ -37,19 +33,29 @@
                         body: ['Inter', 'sans-serif']
                     },
                     animation: {
-                        'float-up': 'floatUp 10s linear forwards',
-                        'shimmer': 'shimmer 1.5s infinite', // Aseguramos que shimmer esté definido
+                        'float-slow': 'float 20s infinite ease-in-out',
+                        'float-reverse': 'floatReverse 25s infinite ease-in-out',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'shimmer': 'shimmer 2s infinite linear',
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
                     },
                     keyframes: {
-                        floatUp: {
-                            '0%': { transform: 'translateY(100%) scale(0.9)', opacity: '0' },
-                            '5%': { opacity: '1', transform: 'translateY(90%) scale(1)' },
-                            '90%': { opacity: '1' },
-                            '100%': { transform: 'translateY(-100px)', opacity: '0' },
+                        float: {
+                            '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
                         },
-                        shimmer: { // Definición de shimmer para los esqueletos
+                        floatReverse: {
+                            '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                            '50%': { transform: 'translate(-30px, 40px) scale(1.1)' },
+                        },
+                        shimmer: {
                             '0%': { backgroundPosition: '200% 0' },
-                            '100%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '-200% 0' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
                         }
                     }
                 }
@@ -62,6 +68,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -70,386 +77,342 @@
         :root { 
             --accent: #f97316; 
             --nav-height: 70px;
-            --header-height: 64px;
+            --header-height: 56px; 
         }
 
         /* --- BASE & SCROLL --- */
         html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #050505; /* Fondo más oscuro */
-            background-image: 
-                radial-gradient(circle at 10% 10%, rgba(249, 115, 22, 0.08) 0%, transparent 40%), 
-                radial-gradient(circle at 90% 90%, rgba(124, 58, 237, 0.05) 0%, transparent 40%),
-                linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, transparent 20%); /* Sutil gradiente para profundidad */
-            background-attachment: fixed;
+            background-color: #050505;
             color: #f3f4f6;
             padding-bottom: calc(var(--nav-height) + 20px);
             padding-top: var(--header-height);
-            overscroll-behavior-y: none;
+            overflow-x: hidden;
         }
 
-        /* CANVAS DE FONDO PARA PYTHON */
-        #particle-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1; /* Detrás de todo */
-            pointer-events: none; /* Deja pasar los clics */
-            opacity: 0.7; /* Sutil */
+        /* --- FONDO AMBIENT --- */
+        .ambient-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; pointer-events: none; overflow: hidden;
         }
+        .blob {
+            position: absolute; border-radius: 50%;
+            filter: blur(80px); opacity: 0.4;
+        }
+        .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #f97316; animation: float-slow 20s infinite alternate; }
+        .blob-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #7c3aed; opacity: 0.25; animation: float-reverse 25s infinite alternate; }
+        .blob-3 { top: 40%; left: 40%; width: 40vw; height: 40vw; background: #c2410c; opacity: 0.15; animation: float-slow 30s infinite alternate-reverse; }
 
-        /* Scrollbars */
+        /* --- SCROLLBARS --- */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; } /* Más ancho */
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 6px; border: 1px solid #1a1a1a; } /* Más redondeado y con borde */
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); } /* Color al pasar el ratón */
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
         /* --- UI COMPONENTS --- */
-        .glass-panel {
-            background: rgba(18, 18, 20, 0.85); /* Ligeramente más opaco */
-            backdrop-filter: blur(25px); /* Más blur */
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Borde más visible */
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4); /* Sombra más pronunciada */
-        }
-
         .glass-header {
-            background: rgba(0, 0, 0, 0.9); /* Más opaco */
-            backdrop-filter: blur(20px); /* Más blur */
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Borde más visible */
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3); /* Sombra para el header */
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .solid-panel {
+            background: #121214;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
         }
 
-        /* --- TOP USERS --- */
+        .glass-panel {
+            background: rgba(18, 18, 20, 0.6);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        /* --- COMPONENTS --- */
         .top-user-ring {
-            padding: 3px; /* Más padding */
-            border-radius: 50%;
+            padding: 2px; border-radius: 50%; position: relative;
+            transition: transform 0.2s;
+        }
+        .top-user-ring:active { transform: scale(0.95); }
+        .rank-gold { background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+        .rank-silver { background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%); }
+        .rank-bronze { background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%); }
+        .rank-normal { background: rgba(255,255,255,0.1); }
+
+        .image-card {
+            border-radius: 16px; overflow: hidden; background: #121214;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid rgba(255,255,255,0.05);
             position: relative;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5); /* Sombra general */
         }
-        .rank-gold { background: linear-gradient(45deg, #ffeb3b, #fbc02d); box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); } /* Oro más vibrante */
-        .rank-silver { background: linear-gradient(45deg, #e0e0e0, #bdbdbd); box-shadow: 0 0 10px rgba(192, 192, 192, 0.4); }
-        .rank-bronze { background: linear-gradient(45deg, #d7ba8e, #a1887f); box-shadow: 0 0 10px rgba(205, 127, 50, 0.4); }
-        .rank-normal { background: rgba(255,255,255,0.15); } /* Ligeramente más claro */
+        .image-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); border-color: rgba(249, 115, 22, 0.3); }
+        .image-card:active { transform: scale(0.98); }
+
+        /* PERSONAJES CIRCULARES */
+        .character-ring {
+            background: linear-gradient(135deg, #f97316 0%, #facc15 100%);
+            padding: 2px;
+            border-radius: 50%;
+            display: inline-block;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .character-ring:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
+        }
+        .character-ring:active {
+            transform: scale(0.95);
+        }
         
-        /* --- FLOATING BUBBLES --- */
-        #floating-comments-container {
-            position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 15;
-            mask-image: linear-gradient(to top, transparent, black 10%, black 90%, transparent); /* Más suave */
-            -webkit-mask-image: linear-gradient(to top, transparent, black 10%, black 90%, transparent);
+        .bottom-nav { 
+            height: var(--nav-height); background: rgba(9, 9, 11, 0.98);
+            backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: env(safe-area-inset-bottom);
         }
+        .nav-item.active { color: var(--accent); }
+        .nav-item.active i { transform: translateY(-4px); filter: drop-shadow(0 0 8px var(--accent)); }
+        
         .chat-bubble {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.7); /* Más opaco */
-            backdrop-filter: blur(6px); /* Más blur */
-            padding: 8px 14px; /* Más padding */
-            border-radius: 25px; /* Más redondeado */
-            color: white;
-            font-size: 13px; /* Ligeramente más grande */
-            max-width: 70%; /* Un poco más estrecho */
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3); /* Sombra más pronunciada */
-            border: 1px solid rgba(255,255,255,0.15); /* Borde más visible */
-            display: flex; align-items: center; gap: 10px; /* Más espacio */
-            animation: floatUp 12s linear forwards; /* Animación CSS */
-            will-change: transform, opacity;
+            position: absolute; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
+            padding: 8px 14px; border-radius: 20px; color: white; font-size: 13px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15);
+            display: flex; align-items: center; gap: 10px; animation: floatUp 10s linear forwards;
+            pointer-events: none; z-index: 20; max-width: 80%; will-change: transform, opacity;
         }
-        .chat-bubble img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); } /* Avatar con borde */
         @keyframes floatUp {
             0% { transform: translateY(100%) scale(0.9); opacity: 0; }
             5% { opacity: 1; transform: translateY(90%) scale(1); }
             90% { opacity: 1; }
-            100% { transform: translateY(-100px); opacity: 0; }
+            100% { transform: translateY(-50px); opacity: 0; }
         }
 
-        /* --- CARDS --- */
-        .image-card {
-            border-radius: 16px; /* Más redondeado */
-            overflow: hidden;
-            background: #121214;
-            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease; /* Transición para sombra */
-            will-change: transform, box-shadow;
-            border: 1px solid rgba(255,255,255,0.08); /* Borde más visible */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Sombra por defecto */
-        }
-        .image-card:hover {
-            transform: translateY(-3px) scale(1.02); /* Efecto hover más pronunciado */
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5); /* Sombra más grande en hover */
-        }
-        .image-card:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-
-        /* --- HERO --- */
-        .hero-wrapper {
-            position: relative; width: 100%; height: 320px; 
-            border-radius: 24px; 
-            overflow: hidden;
-            margin-bottom: 2rem; 
-            box-shadow: 0 20px 50px -20px rgba(0,0,0,0.8);
-            border: 1px solid rgba(255,255,255,0.08); /* Borde más visible */
-            display: none;
-        }
-        .hero-overlay {
-            background: linear-gradient(0deg, #050505 0%, rgba(5,5,5,0.8) 20%, rgba(5,5,5,0.2) 60%, rgba(0,0,0,0.4) 100%);
-            position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 1.5rem;
-        }
-        .hero-slide img {
-            filter: brightness(0.5); /* Imagen más oscura para mejor contraste del texto */
-        }
-
-        /* --- BOTTOM NAV --- */
-        .bottom-nav { 
-            height: var(--nav-height);
-            background: rgba(5, 5, 5, 0.98); /* Más opaco */
-            backdrop-filter: blur(25px); /* Más blur */
-            border-top: 1px solid rgba(255, 255, 255, 0.1); /* Borde más visible */
-            padding-bottom: env(safe-area-inset-bottom);
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.4); /* Sombra hacia arriba */
-        }
-        .nav-item {
-            transition: transform 0.2s ease, color 0.2s ease;
-        }
-        .nav-item:hover {
-            transform: translateY(-2px);
-            color: var(--accent);
-        }
-        .nav-item.active i { 
-            color: var(--accent); 
-            transform: translateY(-6px); /* Más pronunciado */
-            text-shadow: 0 0 20px var(--accent); /* Sombra más grande */
-        }
-
-        /* --- MODAL --- */
-        .modal-backdrop { 
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); /* Fondo más oscuro */
-            z-index: 5000;
-            opacity: 0; transition: opacity 0.3s;
-        } 
+        .modal-backdrop { display: none; position: fixed; inset: 0; background: #000; z-index: 5000; opacity: 0; transition: opacity 0.3s; }
         .modal-backdrop.visible { display: block; opacity: 1; }
-        .modal-backdrop.fullscreen-mode #modal-image-area {
-            height: 100vh;
-            width: 100vw;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 5010;
-            background: black;
-        }
-        .modal-backdrop.fullscreen-mode #modal-inner-container {
-            flex-direction: column; /* En fullscreen, el panel de info se va abajo */
-        }
-        .modal-backdrop.fullscreen-mode .modal-close-btn {
-            top: 1rem; right: 1rem;
-        }
-        .modal-backdrop.fullscreen-mode #modal-image {
-            max-width: 100%;
-            max-height: 100%;
-        }
-        .modal-backdrop.fullscreen-mode #modal-inner-container > div:last-child {
-            display: none; /* Ocultar panel de info en fullscreen */
-        }
-        
-        /* Utils */
-        .skeleton { background: linear-gradient(90deg, #1f1f22 25%, #2a2a2e 50%, #1f1f22 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; } /* Más redondeado */
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .modal-backdrop.fullscreen-mode #modal-inner-container { flex-direction: column; }
+        .modal-backdrop.fullscreen-mode #modal-image-area { height: 100vh; width: 100vw; }
+        .modal-backdrop.fullscreen-mode .info-panel { display: none; }
+
+        .skeleton { background: linear-gradient(90deg, #1f1f22 25%, #2a2a2e 50%, #1f1f22 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px; }
     </style>
 </head>
 <body class="antialiased selection:bg-orange-500 selection:text-white">
 
-    <!-- CANVAS PARA EL SCRIPT DE PYTHON -->
-    <canvas id="particle-canvas"></canvas>
-
-    <div id="initial-loader" class="fixed inset-0 flex flex-col items-center justify-center bg-dark-900 z-[9999] transition-opacity duration-500">
-        <img src="https://files.catbox.moe/ap1lh0.png" class="loader-logo mb-4" style="width: 80px; animation: pulse 2s infinite;">
-        <div class="w-10 h-10 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+    <!-- FONDO AMBIENT (CSS PURO) -->
+    <div class="ambient-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
     </div>
 
-    <div id="app-content" style="display: block;">
+    <!-- LOADER INICIAL -->
+    <div id="initial-loader" class="fixed inset-0 flex flex-col items-center justify-center bg-dark-900 z-[9999] transition-opacity duration-500">
+        <img src="https://files.catbox.moe/ap1lh0.png" class="w-20 mb-6 drop-shadow-[0_0_15px_rgba(249,115,22,0.5)] animate-pulse">
+        <div class="flex gap-2">
+            <div class="w-2.5 h-2.5 bg-orange-500 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+            <div class="w-2.5 h-2.5 bg-orange-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+            <div class="w-2.5 h-2.5 bg-orange-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+    </div>
+
+    <div id="app-content" style="display: none;">
         
         <!-- HEADER -->
-        <header class="fixed top-0 left-0 right-0 z-50 glass-header h-[var(--header-height)] px-4 flex justify-between items-center">
+        <header class="fixed top-0 left-0 right-0 z-50 glass-header h-[var(--header-height)] px-4 flex justify-between items-center transition-all duration-300">
             <div class="relative">
-                <button id="user-profile-btn" onclick="toggleProfileMenu()" class="w-10 h-10 rounded-full overflow-hidden border border-white/10 active:scale-95 transition duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <button id="user-profile-btn" onclick="toggleProfileMenu()" class="w-8 h-8 rounded-full overflow-hidden border border-white/10 active:scale-95 transition focus:outline-none ring-2 ring-transparent hover:ring-white/10">
                     <img id="header-user-img" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
                 </button>
-                <div id="profile-menu" class="fixed top-[70px] left-4 w-56 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-left z-[5001]">
-                    <div class="p-4 border-b border-white/5"><span class="text-xs font-bold text-gray-400 uppercase">Mi Cuenta</span></div>
+                <!-- MENU DE PERFIL -->
+                <div id="profile-menu" class="fixed top-[60px] left-4 w-56 solid-panel rounded-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-left z-[5001]">
+                    <div class="p-4 border-b border-white/5"><span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mi Cuenta</span></div>
                     <div class="p-2">
-                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer text-sm text-gray-300 transition" onclick="if(requireLogin()) openConfigModal()"><i class="fas fa-cog w-5 text-center"></i> Configurar</div>
-                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer text-sm text-gray-300 transition" onclick="window.location.href='profile.html'"><i class="fas fa-user w-5 text-center"></i> Ver Perfil</div>
-                        <div class="flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-lg cursor-pointer text-sm text-red-400 transition" onclick="logoutUser()"><i class="fas fa-sign-out-alt w-5 text-center"></i> Cerrar Sesión</div>
+                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer text-sm text-gray-300 transition" onclick="if(requireLogin()) openConfigModal()"><i class="fas fa-cog w-5 text-center text-orange-500"></i> Configurar</div>
+                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer text-sm text-gray-300 transition" onclick="window.location.href='profile.html'"><i class="fas fa-user w-5 text-center text-orange-500"></i> Ver Perfil</div>
+                        <div class="flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-xl cursor-pointer text-sm text-red-400 transition" onclick="logoutUser()"><i class="fas fa-sign-out-alt w-5 text-center"></i> Cerrar Sesión</div>
                     </div>
                 </div>
             </div>
 
-            <div class="flex flex-col items-center opacity-90">
-                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-7 w-auto drop-shadow-md hover:scale-105 transition-transform duration-200">
+            <div class="flex flex-col items-center cursor-pointer active:scale-95 transition" onclick="window.scrollTo(0,0)">
+                <img src="https://files.catbox.moe/ap1lh0.png" alt="Logo" class="h-7 drop-shadow-[0_0_10px_rgba(249,115,22,0.4)]">
             </div>
             
             <div class="relative">
-                <button onclick="toggleNotifications()" class="notif-btn w-10 h-10 flex items-center justify-center text-gray-300 hover:text-white active:scale-95 transition duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
-                    <i class="far fa-bell text-xl"></i>
-                    <div id="notif-badge" class="absolute top-2 right-2 w-2.5 h-2.5 bg-orange-500 rounded-full hidden border border-black"></div>
+                <button onclick="toggleNotifications()" class="notif-btn w-9 h-9 flex items-center justify-center text-gray-300 hover:text-white active:scale-95 transition hover:bg-white/5 rounded-full">
+                    <i class="far fa-bell text-lg"></i>
+                    <div id="notif-badge" class="absolute top-2 right-2 w-1.5 h-1.5 bg-orange-500 rounded-full hidden border border-black shadow-[0_0_8px_orange]"></div>
                 </button>
-                <div id="notification-dropdown" class="fixed top-[70px] right-4 w-80 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-right z-[5001] max-h-[60vh] overflow-hidden flex flex-col">
-                    <div class="p-4 border-b border-white/5"><span class="text-sm font-bold text-white">Notificaciones</span></div>
-                    <div id="notif-list" class="overflow-y-auto p-2 custom-scrollbar"></div>
+                <!-- NOTIFICACIONES -->
+                <div id="notification-dropdown" class="fixed top-[60px] right-4 w-80 solid-panel rounded-2xl transform scale-90 opacity-0 pointer-events-none transition-all duration-200 origin-top-right z-[5001] max-h-[60vh] overflow-hidden flex flex-col">
+                    <div class="p-4 border-b border-white/5 flex justify-between items-center bg-[#18181b]">
+                        <span class="text-sm font-bold text-white">Actividad</span>
+                        <span class="text-[10px] text-gray-500 uppercase tracking-widest">Recientes</span>
+                    </div>
+                    <div id="notif-list" class="overflow-y-auto p-2 custom-scrollbar flex-1 bg-[#121214]"></div>
                 </div>
             </div>
         </header>
 
-        <main class="w-full pb-8">
-            <div class="container mx-auto px-4 sm:px-6">
+        <main class="w-full pb-10 px-4 sm:px-6">
 
-                <!-- TOP USUARIOS SECTION (Nuevo) -->
-                <section id="top-users-section" class="py-4 mt-2">
-                    <div class="flex items-center justify-between mb-3 px-1">
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fas fa-crown text-orange-500 mr-1"></i> Top Creadores</h3>
+            <!-- TOP USUARIOS -->
+            <section id="top-users-section" class="py-4 mt-2">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-crown text-orange-500"></i> Top Creadores</h3>
+                </div>
+                <div id="top-users-container" class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 pl-1 snap-x">
+                    <!-- Skeletons (ajustados a tamaño pequeño) -->
+                    <div class="flex flex-col items-center gap-2 min-w-[48px] animate-pulse">
+                        <div class="w-10 h-10 rounded-full bg-zinc-800"></div>
+                        <div class="w-8 h-1.5 bg-zinc-800 rounded"></div>
                     </div>
-                    <div id="top-users-container" class="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
-                        <!-- Skeletons por defecto -->
-                        <div class="flex flex-col items-center gap-1 min-w-[60px] animate-pulse">
-                            <div class="w-[56px] h-[56px] rounded-full bg-gray-800"></div>
-                            <div class="w-10 h-2 bg-gray-800 rounded mt-1"></div>
-                        </div>
-                        <div class="flex flex-col items-center gap-1 min-w-[60px] animate-pulse delay-75">
-                            <div class="w-[56px] h-[56px] rounded-full bg-gray-800"></div>
-                            <div class="w-10 h-2 bg-gray-800 rounded mt-1"></div>
-                        </div>
-                        <div class="flex flex-col items-center gap-1 min-w-[60px] animate-pulse delay-150">
-                            <div class="w-[56px] h-[56px] rounded-full bg-gray-800"></div>
-                            <div class="w-10 h-2 bg-gray-800 rounded mt-1"></div>
-                        </div>
+                </div>
+            </section>
+
+            <!-- BUSCADOR -->
+            <div class="relative group mb-6 z-30">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-500 group-focus-within:text-orange-500 transition text-xs"></i>
+                </div>
+                <input type="text" id="search-input" placeholder="Buscar arte, personajes..." onkeydown="if(event.key === 'Enter') executeSearch(this.value)"
+                       class="w-full bg-[#121214] border border-white/10 rounded-xl py-3 pl-10 pr-10 text-white text-xs focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 transition shadow-lg placeholder-gray-600">
+                <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-3 hidden text-gray-500 hover:text-white transition" onclick="resetSearchView()"><i class="fas fa-times text-xs"></i></button>
+            </div>
+
+            <!-- SECCIÓN PERSONAJES (REEMPLAZO DE BANNER) -->
+            <section id="character-stories-section" class="mb-8">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-users text-orange-500"></i> Personajes Destacados</h3>
+                </div>
+                <div id="character-stories-container" class="flex gap-4 overflow-x-auto hide-scrollbar pb-4 pl-1 snap-x min-h-[100px]">
+                    <!-- Aquí se renderizan los 5 círculos -->
+                    <div class="w-20 h-20 rounded-full bg-zinc-900 animate-pulse flex-shrink-0"></div>
+                    <div class="w-20 h-20 rounded-full bg-zinc-900 animate-pulse flex-shrink-0"></div>
+                    <div class="w-20 h-20 rounded-full bg-zinc-900 animate-pulse flex-shrink-0"></div>
+                    <div class="w-20 h-20 rounded-full bg-zinc-900 animate-pulse flex-shrink-0"></div>
+                    <div class="w-20 h-20 rounded-full bg-zinc-900 animate-pulse flex-shrink-0"></div>
+                </div>
+            </section>
+
+            <!-- RESULTADOS BÚSQUEDA -->
+            <div id="search-results-container" class="hidden min-h-[50vh]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-white">Resultados</h2>
+                    <button onclick="resetSearchView()" class="text-xs text-orange-500 font-bold hover:underline">Limpiar</button>
+                </div>
+                <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+                <div id="search-pagination" class="mt-8 flex justify-center gap-4 text-sm"></div>
+            </div>
+
+            <div id="main-content-sections" class="flex flex-col gap-10">
+                <!-- Para Ti -->
+                <section id="for-you-section">
+                    <h3 class="text-xs font-bold text-white mb-4 border-l-4 border-orange-500 pl-3 uppercase tracking-wider">Para Ti</h3>
+                    <div id="for-you-grid" class="grid grid-cols-3 gap-2 sm:gap-3">
+                         <!-- Skeletons se generan con JS -->
                     </div>
                 </section>
-
-                <!-- SEARCH -->
-                <form id="search-form" class="mb-6 relative z-30">
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-gray-500 group-focus-within:text-orange-500 transition"></i>
-                        </div>
-                        <input type="text" id="search-input" placeholder="Buscar..." 
-                               class="w-full bg-[#121214] border border-white/5 rounded-2xl py-3 pl-10 pr-10 text-white text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 transition shadow-lg">
-                        <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-3 hidden text-gray-500 hover:text-white transition"><i class="fas fa-times"></i></button>
+                
+                <!-- Tendencias (Scroll Horizontal) -->
+                <section id="community-section">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xs font-bold text-white border-l-4 border-orange-500 pl-3 uppercase tracking-wider">Tendencias</h3>
+                        <a href="feed.html" class="text-[9px] font-bold text-orange-400 bg-orange-500/10 px-2 py-1 rounded-full hover:bg-orange-500 hover:text-white transition flex items-center gap-1">Ver todo <i class="fas fa-chevron-right text-[7px]"></i></a>
                     </div>
-                </form>
+                    <div id="community-grid" class="flex gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x px-1"></div>
+                </section>
 
-                <!-- HERO SLIDER (Diseño Mejorado) -->
-                <div id="hero-wrapper" class="hero-wrapper group">
-                    <div id="hero-slides-container" class="w-full h-full relative"></div>
-                    <div id="hero-indicators" class="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-30"></div>
-                </div>
-
-                <!-- SEARCH RESULTS -->
-                <div id="search-results-container" class="hidden">
-                    <h2 class="text-lg font-bold text-white mb-4">Resultados</h2>
-                    <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
-                    <div id="search-pagination" class="mt-8 flex justify-center gap-4 text-sm"></div>
-                </div>
-
-                <div id="main-content-sections" class="flex flex-col gap-8">
-                    <!-- Para Ti -->
-                    <section id="for-you-section">
-                        <h3 class="text-base font-bold text-white mb-3 font-title border-l-4 border-orange-500 pl-3">Para Ti</h3>
-                        <div id="for-you-grid" class="grid grid-cols-3 gap-2 sm:gap-3"></div>
-                    </section>
+                <!-- Galería Principal -->
+                <section id="gallery">
+                    <h3 class="text-xs font-bold text-white mb-4 border-l-4 border-orange-500 pl-3 uppercase tracking-wider">Explorar Galería</h3>
+                    <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4"></div>
                     
-                    <!-- Comunidad -->
-                    <section id="community-section">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-base font-bold text-white font-title border-l-4 border-orange-500 pl-3">Tendencias</h3>
-                            <a href="feed.html" class="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-full hover:bg-orange-500 hover:text-white transition">Ver todo</a>
+                    <!-- Gate para No Registrados -->
+                    <div id="gallery-register-gate" class="mt-8 hidden animate-fade-in">
+                        <div class="glass-panel rounded-2xl p-8 text-center border border-orange-500/20 max-w-sm mx-auto">
+                            <div class="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4 text-orange-500 text-xl"><i class="fas fa-lock"></i></div>
+                            <h3 class="text-lg font-bold text-white mb-2">Descubre más</h3>
+                            <p class="text-gray-400 text-xs mb-6 leading-relaxed">Únete a nuestra comunidad para ver la galería completa, comentar y guardar tus favoritos.</p>
+                            <button onclick="window.location.href='login.html'" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-600 to-orange-500 text-white font-bold text-sm shadow-lg hover:shadow-orange-500/20 active:scale-95 transition">Crear Cuenta Gratis</button>
                         </div>
-                        <div id="community-grid" class="flex gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x px-1"></div>
-                    </section>
+                    </div>
 
-                    <!-- Galería Principal -->
-                    <section id="gallery">
-                        <h3 class="text-base font-bold text-white mb-3 font-title border-l-4 border-orange-500 pl-3">Explorar</h3>
-                        <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-                        
-                        <div id="gallery-register-gate" class="mt-8 hidden">
-                            <div class="glass-panel rounded-2xl p-6 text-center border border-orange-500/20">
-                                <i class="fas fa-lock text-3xl text-orange-500 mb-3"></i>
-                                <h3 class="text-lg font-bold text-white mb-2">Más contenido</h3>
-                                <p class="text-gray-400 text-xs mb-4">Regístrate para ver toda la galería.</p>
-                                <button onclick="window.location.href='login.html'" class="w-full py-3 rounded-xl bg-orange-600 text-white font-bold text-sm shadow-lg hover:bg-orange-700 transition">Crear Cuenta</button>
-                            </div>
-                        </div>
-
-                        <div id="loader" class="py-8 grid grid-cols-2 gap-3" style="display: none;"></div>
-                        <div id="load-more-trigger" class="h-20 w-full"></div>
-                    </section>
-                </div>
+                    <div id="loader" class="py-8 grid grid-cols-2 gap-3" style="display: none;"></div>
+                    <div id="load-more-trigger" class="h-24 w-full flex items-center justify-center opacity-0 transition-opacity">
+                         <i class="fas fa-circle-notch fa-spin text-orange-500 text-2xl"></i>
+                    </div>
+                </section>
             </div>
         </main>
         
         <!-- MODAL VISOR -->
         <div id="modal" class="modal-backdrop">
-            <button onclick="closeModal()" class="modal-close-btn absolute top-4 right-4 z-[5020] w-10 h-10 rounded-full bg-black/50 text-white backdrop-blur border border-white/10 flex items-center justify-center active:scale-90 hover:bg-black/70 transition"><i class="fas fa-times"></i></button>
+            <button onclick="closeModal()" class="absolute top-5 right-5 z-[5020] w-10 h-10 rounded-full bg-black/60 text-white backdrop-blur-md border border-white/10 flex items-center justify-center active:scale-90 hover:bg-black/80 hover:text-orange-500 transition shadow-lg"><i class="fas fa-times"></i></button>
 
             <div id="modal-inner-container" class="w-full h-full flex flex-col lg:flex-row bg-black">
                 
-                <!-- Área Imagen con Chat Bubbles -->
+                <!-- Imagen Area -->
                 <div id="modal-image-area" class="relative flex-1 bg-black flex items-center justify-center overflow-hidden h-[60vh] lg:h-full group">
                     <img id="modal-image" src="" class="max-w-full max-h-full object-contain shadow-2xl transition-transform duration-300 z-10 relative">
                     
-                    <!-- CONTENEDOR DE BURBUJAS DE CHAT (NUEVO) -->
+                    <!-- Burbujas Flotantes -->
                     <div id="floating-comments-container"></div>
 
-                    <!-- Controles -->
-                    <button id="prev-image" class="absolute left-2 z-20 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-black/60"><i class="fas fa-chevron-left text-lg"></i></button>
-                    <button id="next-image" class="absolute right-2 z-20 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-black/60"><i class="fas fa-chevron-right text-lg"></i></button>
-                    <button onclick="toggleFullScreen()" class="absolute bottom-4 right-4 z-20 bg-black/50 text-white p-2 rounded-lg backdrop-blur border border-white/10 hover:bg-black/70 transition"><i class="fas fa-expand text-xs"></i></button>
+                    <!-- Navegación -->
+                    <button id="prev-image" class="absolute left-4 z-20 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-orange-500/80 backdrop-blur-sm border border-white/10 active:scale-95"><i class="fas fa-chevron-left"></i></button>
+                    <button id="next-image" class="absolute right-4 z-20 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-orange-500/80 backdrop-blur-sm border border-white/10 active:scale-95"><i class="fas fa-chevron-right"></i></button>
+                    <button onclick="toggleFullScreen()" class="absolute bottom-6 right-6 z-20 bg-black/50 text-white p-2.5 rounded-xl backdrop-blur-md border border-white/10 hover:bg-black/70 transition shadow-lg"><i class="fas fa-expand text-sm"></i></button>
                 </div>
 
-                <!-- Panel Info -->
-                <div class="bg-[#121214] w-full lg:w-[380px] h-[40vh] lg:h-full flex flex-col z-30 relative border-l border-white/5 shadow-[-10px_0_40px_rgba(0,0,0,0.5)]">
+                <!-- Info Panel -->
+                <div class="info-panel bg-[#121214] w-full lg:w-[400px] h-[40vh] lg:h-full flex flex-col z-30 relative border-l border-white/5 shadow-[-10px_0_50px_rgba(0,0,0,0.7)]">
                     
-                    <div class="p-3 border-b border-white/5 flex items-center justify-between bg-[#18181b] shadow-md">
+                    <div class="p-4 border-b border-white/5 flex items-center justify-between bg-[#18181b] shadow-md z-10">
                         <div class="flex items-center gap-3">
-                            <img id="modal-user-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-white/10 cursor-pointer hover:scale-105 transition">
-                            <div>
-                                <h4 id="modal-image-title" class="font-bold text-white text-sm leading-tight line-clamp-1"></h4>
-                                <span id="modal-user-name" class="text-[10px] text-gray-400 cursor-pointer hover:text-orange-400 transition"></span>
+                            <img id="modal-user-avatar" src="" class="w-9 h-9 rounded-full object-cover border border-white/10 cursor-pointer hover:scale-105 transition shadow-sm">
+                            <div class="overflow-hidden">
+                                <h4 id="modal-image-title" class="font-bold text-white text-sm leading-tight truncate"></h4>
+                                <span id="modal-user-name" class="text-[10px] text-gray-400 cursor-pointer hover:text-orange-400 transition font-medium"></span>
                             </div>
                         </div>
-                        <button id="modal-like-btn" class="flex flex-col items-center justify-center w-10 h-10 rounded active:bg-white/5 active:scale-95 transition">
-                            <i class="far fa-heart text-lg mb-0.5"></i>
-                            <span id="modal-like-count" class="text-[9px] font-bold text-gray-400">0</span>
+                        <button id="modal-like-btn" class="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center active:scale-90 transition hover:bg-zinc-700 group">
+                            <i class="far fa-heart text-gray-400 text-base group-hover:text-red-400 transition-colors"></i>
                         </button>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#09090b]">
-                        <div class="mb-4">
-                             <div id="modal-character-tag" class="hidden inline-block bg-orange-500/10 text-orange-400 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase mb-2"><i class="fas fa-tag mr-1"></i></div>
-                             <p id="modal-desc" class="text-xs text-gray-300 leading-relaxed font-light whitespace-pre-wrap"></p>
+                    <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#09090b]">
+                        <div class="mb-6">
+                             <div id="modal-character-tag" class="hidden inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide mb-2"><i class="fas fa-user-tag"></i> <span></span></div>
+                             <p id="modal-desc" class="text-sm text-gray-300 leading-relaxed font-light whitespace-pre-wrap"></p>
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-6 border-b border-white/5 pb-4">
                             <button onclick="toggleTags()" id="tags-toggle-btn" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 hover:text-white transition mb-2"><span>Etiquetas</span> <i class="fas fa-chevron-down text-xs"></i></button>
                             <div id="modal-tags" class="hidden flex flex-wrap gap-2 mt-2"></div>
                         </div>
                         
-                        <div class="mb-4">
-                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-2">Similares</h4>
-                            <div id="similar-grid" class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar snap-x"></div>
+                        <div class="mb-6">
+                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-3 tracking-widest">Similares</h4>
+                            <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-2 hide-scrollbar snap-x"></div>
                         </div>
 
                         <div>
-                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-2">Comentarios</h4>
-                            <div id="comments" class="flex flex-col gap-3 pb-2"></div>
+                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-3 tracking-widest">Comentarios</h4>
+                            <div id="comments" class="flex flex-col gap-4 pb-4"></div>
                         </div>
                     </div>
 
-                    <div class="p-2 bg-[#121214] border-t border-white/5 safe-bottom shadow-lg">
+                    <div class="p-3 bg-[#18181b] border-t border-white/5 safe-bottom z-10">
                         <form id="comment-form" class="flex gap-2 relative">
-                            <input type="text" id="comment-input" class="w-full bg-[#1c1c1f] border border-white/5 rounded-full px-4 py-2.5 text-xs text-white focus:border-orange-500 focus:outline-none pr-9 shadow-inner" placeholder="Comentar..." autocomplete="off">
-                            <button type="submit" class="absolute right-1 top-1 text-orange-500 p-1.5 hover:bg-white/5 rounded-full transition"><i class="fas fa-paper-plane text-xs"></i></button>
+                            <input type="text" id="comment-input" class="w-full bg-[#09090b] border border-white/10 rounded-full px-5 py-3 text-sm text-white focus:border-orange-500 focus:outline-none pr-12 transition focus:bg-[#121214]" placeholder="Escribe un comentario..." autocomplete="off">
+                            <button type="submit" class="absolute right-2 top-1.5 w-9 h-9 flex items-center justify-center text-orange-500 hover:bg-orange-500/10 rounded-full transition active:scale-90"><i class="fas fa-paper-plane text-sm"></i></button>
                         </form>
                     </div>
                 </div>
@@ -457,31 +420,31 @@
         </div>
 
         <!-- MODAL CONFIG -->
-        <div id="config-modal" class="hidden fixed inset-0 z-[6000] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-[#18181b] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-                <h3 class="text-lg font-bold text-white mb-4 text-center">Editar Perfil</h3>
-                <div class="flex flex-col items-center gap-4">
-                    <div class="relative w-28 h-28 group cursor-pointer">
-                        <img id="config-preview-img" src="" class="w-full h-full rounded-full object-cover border-2 border-dashed border-gray-600 group-hover:border-orange-500 transition">
-                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition"><i class="fas fa-camera text-white text-xl"></i></div>
+        <div id="config-modal" class="hidden fixed inset-0 z-[6000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-[#18181b] border border-white/10 rounded-2xl p-6 w-full max-w-xs shadow-2xl transform transition-all">
+                <h3 class="text-lg font-bold text-white mb-6 text-center">Cambiar Foto</h3>
+                <div class="flex flex-col items-center gap-5">
+                    <div class="relative w-32 h-32 group cursor-pointer">
+                        <img id="config-preview-img" src="" class="w-full h-full rounded-full object-cover border-4 border-zinc-800 shadow-xl group-hover:border-orange-500 transition-colors">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition backdrop-blur-sm"><i class="fas fa-camera text-white text-2xl"></i></div>
                         <input type="file" id="config-file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="handleConfigImageSelect(event)">
                     </div>
-                    <p id="config-upload-status" class="text-xs text-gray-400">Toca para cambiar</p>
-                    <div class="flex gap-2 w-full mt-2">
-                        <button onclick="closeConfigModal()" class="flex-1 py-2 rounded-lg bg-zinc-800 text-gray-300 text-sm hover:bg-zinc-700 transition">Cancelar</button>
-                        <button id="btn-save-config" onclick="saveNewProfilePic()" class="flex-1 py-2 rounded-lg bg-orange-600 text-white font-bold text-sm shadow-md hover:bg-orange-700 transition">Guardar</button>
+                    <p id="config-upload-status" class="text-xs text-gray-400 font-medium">Toca la imagen para subir</p>
+                    <div class="flex gap-3 w-full mt-2">
+                        <button onclick="closeConfigModal()" class="flex-1 py-2.5 rounded-xl border border-zinc-700 text-gray-300 text-sm font-semibold hover:bg-zinc-800 transition active:scale-95">Cancelar</button>
+                        <button id="btn-save-config" onclick="saveNewProfilePic()" class="flex-1 py-2.5 rounded-xl bg-orange-600 text-white font-bold text-sm shadow-lg hover:bg-orange-700 transition active:scale-95">Guardar</button>
                     </div>
                 </div>
             </div>
         </div>
         
-        <button id="scrollToTopBtn" class="fixed bottom-[80px] right-4 h-12 w-12 rounded-full bg-zinc-800 text-white shadow-lg border border-white/10 z-[100] flex items-center justify-center active:scale-90 transition-all duration-300 opacity-0 pointer-events-none translate-y-4 hover:bg-zinc-700" onclick="window.scrollTo(0,0)"><i class="fas fa-arrow-up text-sm"></i></button>
+        <button id="scrollToTopBtn" class="fixed bottom-[90px] right-4 h-12 w-12 rounded-full bg-zinc-800/80 backdrop-blur text-white shadow-xl border border-white/10 z-[100] flex items-center justify-center active:scale-90 transition-all duration-300 opacity-0 pointer-events-none translate-y-4 hover:bg-orange-500" onclick="window.scrollTo(0,0)"><i class="fas fa-arrow-up text-sm"></i></button>
 
         <!-- NAV -->
         <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-[4000] flex justify-around items-center px-4">
-            <a href="index.html" class="nav-item active flex flex-col items-center justify-center w-16 h-full transition"><i class="fas fa-home text-xl text-gray-500"></i></a>
-            <a href="feed.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center w-16 h-full transition"><i class="fas fa-globe-americas text-xl text-gray-500"></i></a>
-            <a href="profile.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center w-16 h-full transition"><i class="far fa-user text-xl text-gray-500"></i></a>
+            <a href="index.html" class="nav-item active flex flex-col items-center justify-center w-20 h-full transition"><i class="fas fa-home text-xl text-gray-500"></i></a>
+            <a href="feed.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center w-20 h-full transition"><i class="fas fa-globe-americas text-xl text-gray-500"></i></a>
+            <a href="profile.html" onclick="return requireLogin(event)" class="nav-item flex flex-col items-center justify-center w-20 h-full transition"><i class="far fa-user text-xl text-gray-500"></i></a>
         </nav>
     </div>
 
@@ -498,7 +461,6 @@
         if (!deviceID) { deviceID = Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('deviceID', deviceID); }
         
         let userDataCache = {};
-        
         const imagesPerLoad = 21; 
         let allImages = []; 
         let fullGalleryCache = []; 
@@ -508,7 +470,7 @@
         let isLoading = false; 
         let noMoreImages = false; 
         let scrollLoadCount = 0;
-        const MAX_GUEST_LOADS = 1;
+        const MAX_GUEST_LOADS = 2;
 
         let currentImageId = ''; 
         let currentContext = 'gallery';
@@ -522,12 +484,10 @@
         const searchResultsPerPage = 21; 
         let touchStartX = 0, touchEndX = 0, touchStartY = 0, touchEndY = 0; 
         const swipeThreshold = 50;
-        let adminUserId = null;
 
         window.forYouList = [];
         window.communityList = [];
         
-        // --- CHAT BUBBLES VARS ---
         let bubbleInterval = null;
         let fetchedCommentsForBubbles = [];
 
@@ -537,25 +497,30 @@
 
             if (user && !user.isAnonymous) {
                 currentUser = user;
-                appContent.style.display = 'block';
                 loadUserProfile(user.uid);
                 document.getElementById('gallery-register-gate').style.display = 'none';
                 initNotificationSystem(user.uid);
             } else {
                 currentUser = null;
-                appContent.style.display = 'block';
             }
+            appContent.style.display = 'block';
 
-            if (loader) { loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 500); }
+            if (loader) { 
+                loader.style.opacity = '0'; 
+                setTimeout(() => { loader.style.display = 'none'; }, 500); 
+            }
             if(feedCache.length > 0) renderCommunitySection();
             if(user) fetchUserReactions().then(() => loadForYouImages());
         });
 
         async function initializeApp() {
             await cacheAllDataForSearch(); 
-            renderTopUsers(); // RENDERIZAR TOP USUARIOS DESPUES DEL CACHÉ
+            renderTopUsers(); 
             await Promise.all([ fetchUserReactions(), cacheAllReactionCounts() ]);
-            loadHeroBanner(); 
+            
+            // Reemplazado loadHeroBanner por loadCharacterStories
+            loadCharacterStories(); 
+            
             loadInitialImages();
             loadForYouImages(); 
             renderCommunitySection(); 
@@ -581,7 +546,6 @@
                     const uid = child.key;
                     uData.push({ id: uid, type: 'user', ...userData }); 
                     userMap[uid] = userData; 
-                    if (userData.email === 'ezequiel@exen.com') adminUserId = uid;
                 });
                 usersCache = uData;
             }
@@ -591,16 +555,18 @@
                 const fData = [];
                 feedSnap.forEach(child => { 
                     const post = child.val();
-                    if (post.imageUrl) { 
+                    // IMPORTANTE: Asegurar que hay URL de imagen válida para posts
+                    if (post.imageUrl || (post.imageUrls && post.imageUrls.length > 0)) { 
                         const author = userMap[post.userId];
                         const currentAvatar = author ? author.profilePic : (post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U');
                         const currentName = author ? author.username : (post.userName || 'Usuario');
-                        
+                        const mainImage = post.imageUrl || post.imageUrls[0]; // Priorizar la imagen del post
+
                         fData.push({ 
                             id: child.key, 
                             type: 'feed', 
-                            url: post.imageUrl, 
-                            thumbnailUrl: post.imageUrl,
+                            url: mainImage, 
+                            thumbnailUrl: mainImage,
                             title: post.title || 'Sin título', 
                             desc: post.text, 
                             tags: post.tags ? post.tags.split(',').map(t=>t.trim()) : [],
@@ -619,108 +585,62 @@
             fullGalleryCache = unifiedGalleryData; 
         }
         
-        // --- NUEVA FUNCIÓN: RENDERIZAR TOP USUARIOS ---
         function renderTopUsers() {
             const container = document.getElementById('top-users-container');
             container.innerHTML = '';
-
-            // Calcular Top Usuarios basado en imágenes publicadas (feed)
             const userCounts = {};
-            unifiedGalleryData.forEach(img => {
-                if (img.type === 'feed' && img.userId) {
-                    userCounts[img.userId] = (userCounts[img.userId] || 0) + 1;
-                }
-            });
+            unifiedGalleryData.forEach(img => { if (img.type === 'feed' && img.userId) { userCounts[img.userId] = (userCounts[img.userId] || 0) + 1; } });
+            const sortedUsers = Object.keys(userCounts).map(uid => { const user = usersCache.find(u => u.id === uid); return user ? { ...user, count: userCounts[uid] } : null; }).filter(u => u).sort((a, b) => b.count - a.count).slice(0, 10);
 
-            // Convertir a array y ordenar
-            const sortedUsers = Object.keys(userCounts)
-                .map(uid => {
-                    const user = usersCache.find(u => u.id === uid);
-                    return user ? { ...user, count: userCounts[uid] } : null;
-                })
-                .filter(u => u) // Eliminar nulos
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10); // Top 10
-
-            if (sortedUsers.length === 0) {
-                container.innerHTML = '<span class="text-xs text-gray-500 px-4">Sin actividad reciente.</span>';
-                return;
-            }
+            if (sortedUsers.length === 0) { container.innerHTML = '<span class="text-[10px] text-gray-500 px-4 italic">Sin actividad.</span>'; return; }
 
             sortedUsers.forEach((user, index) => {
-                let rankClass = 'rank-normal';
-                let icon = '';
-                if(index === 0) { rankClass = 'rank-gold'; icon = '<i class="fas fa-crown text-[8px] text-yellow-900 absolute -bottom-1 bg-yellow-400 rounded-full w-3 h-3 flex items-center justify-center border border-black"></i>'; }
+                let rankClass = 'rank-normal'; let icon = '';
+                if(index === 0) { rankClass = 'rank-gold'; icon = '<i class="fas fa-crown text-[8px] text-yellow-900 absolute -bottom-1 -right-1 bg-yellow-400 rounded-full w-4 h-4 flex items-center justify-center border-2 border-[#09090b] shadow-sm"></i>'; }
                 else if(index === 1) { rankClass = 'rank-silver'; }
                 else if(index === 2) { rankClass = 'rank-bronze'; }
 
                 const div = document.createElement('div');
-                div.className = "flex flex-col items-center gap-1 min-w-[60px] cursor-pointer group";
+                div.className = "flex flex-col items-center gap-1.5 min-w-[48px] cursor-pointer group active:scale-95 transition";
                 div.onclick = () => window.location.href = `profile.html?uid=${user.id}`;
-                
-                div.innerHTML = `
-                    <div class="w-[56px] h-[56px] ${rankClass} top-user-ring flex items-center justify-center transition transform group-active:scale-95">
-                        <img src="${user.profilePic || 'https://placehold.co/100'}" class="w-full h-full rounded-full object-cover border-2 border-[#050505]">
-                        ${icon}
-                    </div>
-                    <span class="text-[9px] text-gray-400 font-bold truncate max-w-[60px] mt-1">${user.username}</span>
-                `;
+                div.innerHTML = `<div class="w-10 h-10 ${rankClass} top-user-ring flex items-center justify-center transition transform shadow-lg"><img src="${user.profilePic || 'https://placehold.co/100'}" class="w-full h-full rounded-full object-cover border-2 border-[#09090b]">${icon}</div><span class="text-[9px] text-gray-400 font-bold truncate max-w-[48px] group-hover:text-orange-400 transition-colors">${user.username}</span>`;
                 container.appendChild(div);
             });
         }
 
         async function fetchUserReactions() { 
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
-            const [reactionsSnap, feedLikesSnap] = await Promise.all([
-                 db.ref('reactions').once('value'),
-                 db.ref('feed_likes').once('value')
-            ]);
-            const allReactions = reactionsSnap.val() || {}; 
-            const allFeedLikes = feedLikesSnap.val() || {};
+            const [reactionsSnap, feedLikesSnap] = await Promise.all([ db.ref('reactions').once('value'), db.ref('feed_likes').once('value') ]);
+            const allReactions = reactionsSnap.val() || {}; const allFeedLikes = feedLikesSnap.val() || {};
             userReactions = {}; 
             Object.keys(allReactions).forEach(imgId => { if(allReactions[imgId][userId]) userReactions[imgId] = 'like'; });
             Object.keys(allFeedLikes).forEach(postId => { if(allFeedLikes[postId][userId]) userReactions[postId] = 'like'; });
         }
         async function cacheAllReactionCounts() { 
             const reactionsSnap = await db.ref('reactions').once('value'); 
-            const counts = {}; 
-            const reactions = reactionsSnap.val() || {};
+            const counts = {}; const reactions = reactionsSnap.val() || {};
             Object.entries(reactions).forEach(([imgId, users]) => { counts[imgId] = Object.keys(users).length; }); 
             allReactionCounts = counts; 
         }
 
         function renderCommunitySection() {
-            const container = document.getElementById('community-grid');
-            container.innerHTML = '';
-            let sortedFeed = [...feedCache].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-            let filteredFeed = sortedFeed.slice(0, 20);
-            window.communityList = filteredFeed;
-            filteredFeed.forEach(post => {
+            const container = document.getElementById('community-grid'); container.innerHTML = '';
+            let sortedFeed = [...feedCache].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 20);
+            window.communityList = sortedFeed;
+            sortedFeed.forEach(post => {
                 const card = document.createElement('div');
-                card.className = "relative min-w-[100px] w-[100px] h-[140px] rounded-xl overflow-hidden flex-shrink-0 snap-start cursor-pointer group shadow-lg border border-white/5";
+                card.className = "relative min-w-[100px] w-[100px] h-[140px] rounded-xl overflow-hidden flex-shrink-0 snap-start cursor-pointer group shadow-lg border border-white/5 bg-zinc-900";
                 card.onclick = (e) => { e.stopPropagation(); if(requireLogin(e)) openModal(post.id, 'community'); };
-                card.innerHTML = `<img src="${post.thumbnailUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" loading="lazy"><div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div><div class="absolute bottom-2 left-1 right-1"><p class="text-white text-[8px] font-bold truncate text-center">${post.user.name}</p></div>`;
+                card.innerHTML = `<img src="${post.thumbnailUrl}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" loading="lazy"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80"></div><div class="absolute bottom-2 left-1 right-1"><p class="text-white text-[9px] font-bold truncate text-center drop-shadow-md">${post.user.name}</p></div>`;
                 container.appendChild(card);
             });
         }
 
         async function loadForYouImages() {
-            const grid = document.getElementById('for-you-grid');
-            generateSkeletons(grid, 6);
+            const grid = document.getElementById('for-you-grid'); generateSkeletons(grid, 6);
             let tagScores = {};
-            unifiedGalleryData.forEach(img => {
-                if (userReactions[img.id] === 'like') {
-                    if (img.tags && Array.isArray(img.tags)) {
-                        img.tags.forEach(tag => { const normTag = normalize(tag); tagScores[normTag] = (tagScores[normTag] || 0) + 1; });
-                    }
-                }
-            });
-            let scoredImages = unifiedGalleryData.filter(img => userReactions[img.id] !== 'like').map(img => {
-                let score = 0;
-                if (img.tags && Array.isArray(img.tags)) { img.tags.forEach(tag => { const normTag = normalize(tag); if (tagScores[normTag]) score += tagScores[normTag]; }); }
-                score += Math.random() * 2;
-                return { img, score };
-            });
+            unifiedGalleryData.forEach(img => { if (userReactions[img.id] === 'like' && img.tags) { img.tags.forEach(tag => { const normTag = normalize(tag); tagScores[normTag] = (tagScores[normTag] || 0) + 1; }); } });
+            let scoredImages = unifiedGalleryData.filter(img => userReactions[img.id] !== 'like').map(img => { let score = 0; if (img.tags) { img.tags.forEach(tag => { const normTag = normalize(tag); if (tagScores[normTag]) score += tagScores[normTag]; }); } score += Math.random() * 2; return { img, score }; });
             scoredImages.sort((a, b) => b.score - a.score);
             const finalSelection = scoredImages.slice(0, 6).map(item => item.img);
             window.forYouList = finalSelection;
@@ -740,213 +660,163 @@
             if (!currentUser && scrollLoadCount >= MAX_GUEST_LOADS) { document.getElementById('loader').style.display = 'none'; document.getElementById('gallery-register-gate').style.display = 'block'; noMoreImages = true; return; }
             isLoading = true; 
             const loaderContainer = document.getElementById('loader'); loaderContainer.style.display = 'grid'; generateSkeletons(loaderContainer, 3); 
-            const currentLoadedCount = allImages.length; 
-            const newImages = unifiedGalleryData.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); 
-            if (newImages.length === 0) { noMoreImages = true; } 
-            else { allImages = allImages.concat(newImages); displaySearchResults(newImages, 'grid', true, 'main'); scrollLoadCount++; } 
-            loaderContainer.style.display = 'none'; isLoading = false; 
+            document.getElementById('load-more-trigger').style.opacity = '1';
+            
+            setTimeout(() => {
+                const currentLoadedCount = allImages.length; 
+                const newImages = unifiedGalleryData.slice(currentLoadedCount, currentLoadedCount + imagesPerLoad); 
+                if (newImages.length === 0) { noMoreImages = true; } 
+                else { allImages = allImages.concat(newImages); displaySearchResults(newImages, 'grid', true, 'main'); scrollLoadCount++; } 
+                loaderContainer.style.display = 'none'; document.getElementById('load-more-trigger').style.opacity = '0'; isLoading = false; 
+            }, 400);
         }
 
-        function loadHeroBanner() {
-            const userImages = unifiedGalleryData.filter(img => img.type === 'feed');
-            if (userImages.length === 0) return;
-            let shuffled = [...userImages].sort(() => 0.5 - Math.random());
-            const heroImages = shuffled.slice(0, 5);
-            const container = document.getElementById('hero-slides-container');
-            const indicatorsContainer = document.getElementById('hero-indicators');
-            const heroWrapper = document.getElementById('hero-wrapper');
-            heroWrapper.style.display = 'block'; container.innerHTML = ''; indicatorsContainer.innerHTML = '';
-            
-            heroImages.forEach((img, index) => {
-                const slide = document.createElement('div');
-                slide.className = `hero-slide absolute inset-0 opacity-0 transition-opacity duration-700 z-10 ${index === 0 ? 'active opacity-100 z-20' : ''}`;
-                slide.setAttribute('onclick', `if(requireLogin(event)) openModal('${img.id}', 'main')`);
-                const displayUrl = img.thumbnailUrl || img.url; 
-                slide.innerHTML = `<img src="${displayUrl}" class="w-full h-full object-cover filter brightness-[0.6]"><div class="hero-overlay"><div class="w-full"><span class="bg-orange-500 text-white font-bold tracking-wider uppercase mb-2 text-[9px] px-2 py-0.5 rounded inline-block">Destacado</span><h2 class="text-2xl font-black text-white leading-none mb-1 uppercase line-clamp-2 italic text-shadow-lg">${img.title}</h2><p class="text-gray-300 text-xs flex items-center gap-1 mb-4"><i class="fas fa-user-circle"></i> ${img.user.name}</p></div></div>`;
-                container.appendChild(slide);
-                const dot = document.createElement('div'); 
-                dot.className = `w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer ${index === 0 ? 'bg-orange-500 w-4' : 'bg-white/50'}`;
-                dot.addEventListener('click', (e) => { e.stopPropagation(); manualSlide(index); });
-                indicatorsContainer.appendChild(dot);
+        // --- NUEVA FUNCIÓN: CARGAR HISTORIAS DE PERSONAJES ---
+        function loadCharacterStories() {
+            const container = document.getElementById('character-stories-container');
+            container.innerHTML = '';
+
+            // 1. Agrupar imágenes por personaje
+            const charMap = {};
+            unifiedGalleryData.forEach(item => {
+                if (item.characterName && item.url) {
+                    const name = item.characterName.trim();
+                    // Normalizar un poco para evitar duplicados por mayúsculas/minúsculas
+                    const normName = normalize(name);
+                    
+                    if (!charMap[normName]) {
+                        charMap[normName] = {
+                            displayName: name,
+                            images: []
+                        };
+                    }
+                    charMap[normName].images.push(item);
+                }
             });
-            startHeroInterval();
-        }
-        let heroInterval;
-        function startHeroInterval() { if (heroInterval) clearInterval(heroInterval); heroInterval = setInterval(() => { const slides = document.querySelectorAll('.hero-slide'); if(slides.length === 0) return; let current = 0; slides.forEach((s, i) => { if(s.classList.contains('active')) current = i; }); const next = (current + 1) % slides.length; manualSlide(next); }, 6000); }
-        function manualSlide(index) { 
-            const slides = document.querySelectorAll('.hero-slide'); 
-            const dots = document.getElementById('hero-indicators').children; 
-            if (!slides.length) return; 
-            slides.forEach(s => {s.classList.remove('active'); s.classList.remove('opacity-100'); s.classList.remove('z-20');}); 
-            Array.from(dots).forEach(d => { d.className = 'w-1.5 h-1.5 rounded-full bg-white/50 transition-all duration-300 cursor-pointer'; }); 
-            slides[index].classList.add('active', 'opacity-100', 'z-20'); 
-            dots[index].className = 'w-4 h-1.5 rounded-full bg-orange-500 transition-all duration-300 cursor-pointer'; 
+
+            // 2. Obtener lista de personajes únicos
+            const uniqueChars = Object.values(charMap);
+
+            if (uniqueChars.length === 0) {
+                document.getElementById('character-stories-section').style.display = 'none';
+                return;
+            } else {
+                document.getElementById('character-stories-section').style.display = 'block';
+            }
+
+            // 3. Mezclar y seleccionar 5
+            const selectedChars = uniqueChars.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+            // 4. Renderizar
+            selectedChars.forEach(charObj => {
+                // Seleccionar imagen aleatoria para este personaje
+                const randomImg = charObj.images[Math.floor(Math.random() * charObj.images.length)];
+                
+                const div = document.createElement('div');
+                div.className = "flex flex-col items-center gap-2 cursor-pointer transition transform active:scale-95 flex-shrink-0 group";
+                
+                // Acción al hacer clic: Ejecutar búsqueda por ese personaje
+                div.onclick = () => {
+                     document.getElementById('search-input').value = charObj.displayName;
+                     executeSearch(charObj.displayName);
+                };
+                
+                div.innerHTML = `
+                    <div class="character-ring w-[74px] h-[74px] flex items-center justify-center">
+                        <div class="w-full h-full rounded-full border-2 border-[#050505] overflow-hidden bg-zinc-800 relative">
+                            <img src="${randomImg.thumbnailUrl || randomImg.url}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-semibold text-gray-300 truncate max-w-[70px] text-center">${charObj.displayName}</span>
+                `;
+                container.appendChild(div);
+            });
         }
 
         function displaySearchResults(items, containerId, append = false, sourceContext = 'search') { 
-            const grid = document.getElementById(containerId); 
-            if (!append) grid.innerHTML = ''; 
-            if (items.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-8 text-gray-400">No hay contenido disponible.</div>`; return; } 
+            const grid = document.getElementById(containerId); if (!append) grid.innerHTML = ''; 
+            if (items.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-10 text-gray-500 text-xs italic">No hay contenido disponible.</div>`; return; } 
             items.forEach((item, index) => { 
-                if (!item) return;
-                if (sourceContext === 'main' && !append && index === 4) {
-                    const feedbackCard = document.createElement('div');
-                    feedbackCard.className = "image-card group relative aspect-[2/3] cursor-pointer flex flex-col items-center justify-center text-center p-4 border border-orange-500/30 bg-gradient-to-br from-[#1a1a1c] to-[#000]";
-                    feedbackCard.onclick = () => window.location.href = 'fadeback.html';
-                    feedbackCard.innerHTML = `<div class="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center mb-2 group-hover:scale-110 transition"><i class="fas fa-lightbulb text-orange-500"></i></div><h4 class="text-white font-bold text-xs mb-1">Feedback</h4><p class="text-gray-500 text-[9px] leading-tight">Tu opinión importa.</p>`;
-                    grid.appendChild(feedbackCard);
+                if (!item || !item.url) return;
+                if (sourceContext === 'main' && !append && index === 3) {
+                    const fb = document.createElement('div'); fb.className = "image-card aspect-[2/3] cursor-pointer flex flex-col items-center justify-center text-center p-4 border border-orange-500/20 bg-gradient-to-br from-orange-500/10 to-black group";
+                    fb.onclick = () => window.location.href = 'fadeback.html';
+                    fb.innerHTML = `<div class="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition shadow-[0_0_15px_rgba(249,115,22,0.3)]"><i class="fas fa-comment-dots text-orange-500"></i></div><h4 class="text-white font-bold text-xs mb-1">Feedback</h4><p class="text-gray-500 text-[9px]">Ayúdanos a mejorar.</p>`;
+                    grid.appendChild(fb);
                 }
-                if (item.type === 'user') { return; }
-                if (!item.url) return;
-                const div = document.createElement('div'); 
-                div.className = 'image-card group relative aspect-[2/3] cursor-pointer bg-zinc-900'; 
-                div.setAttribute('onclick', `if(requireLogin(event)) openModal('${item.id}', '${sourceContext}')`); 
-                let reactionCount = 0;
-                if (item.type === 'feed') reactionCount = item.likes || 0;
-                else reactionCount = allReactionCounts[item.id] || 0;
+                if (item.type === 'user') return;
+                const div = document.createElement('div'); div.className = 'image-card group aspect-[2/3] cursor-pointer bg-zinc-900'; 
+                div.onclick = (e) => { if(requireLogin(e)) openModal(item.id, sourceContext); };
+                const reactionCount = item.type === 'feed' ? (item.likes || 0) : (allReactionCounts[item.id] || 0);
                 const isLiked = userReactions[item.id] === 'like';
-                const isVerified = (item.type === 'gallery');
-                div.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80"></div>${isVerified ? '<div class="absolute top-2 left-2 z-10 bg-white/10 backdrop-blur-md border border-white/20 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">Oficial</div>' : ''}<div class="absolute bottom-0 left-0 p-3 w-full"><h4 class="truncate font-bold text-white text-xs mb-0.5 tracking-tight">${item.title}</h4>${!isVerified ? `<p class="text-[9px] text-gray-400 truncate flex items-center gap-1"><img src="${item.user.avatar}" class="w-3 h-3 rounded-full border border-white/10"> ${item.user.name}</p>` : ''}</div><div class="absolute top-2 right-2 flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded-md backdrop-blur-sm border border-white/5"><i class="fas fa-heart text-[9px] ${isLiked ? 'text-red-500' : 'text-gray-300'}"></i><span class="text-[9px] text-white font-bold">${reactionCount}</span></div>`; 
+                const isOfficial = item.type === 'gallery';
+                div.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" class="h-full w-full object-cover transition duration-700 group-hover:scale-110"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition"></div><div class="absolute bottom-0 left-0 p-3 w-full translate-y-2 group-hover:translate-y-0 transition duration-300"><h4 class="truncate font-bold text-white text-xs mb-0.5">${item.title}</h4>${!isOfficial ? `<p class="text-[9px] text-gray-400 truncate flex items-center gap-1 opacity-0 group-hover:opacity-100 transition duration-300"><img src="${item.user.avatar}" class="w-3 h-3 rounded-full"> ${item.user.name}</p>` : ''}</div><div class="absolute top-2 right-2 flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded-md backdrop-blur border border-white/5 shadow"><i class="fas fa-heart text-[9px] ${isLiked ? 'text-red-500' : 'text-gray-300'}"></i><span class="text-[9px] text-white font-bold">${reactionCount}</span></div>`; 
                 grid.appendChild(div); 
             }); 
         }
 
-        // --- FUNCIONES CHAT BUBBLES ---
+        // --- BUBBLES ---
         function initFloatingComments(id, context) {
-            const container = document.getElementById('floating-comments-container');
-            container.innerHTML = '';
-            fetchedCommentsForBubbles = [];
-            
-            if (bubbleInterval) clearInterval(bubbleInterval);
-
-            // Fetch SOLO UNA VEZ (.once) al abrir
+            const container = document.getElementById('floating-comments-container'); container.innerHTML = '';
+            fetchedCommentsForBubbles = []; if (bubbleInterval) clearInterval(bubbleInterval);
             let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`;
             db.ref(path).limitToLast(15).once('value', snap => {
-                if(snap.exists()) {
-                    snap.forEach(c => fetchedCommentsForBubbles.push(c.val()));
-                    // Iniciar el loop visual si hay comentarios
-                    if(fetchedCommentsForBubbles.length > 0) {
-                        startBubbleLoop();
-                    }
-                }
+                if(snap.exists()) { snap.forEach(c => fetchedCommentsForBubbles.push(c.val())); if(fetchedCommentsForBubbles.length > 0) startBubbleLoop(); }
             });
         }
-
         function startBubbleLoop() {
             const container = document.getElementById('floating-comments-container');
-            
-            // Función para crear una burbuja
             const createBubble = () => {
                 if(fetchedCommentsForBubbles.length === 0) return;
-                // Elegir comentario al azar o secuencial
                 const comment = fetchedCommentsForBubbles[Math.floor(Math.random() * fetchedCommentsForBubbles.length)];
-                
-                const bubble = document.createElement('div');
-                bubble.className = 'chat-bubble';
-                // Posición horizontal aleatoria (evitando bordes extremos)
-                const randomLeft = Math.floor(Math.random() * 60) + 10; // 10% a 70%
-                bubble.style.left = `${randomLeft}%`;
-                bubble.style.bottom = '-50px'; // Empezar fuera
-
-                bubble.innerHTML = `
-                    <img src="${comment.userAvatar || 'https://placehold.co/50'}" alt="">
-                    <span>${comment.text ? comment.text.substring(0, 30) + (comment.text.length > 30 ? '...' : '') : '...'}</span>
-                `;
-
-                container.appendChild(bubble);
-
-                // Limpiar burbuja del DOM cuando termine la animación (12s definido en CSS)
-                setTimeout(() => {
-                    if(bubble && bubble.parentNode) bubble.parentNode.removeChild(bubble);
-                }, 12000);
+                const bubble = document.createElement('div'); bubble.className = 'chat-bubble';
+                bubble.style.left = `${Math.floor(Math.random() * 60) + 10}%`; bubble.style.bottom = '-60px';
+                bubble.innerHTML = `<img src="${comment.userAvatar || 'https://placehold.co/50'}"><span>${comment.text ? comment.text.substring(0, 25) + (comment.text.length > 25 ? '...' : '') : '...'}</span>`;
+                container.appendChild(bubble); setTimeout(() => { if(bubble.parentNode) bubble.remove(); }, 10000);
             };
-
-            // Crear burbuja inicial
-            createBubble();
-
-            // Intervalo para nuevas burbujas (cada 2.5s)
-            bubbleInterval = setInterval(createBubble, 2500);
+            createBubble(); bubbleInterval = setInterval(createBubble, 3000);
         }
+        function stopFloatingComments() { if (bubbleInterval) clearInterval(bubbleInterval); document.getElementById('floating-comments-container').innerHTML = ''; }
 
-        function stopFloatingComments() {
-            if (bubbleInterval) clearInterval(bubbleInterval);
-            document.getElementById('floating-comments-container').innerHTML = '';
-        }
-
-        // --- SISTEMA DE MENÚ ---
+        // --- MENU ---
         function toggleProfileMenu() {
-            const menu = document.getElementById('profile-menu');
-            const notifDropdown = document.getElementById('notification-dropdown');
-            notifDropdown.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100'); 
-            notifDropdown.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            
-            if (menu.classList.contains('opacity-0')) {
-                menu.classList.remove('opacity-0', 'pointer-events-none', 'scale-90');
-                menu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
-            } else {
-                menu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
-                menu.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            }
+            const m = document.getElementById('profile-menu'), n = document.getElementById('notification-dropdown');
+            n.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100'); n.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
+            if(m.classList.contains('opacity-0')) { m.classList.remove('opacity-0', 'pointer-events-none', 'scale-90'); m.classList.add('opacity-100', 'pointer-events-auto', 'scale-100'); }
+            else { m.classList.add('opacity-0', 'pointer-events-none', 'scale-90'); m.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100'); }
         }
-        
         function toggleNotifications() {
-            const dd = document.getElementById('notification-dropdown');
-            const menu = document.getElementById('profile-menu');
-            menu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100'); 
-            menu.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            
-            if (dd.classList.contains('opacity-0')) {
-                dd.classList.remove('opacity-0', 'pointer-events-none', 'scale-90');
-                dd.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
-                document.getElementById('notif-badge').classList.add('hidden');
-                if(currentUser) localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now());
-                loadNotifications();
-            } else {
-                dd.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
-                dd.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            }
+            const m = document.getElementById('profile-menu'), n = document.getElementById('notification-dropdown');
+            m.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100'); m.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
+            if(n.classList.contains('opacity-0')) {
+                n.classList.remove('opacity-0', 'pointer-events-none', 'scale-90'); n.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+                document.getElementById('notif-badge').classList.add('hidden'); if(currentUser) localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now()); loadNotifications();
+            } else { n.classList.add('opacity-0', 'pointer-events-none', 'scale-90'); n.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100'); }
         }
-        window.addEventListener('click', (e) => {
-            if (!e.target.closest('#user-profile-btn') && !e.target.closest('#profile-menu')) {
-                document.getElementById('profile-menu').classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
-                document.getElementById('profile-menu').classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            }
-            if (!e.target.closest('.notif-btn') && !e.target.closest('#notification-dropdown')) {
-                document.getElementById('notification-dropdown').classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
-                document.getElementById('notification-dropdown').classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-            }
-        });
+        window.onclick = e => { if(!e.target.closest('.relative')) { document.getElementById('profile-menu').classList.add('opacity-0', 'pointer-events-none', 'scale-90'); document.getElementById('notification-dropdown').classList.add('opacity-0', 'pointer-events-none', 'scale-90'); } };
 
         function initNotificationSystem(uid) {
             const badge = document.getElementById('notif-badge');
             db.ref('notifications/' + uid).orderByKey().limitToLast(1).on('child_added', snap => {
-                if(!snap.exists()) return;
-                const lastNotif = snap.val();
-                const lastSeenTimestamp = localStorage.getItem('lastSeenNotif_' + uid) || 0;
-                if (lastNotif.timestamp > lastSeenTimestamp) badge.classList.remove('hidden');
-                else badge.classList.add('hidden');
+                if(!snap.exists()) return; const lastNotif = snap.val(); const lastSeen = localStorage.getItem('lastSeenNotif_' + uid) || 0;
+                if (lastNotif.timestamp > lastSeen) badge.classList.remove('hidden');
             });
         }
         function loadNotifications() {
             const list = document.getElementById('notif-list');
             db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
-                list.innerHTML = '';
-                if (!snap.exists()) { list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">Sin notificaciones.</div>'; return; }
+                list.innerHTML = ''; if (!snap.exists()) { list.innerHTML = '<div class="p-8 text-center text-gray-500 text-[10px] italic">Sin notificaciones recientes</div>'; return; }
                 const notifs = []; snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
                 notifs.reverse().forEach(n => {
                     const item = document.createElement('div');
-                    item.className = `flex gap-3 p-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition items-center ${!n.read ? 'bg-orange-500/5' : ''}`;
-                    let icon = ''; 
-                    if (n.type === 'like') { icon = '<i class="fas fa-heart text-red-500"></i>'; }
-                    else if (n.type === 'comment') { icon = '<i class="fas fa-comment text-blue-500"></i>'; }
-                    else if (n.type === 'follow') { icon = '<i class="fas fa-user-plus text-green-500"></i>'; }
-                    item.innerHTML = `<div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">${icon}</div><div class="flex-1"><p class="text-xs text-gray-300"><b>${n.fromUserName}</b> ${n.type === 'like' ? 'te dio like.' : n.type === 'comment' ? 'comentó.' : 'te sigue.'}</p><span class="text-[9px] text-zinc-600">${timeAgo(n.timestamp)}</span></div>`;
-                    item.onclick = () => { markAsRead(n.key, item); if(n.postId) openModal(n.postId, 'main'); };
+                    item.className = `flex gap-3 p-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition items-start ${!n.read ? 'bg-orange-500/5' : ''}`;
+                    let icon = n.type === 'like' ? '<i class="fas fa-heart text-red-500"></i>' : n.type === 'comment' ? '<i class="fas fa-comment text-blue-500"></i>' : '<i class="fas fa-user-plus text-green-500"></i>';
+                    item.innerHTML = `<div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 text-xs border border-white/5 shadow">${icon}</div><div class="flex-1"><p class="text-xs text-gray-300 leading-snug"><b>${n.fromUserName}</b> ${n.type === 'like'?'te dio like.':n.type === 'comment'?'comentó tu post.':'te sigue.'}</p><span class="text-[9px] text-zinc-600 font-medium">${timeAgo(n.timestamp)}</span></div>`;
+                    item.onclick = () => { db.ref(`notifications/${currentUser.uid}/${n.key}/read`).set(true); item.classList.remove('bg-orange-500/5'); if(n.postId) openModal(n.postId, 'main'); };
                     list.appendChild(item);
                 });
             });
         }
-        function markAsRead(key, element) { db.ref(`notifications/${currentUser.uid}/${key}/read`).set(true); element.classList.remove('bg-orange-500/5'); }
 
         async function openModal(id, context) {
             if(!requireLogin()) return;
@@ -959,86 +829,47 @@
             if(currentIndex === -1) { currentPlaylist = unifiedGalleryData; currentIndex = currentPlaylist.findIndex(i => i.id === id); }
             if(currentIndex === -1) return; 
 
-            let img = currentPlaylist[currentIndex];
-            currentImageId = id; currentContext = img.type;
-            updateModalContent(img);
-            document.getElementById('modal').classList.add('visible'); 
-            document.body.style.overflow = 'hidden';
-            
-            // INICIAR BURBUJAS DE CHAT
+            let img = currentPlaylist[currentIndex]; currentImageId = id; currentContext = img.type;
+            updateModalContent(img); document.getElementById('modal').classList.add('visible'); document.body.style.overflow = 'hidden';
             initFloatingComments(id, context);
         }
 
         function updateModalContent(img) {
             document.getElementById('modal-image-title').textContent = img.title;
             document.getElementById('modal-desc').textContent = img.desc || 'Sin descripción.';
-            const avatarEl = document.getElementById('modal-user-avatar');
-            const nameEl = document.getElementById('modal-user-name');
+            const avatarEl = document.getElementById('modal-user-avatar'); const nameEl = document.getElementById('modal-user-name');
             const modalImg = document.getElementById('modal-image');
             
             modalImg.src = img.thumbnailUrl || img.url;
-            if (img.thumbnailUrl && img.thumbnailUrl !== img.url) {
-                const highRes = new Image(); highRes.src = img.url;
-                highRes.onload = () => { if (currentImageId === img.id) modalImg.src = img.url; };
-            }
+            if (img.thumbnailUrl && img.thumbnailUrl !== img.url) { const hi = new Image(); hi.src = img.url; hi.onload = () => { if (currentImageId === img.id) modalImg.src = img.url; }; }
 
-            if (img.type === 'gallery') {
-                nameEl.textContent = "Galería Oficial"; avatarEl.src = "https://files.catbox.moe/ap1lh0.png";
-                nameEl.onclick = null; avatarEl.onclick = null;
-            } else {
-                nameEl.textContent = img.user.name; avatarEl.src = img.user.avatar;
-                const goToProfile = () => window.location.href = `profile.html?uid=${img.userId}`;
-                nameEl.onclick = goToProfile; avatarEl.onclick = goToProfile;
-            }
+            if (img.type === 'gallery') { nameEl.textContent = "Galería Oficial"; avatarEl.src = "https://files.catbox.moe/ap1lh0.png"; nameEl.onclick=null; avatarEl.onclick=null; } 
+            else { nameEl.textContent = img.user.name; avatarEl.src = img.user.avatar; const go = () => window.location.href = `profile.html?uid=${img.userId}`; nameEl.onclick=go; avatarEl.onclick=go; }
 
             const charTag = document.getElementById('modal-character-tag');
-            if (img.characterName) {
-                charTag.classList.remove('hidden'); charTag.classList.add('inline-block');
-                charTag.innerHTML = `<i class="fas fa-tag mr-1"></i> ${img.characterName}`;
-            } else { charTag.classList.add('hidden'); charTag.classList.remove('inline-block'); }
+            if (img.characterName) { charTag.classList.remove('hidden'); charTag.classList.add('inline-flex'); charTag.querySelector('span').innerText = img.characterName; } else { charTag.classList.add('hidden'); charTag.classList.remove('inline-flex'); }
 
             const tagsDiv = document.getElementById('modal-tags'); const tagsBtn = document.getElementById('tags-toggle-btn');
-            tagsDiv.classList.add('hidden'); tagsBtn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down text-xs"></i>'; tagsDiv.innerHTML = '';
-            
-            if (img.tags && img.tags.length > 0) {
-                tagsBtn.style.display = 'flex';
-                img.tags.forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 border border-zinc-700 px-2.5 py-1 rounded-full text-gray-400">#${t.trim()}</span>`; });
-            } else { tagsBtn.style.display = 'none'; }
+            tagsDiv.classList.add('hidden'); tagsBtn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down"></i>'; tagsDiv.innerHTML = '';
+            if (img.tags && img.tags.length > 0) { tagsBtn.style.display = 'flex'; img.tags.forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 text-gray-300 px-2.5 py-1 rounded-full border border-zinc-700 font-medium cursor-pointer hover:border-orange-500" onclick="executeSearch('${t.trim()}')">#${t.trim()}</span>`; }); } else { tagsBtn.style.display = 'none'; }
 
-            const modalLikeBtn = document.getElementById('modal-like-btn');
-            modalLikeBtn.onclick = () => toggleReactionInModal(img.id);
-            updateModalLikeUI(img.id);
-            
-            // Cargar comentarios en panel lateral (usando ONCE si se requiere estricto, pero usaremos ONCE aqui tambien para consistencia con burbujas segun peticion)
-            loadComments(img.id, currentContext);
-            loadSimilarImagesInSlider(img.tags || [], img.id, img.characterName);
+            document.getElementById('modal-like-btn').onclick = () => toggleReactionInModal(img.id); updateModalLikeUI(img.id);
+            loadComments(img.id, currentContext); loadSimilarImagesInSlider(img.tags || [], img.id, img.characterName);
 
             document.getElementById('prev-image').style.display = currentIndex > 0 ? 'flex' : 'none';
             document.getElementById('next-image').style.display = currentIndex < currentPlaylist.length - 1 ? 'flex' : 'none';
         }
 
         function loadSimilarImagesInSlider(tags, currentId, currentCharacterName) {
-            const container = document.getElementById('similar-grid');
-            container.innerHTML = '';
+            const container = document.getElementById('similar-grid'); container.innerHTML = '';
             const candidates = unifiedGalleryData.filter(p => p.id !== currentId && p.url);
             let finalResults = []; let addedIds = new Set();
             const normCharName = normalize(currentCharacterName);
-            if (normCharName) {
-                const charMatches = candidates.filter(p => p.characterName && normalize(p.characterName) === normCharName).slice(0, 5);
-                charMatches.forEach(p => { finalResults.push(p); addedIds.add(p.id); });
-            }
-            if (tags && tags.length > 0) {
-                const tagMatches = candidates.filter(p => !addedIds.has(p.id)).map(p => {
-                        const pTags = Array.isArray(p.tags) ? p.tags.map(t=>normalize(t)) : [];
-                        const common = pTags.filter(t => tags.map(tt=>normalize(tt)).includes(t));
-                        return { post: p, score: common.length };
-                    }).filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.post);
-                finalResults = finalResults.concat(tagMatches);
-            }
+            if (normCharName) { const charMatches = candidates.filter(p => p.characterName && normalize(p.characterName) === normCharName).slice(0, 5); charMatches.forEach(p => { finalResults.push(p); addedIds.add(p.id); }); }
+            if (tags && tags.length > 0) { const tagMatches = candidates.filter(p => !addedIds.has(p.id)).map(p => { const pTags = Array.isArray(p.tags) ? p.tags.map(t=>normalize(t)) : []; const common = pTags.filter(t => tags.map(tt=>normalize(tt)).includes(t)); return { post: p, score: common.length }; }).filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.post); finalResults = finalResults.concat(tagMatches); }
             if (finalResults.length === 0) { container.innerHTML = '<span class="text-[10px] text-gray-500 italic px-2">No hay similares.</span>'; return; }
             finalResults.slice(0, 10).forEach(post => {
-                const div = document.createElement('div'); 
-                div.className = "relative min-w-[70px] w-[70px] h-[70px] rounded-lg overflow-hidden flex-shrink-0 cursor-pointer border border-white/5 opacity-80 hover:opacity-100 hover:border-orange-500/50 transition"; 
+                const div = document.createElement('div'); div.className = "relative min-w-[70px] w-[70px] h-[70px] rounded-lg overflow-hidden flex-shrink-0 cursor-pointer border border-white/10 hover:border-orange-500/50 transition opacity-80 hover:opacity-100"; 
                 div.onclick = () => { stopFloatingComments(); updateModalContent(post); initFloatingComments(post.id, post.type); };
                 div.innerHTML = `<img src="${post.thumbnailUrl || post.url}" loading="lazy" class="w-full h-full object-cover">`;
                 container.appendChild(div);
@@ -1048,19 +879,11 @@
         function toggleTags() { const div = document.getElementById('modal-tags'); const btn = document.getElementById('tags-toggle-btn'); if (div.classList.contains('hidden')) { div.classList.remove('hidden'); btn.innerHTML = '<span>Ocultar</span> <i class="fas fa-chevron-up text-xs"></i>'; } else { div.classList.add('hidden'); btn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down text-xs"></i>'; } }
         function navigateToNext() { if(currentIndex < currentPlaylist.length - 1) { stopFloatingComments(); currentIndex++; updateModalContent(currentPlaylist[currentIndex]); initFloatingComments(currentPlaylist[currentIndex].id, currentPlaylist[currentIndex].type); } }
         function navigateToPrevious() { if(currentIndex > 0) { stopFloatingComments(); currentIndex--; updateModalContent(currentPlaylist[currentIndex]); initFloatingComments(currentPlaylist[currentIndex].id, currentPlaylist[currentIndex].type); } }
-        const imageArea = document.getElementById('modal-image-area'); 
-        imageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
+        const imageArea = document.getElementById('modal-image-area'); imageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
         imageArea.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; touchEndY = e.changedTouches[0].screenY; handleSwipe(); }, {passive: true});
         function handleSwipe() { const deltaX = touchEndX - touchStartX; const deltaY = touchEndY - touchStartY; if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > Math.abs(deltaY)) { if (deltaX < 0) navigateToNext(); else navigateToPrevious(); } else if (Math.abs(deltaY) > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX)) { if (deltaY > 0) closeModal(); } }
         function toggleFullScreen() { document.getElementById('modal').classList.toggle('fullscreen-mode'); }
-        
-        function closeModal() { 
-            const modal = document.getElementById('modal');
-            modal.classList.remove('visible'); 
-            stopFloatingComments(); // DETENER BURBUJAS
-            setTimeout(() => { modal.classList.remove('fullscreen-mode'); document.getElementById('modal-image').src = ''; }, 300);
-            document.body.style.overflow = 'auto'; 
-        }
+        function closeModal() { const modal = document.getElementById('modal'); modal.classList.remove('visible'); stopFloatingComments(); setTimeout(() => { modal.classList.remove('fullscreen-mode'); document.getElementById('modal-image').src = ''; }, 300); document.body.style.overflow = 'auto'; }
 
         function toggleReactionInModal(id) {
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
@@ -1073,73 +896,81 @@
         function updateModalLikeUI(id) {
             const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
             const modalLikeBtn = document.getElementById('modal-like-btn');
-            const modalLikeCount = document.getElementById('modal-like-count');
-            db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`).on('value', s => {
-                 if((currentContext === 'feed' && s.exists()) || (currentContext !== 'feed' && s.val() === 'like')) { modalLikeBtn.querySelector('i').className = "fas fa-heart text-lg mb-0.5 text-red-500"; } 
-                 else { modalLikeBtn.querySelector('i').className = "far fa-heart text-lg mb-0.5 text-gray-400"; }
-            });
-            const pathCount = currentContext === 'feed' ? `feed_posts/${id}/likes` : `reactions/${id}`;
-            db.ref(pathCount).on('value', s => {
-                 let count = 0; if(currentContext === 'feed') count = s.val() || 0; else if(s.val()) Object.values(s.val()).forEach(v => { if(v === 'like') count++; });
-                 modalLikeCount.innerText = count; 
-            });
+            db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`).on('value', s => { if((currentContext === 'feed' && s.exists()) || (currentContext !== 'feed' && s.val() === 'like')) { modalLikeBtn.querySelector('i').className = "fas fa-heart text-xl text-red-500"; } else { modalLikeBtn.querySelector('i').className = "far fa-heart text-xl text-gray-400"; } });
         }
 
         function loadComments(id, context) { 
             let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; 
             const container = document.getElementById('comments'); 
-            // CAMBIO: USAR ONCE EN LUGAR DE ON PARA EVITAR LISTENERS ONLINE SEGUN PETICION
             db.ref(path).orderByChild('timestamp').limitToLast(50).once('value', snap => { 
                 container.innerHTML = !snap.exists() ? '<p class="text-center text-gray-600 text-[10px] py-4 italic">Aún no hay comentarios.</p>' : ''; 
                 const comments = []; snap.forEach(child => comments.push(child.val())); 
                 comments.reverse().forEach(c => { 
-                    const div = document.createElement('div'); div.className = "flex gap-2 items-start";
-                    div.innerHTML = `<img src="${c.userAvatar || 'https://placehold.co/50'}" class="w-7 h-7 rounded-full mt-1 border border-zinc-700 object-cover"><div class="bg-[#1c1c1f] p-2.5 rounded-2xl rounded-tl-sm border border-white/5 w-full"><div class="flex justify-between items-center mb-0.5"><span class="font-bold text-gray-400 text-[10px]">${c.userName || c.name || 'Anónimo'}</span><span class="text-[9px] text-zinc-600">${timeAgo(c.timestamp)}</span></div><p class="text-gray-300 text-xs leading-snug break-words">${c.text || ''}</p></div>`; 
+                    const div = document.createElement('div'); div.className = "flex gap-2.5 items-start animate-fade-in";
+                    div.innerHTML = `<img src="${c.userAvatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full mt-0.5 border border-zinc-700 object-cover shadow-sm"><div class="bg-[#1c1c1f] p-3 rounded-2xl rounded-tl-none border border-white/5 w-full shadow-sm"><div class="flex justify-between items-center mb-0.5"><span class="font-bold text-gray-300 text-[11px] cursor-pointer hover:text-orange-400 transition">${c.userName || c.name || 'Anónimo'}</span><span class="text-[9px] text-zinc-600">${timeAgo(c.timestamp)}</span></div><p class="text-gray-300 text-xs leading-relaxed break-words font-light">${c.text || ''}</p></div>`; 
                     container.appendChild(div); 
                 }); 
             }); 
         }
         document.getElementById('comment-form').addEventListener('submit', (e) => {
              e.preventDefault(); const input = document.getElementById('comment-input'); const text = input.value.trim(); if(!text) return;
+             if(!requireLogin()) return;
              const path = currentContext === 'feed' ? `feed_comments/${currentImageId}` : `comments/${currentImageId}`;
              const finalUserName = (currentUser && userDataCache.username) ? userDataCache.username : (currentUser?.displayName || 'Anónimo');
              const finalUserAvatar = (currentUser && userDataCache.profilePic) ? userDataCache.profilePic : 'https://placehold.co/100x100';
-             db.ref(path).push({ text: text, userId: currentUser ? currentUser.uid : 'anon', userName: finalUserName, name: finalUserName, userAvatar: finalUserAvatar, timestamp: Date.now() }).then(() => {
-                 // Recargar comentarios manualmente al comentar ya que quitamos el listener
-                 loadComments(currentImageId, currentContext);
-                 initFloatingComments(currentImageId, currentContext); // Actualizar burbujas
-             }); 
+             db.ref(path).push({ text: text, userId: currentUser.uid, userName: finalUserName, name: finalUserName, userAvatar: finalUserAvatar, timestamp: Date.now() }).then(() => { loadComments(currentImageId, currentContext); initFloatingComments(currentImageId, currentContext); }); 
              input.value = '';
         });
 
         // Utils
         function executeSearch(query) { 
-            document.getElementById('main-content-sections').classList.add('hidden'); document.getElementById('gallery').classList.add('hidden'); document.getElementById('top-users-section').classList.add('hidden'); document.getElementById('hero-wrapper').classList.add('hidden'); // Ocultar nuevos elementos
+            query = normalize(query); if(!query) return;
+            document.getElementById('main-content-sections').classList.add('hidden'); 
+            document.getElementById('top-users-section').classList.add('hidden'); 
+            
+            // Ocultar la sección de personajes también al buscar
+            document.getElementById('character-stories-section').classList.add('hidden');
+
             document.getElementById('search-results-container').classList.remove('hidden'); 
-            document.getElementById('clear-search-btn').classList.remove('hidden'); document.getElementById('clear-search-btn').classList.add('block');
+            document.getElementById('clear-search-btn').classList.remove('hidden');
+            
             const matchedUsers = usersCache.filter(u => (u.username && normalize(u.username).includes(query))); 
-            const matchedGallery = unifiedGalleryData.filter(i => (i.title && normalize(i.title).includes(query)) || (i.tags && i.tags.some(t => normalize(t).includes(query))) || (i.user && i.user.name && normalize(i.user.name).includes(query))); 
+            
+            // Búsqueda mejorada para incluir nombre de personaje
+            const matchedGallery = unifiedGalleryData.filter(i => 
+                (i.title && normalize(i.title).includes(query)) || 
+                (i.tags && i.tags.some(t => normalize(t).includes(query))) || 
+                (i.user && i.user.name && normalize(i.user.name).includes(query)) ||
+                (i.characterName && normalize(i.characterName).includes(query))
+            ); 
+            
             currentSearchResults = [...matchedUsers, ...matchedGallery]; displaySearchResultsPage(1); 
         }
+
         function displaySearchResultsPage(page) { searchCurrentPage = page; const start = (page - 1) * searchResultsPerPage; const items = currentSearchResults.slice(start, start + searchResultsPerPage); displaySearchResults(items, 'search-results-grid', false, 'search'); renderPaginationControls(); }
         function renderPaginationControls(){ const container = document.getElementById('search-pagination'); const total = Math.ceil(currentSearchResults.length / searchResultsPerPage); container.innerHTML = ''; if (total <= 1) return; container.innerHTML = `<button onclick="displaySearchResultsPage(${searchCurrentPage - 1})" class="px-4 py-2 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition" ${searchCurrentPage === 1 ? 'disabled' : ''}>Prev</button><span class="text-gray-400 self-center"> ${searchCurrentPage}/${total}</span><button onclick="displaySearchResultsPage(${searchCurrentPage + 1})" class="px-4 py-2 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition" ${searchCurrentPage === total ? 'disabled' : ''}>Next</button>`; }
-        function resetSearchView(){ document.getElementById('search-input').value = ''; document.getElementById('search-results-container').classList.add('hidden'); document.getElementById('main-content-sections').classList.remove('hidden'); document.getElementById('gallery').classList.remove('hidden'); document.getElementById('top-users-section').classList.remove('hidden'); document.getElementById('hero-wrapper').classList.remove('hidden'); const clearBtn = document.getElementById('clear-search-btn'); clearBtn.classList.add('hidden'); clearBtn.classList.remove('block'); }
+        
+        function resetSearchView(){ 
+            document.getElementById('search-input').value = ''; 
+            document.getElementById('search-results-container').classList.add('hidden'); 
+            document.getElementById('main-content-sections').classList.remove('hidden'); 
+            document.getElementById('top-users-section').classList.remove('hidden'); 
+            document.getElementById('character-stories-section').classList.remove('hidden'); // Mostrar personajes de nuevo
+            document.getElementById('clear-search-btn').classList.add('hidden'); 
+        }
         
         function setupEventListeners() { 
-            document.getElementById('search-form').addEventListener('submit', e => { e.preventDefault(); executeSearch(normalize(document.getElementById('search-input').value)); });
-            document.getElementById('clear-search-btn').addEventListener('click', resetSearchView);
             const obs = new IntersectionObserver(e => { if(e[0].isIntersecting) loadMoreImages(); }); obs.observe(document.getElementById('load-more-trigger'));
             document.getElementById('next-image').onclick = navigateToNext; document.getElementById('prev-image').onclick = navigateToPrevious;
             document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
             window.addEventListener('scroll', () => { const btn = document.getElementById('scrollToTopBtn'); if (window.scrollY > 300) { btn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4'); } else { btn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4'); } });
         }
 
-        function generateSkeletons(container, count) { container.innerHTML = ''; for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton aspect-[2/3] rounded-lg'; } }
+        function generateSkeletons(container, count) { for (let i = 0; i < count; i++) { container.appendChild(document.createElement('div')).className = 'skeleton aspect-[2/3]'; } }
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
         function timeAgo(ts) { if(!ts) return ''; const s = Math.floor((Date.now()-ts)/1000); if(s<60) return 'Ahora'; if(s<3600) return Math.floor(s/60)+' min'; if(s<86400) return Math.floor(s/3600)+' h'; return Math.floor(s/86400)+' d'; }
         
         function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } window.location.href = 'login.html'; return false; } return true; }
-        
         function loadUserProfile(uid) { db.ref('users/' + uid).once('value', snap => { if (snap.exists()) { const data = snap.val(); document.getElementById('header-user-img').src = data.profilePic || 'https://placehold.co/100x100/333/fff?text=U'; userDataCache = data; } }); }
         
         let newProfileFile = null;
@@ -1149,129 +980,5 @@
         async function saveNewProfilePic() { if (!newProfileFile) { closeConfigModal(); return; } const btn = document.getElementById('btn-save-config'); const status = document.getElementById('config-upload-status'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; status.innerHTML = 'Subiendo...'; try { const formData = new FormData(); formData.append('reqtype', 'fileupload'); formData.append('userhash', CATBOX_USERHASH); formData.append('fileToUpload', newProfileFile); const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData }); if (!res.ok) throw new Error("Error de red"); const url = await res.text(); if (url.includes('catbox.moe')) { const finalUrl = url.trim(); if (currentUser) { await db.ref('users/' + currentUser.uid).update({ profilePic: finalUrl }); alert('¡Listo!'); closeConfigModal(); window.location.reload(); } } else { throw new Error("API Error"); } } catch (e) { console.error(e); status.innerHTML = '<span class="text-red-500">Error</span>'; btn.disabled = false; btn.innerHTML = 'Reintentar'; } }
         function logoutUser() { auth.signOut().then(() => { window.location.reload(); }); }
     </script>
-
-    <!-- SCRIPT DE PYTHON PARA EL FONDO DINÁMICO -->
-    <script type="py">
-from pyscript import window, document
-from pyodide.ffi import create_proxy
-import random
-import math
-
-# Configuración del canvas de fondo
-canvas = document.getElementById("particle-canvas")
-ctx = canvas.getContext("2d")
-
-# Estado global
-mouse = {"x": -1000, "y": -1000}
-particles = []
-
-def resize(event=None):
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-
-resize()
-window.addEventListener("resize", create_proxy(resize))
-
-class Particle:
-    def __init__(self, x, y, is_respawn=False):
-        self.x = x
-        self.y = y
-        self.size = random.random() * 2 + 0.5
-        
-        # Colores temáticos (Naranja Exen y Violeta)
-        # 80% Naranjas/Dorados, 20% Violetas
-        if random.random() > 0.2:
-            # Rango Naranja (Hue ~20-40)
-            h = random.randint(20, 45)
-            s = 90
-            l = 60
-        else:
-            # Rango Violeta (Hue ~260-290)
-            h = random.randint(260, 290)
-            s = 80
-            l = 70
-            
-        self.color = f"hsl({h}, {s}%, {l}%)"
-        
-        # Velocidad suave y flotante
-        self.vx = (random.random() - 0.5) * 0.8
-        self.vy = (random.random() - 0.5) * 0.8
-        
-        # Vida infinita (respawn en bordes)
-        self.alpha = 0 if is_respawn else random.random()
-        self.target_alpha = random.random() * 0.6 + 0.2
-
-    def update(self):
-        # Movimiento fluido
-        self.x += self.vx
-        self.y += self.vy
-        
-        # Efecto de aparición suave
-        if self.alpha < self.target_alpha:
-            self.alpha += 0.01
-
-        # Interacción con ratón (Repulsión suave)
-        dx = mouse["x"] - self.x
-        dy = mouse["y"] - self.y
-        dist = math.sqrt(dx*dx + dy*dy)
-        
-        if dist < 120:
-            force = (120 - dist) / 120
-            angle = math.atan2(dy, dx)
-            # Empujar lejos del ratón
-            self.vx -= math.cos(angle) * force * 0.1
-            self.vy -= math.sin(angle) * force * 0.1
-
-        # Límites (Screen Wrap)
-        if self.x < 0: self.x = canvas.width
-        if self.x > canvas.width: self.x = 0
-        if self.y < 0: self.y = canvas.height
-        if self.y > canvas.height: self.y = 0
-        
-        # Fricción mínima para estabilizar
-        self.vx *= 0.99
-        self.vy *= 0.99
-
-    def draw(self):
-        ctx.save()
-        ctx.globalAlpha = self.alpha
-        ctx.fillStyle = self.color
-        ctx.shadowBlur = 8
-        ctx.shadowColor = self.color
-        ctx.beginPath()
-        ctx.arc(self.x, self.y, self.size, 0, math.pi * 2)
-        ctx.fill()
-        ctx.restore()
-
-def handle_mouse(e):
-    if hasattr(e, 'touches'):
-        mouse["x"] = e.touches.item(0).clientX
-        mouse["y"] = e.touches.item(0).clientY
-    else:
-        mouse["x"] = e.clientX
-        mouse["y"] = e.clientY
-
-# Escuchamos en window para capturar eventos sobre la UI HTML
-mouse_proxy = create_proxy(handle_mouse)
-window.addEventListener("mousemove", mouse_proxy)
-window.addEventListener("touchmove", mouse_proxy)
-
-# Inicializar partículas
-for _ in range(70): # Cantidad moderada para no saturar
-    particles.append(Particle(random.random() * canvas.width, random.random() * canvas.height))
-
-def run_animation(*args):
-    # Limpiar canvas completamente para mantener transparencia del fondo CSS
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    
-    for p in particles:
-        p.update()
-        p.draw()
-    
-    window.requestAnimationFrame(create_proxy(run_animation))
-
-run_animation()
-    </script>
 </body>
 </html>
- 
