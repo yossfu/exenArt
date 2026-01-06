@@ -484,13 +484,24 @@
             });
         }
         window.runAutoTagging = async function(originalFile) {
-            const tagInput = document.getElementById('post-tags'); tagInput.value = ""; 
+            const tagInput = document.getElementById('post-tags'); 
+            const publishBtn = document.getElementById('publish-btn');
+            
+            tagInput.value = ""; 
+            publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
+            
             try {
                 const processedFile = await resizeImageForApi(originalFile);
                 const client = await Client.connect("Jossle/deepdanbooru_online_Exen");
                 const result = await client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend]);
-                if (result && result.data && result.data[0]) { tagInput.value = result.data[0]; } else throw new Error("Respuesta vacía");
-            } catch (error) { console.error("Error Tagging:", error); tagInput.value = "tag_error"; }
+                if (result && result.data && result.data[0]) { 
+                    tagInput.value = result.data[0]; 
+                    publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+                } else throw new Error("Respuesta vacía");
+            } catch (error) { 
+                console.error("Error Tagging:", error); 
+                publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+            }
         }
     </script>
 
@@ -537,7 +548,7 @@
             if (user && !user.isAnonymous) {
                 currentUser = user; targetUserId = uidParam || currentUser.uid;
                 if (!uidParam) window.history.replaceState(null, '', `?uid=${currentUser.uid}`);
-                db.ref('users/' + currentUser.uid).once('value', s => currentUserData = s.val());
+                db.ref('users/' + currentUser.uid).on('value', s => currentUserData = s.val());
                 document.getElementById('app-content').style.display = 'block';
                 setupUIForTargetUser(); loadUserProfile(); loadUserPosts(); loadUserCollectionsGrid(collectionParam); 
                 checkFollowStatus(); loadFollowersCount();
@@ -721,10 +732,8 @@
             const loader = document.getElementById('avatar-loading'); loader.classList.remove('hidden'); loader.classList.add('flex');
             try {
                 const fileToUpload = await compressImage(file);
-                const fd = new FormData(); fd.append('reqtype', 'fileupload'); fd.append('userhash', CATBOX_USERHASH); fd.append('fileToUpload', fileToUpload);
-                const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", {method:'POST', body:fd});
-                const urlText = await res.text(); if (!urlText.includes('catbox.moe')) throw new Error("Error en subida de imagen");
-                const finalUrl = urlText.trim();
+                const finalUrl = await uploadToCatboxWithFallback(fileToUpload);
+                
                 await db.ref('users/' + currentUser.uid).update({ profilePic: finalUrl });
                 document.getElementById('profile-image').src = finalUrl; const postPreview = document.getElementById('post-avatar-preview'); if(postPreview) postPreview.src = finalUrl;
                 showToast("Actualizando publicaciones antiguas...");
@@ -854,6 +863,7 @@
                 selectedFiles = []; renderPreviewStack();
                 document.getElementById('post-text').value = ''; document.getElementById('post-title').value=''; document.getElementById('post-tags').value=''; document.getElementById('post-character').value='';
                 document.getElementById('publish-btn').disabled = false; document.getElementById('publish-btn').classList.remove('btn-disabled');
+                document.getElementById('publish-btn').innerHTML = '<span>Publicar</span> <i class="fas fa-paper-plane text-xs"></i>';
                 selectCustomOption('dropdown-category', '', '<i class="fas fa-tag mr-2 text-xs text-orange-500"></i> Categoría');
                 selectCustomOption('dropdown-collection', '', '<i class="fas fa-folder mr-2 text-xs text-orange-500"></i> Ningún Álbum');
                 document.getElementById('new-collection-name').value = ''; document.getElementById('post-text').rows=1;
@@ -914,36 +924,50 @@
             let colId = document.getElementById('post-collection').value;
             const newColName = document.getElementById('new-collection-name').value.trim();
 
-            if (!text && selectedFiles.length === 0) return showAlert("Añade contenido.");
-            if (selectedFiles.length > 0 && (!title || !category)) return showAlert("Faltan datos (título/categoría).");
+            if (!text && selectedFiles.length === 0) return showAlert("Escribe algo o sube una imagen.");
+            if (selectedFiles.length > 0 && (!title || !category)) return showAlert("Título y Categoría son requeridos con imagen.");
             if (colId === 'new' && !newColName) return showAlert("Nombre de colección requerido.");
 
-            const btn = document.getElementById('publish-btn'); btn.disabled = true; btn.classList.add('btn-disabled');
-            document.getElementById('upload-progress').classList.remove('hidden');
+            const btn = document.getElementById('publish-btn');
+            const progress = document.getElementById('upload-progress');
+            
+            btn.disabled = true; btn.classList.add('btn-disabled');
+            btn.innerHTML = '<i class="fas fa-cog fa-spin"></i> Procesando...';
+            progress.classList.remove('hidden');
 
             try {
-                let colName = null, uploadedUrls = [];
+                let colName = null;
                 if (colId === 'new') {
                     const ref = db.ref('collections/' + currentUser.uid).push();
                     colId = ref.key; colName = newColName;
                     await ref.set({ name: newColName, createdAt: firebase.database.ServerValue.TIMESTAMP, cover: 'pending', previews: [] });
                 } else if (colId) { const snap = await db.ref(`collections/${currentUser.uid}/${colId}/name`).once('value'); colName = snap.val(); }
 
+                let uploadedUrls = [];
                 if (selectedFiles.length > 0) {
                     for (const file of selectedFiles) {
+                        // 1. Comprimir
                         let processedFile = await compressImage(file);
-                        const formData = new FormData(); formData.append('reqtype','fileupload'); formData.append('userhash',CATBOX_USERHASH); formData.append('fileToUpload', processedFile);
-                        const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method:'POST', body: formData });
-                        const txt = await r.text(); if(txt.includes('catbox.moe')) uploadedUrls.push(txt.trim());
+                        // 2. Subir
+                        btn.innerHTML = '<i class="fas fa-cloud-upload-alt fa-bounce"></i> Subiendo...';
+                        const url = await uploadToCatboxWithFallback(processedFile);
+                        uploadedUrls.push(url);
+                    }
+                    
+                    // SEGURIDAD ANTI-GHOST: Si seleccionó archivos pero no hay URLs, ABORTAR.
+                    if (uploadedUrls.length === 0) {
+                        throw new Error("La subida de imágenes falló. No se creó la publicación.");
                     }
                 }
+                
+                // Usar currentUserData si existe, sino fallback al usuario de auth
+                const safeAvatar = (currentUserData && currentUserData.profilePic) ? currentUserData.profilePic : 'https://placehold.co/150x150/333/666?text=U';
+                const safeName = (currentUserData && currentUserData.username) ? currentUserData.username : 'Usuario';
 
-                const userSnap = await db.ref('users/' + currentUser.uid).once('value');
-                const userData = userSnap.val() || {};
-                const safeAvatar = userData.profilePic || 'https://placehold.co/150x150/333/666?text=U';
-                const safeName = userData.username || 'Anon';
+                const newPostRef = db.ref('feed_posts').push();
+                const newPostId = newPostRef.key;
 
-                await db.ref('feed_posts').push({
+                await newPostRef.set({
                     text, title, tags, category, characterName,
                     imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
                     imageUrls: uploadedUrls,
@@ -961,13 +985,20 @@
                 }
 
                 if (colId && uploadedUrls.length > 0) { 
-                    // Update previews with ALL uploaded images, reversed so first is first
+                    // Update previews with ALL uploaded images
                     await updateCollectionPreviews(currentUser.uid, colId, uploadedUrls); 
                 }
                 
                 collapsePostArea(true); loadUserPosts(); loadUserCollectionsGrid(); showToast("Publicado");
-            } catch (e) { showAlert(e.message); } 
-            finally { btn.disabled = false; btn.classList.remove('btn-disabled'); document.getElementById('upload-progress').classList.add('hidden'); }
+            } catch (e) { 
+                console.error(e);
+                showAlert("Error: " + (e.message || e)); 
+            } 
+            finally { 
+                btn.disabled = false; btn.classList.remove('btn-disabled'); 
+                btn.innerHTML = '<span>Publicar</span> <i class="fas fa-paper-plane text-xs"></i>';
+                progress.classList.add('hidden'); 
+            }
         }
 
         // --- FETCHERS (ONCE) ---
@@ -1258,7 +1289,7 @@
         function saveSlogan() { const s = document.getElementById('slogan-input').value.trim(); db.ref('users/'+currentUser.uid).update({slogan:s}).then(()=>toggleSloganEdit()); }
         function toggleSloganEdit() { const d=document.getElementById('slogan-display-container'), e=document.getElementById('slogan-edit-container'); if(e.classList.contains('hidden')){d.classList.add('hidden');e.classList.remove('hidden');}else{d.classList.remove('hidden');e.classList.add('hidden');} }
 
-        async function handleBannerUpload(e) { const f = e.target.files[0]; if(!f) return; document.getElementById('banner-loading').classList.remove('hidden'); try { const fileToUpload = await compressImage(f); const fd = new FormData(); fd.append('reqtype', 'fileupload'); fd.append('userhash', CATBOX_USERHASH); fd.append('fileToUpload', fileToUpload); const res = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", {method:'POST', body:fd}); const txt = await res.text(); if(txt.includes('catbox.moe')) { db.ref('users/'+currentUser.uid).update({bannerUrl:txt.trim()}); showToast("Portada actualizada"); } } catch(err){ showAlert("Error banner."); } finally{document.getElementById('banner-loading').classList.add('hidden');} }
+        async function handleBannerUpload(e) { const f = e.target.files[0]; if(!f) return; document.getElementById('banner-loading').classList.remove('hidden'); try { const fileToUpload = await compressImage(f); const finalUrl = await uploadToCatboxWithFallback(fileToUpload); await db.ref('users/'+currentUser.uid).update({bannerUrl:finalUrl}); showToast("Portada actualizada"); } catch(err){ showAlert("Error banner: " + err.message); } finally{document.getElementById('banner-loading').classList.add('hidden');} }
         function loadUserCollectionsSelect() { if (!currentUser) return; db.ref('collections/' + currentUser.uid).on('value', snap => { let html = `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '', '<i class=\\'fas fa-folder mr-2 text-xs text-orange-500\\'></i> Ningún Álbum')">Ningún Álbum</div><div class="option-item special-option" onclick="selectCustomOption('dropdown-collection', 'new', '➕ Crear Nueva Colección...')">➕ Crear Nueva Colección...</div>`; snap.forEach(child => { html += `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '${child.key}', '📁 ${child.val().name}')">📁 ${child.val().name}</div>`; }); const el = document.getElementById('collection-options-list'); if(el) el.innerHTML = html; }); }
         function toggleCollectionInput() { const val = document.getElementById('post-collection').value; const c = document.getElementById('new-collection-container'); if(val === 'new') c.classList.remove('hidden'); else c.classList.add('hidden'); }
         
@@ -1320,20 +1351,73 @@
         function loadCollectionPosts(colId) { const grid = document.getElementById('detail-collection-grid'), emptyMsg = document.getElementById('detail-empty-msg'); grid.innerHTML = '<div class="col-span-3 text-center py-10"><i class="fas fa-circle-notch fa-spin text-orange-500"></i></div>'; db.ref('feed_posts').orderByChild('userId').equalTo(targetUserId).limitToLast(200).once('value', snap => { grid.innerHTML = ''; let colPosts = []; if(snap.exists()){ snap.forEach(c => { const p = c.val(); if(p.collectionId === colId && (p.imageUrl || (p.imageUrls && p.imageUrls.length > 0))) { p.id = c.key; colPosts.push(p); } }); } if (colPosts.length === 0) { emptyMsg.classList.remove('hidden'); return; } emptyMsg.classList.add('hidden'); colPosts.sort((a,b) => b.timestamp - a.timestamp); colPosts.forEach((post, idx) => { const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []); images.forEach((imgUrl, imgIdx) => { const div = document.createElement('div'); div.className = "grid-item"; div.onclick = () => openMainViewer(colPosts, idx, imgIdx); div.innerHTML = `<img src="${imgUrl}" class="grid-image" loading="lazy">`; grid.appendChild(div); }); }); }); }
         function deleteCurrentCollection() { showConfirm("¿Eliminar colección?", () => { db.ref(`collections/${currentUser.uid}/${currentCollectionId}`).remove(); closeCollectionDetail(); showToast("Eliminado"); }, "Eliminar Álbum"); }
 
+        // --- COMPRESIÓN Y SUBIDA MEJORADAS (FEED LOGIC) ---
         function compressImage(file) {
             return new Promise((resolve, reject) => {
-                const maxSizeKB = 150; if (file.size / 1024 <= maxSizeKB) { resolve(file); return; }
-                const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = function(event) {
-                    const img = new Image(); img.src = event.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, img.width, img.height);
-                        let quality = 0.9, attempts = 0;
-                        const tryCompress = () => { canvas.toBlob((blob) => { if (!blob) { reject(new Error("Error")); return; } if ((blob.size / 1024) <= maxSizeKB || quality <= 0.1 || attempts >= 20) { resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg", lastModified: Date.now() })); } else { quality -= 0.05; attempts++; tryCompress(); } }, 'image/jpeg', quality); }; tryCompress();
-                    }; img.onerror = error => reject(error);
-                }; reader.onerror = error => reject(error);
+                const maxSizeKB = 150; 
+                if (file.size / 1024 <= maxSizeKB && file.type !== 'image/png') { resolve(file); return; }
+
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    let width = img.width, height = img.height;
+                    const maxDim = 1920; 
+
+                    // Resize inicial si es gigante
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; } 
+                        else { width = Math.round((width * maxDim) / height); height = maxDim; }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    let quality = 0.9;
+                    
+                    const tryCompression = () => {
+                        canvas.toBlob(blob => {
+                            if (!blob) { reject(new Error("Error procesando imagen.")); return; }
+                            
+                            // Éxito: Tamaño correcto o calidad mínima alcanzada
+                            if (blob.size / 1024 <= maxSizeKB || quality <= 0.3) {
+                                resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), { type: "image/webp", lastModified: Date.now() }));
+                            } else {
+                                // Fallo: Reducir calidad
+                                quality -= 0.1;
+                                // Si la calidad baja mucho, reducir dimensiones drásticamente para asegurar <150kb
+                                if (quality < 0.5) {
+                                    canvas.width *= 0.8; canvas.height *= 0.8;
+                                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                }
+                                tryCompression();
+                            }
+                        }, 'image/webp', quality);
+                    };
+                    tryCompression();
+                };
+                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Imagen corrupta.")); };
+                img.src = url;
             });
         }
+
+        async function uploadToCatboxWithFallback(file) {
+            const formData = new FormData(); formData.append('reqtype', 'fileupload'); formData.append('userhash', CATBOX_USERHASH); formData.append('fileToUpload', file);
+            try {
+                const r = await fetch("https://corsproxy.io/?https://catbox.moe/user/api.php", { method: 'POST', body: formData });
+                if (r.ok) { const txt = await r.text(); if (txt.includes('catbox.moe')) return txt.trim(); }
+            } catch (e) { console.warn("Fallo Proxy 1", e); }
+            try {
+                const fd2 = new FormData(); fd2.append('reqtype', 'fileupload'); fd2.append('userhash', CATBOX_USERHASH); fd2.append('fileToUpload', file);
+                const r = await fetch("https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent("https://catbox.moe/user/api.php"), { method: 'POST', body: fd2 });
+                if (r.ok) { const txt = await r.text(); if (txt.includes('catbox.moe')) return txt.trim(); }
+            } catch (e) { console.warn("Fallo Proxy 2", e); }
+            throw new Error("Error de conexión. Intenta más tarde.");
+        }
+
         function toggleTags() { const div = document.getElementById('modal-tags'); const btn = document.getElementById('tags-toggle-btn'); if (div.classList.contains('hidden')) { div.classList.remove('hidden'); btn.innerHTML = '<span>Ocultar etiquetas</span> <i class="fas fa-chevron-up"></i>'; } else { div.classList.add('hidden'); btn.innerHTML = '<span>Ver etiquetas</span> <i class="fas fa-chevron-down"></i>'; } }
         function toggleFullScreen() { document.getElementById('modal').classList.toggle('fullscreen-mode'); }
         function confirmDeletePost(postId) { showConfirm("¿Borrar permanentemente?", () => executeDelete(postId), "Eliminar obra"); }
