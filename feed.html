@@ -268,14 +268,14 @@
                                 <div id="character-suggestions" class="suggestions-dropdown custom-scrollbar"></div>
                             </div>
                             
-                            <!-- Campo de Tags Generales (DeepDanbooru) -->
                             <div class="hidden"><input type="text" id="post-tags" placeholder="Auto-tagging..." readonly></div>
                             
-                            <!-- NUEVO CAMPO: Descripción / Etiquetas Detalladas (WD Tagger) -->
-                            <div class="hidden">
-                                <input type="text" id="post-description" placeholder="Etiquetas detalladas (WD)..." class="custom-input bg-black/40 border-zinc-700 text-xs pl-8 tags-readonly" readonly>
+                            <!-- NUEVO CAMPO VISIBLE PARA WD TAGGER -->
+                            <div class="relative w-full mb-1">
+                                <input type="text" id="post-description" placeholder="Analizando detalles..." class="custom-input bg-black/40 border-zinc-700 text-xs pl-2 text-gray-300" readonly>
+                                <div class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-gray-500 font-bold bg-black/50 px-2 py-0.5 rounded">WD TAGGER</div>
                             </div>
-                            
+
                             <div class="flex flex-col sm:flex-row gap-3">
                                 <div class="custom-select-container w-full" id="dropdown-category">
                                     <input type="hidden" id="post-category" value="">
@@ -438,15 +438,14 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE IA (ACTUALIZADO CON WD TAGGER) -->
+    <!-- SCRIPT DE IA -->
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
-        
-        // Configuración DeepDanbooru (Original)
         const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
         
-        // Configuración WD Tagger (Nuevo)
-        // El espacio suele usar: [imagen, umbral_general, umbral_personaje]
+        // WD Tagger Config (SmilingWolf)
+        // Usa el espacio oficial y parámetros típicos de este modelo
+        const WD_SPACE_URL = "https://smilingwolf-wd-tagger.hf.space";
         const WD_CONFIG = { gen_threshold: 0.35, char_threshold: 0.85 };
 
         async function resizeImageForApi(file) {
@@ -459,10 +458,10 @@
                 }; img.src = URL.createObjectURL(file);
             });
         }
-
+        
         window.runAutoTagging = async function(originalFile) {
             const tagInput = document.getElementById('post-tags'); 
-            const descInput = document.getElementById('post-description'); // Nuevo campo
+            const descInput = document.getElementById('post-description'); // Nuevo campo descriptivo
             const publishBtn = document.getElementById('publish-btn');
             
             tagInput.value = ""; 
@@ -472,47 +471,51 @@
 
             try {
                 const processedFile = await resizeImageForApi(originalFile);
-
-                // Ejecutamos ambos modelos en paralelo usando Promise.all
+                
+                // Ejecutamos ambos en paralelo (Promise.allSettled permite que uno falle sin detener al otro)
                 const [resultDeep, resultWD] = await Promise.allSettled([
                     // Tagger 1: DeepDanbooru
                     Client.connect("Jossle/deepdanbooru_online_Exen").then(client => 
                         client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend])
                     ),
-                    // Tagger 2: SmilingWolf WD Tagger (v1.4 vit v2 es el estándar para esto)
-                    Client.connect("SmilingWolf/wd-v1-4-vit-tagger-v2").then(client => 
+                    // Tagger 2: WD Tagger
+                    Client.connect(WD_SPACE_URL).then(client => 
                         client.predict(0, [processedFile, WD_CONFIG.gen_threshold, WD_CONFIG.char_threshold])
                     )
                 ]);
 
-                // Procesar resultado DeepDanbooru (Tags simples)
-                if (resultDeep.status === 'fulfilled' && resultDeep.value && resultDeep.value.data && resultDeep.value.data[0]) {
+                // Procesar DeepDanbooru
+                if (resultDeep.status === 'fulfilled' && resultDeep.value && resultDeep.value.data) {
                     tagInput.value = resultDeep.value.data[0];
                 }
 
-                // Procesar resultado WD Tagger (Descriptivo/Detallado)
+                // Procesar WD Tagger
                 if (resultWD.status === 'fulfilled' && resultWD.value && resultWD.value.data) {
-                    const labelData = resultWD.value.data[0]; // Suele ser un objeto {tag: conf, tag2: conf}
+                    const labelData = resultWD.value.data[0]; // WD devuelve un objeto { tag: confianza }
                     if (labelData && typeof labelData === 'object') {
-                        // Filtramos y ordenamos las etiquetas por confianza
+                        // Ordenamos por confianza y filtramos
                         const sortedTags = Object.entries(labelData)
-                            .filter(([tag, conf]) => conf > WD_CONFIG.gen_threshold) // Filtrar por umbral
-                            .sort((a, b) => b[1] - a[1]) // Ordenar descendente por confianza
-                            .map(([tag, conf]) => tag.replaceAll('_', ' ')); // Reemplazar _ con espacios para que sea más natural/descriptivo
+                            .filter(([tag, conf]) => conf > WD_CONFIG.gen_threshold)
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([tag]) => tag.replaceAll('_', ' ')); // Formatear "red_eyes" -> "red eyes"
                         
-                        // Unimos para crear una "descripción" basada en tags
                         if (sortedTags.length > 0) {
                             descInput.value = sortedTags.join(", ");
+                        } else {
+                            descInput.value = "Sin detalles detectados.";
                         }
                     }
+                } else {
+                    console.warn("WD Tagger falló o no respondió:", resultWD.reason);
+                    descInput.value = "WD Tagger no disponible (Posible sobrecarga)";
                 }
 
             } catch (error) {
-                console.error("Error Tagging:", error); 
+                console.error("Error General Tagging:", error); 
+                if(!tagInput.value) tagInput.value = "Error en análisis";
             } finally {
-                publishBtn.disabled = false; 
-                publishBtn.classList.remove('btn-disabled');
-                publishBtn.innerHTML = 'Publicar';
+                publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+                publishBtn.innerHTML = '<span>Publicar</span> <i class="fas fa-paper-plane text-xs"></i>';
             }
         }
     </script>
@@ -681,7 +684,7 @@
                 document.getElementById('new-collection-name').value = '';
                 document.getElementById('character-suggestions').classList.remove('visible'); 
                 document.getElementById('publish-btn').disabled = false; document.getElementById('publish-btn').classList.remove('btn-disabled');
-                document.getElementById('publish-btn').innerHTML = 'Publicar';
+                document.getElementById('publish-btn').innerHTML = '<span>Publicar</span> <i class="fas fa-paper-plane text-xs"></i>';
             };
             if(force || (selectedFiles.length === 0 && !document.getElementById('post-text').value)) reset();
             else showConfirm("¿Descartar publicación?", reset);
@@ -733,7 +736,7 @@
             const title = document.getElementById('post-title').value.trim();
             const characterName = document.getElementById('post-character').value.trim();
             const tags = document.getElementById('post-tags').value.trim();
-            const description = document.getElementById('post-description').value.trim(); // Nuevo campo descriptivo
+            const description = document.getElementById('post-description').value.trim(); // Nuevo campo
             const category = document.getElementById('post-category').value;
             let colId = document.getElementById('post-collection').value;
             const newColName = document.getElementById('new-collection-name').value.trim();
@@ -783,15 +786,13 @@
                 const newPostRef = db.ref('feed_posts').push();
                 const newPostId = newPostRef.key;
                 
-                // Concatenamos las tags descriptivas al texto principal si se desea, o las guardamos en el objeto
-                // Aquí las guardamos en el objeto 'postData' como 'descriptionTags'
+                // Concatenamos las tags descriptivas al objeto del post para mostrarlas luego
                 const postData = {
                     text, 
                     imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
                     imageUrls: uploadedUrls,
-                    title, 
-                    tags: tags,
-                    descriptionTags: description, // Guardamos la descripción generada
+                    title, tags, 
+                    descriptionTags: description, // Nuevo campo en DB
                     category, characterName,
                     userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0,
@@ -819,7 +820,7 @@
                 showAlert("Error: " + (e.message || e || "Error desconocido")); 
             }
             finally { 
-                btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = 'Publicar'; 
+                btn.disabled = false; btn.classList.remove('btn-disabled'); btn.innerHTML = '<span>Publicar</span> <i class="fas fa-paper-plane text-xs"></i>'; 
                 progress.classList.add('hidden'); 
             }
         }
@@ -983,9 +984,11 @@
             div.id = `post-card-${post.id}`;
             
             let textHtml = '';
-            // Mostrar texto y descripción generada
+            // AQUI MOSTRAMOS LA DESCRIPCION DETALLADA SI EXISTE
             if (post.text || post.descriptionTags) {
-                const fullText = (post.text || "") + (post.descriptionTags ? "\n\n" + post.descriptionTags : "");
+                let fullText = post.text || "";
+                if (post.descriptionTags) fullText += "\n\n" + post.descriptionTags;
+
                 if (fullText.length > 150) {
                     textHtml = `<div class="mt-2"><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light" id="text-short-${post.id}">${fullText.substring(0, 150)}... <button onclick="expandText('${post.id}')" class="text-orange-500 font-bold hover:underline text-xs ml-1">Ver más</button></p><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light hidden" id="text-full-${post.id}">${fullText}</p></div>`;
                 } else { textHtml = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-2 font-light">${fullText}</p>`; }
@@ -1082,7 +1085,7 @@
             document.getElementById('modal-image').src = imgToShow;
             document.getElementById('modal-title').textContent = post.title || 'Sin título';
             
-            // Mostrar también la descripción automática en el visor
+            // ACTUALIZACION VISOR: Mostrar tags WD también
             const fullDesc = (post.text || '') + (post.descriptionTags ? '\n\n' + post.descriptionTags : '');
             document.getElementById('modal-desc').innerHTML = fullDesc.replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
             
@@ -1171,7 +1174,7 @@
         window.addEventListener('click', function(e) { if (!e.target.closest('.custom-select-container')) { document.querySelectorAll('.custom-select-options.show').forEach(el => { el.classList.remove('show'); el.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); }); } });
         window.addEventListener('click', function(e) { if (!e.target.closest('.relative') || e.target.closest('.notif-item')) { const d = document.getElementById('notification-dropdown'); if(d && !e.target.closest('.notif-btn')) d.classList.remove('visible'); } });
 
-        function loadUserCollectionsSelect() { if (!currentUser) return; db.ref('collections/' + currentUser.uid).on('value', snap => { let html = `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '', '<i class=\\'fas fa-folder mr-2 text-xs text-orange-500\\'></i> Álbum')">Ningún Álbum</div><div class="option-item special-option" onclick="selectCustomOption('dropdown-collection', 'new', '➕ Crear Nueva Colección...')">➕ Crear Nueva Colección...</div>`; snap.forEach(child => { html += `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '${child.key}', '📁 ${child.val().name}')">📁 ${child.val().name}</div>`; }); const el = document.getElementById('collection-options-list'); if(el) el.innerHTML = html; }); }
+        function loadUserCollectionsSelect() { if (!currentUser) return; db.ref('collections/' + currentUser.uid).on('value', snap => { let html = `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '', '<i class=\\'fas fa-folder mr-2 text-xs text-orange-500\\'></i> Ningún Álbum')">Ningún Álbum</div><div class="option-item special-option" onclick="selectCustomOption('dropdown-collection', 'new', '➕ Crear Nueva Colección...')">➕ Crear Nueva Colección...</div>`; snap.forEach(child => { html += `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '${child.key}', '📁 ${child.val().name}')">📁 ${child.val().name}</div>`; }); const el = document.getElementById('collection-options-list'); if(el) el.innerHTML = html; }); }
         function toggleCollectionInput() { const v = document.getElementById('post-collection').value; const c = document.getElementById('new-collection-container'); if(v==='new') c.classList.remove('hidden'); else c.classList.add('hidden'); }
         async function updateCollectionPreviews(uid, cid, url) { if(!cid||cid==='new'||!url)return; const r=db.ref(`collections/${uid}/${cid}/previews`); await r.transaction(l=>{ l=l||[]; if(!Array.isArray(l))l=[]; l.unshift(url); return l.slice(0,4); }); db.ref(`collections/${uid}/${cid}/cover`).set(url); }
 
