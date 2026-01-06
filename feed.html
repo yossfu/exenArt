@@ -268,7 +268,13 @@
                                 <div id="character-suggestions" class="suggestions-dropdown custom-scrollbar"></div>
                             </div>
                             
+                            <!-- Campo de Tags Generales (DeepDanbooru) -->
                             <div class="hidden"><input type="text" id="post-tags" placeholder="Auto-tagging..." readonly></div>
+                            
+                            <!-- NUEVO CAMPO: Descripción / Etiquetas Detalladas (WD Tagger) -->
+                            <div class="hidden">
+                                <input type="text" id="post-description" placeholder="Etiquetas detalladas (WD)..." class="custom-input bg-black/40 border-zinc-700 text-xs pl-8 tags-readonly" readonly>
+                            </div>
                             
                             <div class="flex flex-col sm:flex-row gap-3">
                                 <div class="custom-select-container w-full" id="dropdown-category">
@@ -432,10 +438,17 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE IA -->
+    <!-- SCRIPT DE IA (ACTUALIZADO CON WD TAGGER) -->
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
+        
+        // Configuración DeepDanbooru (Original)
         const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
+        
+        // Configuración WD Tagger (Nuevo)
+        // El espacio suele usar: [imagen, umbral_general, umbral_personaje]
+        const WD_CONFIG = { gen_threshold: 0.35, char_threshold: 0.85 };
+
         async function resizeImageForApi(file) {
             if (file.size <= 1024 * 1024) return file;
             return new Promise((resolve) => {
@@ -446,21 +459,60 @@
                 }; img.src = URL.createObjectURL(file);
             });
         }
+
         window.runAutoTagging = async function(originalFile) {
-            const tagInput = document.getElementById('post-tags'); const publishBtn = document.getElementById('publish-btn');
+            const tagInput = document.getElementById('post-tags'); 
+            const descInput = document.getElementById('post-description'); // Nuevo campo
+            const publishBtn = document.getElementById('publish-btn');
+            
             tagInput.value = ""; 
+            descInput.value = "";
             publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
+            publishBtn.innerHTML = '<i class="fas fa-cog fa-spin"></i> Analizando...';
+
             try {
                 const processedFile = await resizeImageForApi(originalFile);
-                const client = await Client.connect("Jossle/deepdanbooru_online_Exen");
-                const result = await client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend]);
-                if (result && result.data && result.data[0]) {
-                    tagInput.value = result.data[0];
-                    publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
-                } else throw new Error("Respuesta vacía");
+
+                // Ejecutamos ambos modelos en paralelo usando Promise.all
+                const [resultDeep, resultWD] = await Promise.allSettled([
+                    // Tagger 1: DeepDanbooru
+                    Client.connect("Jossle/deepdanbooru_online_Exen").then(client => 
+                        client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend])
+                    ),
+                    // Tagger 2: SmilingWolf WD Tagger (v1.4 vit v2 es el estándar para esto)
+                    Client.connect("SmilingWolf/wd-v1-4-vit-tagger-v2").then(client => 
+                        client.predict(0, [processedFile, WD_CONFIG.gen_threshold, WD_CONFIG.char_threshold])
+                    )
+                ]);
+
+                // Procesar resultado DeepDanbooru (Tags simples)
+                if (resultDeep.status === 'fulfilled' && resultDeep.value && resultDeep.value.data && resultDeep.value.data[0]) {
+                    tagInput.value = resultDeep.value.data[0];
+                }
+
+                // Procesar resultado WD Tagger (Descriptivo/Detallado)
+                if (resultWD.status === 'fulfilled' && resultWD.value && resultWD.value.data) {
+                    const labelData = resultWD.value.data[0]; // Suele ser un objeto {tag: conf, tag2: conf}
+                    if (labelData && typeof labelData === 'object') {
+                        // Filtramos y ordenamos las etiquetas por confianza
+                        const sortedTags = Object.entries(labelData)
+                            .filter(([tag, conf]) => conf > WD_CONFIG.gen_threshold) // Filtrar por umbral
+                            .sort((a, b) => b[1] - a[1]) // Ordenar descendente por confianza
+                            .map(([tag, conf]) => tag.replaceAll('_', ' ')); // Reemplazar _ con espacios para que sea más natural/descriptivo
+                        
+                        // Unimos para crear una "descripción" basada en tags
+                        if (sortedTags.length > 0) {
+                            descInput.value = sortedTags.join(", ");
+                        }
+                    }
+                }
+
             } catch (error) {
                 console.error("Error Tagging:", error); 
-                publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
+            } finally {
+                publishBtn.disabled = false; 
+                publishBtn.classList.remove('btn-disabled');
+                publishBtn.innerHTML = 'Publicar';
             }
         }
     </script>
@@ -623,7 +675,7 @@
                 document.getElementById('extra-fields').classList.remove('expanded'); document.getElementById('post-text').rows = 1;
                 selectedFiles = []; renderPreviewStack(); 
                 document.getElementById('post-text').value = ''; document.getElementById('post-title').value = '';
-                document.getElementById('post-character').value = ''; document.getElementById('post-tags').value = '';
+                document.getElementById('post-character').value = ''; document.getElementById('post-tags').value = ''; document.getElementById('post-description').value = '';
                 selectCustomOption('dropdown-collection', '', '<i class="fas fa-folder mr-2 text-xs text-orange-500"></i> Álbum');
                 selectCustomOption('dropdown-category', '', '<i class="fas fa-tag mr-2 text-xs text-orange-500"></i> Categoría');
                 document.getElementById('new-collection-name').value = '';
@@ -681,6 +733,7 @@
             const title = document.getElementById('post-title').value.trim();
             const characterName = document.getElementById('post-character').value.trim();
             const tags = document.getElementById('post-tags').value.trim();
+            const description = document.getElementById('post-description').value.trim(); // Nuevo campo descriptivo
             const category = document.getElementById('post-category').value;
             let colId = document.getElementById('post-collection').value;
             const newColName = document.getElementById('new-collection-name').value.trim();
@@ -730,11 +783,16 @@
                 const newPostRef = db.ref('feed_posts').push();
                 const newPostId = newPostRef.key;
                 
+                // Concatenamos las tags descriptivas al texto principal si se desea, o las guardamos en el objeto
+                // Aquí las guardamos en el objeto 'postData' como 'descriptionTags'
                 const postData = {
                     text, 
                     imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
                     imageUrls: uploadedUrls,
-                    title, tags, category, characterName,
+                    title, 
+                    tags: tags,
+                    descriptionTags: description, // Guardamos la descripción generada
+                    category, characterName,
                     userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0,
                     collectionId: colId || null, collectionName: colName || null
@@ -925,8 +983,9 @@
             div.id = `post-card-${post.id}`;
             
             let textHtml = '';
-            if (post.text) {
-                const fullText = post.text;
+            // Mostrar texto y descripción generada
+            if (post.text || post.descriptionTags) {
+                const fullText = (post.text || "") + (post.descriptionTags ? "\n\n" + post.descriptionTags : "");
                 if (fullText.length > 150) {
                     textHtml = `<div class="mt-2"><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light" id="text-short-${post.id}">${fullText.substring(0, 150)}... <button onclick="expandText('${post.id}')" class="text-orange-500 font-bold hover:underline text-xs ml-1">Ver más</button></p><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light hidden" id="text-full-${post.id}">${fullText}</p></div>`;
                 } else { textHtml = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-2 font-light">${fullText}</p>`; }
@@ -1022,7 +1081,11 @@
             }
             document.getElementById('modal-image').src = imgToShow;
             document.getElementById('modal-title').textContent = post.title || 'Sin título';
-            document.getElementById('modal-desc').innerHTML = (post.text || '').replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
+            
+            // Mostrar también la descripción automática en el visor
+            const fullDesc = (post.text || '') + (post.descriptionTags ? '\n\n' + post.descriptionTags : '');
+            document.getElementById('modal-desc').innerHTML = fullDesc.replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
+            
             document.getElementById('modal-user-name').textContent = post.userName || 'Usuario';
             document.getElementById('modal-user-pic').src = post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U';
             
