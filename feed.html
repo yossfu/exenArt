@@ -79,9 +79,10 @@
 
         /* Upload Area */
         #extra-fields { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease; }
-        #extra-fields.expanded { max-height: 1000px; opacity: 1; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); overflow: visible !important; }
+        #extra-fields.expanded { max-height: 1200px; opacity: 1; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); overflow: visible !important; }
         .custom-input { background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; transition: all 0.3s; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
         .custom-input:focus { outline: none; border-color: var(--accent); background: rgba(0,0,0,0.4); box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 0 2px rgba(249, 115, 22, 0.3); }
+        .tags-readonly { background: rgba(0,0,0,0.4); cursor: not-allowed; border-style: dashed; opacity: 0.8; font-family: monospace; }
 
         /* Dropdowns */
         .custom-select-container { position: relative; width: 100%; }
@@ -271,9 +272,10 @@
                             <!-- Campo de Tags Generales (DeepDanbooru) -->
                             <div class="hidden"><input type="text" id="post-tags" placeholder="Auto-tagging..." readonly></div>
                             
-                            <!-- NUEVO CAMPO: Descripción / Etiquetas Detalladas (WD Tagger) -->
-                            <div class="hidden">
-                                <input type="text" id="post-description" placeholder="Etiquetas detalladas (WD)..." class="custom-input bg-black/40 border-zinc-700 text-xs pl-8 tags-readonly" readonly>
+                            <!-- NUEVO CAMPO: Descripción Automática (Jossle) -->
+                            <div class="mt-2">
+                                <label class="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-1 mb-1 block">Descripción Generada</label>
+                                <input type="text" id="post-auto-desc" placeholder="La descripción aparecerá aquí..." class="custom-input bg-black/40 border-zinc-700 text-xs tags-readonly" readonly>
                             </div>
                             
                             <div class="flex flex-col sm:flex-row gap-3">
@@ -438,16 +440,12 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE IA (ACTUALIZADO CON WD TAGGER) -->
+    <!-- SCRIPT DE IA (ACTUALIZADO CON JOSSLE + DEEPDANBOORU) -->
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
         
-        // Configuración DeepDanbooru (Original)
+        // Configuración DeepDanbooru (Tags)
         const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: false, descend: true };
-        
-        // Configuración WD Tagger (Nuevo)
-        // El espacio suele usar: [imagen, umbral_general, umbral_personaje]
-        const WD_CONFIG = { gen_threshold: 0.35, char_threshold: 0.85 };
 
         async function resizeImageForApi(file) {
             if (file.size <= 1024 * 1024) return file;
@@ -462,53 +460,46 @@
 
         window.runAutoTagging = async function(originalFile) {
             const tagInput = document.getElementById('post-tags'); 
-            const descInput = document.getElementById('post-description'); // Nuevo campo
+            const descInput = document.getElementById('post-auto-desc'); // Nuevo campo Jossle
             const publishBtn = document.getElementById('publish-btn');
             
             tagInput.value = ""; 
-            descInput.value = "";
+            descInput.value = "Generando descripción...";
             publishBtn.disabled = true; publishBtn.classList.add('btn-disabled');
             publishBtn.innerHTML = '<i class="fas fa-cog fa-spin"></i> Analizando...';
 
             try {
                 const processedFile = await resizeImageForApi(originalFile);
 
-                // Ejecutamos ambos modelos en paralelo usando Promise.all
-                const [resultDeep, resultWD] = await Promise.allSettled([
-                    // Tagger 1: DeepDanbooru
+                // Ejecutamos ambos modelos en paralelo
+                // 1. DeepDanbooru (Tags)
+                // 2. Jossle (Descripción) - Conectando a la URL del Space
+                const [resultDeep, resultJossle] = await Promise.allSettled([
                     Client.connect("Jossle/deepdanbooru_online_Exen").then(client => 
                         client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend])
                     ),
-                    // Tagger 2: SmilingWolf WD Tagger (v1.4 vit v2 es el estándar para esto)
-                    Client.connect("SmilingWolf/wd-v1-4-vit-tagger-v2").then(client => 
-                        client.predict(0, [processedFile, WD_CONFIG.gen_threshold, WD_CONFIG.char_threshold])
+                    Client.connect("https://jossle-autotagexen.hf.space").then(client => 
+                        client.predict(0, [processedFile])
                     )
                 ]);
 
-                // Procesar resultado DeepDanbooru (Tags simples)
+                // Procesar DeepDanbooru
                 if (resultDeep.status === 'fulfilled' && resultDeep.value && resultDeep.value.data && resultDeep.value.data[0]) {
                     tagInput.value = resultDeep.value.data[0];
                 }
 
-                // Procesar resultado WD Tagger (Descriptivo/Detallado)
-                if (resultWD.status === 'fulfilled' && resultWD.value && resultWD.value.data) {
-                    const labelData = resultWD.value.data[0]; // Suele ser un objeto {tag: conf, tag2: conf}
-                    if (labelData && typeof labelData === 'object') {
-                        // Filtramos y ordenamos las etiquetas por confianza
-                        const sortedTags = Object.entries(labelData)
-                            .filter(([tag, conf]) => conf > WD_CONFIG.gen_threshold) // Filtrar por umbral
-                            .sort((a, b) => b[1] - a[1]) // Ordenar descendente por confianza
-                            .map(([tag, conf]) => tag.replaceAll('_', ' ')); // Reemplazar _ con espacios para que sea más natural/descriptivo
-                        
-                        // Unimos para crear una "descripción" basada en tags
-                        if (sortedTags.length > 0) {
-                            descInput.value = sortedTags.join(", ");
-                        }
-                    }
+                // Procesar Jossle
+                if (resultJossle.status === 'fulfilled' && resultJossle.value && resultJossle.value.data) {
+                    // Asumimos que el resultado es texto en data[0]
+                    descInput.value = resultJossle.value.data[0];
+                } else {
+                    console.warn("Jossle no retornó datos o falló", resultJossle.reason);
+                    descInput.value = ""; // Fallo silencioso, limpiar mensaje de carga
                 }
 
             } catch (error) {
-                console.error("Error Tagging:", error); 
+                console.error("Error Global Tagging:", error); 
+                descInput.value = "";
             } finally {
                 publishBtn.disabled = false; 
                 publishBtn.classList.remove('btn-disabled');
@@ -675,7 +666,8 @@
                 document.getElementById('extra-fields').classList.remove('expanded'); document.getElementById('post-text').rows = 1;
                 selectedFiles = []; renderPreviewStack(); 
                 document.getElementById('post-text').value = ''; document.getElementById('post-title').value = '';
-                document.getElementById('post-character').value = ''; document.getElementById('post-tags').value = ''; document.getElementById('post-description').value = '';
+                document.getElementById('post-character').value = ''; document.getElementById('post-tags').value = ''; 
+                document.getElementById('post-auto-desc').value = ''; // Resetear descripción auto
                 selectCustomOption('dropdown-collection', '', '<i class="fas fa-folder mr-2 text-xs text-orange-500"></i> Álbum');
                 selectCustomOption('dropdown-category', '', '<i class="fas fa-tag mr-2 text-xs text-orange-500"></i> Categoría');
                 document.getElementById('new-collection-name').value = '';
@@ -733,7 +725,7 @@
             const title = document.getElementById('post-title').value.trim();
             const characterName = document.getElementById('post-character').value.trim();
             const tags = document.getElementById('post-tags').value.trim();
-            const description = document.getElementById('post-description').value.trim(); // Nuevo campo descriptivo
+            const autoDesc = document.getElementById('post-auto-desc').value.trim(); // Nueva descripción generada
             const category = document.getElementById('post-category').value;
             let colId = document.getElementById('post-collection').value;
             const newColName = document.getElementById('new-collection-name').value.trim();
@@ -783,15 +775,14 @@
                 const newPostRef = db.ref('feed_posts').push();
                 const newPostId = newPostRef.key;
                 
-                // Concatenamos las tags descriptivas al texto principal si se desea, o las guardamos en el objeto
-                // Aquí las guardamos en el objeto 'postData' como 'descriptionTags'
+                // Guardamos tanto los tags normales como la descripción generada (autoDescription)
                 const postData = {
                     text, 
                     imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
                     imageUrls: uploadedUrls,
                     title, 
                     tags: tags,
-                    descriptionTags: description, // Guardamos la descripción generada
+                    autoDescription: autoDesc, // Guardamos lo que generó Jossle
                     category, characterName,
                     userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0,
@@ -983,9 +974,9 @@
             div.id = `post-card-${post.id}`;
             
             let textHtml = '';
-            // Mostrar texto y descripción generada
-            if (post.text || post.descriptionTags) {
-                const fullText = (post.text || "") + (post.descriptionTags ? "\n\n" + post.descriptionTags : "");
+            // Mostrar texto y descripción auto-generada
+            if (post.text || post.autoDescription) {
+                const fullText = (post.text || "") + (post.autoDescription ? "\n\n" + post.autoDescription : "");
                 if (fullText.length > 150) {
                     textHtml = `<div class="mt-2"><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light" id="text-short-${post.id}">${fullText.substring(0, 150)}... <button onclick="expandText('${post.id}')" class="text-orange-500 font-bold hover:underline text-xs ml-1">Ver más</button></p><p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap font-light hidden" id="text-full-${post.id}">${fullText}</p></div>`;
                 } else { textHtml = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap mt-2 font-light">${fullText}</p>`; }
@@ -1083,7 +1074,7 @@
             document.getElementById('modal-title').textContent = post.title || 'Sin título';
             
             // Mostrar también la descripción automática en el visor
-            const fullDesc = (post.text || '') + (post.descriptionTags ? '\n\n' + post.descriptionTags : '');
+            const fullDesc = (post.text || '') + (post.autoDescription ? '\n\n' + post.autoDescription : '');
             document.getElementById('modal-desc').innerHTML = fullDesc.replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
             
             document.getElementById('modal-user-name').textContent = post.userName || 'Usuario';
