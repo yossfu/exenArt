@@ -38,6 +38,7 @@
                         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'shimmer': 'shimmer 2s infinite linear',
                         'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'like-bounce': 'likeBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                     },
                     keyframes: {
                         float: {
@@ -56,6 +57,11 @@
                         fadeIn: {
                             '0%': { opacity: '0', transform: 'translateY(10px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        likeBounce: {
+                            '0%': { transform: 'scale(1)' },
+                            '30%': { transform: 'scale(1.4)' },
+                            '100%': { transform: 'scale(1)' }
                         }
                     }
                 }
@@ -104,7 +110,7 @@
         .blob-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #7c3aed; opacity: 0.25; animation: float-reverse 25s infinite alternate; }
         .blob-3 { top: 40%; left: 40%; width: 40vw; height: 40vw; background: #c2410c; opacity: 0.15; animation: float-slow 30s infinite alternate-reverse; }
 
-        /* --- SCROLLBARS --- */
+        /* --- UI COMPONENTS --- */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
@@ -112,7 +118,6 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        /* --- UI COMPONENTS --- */
         .glass-header {
             background: rgba(5, 5, 5, 0.95);
             backdrop-filter: blur(20px);
@@ -135,17 +140,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
 
-        /* --- COMPONENTS --- */
-        .top-user-ring {
-            padding: 2px; border-radius: 50%; position: relative;
-            transition: transform 0.2s;
-        }
-        .top-user-ring:active { transform: scale(0.95); }
-        .rank-gold { background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
-        .rank-silver { background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%); }
-        .rank-bronze { background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%); }
-        .rank-normal { background: rgba(255,255,255,0.1); }
-
+        /* --- CARDS & GRID --- */
         .image-card {
             border-radius: 16px; overflow: hidden; background: #121214;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -155,21 +150,51 @@
         .image-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); border-color: rgba(249, 115, 22, 0.3); }
         .image-card:active { transform: scale(0.98); }
 
-        /* PERSONAJES CIRCULARES */
+        .character-pill {
+            background: rgba(9, 9, 11, 0.85); backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #d1d5db; font-size: 9px; font-weight: 700;
+            padding: 3px 8px; border-radius: 99px;
+            display: flex; items-center; gap: 4px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+        .image-card:hover .character-pill { background: var(--accent); color: white; border-color: var(--accent); }
+
+        /* --- AUTOCOMPLETE SUGGESTIONS --- */
+        .suggestions-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: rgba(24, 24, 27, 0.98); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1); border-top: none;
+            border-radius: 0 0 12px 12px; z-index: 50;
+            max-height: 200px; overflow-y: auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            display: none; animation: slideDown 0.2s ease-out;
+        }
+        .suggestions-dropdown.visible { display: block; }
+        .suggestion-item {
+            padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;
+        }
+        .suggestion-item:hover { background: rgba(255,255,255,0.05); }
+        .suggestion-item:active { background: rgba(249, 115, 22, 0.2); }
+        
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- COMPONENTS --- */
+        .top-user-ring { padding: 2px; border-radius: 50%; position: relative; transition: transform 0.2s; }
+        .top-user-ring:active { transform: scale(0.95); }
+        .rank-gold { background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); }
+        .rank-silver { background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%); }
+        .rank-bronze { background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%); }
+        .rank-normal { background: rgba(255,255,255,0.1); }
+
         .character-ring {
             background: linear-gradient(135deg, #f97316 0%, #facc15 100%);
-            padding: 2px;
-            border-radius: 50%;
-            display: inline-block;
+            padding: 2px; border-radius: 50%; display: inline-block;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .character-ring:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
-        }
-        .character-ring:active {
-            transform: scale(0.95);
-        }
+        .character-ring:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(249, 115, 22, 0.4); }
         
         .bottom-nav { 
             height: var(--nav-height); background: rgba(9, 9, 11, 0.98);
@@ -177,7 +202,6 @@
             padding-bottom: env(safe-area-inset-bottom);
         }
         .nav-item.active { color: var(--accent); }
-        .nav-item.active i { transform: translateY(-4px); filter: drop-shadow(0 0 8px var(--accent)); }
         
         .chat-bubble {
             position: absolute; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
@@ -198,6 +222,9 @@
         .modal-backdrop.fullscreen-mode #modal-inner-container { flex-direction: column; }
         .modal-backdrop.fullscreen-mode #modal-image-area { height: 100vh; width: 100vw; }
         .modal-backdrop.fullscreen-mode .info-panel { display: none; }
+        
+        /* TOAST */
+        #toast-container { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
         .skeleton { background: linear-gradient(90deg, #1f1f22 25%, #2a2a2e 50%, #1f1f22 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px; }
     </style>
@@ -218,6 +245,14 @@
             <div class="w-2.5 h-2.5 bg-orange-500 rounded-full animate-bounce" style="animation-delay: 0s"></div>
             <div class="w-2.5 h-2.5 bg-orange-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
             <div class="w-2.5 h-2.5 bg-orange-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast-container" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[9000] pointer-events-none transition-all duration-300 opacity-0 translate-y-4">
+        <div class="bg-zinc-900/95 backdrop-blur-md border border-zinc-700 px-6 py-3 rounded-full text-white font-medium shadow-2xl flex items-center gap-3">
+            <i class="fas fa-bell text-orange-500 text-lg"></i>
+            <span id="toast-message" class="text-sm">Notificación</span>
         </div>
     </div>
 
@@ -268,7 +303,6 @@
                     <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-crown text-orange-500"></i> Top Creadores</h3>
                 </div>
                 <div id="top-users-container" class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 pl-1 snap-x">
-                    <!-- Skeletons (ajustados a tamaño pequeño) -->
                     <div class="flex flex-col items-center gap-2 min-w-[48px] animate-pulse">
                         <div class="w-10 h-10 rounded-full bg-zinc-800"></div>
                         <div class="w-8 h-1.5 bg-zinc-800 rounded"></div>
@@ -276,25 +310,24 @@
                 </div>
             </section>
 
-            <!-- BUSCADOR -->
+            <!-- BUSCADOR CON AUTOCOMPLETADO -->
             <div class="relative group mb-6 z-30">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <i class="fas fa-search text-gray-500 group-focus-within:text-orange-500 transition text-xs"></i>
                 </div>
-                <input type="text" id="search-input" placeholder="Buscar arte, personajes..." onkeydown="if(event.key === 'Enter') executeSearch(this.value)"
-                       class="w-full bg-[#121214] border border-white/10 rounded-xl py-3 pl-10 pr-10 text-white text-xs focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 transition shadow-lg placeholder-gray-600">
+                <input type="text" id="search-input" placeholder="Buscar arte, personajes..." autocomplete="off"
+                       class="w-full bg-[#121214] border border-white/10 rounded-xl py-3 pl-10 pr-10 text-white text-xs focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 transition shadow-lg placeholder-gray-600 rounded-b-xl focus:rounded-b-none">
                 <button type="button" id="clear-search-btn" class="absolute inset-y-0 right-3 hidden text-gray-500 hover:text-white transition" onclick="resetSearchView()"><i class="fas fa-times text-xs"></i></button>
+                <!-- SUGERENCIAS DESPLEGABLES -->
+                <div id="search-suggestions" class="suggestions-dropdown custom-scrollbar"></div>
             </div>
 
-            <!-- SECCIÓN PERSONAJES (REEMPLAZO DE BANNER) -->
+            <!-- SECCIÓN PERSONAJES -->
             <section id="character-stories-section" class="mb-8">
                 <div class="flex items-center justify-between mb-3 px-1">
                     <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-users text-orange-500"></i> Personajes Destacados</h3>
                 </div>
                 <div id="character-stories-container" class="flex gap-4 overflow-x-auto hide-scrollbar pb-4 pl-1 snap-x min-h-[100px]">
-                    <!-- Aquí se renderizan los 5 círculos -->
-                    <div class="w-20 h-20 rounded-full bg-zinc-900 animate-pulse flex-shrink-0"></div>
-                    <div class="w-20 h-20 rounded-full bg-zinc-900 animate-pulse flex-shrink-0"></div>
                     <div class="w-20 h-20 rounded-full bg-zinc-900 animate-pulse flex-shrink-0"></div>
                     <div class="w-20 h-20 rounded-full bg-zinc-900 animate-pulse flex-shrink-0"></div>
                     <div class="w-20 h-20 rounded-full bg-zinc-900 animate-pulse flex-shrink-0"></div>
@@ -315,9 +348,7 @@
                 <!-- Para Ti -->
                 <section id="for-you-section">
                     <h3 class="text-xs font-bold text-white mb-4 border-l-4 border-orange-500 pl-3 uppercase tracking-wider">Para Ti</h3>
-                    <div id="for-you-grid" class="grid grid-cols-3 gap-2 sm:gap-3">
-                         <!-- Skeletons se generan con JS -->
-                    </div>
+                    <div id="for-you-grid" class="grid grid-cols-3 gap-2 sm:gap-3"></div>
                 </section>
                 
                 <!-- Tendencias (Scroll Horizontal) -->
@@ -352,7 +383,7 @@
             </div>
         </main>
         
-        <!-- MODAL VISOR -->
+        <!-- MODAL VISOR MEJORADO (Estilo Feed) -->
         <div id="modal" class="modal-backdrop">
             <button onclick="closeModal()" class="absolute top-5 right-5 z-[5020] w-10 h-10 rounded-full bg-black/60 text-white backdrop-blur-md border border-white/10 flex items-center justify-center active:scale-90 hover:bg-black/80 hover:text-orange-500 transition shadow-lg"><i class="fas fa-times"></i></button>
 
@@ -371,7 +402,7 @@
                     <button onclick="toggleFullScreen()" class="absolute bottom-6 right-6 z-20 bg-black/50 text-white p-2.5 rounded-xl backdrop-blur-md border border-white/10 hover:bg-black/70 transition shadow-lg"><i class="fas fa-expand text-sm"></i></button>
                 </div>
 
-                <!-- Info Panel -->
+                <!-- Info Panel Estilo Feed -->
                 <div class="info-panel bg-[#121214] w-full lg:w-[400px] h-[40vh] lg:h-full flex flex-col z-30 relative border-l border-white/5 shadow-[-10px_0_50px_rgba(0,0,0,0.7)]">
                     
                     <div class="p-4 border-b border-white/5 flex items-center justify-between bg-[#18181b] shadow-md z-10">
@@ -379,12 +410,16 @@
                             <img id="modal-user-avatar" src="" class="w-9 h-9 rounded-full object-cover border border-white/10 cursor-pointer hover:scale-105 transition shadow-sm">
                             <div class="overflow-hidden">
                                 <h4 id="modal-image-title" class="font-bold text-white text-sm leading-tight truncate"></h4>
-                                <span id="modal-user-name" class="text-[10px] text-gray-400 cursor-pointer hover:text-orange-400 transition font-medium"></span>
+                                <span id="modal-user-name" class="text-[10px] text-gray-400 cursor-pointer hover:text-orange-400 transition font-medium flex items-center gap-1"></span>
                             </div>
                         </div>
-                        <button id="modal-like-btn" class="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center active:scale-90 transition hover:bg-zinc-700 group">
-                            <i class="far fa-heart text-gray-400 text-base group-hover:text-red-400 transition-colors"></i>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <!-- Botón Like con contador -->
+                            <button id="modal-like-btn" class="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-full border border-white/5 active:scale-95 transition group">
+                                <i class="far fa-heart text-gray-400 text-sm group-hover:text-red-400 transition-colors"></i>
+                                <span id="modal-likes-count" class="text-xs font-bold text-white">0</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#09090b]">
@@ -404,7 +439,7 @@
                         </div>
 
                         <div>
-                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-3 tracking-widest">Comentarios</h4>
+                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-3 tracking-widest flex items-center gap-2"><i class="fas fa-comments"></i> Comentarios</h4>
                             <div id="comments" class="flex flex-col gap-4 pb-4"></div>
                         </div>
                     </div>
@@ -487,6 +522,7 @@
 
         window.forYouList = [];
         window.communityList = [];
+        let characterStatsCache = {}; // Cache para autocomplete
         
         let bubbleInterval = null;
         let fetchedCommentsForBubbles = [];
@@ -515,12 +551,10 @@
 
         async function initializeApp() {
             await cacheAllDataForSearch(); 
+            initCharacterStatsListener(); // Iniciar listener de personajes
             renderTopUsers(); 
             await Promise.all([ fetchUserReactions(), cacheAllReactionCounts() ]);
-            
-            // Reemplazado loadHeroBanner por loadCharacterStories
             loadCharacterStories(); 
-            
             loadInitialImages();
             loadForYouImages(); 
             renderCommunitySection(); 
@@ -528,6 +562,7 @@
         }
         document.addEventListener('DOMContentLoaded', initializeApp);
 
+        // --- SISTEMA DE DATOS ---
         async function cacheAllDataForSearch() { 
             const snapshot = await db.ref('images').once('value'); 
             if (snapshot.exists()) { 
@@ -544,7 +579,8 @@
                 userSnap.forEach(child => { 
                     const userData = child.val();
                     const uid = child.key;
-                    uData.push({ id: uid, type: 'user', ...userData }); 
+                    // Guardar estatus de verificado si existe
+                    uData.push({ id: uid, type: 'user', isVerified: userData.isVerified || false, ...userData }); 
                     userMap[uid] = userData; 
                 });
                 usersCache = uData;
@@ -555,12 +591,12 @@
                 const fData = [];
                 feedSnap.forEach(child => { 
                     const post = child.val();
-                    // IMPORTANTE: Asegurar que hay URL de imagen válida para posts
                     if (post.imageUrl || (post.imageUrls && post.imageUrls.length > 0)) { 
                         const author = userMap[post.userId];
                         const currentAvatar = author ? author.profilePic : (post.userAvatar || 'https://placehold.co/100x100/333/fff?text=U');
                         const currentName = author ? author.username : (post.userName || 'Usuario');
-                        const mainImage = post.imageUrl || post.imageUrls[0]; // Priorizar la imagen del post
+                        const isVerified = author ? (author.isVerified || false) : false; // Check verificado
+                        const mainImage = post.imageUrl || post.imageUrls[0];
 
                         fData.push({ 
                             id: child.key, 
@@ -572,7 +608,7 @@
                             tags: post.tags ? post.tags.split(',').map(t=>t.trim()) : [],
                             category: post.category, 
                             characterName: post.characterName || '',
-                            user: { name: currentName, avatar: currentAvatar, id: post.userId },
+                            user: { name: currentName, avatar: currentAvatar, id: post.userId, isVerified: isVerified },
                             userId: post.userId, 
                             timestamp: post.timestamp, 
                             likes: post.likes || 0 
@@ -583,6 +619,59 @@
             }
             unifiedGalleryData = [...fullGalleryCache, ...feedCache].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             fullGalleryCache = unifiedGalleryData; 
+        }
+
+        // --- AUTOCOMPLETADO DE PERSONAJES ---
+        function initCharacterStatsListener() {
+            db.ref('stats/characters').on('value', snapshot => {
+                if (snapshot.exists()) { characterStatsCache = snapshot.val(); } else { characterStatsCache = {}; }
+            });
+            
+            const searchInput = document.getElementById('search-input');
+            const suggestionsBox = document.getElementById('search-suggestions');
+            
+            searchInput.addEventListener('input', (e) => {
+                const val = e.target.value.trim().toLowerCase();
+                if (!val) { suggestionsBox.classList.remove('visible'); return; }
+                
+                // Buscar coincidencias
+                const allChars = Object.entries(characterStatsCache).map(([key, data]) => ({ id: key, name: data.displayName, count: data.count || 0 }));
+                const matches = allChars.filter(c => c.name.toLowerCase().includes(val)).sort((a, b) => b.count - a.count).slice(0, 5);
+                
+                if (matches.length > 0) {
+                    renderSearchSuggestions(matches);
+                    suggestionsBox.classList.add('visible');
+                    searchInput.style.borderRadius = "0.75rem 0.75rem 0 0"; // Ajuste visual
+                } else {
+                    suggestionsBox.classList.remove('visible');
+                    searchInput.style.borderRadius = "0.75rem";
+                }
+            });
+
+            // Cerrar al hacer click fuera
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                    suggestionsBox.classList.remove('visible');
+                    searchInput.style.borderRadius = "0.75rem";
+                }
+            });
+        }
+
+        function renderSearchSuggestions(matches) {
+            const box = document.getElementById('search-suggestions');
+            box.innerHTML = '';
+            matches.forEach(match => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.innerHTML = `<span class="text-sm font-semibold text-gray-200 flex items-center gap-2"><i class="fas fa-search text-xs text-gray-500"></i> ${match.name}</span> <span class="text-[10px] text-gray-500">${match.count} posts</span>`;
+                div.onclick = () => {
+                    document.getElementById('search-input').value = match.name;
+                    box.classList.remove('visible');
+                    document.getElementById('search-input').style.borderRadius = "0.75rem";
+                    executeSearch(match.name);
+                };
+                box.appendChild(div);
+            });
         }
         
         function renderTopUsers() {
@@ -616,7 +705,11 @@
             Object.keys(allReactions).forEach(imgId => { if(allReactions[imgId][userId]) userReactions[imgId] = 'like'; });
             Object.keys(allFeedLikes).forEach(postId => { if(allFeedLikes[postId][userId]) userReactions[postId] = 'like'; });
         }
+        
         async function cacheAllReactionCounts() { 
+            // Para Feed Posts, escuchamos feed_posts/id/likes
+            // Para Legacy Gallery, escuchamos reactions
+            // Aquí solo precargamos. El update en tiempo real se hará en el elemento visible.
             const reactionsSnap = await db.ref('reactions').once('value'); 
             const counts = {}; const reactions = reactionsSnap.val() || {};
             Object.entries(reactions).forEach(([imgId, users]) => { counts[imgId] = Object.keys(users).length; }); 
@@ -671,73 +764,41 @@
             }, 400);
         }
 
-        // --- NUEVA FUNCIÓN: CARGAR HISTORIAS DE PERSONAJES ---
         function loadCharacterStories() {
             const container = document.getElementById('character-stories-container');
             container.innerHTML = '';
-
-            // 1. Agrupar imágenes por personaje
             const charMap = {};
             unifiedGalleryData.forEach(item => {
                 if (item.characterName && item.url) {
                     const name = item.characterName.trim();
-                    // Normalizar un poco para evitar duplicados por mayúsculas/minúsculas
                     const normName = normalize(name);
-                    
-                    if (!charMap[normName]) {
-                        charMap[normName] = {
-                            displayName: name,
-                            images: []
-                        };
-                    }
+                    if (!charMap[normName]) { charMap[normName] = { displayName: name, images: [] }; }
                     charMap[normName].images.push(item);
                 }
             });
-
-            // 2. Obtener lista de personajes únicos
             const uniqueChars = Object.values(charMap);
-
-            if (uniqueChars.length === 0) {
-                document.getElementById('character-stories-section').style.display = 'none';
-                return;
-            } else {
-                document.getElementById('character-stories-section').style.display = 'block';
-            }
-
-            // 3. Mezclar y seleccionar 5
+            if (uniqueChars.length === 0) { document.getElementById('character-stories-section').style.display = 'none'; return; } 
+            else { document.getElementById('character-stories-section').style.display = 'block'; }
             const selectedChars = uniqueChars.sort(() => 0.5 - Math.random()).slice(0, 5);
-
-            // 4. Renderizar
             selectedChars.forEach(charObj => {
-                // Seleccionar imagen aleatoria para este personaje
                 const randomImg = charObj.images[Math.floor(Math.random() * charObj.images.length)];
-                
                 const div = document.createElement('div');
                 div.className = "flex flex-col items-center gap-2 cursor-pointer transition transform active:scale-95 flex-shrink-0 group";
-                
-                // Acción al hacer clic: Ejecutar búsqueda por ese personaje
-                div.onclick = () => {
-                     document.getElementById('search-input').value = charObj.displayName;
-                     executeSearch(charObj.displayName);
-                };
-                
-                div.innerHTML = `
-                    <div class="character-ring w-[74px] h-[74px] flex items-center justify-center">
-                        <div class="w-full h-full rounded-full border-2 border-[#050505] overflow-hidden bg-zinc-800 relative">
-                            <img src="${randomImg.thumbnailUrl || randomImg.url}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
-                        </div>
-                    </div>
-                    <span class="text-[10px] font-semibold text-gray-300 truncate max-w-[70px] text-center">${charObj.displayName}</span>
-                `;
+                div.onclick = () => { document.getElementById('search-input').value = charObj.displayName; executeSearch(charObj.displayName); };
+                div.innerHTML = `<div class="character-ring w-[74px] h-[74px] flex items-center justify-center"><div class="w-full h-full rounded-full border-2 border-[#050505] overflow-hidden bg-zinc-800 relative"><img src="${randomImg.thumbnailUrl || randomImg.url}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110"></div></div><span class="text-[10px] font-semibold text-gray-300 truncate max-w-[70px] text-center">${charObj.displayName}</span>`;
                 container.appendChild(div);
             });
         }
 
+        // --- RENDERIZADO DE TARJETAS (Actualizado) ---
         function displaySearchResults(items, containerId, append = false, sourceContext = 'search') { 
             const grid = document.getElementById(containerId); if (!append) grid.innerHTML = ''; 
             if (items.length === 0 && !append) { grid.innerHTML = `<div class="col-span-full w-full text-center py-10 text-gray-500 text-xs italic">No hay contenido disponible.</div>`; return; } 
+            
             items.forEach((item, index) => { 
                 if (!item || !item.url) return;
+                
+                // Feedback card logic (unchanged)
                 if (sourceContext === 'main' && !append && index === 3) {
                     const fb = document.createElement('div'); fb.className = "image-card aspect-[2/3] cursor-pointer flex flex-col items-center justify-center text-center p-4 border border-orange-500/20 bg-gradient-to-br from-orange-500/10 to-black group";
                     fb.onclick = () => window.location.href = 'fadeback.html';
@@ -745,17 +806,294 @@
                     grid.appendChild(fb);
                 }
                 if (item.type === 'user') return;
+
                 const div = document.createElement('div'); div.className = 'image-card group aspect-[2/3] cursor-pointer bg-zinc-900'; 
                 div.onclick = (e) => { if(requireLogin(e)) openModal(item.id, sourceContext); };
+                
+                // Likes y Estado
                 const reactionCount = item.type === 'feed' ? (item.likes || 0) : (allReactionCounts[item.id] || 0);
                 const isLiked = userReactions[item.id] === 'like';
                 const isOfficial = item.type === 'gallery';
-                div.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" class="h-full w-full object-cover transition duration-700 group-hover:scale-110"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition"></div><div class="absolute bottom-0 left-0 p-3 w-full translate-y-2 group-hover:translate-y-0 transition duration-300"><h4 class="truncate font-bold text-white text-xs mb-0.5">${item.title}</h4>${!isOfficial ? `<p class="text-[9px] text-gray-400 truncate flex items-center gap-1 opacity-0 group-hover:opacity-100 transition duration-300"><img src="${item.user.avatar}" class="w-3 h-3 rounded-full"> ${item.user.name}</p>` : ''}</div><div class="absolute top-2 right-2 flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded-md backdrop-blur border border-white/5 shadow"><i class="fas fa-heart text-[9px] ${isLiked ? 'text-red-500' : 'text-gray-300'}"></i><span class="text-[9px] text-white font-bold">${reactionCount}</span></div>`; 
+                
+                // Badge de verificación y Character Cloud
+                const verifiedBadge = (item.user && item.user.isVerified) ? '<i class="fas fa-check-circle text-blue-400 text-[9px] ml-1"></i>' : '';
+                const characterPill = item.characterName ? `<div class="absolute top-2 left-2 z-10 character-pill"><i class="fas fa-user-circle"></i> ${item.characterName}</div>` : '';
+
+                div.innerHTML = `
+                    <img src="${item.thumbnailUrl || item.url}" loading="lazy" class="h-full w-full object-cover transition duration-700 group-hover:scale-110">
+                    ${characterPill}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition"></div>
+                    <div class="absolute bottom-0 left-0 p-3 w-full translate-y-2 group-hover:translate-y-0 transition duration-300">
+                        <h4 class="truncate font-bold text-white text-xs mb-0.5">${item.title}</h4>
+                        ${!isOfficial ? `<p class="text-[9px] text-gray-400 truncate flex items-center gap-1 opacity-0 group-hover:opacity-100 transition duration-300"><img src="${item.user.avatar}" class="w-3 h-3 rounded-full border border-black"> ${item.user.name}${verifiedBadge}</p>` : ''}
+                    </div>
+                    <div class="absolute top-2 right-2 flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded-md backdrop-blur border border-white/5 shadow" id="card-like-${item.id}">
+                        <i class="fas fa-heart text-[9px] ${isLiked ? 'text-red-500' : 'text-gray-300'}"></i>
+                        <span class="text-[9px] text-white font-bold">${reactionCount}</span>
+                    </div>`; 
+                
+                // Activar listener de likes en la tarjeta si es feed
+                if (item.type === 'feed') setupCardLikeListener(item.id);
+
                 grid.appendChild(div); 
             }); 
         }
 
-        // --- BUBBLES ---
+        // --- SINCRONIZACIÓN DE LIKES (TARJETAS) ---
+        function setupCardLikeListener(id) {
+            // Escuchar cambios en likes solo para actualizar el contador visual de la tarjeta
+            const likeCountRef = db.ref(`feed_posts/${id}/likes`);
+            const likeIndicator = document.getElementById(`card-like-${id}`);
+            
+            // Nota: Esto puede ser costoso si hay miles de posts. 
+            // En una app real usaríamos listeners solo en viewport o paginación estricta.
+            // Para Canvas, lo mantenemos simple.
+            likeCountRef.on('value', snap => {
+                if(!likeIndicator) return;
+                const count = snap.val() || 0;
+                const span = likeIndicator.querySelector('span');
+                if(span) span.innerText = count;
+            });
+            
+            // Listener de estado (si el usuario actual dio like)
+            if(currentUser) {
+                db.ref(`feed_likes/${id}/${currentUser.uid}`).on('value', snap => {
+                    if(!likeIndicator) return;
+                    const icon = likeIndicator.querySelector('i');
+                    if(snap.exists()) {
+                        icon.classList.remove('text-gray-300');
+                        icon.classList.add('text-red-500');
+                    } else {
+                        icon.classList.remove('text-red-500');
+                        icon.classList.add('text-gray-300');
+                    }
+                });
+            }
+        }
+
+        // --- NOTIFICACIONES GLOBAL (TOAST) ---
+        function initNotificationSystem(uid) {
+            const badge = document.getElementById('notif-badge');
+            // Listener global de notificaciones
+            db.ref('notifications/' + uid).orderByKey().limitToLast(1).on('child_added', snap => {
+                if(!snap.exists()) return; 
+                const lastNotif = snap.val(); 
+                const lastSeen = localStorage.getItem('lastSeenNotif_' + uid) || 0;
+                
+                if (lastNotif.timestamp > lastSeen) {
+                    badge.classList.remove('hidden');
+                    // Mostrar Toast si es reciente (últimos 10s) para evitar spam al cargar
+                    if (Date.now() - lastNotif.timestamp < 10000) {
+                        showToastNotify(`<b>${lastNotif.fromUserName}</b>: Nueva interacción`);
+                    }
+                }
+            });
+        }
+        
+        function showToastNotify(htmlMsg) {
+            const t = document.getElementById('toast-container');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.innerHTML = htmlMsg;
+            t.classList.remove('opacity-0', 'translate-y-4');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 4000);
+        }
+
+        // --- MODAL ACTUALIZADO ---
+        async function openModal(id, context) {
+            if(!requireLogin()) return;
+            if(context === 'main') currentPlaylist = unifiedGalleryData; 
+            else if(context === 'foryou') currentPlaylist = window.forYouList;
+            else if(context === 'community') currentPlaylist = window.communityList;
+            else currentPlaylist = unifiedGalleryData; 
+            
+            currentIndex = currentPlaylist.findIndex(i => i.id === id);
+            if(currentIndex === -1) { currentPlaylist = unifiedGalleryData; currentIndex = currentPlaylist.findIndex(i => i.id === id); }
+            if(currentIndex === -1) return; 
+
+            let img = currentPlaylist[currentIndex]; currentImageId = id; currentContext = img.type;
+            updateModalContent(img); 
+            document.getElementById('modal').classList.add('visible'); 
+            document.body.style.overflow = 'hidden';
+            initFloatingComments(id, context);
+        }
+
+        function updateModalContent(img) {
+            document.getElementById('modal-image-title').textContent = img.title;
+            document.getElementById('modal-desc').textContent = img.desc || 'Sin descripción.';
+            const avatarEl = document.getElementById('modal-user-avatar'); 
+            const nameEl = document.getElementById('modal-user-name');
+            const modalImg = document.getElementById('modal-image');
+            
+            modalImg.src = img.thumbnailUrl || img.url;
+            if (img.thumbnailUrl && img.thumbnailUrl !== img.url) { const hi = new Image(); hi.src = img.url; hi.onload = () => { if (currentImageId === img.id) modalImg.src = img.url; }; }
+
+            // User Info & Verification Badge
+            const verifiedHtml = (img.user && img.user.isVerified) ? '<i class="fas fa-check-circle text-blue-400 text-[10px] ml-1"></i>' : '';
+
+            if (img.type === 'gallery') { 
+                nameEl.textContent = "Galería Oficial"; 
+                avatarEl.src = "https://files.catbox.moe/ap1lh0.png"; 
+                nameEl.onclick=null; avatarEl.onclick=null; 
+            } else { 
+                nameEl.innerHTML = `${img.user.name} ${verifiedHtml}`; 
+                avatarEl.src = img.user.avatar; 
+                const go = () => window.location.href = `profile.html?uid=${img.userId}`; 
+                nameEl.onclick=go; avatarEl.onclick=go; 
+            }
+
+            const charTag = document.getElementById('modal-character-tag');
+            if (img.characterName) { 
+                charTag.classList.remove('hidden'); charTag.classList.add('inline-flex'); 
+                charTag.querySelector('span').innerText = img.characterName; 
+            } else { 
+                charTag.classList.add('hidden'); charTag.classList.remove('inline-flex'); 
+            }
+
+            const tagsDiv = document.getElementById('modal-tags'); const tagsBtn = document.getElementById('tags-toggle-btn');
+            tagsDiv.classList.add('hidden'); tagsBtn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down"></i>'; tagsDiv.innerHTML = '';
+            if (img.tags && img.tags.length > 0) { tagsBtn.style.display = 'flex'; img.tags.forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 text-gray-300 px-2.5 py-1 rounded-full border border-zinc-700 font-medium cursor-pointer hover:border-orange-500" onclick="executeSearch('${t.trim()}')">#${t.trim()}</span>`; }); } else { tagsBtn.style.display = 'none'; }
+
+            // Configurar botón like y contador en tiempo real
+            setupModalLikeSystem(img.id);
+            
+            // Cargar comentarios en tiempo real
+            loadComments(img.id, currentContext); 
+            
+            loadSimilarImagesInSlider(img.tags || [], img.id, img.characterName);
+
+            document.getElementById('prev-image').style.display = currentIndex > 0 ? 'flex' : 'none';
+            document.getElementById('next-image').style.display = currentIndex < currentPlaylist.length - 1 ? 'flex' : 'none';
+        }
+
+        function setupModalLikeSystem(id) {
+            const modalLikeBtn = document.getElementById('modal-like-btn');
+            const likeCountEl = document.getElementById('modal-likes-count');
+            const userId = currentUser ? currentUser.uid : deviceID;
+            
+            // Limpiar listeners anteriores
+            db.ref(`feed_likes/${id}/${userId}`).off();
+            db.ref(`feed_posts/${id}/likes`).off();
+            db.ref(`reactions/${id}/${userId}`).off();
+            
+            modalLikeBtn.onclick = () => toggleReactionInModal(id);
+
+            // Listener de estado (corazón rojo/gris)
+            const likeStatusPath = currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`;
+            db.ref(likeStatusPath).on('value', s => { 
+                const isLiked = (currentContext === 'feed' && s.exists()) || (currentContext !== 'feed' && s.val() === 'like');
+                const icon = modalLikeBtn.querySelector('i');
+                if(isLiked) { 
+                    icon.className = "fas fa-heart text-sm text-red-500 animate-like-bounce"; 
+                    modalLikeBtn.classList.add('bg-red-500/10', 'border-red-500/30');
+                } else { 
+                    icon.className = "far fa-heart text-sm text-gray-400"; 
+                    modalLikeBtn.classList.remove('bg-red-500/10', 'border-red-500/30');
+                }
+            });
+
+            // Listener de contador
+            const countPath = currentContext === 'feed' ? `feed_posts/${id}/likes` : `reactions/${id}`; 
+            // Para legacy gallery 'reactions' es un objeto, no un contador directo, asumimos lógica simple o legacy
+            if (currentContext === 'feed') {
+                db.ref(countPath).on('value', s => likeCountEl.innerText = s.val() || 0);
+            } else {
+                 // Fallback para galería legacy (calculando localmente o usando caché)
+                 likeCountEl.innerText = allReactionCounts[id] || 0;
+            }
+        }
+
+        function toggleReactionInModal(id) {
+            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
+            const ref = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
+            
+            ref.once('value', s => {
+                if(s.exists()) { 
+                    // Quitar Like
+                    if(currentContext === 'feed') { 
+                        ref.remove(); 
+                        db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); 
+                    } else { 
+                        ref.remove(); 
+                        allReactionCounts[id] = (allReactionCounts[id] || 1) - 1;
+                        document.getElementById('modal-likes-count').innerText = allReactionCounts[id];
+                    } 
+                    userReactions[id] = null; 
+                } 
+                else { 
+                    // Dar Like
+                    if(currentContext === 'feed') { 
+                        ref.set(true); 
+                        db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); 
+                        // Notificar al dueño
+                        const item = unifiedGalleryData.find(i => i.id === id);
+                        if(item && item.userId) sendNotification(item.userId, 'like', id);
+                    } else { 
+                        ref.set('like'); 
+                        allReactionCounts[id] = (allReactionCounts[id] || 0) + 1;
+                        document.getElementById('modal-likes-count').innerText = allReactionCounts[id];
+                    } 
+                    userReactions[id] = 'like'; 
+                }
+            });
+        }
+        
+        function sendNotification(targetUid, type, postId) {
+             if (!currentUser || targetUid === currentUser.uid) return;
+             db.ref(`notifications/${targetUid}`).push({
+                 type: type,
+                 fromUserId: currentUser.uid,
+                 fromUserName: (userDataCache && userDataCache.username) ? userDataCache.username : 'Usuario',
+                 postId: postId,
+                 timestamp: firebase.database.ServerValue.TIMESTAMP,
+                 read: false
+             });
+        }
+
+        function loadComments(id, context) { 
+            let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; 
+            const container = document.getElementById('comments'); 
+            container.innerHTML = ''; // Limpiar
+            
+            // Usar on('child_added') para tiempo real
+            db.ref(path).off();
+            db.ref(path).orderByChild('timestamp').limitToLast(50).on('child_added', snap => {
+                const c = snap.val();
+                const div = document.createElement('div'); 
+                div.className = "flex gap-2.5 items-start animate-fade-in";
+                div.innerHTML = `<img src="${c.userAvatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full mt-0.5 border border-zinc-700 object-cover shadow-sm cursor-pointer" onclick="window.location.href='profile.html?uid=${c.userId}'"><div class="bg-[#1c1c1f] p-3 rounded-2xl rounded-tl-none border border-white/5 w-full shadow-sm"><div class="flex justify-between items-center mb-0.5"><span class="font-bold text-gray-300 text-[11px] cursor-pointer hover:text-orange-400 transition" onclick="window.location.href='profile.html?uid=${c.userId}'">${c.userName || c.name || 'Anónimo'}</span><span class="text-[9px] text-zinc-600">${timeAgo(c.timestamp)}</span></div><p class="text-gray-300 text-xs leading-relaxed break-words font-light">${c.text || ''}</p></div>`;
+                // Insertar al principio para ver nuevos arriba si usamos flex-col-reverse, o append normal
+                // Aquí append normal, scroll abajo
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+            });
+            
+            // Manejar caso vacío inicial
+            db.ref(path).once('value', s => {
+                if(!s.exists()) container.innerHTML = '<p id="no-comments-msg" class="text-center text-gray-600 text-[10px] py-4 italic">Sé el primero en comentar.</p>';
+            });
+        }
+        
+        // --- COMENTARIOS (POST) ---
+        document.getElementById('comment-form').addEventListener('submit', (e) => {
+             e.preventDefault(); const input = document.getElementById('comment-input'); const text = input.value.trim(); if(!text) return;
+             if(!requireLogin()) return;
+             
+             const path = currentContext === 'feed' ? `feed_comments/${currentImageId}` : `comments/${currentImageId}`;
+             const finalUserName = (currentUser && userDataCache.username) ? userDataCache.username : (currentUser?.displayName || 'Anónimo');
+             const finalUserAvatar = (currentUser && userDataCache.profilePic) ? userDataCache.profilePic : 'https://placehold.co/100x100';
+             
+             const nm = document.getElementById('no-comments-msg'); if(nm) nm.remove();
+
+             db.ref(path).push({ text: text, userId: currentUser.uid, userName: finalUserName, name: finalUserName, userAvatar: finalUserAvatar, timestamp: Date.now() });
+             
+             // Notificar al dueño del post
+             const item = unifiedGalleryData.find(i => i.id === currentImageId);
+             if(item && item.userId) sendNotification(item.userId, 'comment', currentImageId);
+
+             input.value = '';
+        });
+
+        // --- BUBBLES & FLOATERS ---
         function initFloatingComments(id, context) {
             const container = document.getElementById('floating-comments-container'); container.innerHTML = '';
             fetchedCommentsForBubbles = []; if (bubbleInterval) clearInterval(bubbleInterval);
@@ -771,7 +1109,7 @@
                 const comment = fetchedCommentsForBubbles[Math.floor(Math.random() * fetchedCommentsForBubbles.length)];
                 const bubble = document.createElement('div'); bubble.className = 'chat-bubble';
                 bubble.style.left = `${Math.floor(Math.random() * 60) + 10}%`; bubble.style.bottom = '-60px';
-                bubble.innerHTML = `<img src="${comment.userAvatar || 'https://placehold.co/50'}"><span>${comment.text ? comment.text.substring(0, 25) + (comment.text.length > 25 ? '...' : '') : '...'}</span>`;
+                bubble.innerHTML = `<img src="${comment.userAvatar || 'https://placehold.co/50'}" class="w-5 h-5 rounded-full"><span>${comment.text ? comment.text.substring(0, 25) + (comment.text.length > 25 ? '...' : '') : '...'}</span>`;
                 container.appendChild(bubble); setTimeout(() => { if(bubble.parentNode) bubble.remove(); }, 10000);
             };
             createBubble(); bubbleInterval = setInterval(createBubble, 3000);
@@ -795,13 +1133,6 @@
         }
         window.onclick = e => { if(!e.target.closest('.relative')) { document.getElementById('profile-menu').classList.add('opacity-0', 'pointer-events-none', 'scale-90'); document.getElementById('notification-dropdown').classList.add('opacity-0', 'pointer-events-none', 'scale-90'); } };
 
-        function initNotificationSystem(uid) {
-            const badge = document.getElementById('notif-badge');
-            db.ref('notifications/' + uid).orderByKey().limitToLast(1).on('child_added', snap => {
-                if(!snap.exists()) return; const lastNotif = snap.val(); const lastSeen = localStorage.getItem('lastSeenNotif_' + uid) || 0;
-                if (lastNotif.timestamp > lastSeen) badge.classList.remove('hidden');
-            });
-        }
         function loadNotifications() {
             const list = document.getElementById('notif-list');
             db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
@@ -816,48 +1147,6 @@
                     list.appendChild(item);
                 });
             });
-        }
-
-        async function openModal(id, context) {
-            if(!requireLogin()) return;
-            if(context === 'main') currentPlaylist = unifiedGalleryData; 
-            else if(context === 'foryou') currentPlaylist = window.forYouList;
-            else if(context === 'community') currentPlaylist = window.communityList;
-            else currentPlaylist = unifiedGalleryData; 
-            
-            currentIndex = currentPlaylist.findIndex(i => i.id === id);
-            if(currentIndex === -1) { currentPlaylist = unifiedGalleryData; currentIndex = currentPlaylist.findIndex(i => i.id === id); }
-            if(currentIndex === -1) return; 
-
-            let img = currentPlaylist[currentIndex]; currentImageId = id; currentContext = img.type;
-            updateModalContent(img); document.getElementById('modal').classList.add('visible'); document.body.style.overflow = 'hidden';
-            initFloatingComments(id, context);
-        }
-
-        function updateModalContent(img) {
-            document.getElementById('modal-image-title').textContent = img.title;
-            document.getElementById('modal-desc').textContent = img.desc || 'Sin descripción.';
-            const avatarEl = document.getElementById('modal-user-avatar'); const nameEl = document.getElementById('modal-user-name');
-            const modalImg = document.getElementById('modal-image');
-            
-            modalImg.src = img.thumbnailUrl || img.url;
-            if (img.thumbnailUrl && img.thumbnailUrl !== img.url) { const hi = new Image(); hi.src = img.url; hi.onload = () => { if (currentImageId === img.id) modalImg.src = img.url; }; }
-
-            if (img.type === 'gallery') { nameEl.textContent = "Galería Oficial"; avatarEl.src = "https://files.catbox.moe/ap1lh0.png"; nameEl.onclick=null; avatarEl.onclick=null; } 
-            else { nameEl.textContent = img.user.name; avatarEl.src = img.user.avatar; const go = () => window.location.href = `profile.html?uid=${img.userId}`; nameEl.onclick=go; avatarEl.onclick=go; }
-
-            const charTag = document.getElementById('modal-character-tag');
-            if (img.characterName) { charTag.classList.remove('hidden'); charTag.classList.add('inline-flex'); charTag.querySelector('span').innerText = img.characterName; } else { charTag.classList.add('hidden'); charTag.classList.remove('inline-flex'); }
-
-            const tagsDiv = document.getElementById('modal-tags'); const tagsBtn = document.getElementById('tags-toggle-btn');
-            tagsDiv.classList.add('hidden'); tagsBtn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down"></i>'; tagsDiv.innerHTML = '';
-            if (img.tags && img.tags.length > 0) { tagsBtn.style.display = 'flex'; img.tags.forEach(t => { if(t.trim()) tagsDiv.innerHTML += `<span class="text-[10px] bg-zinc-800 text-gray-300 px-2.5 py-1 rounded-full border border-zinc-700 font-medium cursor-pointer hover:border-orange-500" onclick="executeSearch('${t.trim()}')">#${t.trim()}</span>`; }); } else { tagsBtn.style.display = 'none'; }
-
-            document.getElementById('modal-like-btn').onclick = () => toggleReactionInModal(img.id); updateModalLikeUI(img.id);
-            loadComments(img.id, currentContext); loadSimilarImagesInSlider(img.tags || [], img.id, img.characterName);
-
-            document.getElementById('prev-image').style.display = currentIndex > 0 ? 'flex' : 'none';
-            document.getElementById('next-image').style.display = currentIndex < currentPlaylist.length - 1 ? 'flex' : 'none';
         }
 
         function loadSimilarImagesInSlider(tags, currentId, currentCharacterName) {
@@ -885,50 +1174,11 @@
         function toggleFullScreen() { document.getElementById('modal').classList.toggle('fullscreen-mode'); }
         function closeModal() { const modal = document.getElementById('modal'); modal.classList.remove('visible'); stopFloatingComments(); setTimeout(() => { modal.classList.remove('fullscreen-mode'); document.getElementById('modal-image').src = ''; }, 300); document.body.style.overflow = 'auto'; }
 
-        function toggleReactionInModal(id) {
-            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
-            const ref = db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`);
-            ref.once('value', s => {
-                if(s.exists()) { if(currentContext === 'feed') { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } else { ref.remove(); } userReactions[id] = null; } 
-                else { if(currentContext === 'feed') { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } else { ref.set('like'); } userReactions[id] = 'like'; }
-            });
-        }
-        function updateModalLikeUI(id) {
-            const userId = currentUser && !currentUser.isAnonymous ? currentUser.uid : deviceID;
-            const modalLikeBtn = document.getElementById('modal-like-btn');
-            db.ref(currentContext === 'feed' ? `feed_likes/${id}/${userId}` : `reactions/${id}/${userId}`).on('value', s => { if((currentContext === 'feed' && s.exists()) || (currentContext !== 'feed' && s.val() === 'like')) { modalLikeBtn.querySelector('i').className = "fas fa-heart text-xl text-red-500"; } else { modalLikeBtn.querySelector('i').className = "far fa-heart text-xl text-gray-400"; } });
-        }
-
-        function loadComments(id, context) { 
-            let path = context === 'feed' ? `feed_comments/${id}` : `comments/${id}`; 
-            const container = document.getElementById('comments'); 
-            db.ref(path).orderByChild('timestamp').limitToLast(50).once('value', snap => { 
-                container.innerHTML = !snap.exists() ? '<p class="text-center text-gray-600 text-[10px] py-4 italic">Aún no hay comentarios.</p>' : ''; 
-                const comments = []; snap.forEach(child => comments.push(child.val())); 
-                comments.reverse().forEach(c => { 
-                    const div = document.createElement('div'); div.className = "flex gap-2.5 items-start animate-fade-in";
-                    div.innerHTML = `<img src="${c.userAvatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full mt-0.5 border border-zinc-700 object-cover shadow-sm"><div class="bg-[#1c1c1f] p-3 rounded-2xl rounded-tl-none border border-white/5 w-full shadow-sm"><div class="flex justify-between items-center mb-0.5"><span class="font-bold text-gray-300 text-[11px] cursor-pointer hover:text-orange-400 transition">${c.userName || c.name || 'Anónimo'}</span><span class="text-[9px] text-zinc-600">${timeAgo(c.timestamp)}</span></div><p class="text-gray-300 text-xs leading-relaxed break-words font-light">${c.text || ''}</p></div>`; 
-                    container.appendChild(div); 
-                }); 
-            }); 
-        }
-        document.getElementById('comment-form').addEventListener('submit', (e) => {
-             e.preventDefault(); const input = document.getElementById('comment-input'); const text = input.value.trim(); if(!text) return;
-             if(!requireLogin()) return;
-             const path = currentContext === 'feed' ? `feed_comments/${currentImageId}` : `comments/${currentImageId}`;
-             const finalUserName = (currentUser && userDataCache.username) ? userDataCache.username : (currentUser?.displayName || 'Anónimo');
-             const finalUserAvatar = (currentUser && userDataCache.profilePic) ? userDataCache.profilePic : 'https://placehold.co/100x100';
-             db.ref(path).push({ text: text, userId: currentUser.uid, userName: finalUserName, name: finalUserName, userAvatar: finalUserAvatar, timestamp: Date.now() }).then(() => { loadComments(currentImageId, currentContext); initFloatingComments(currentImageId, currentContext); }); 
-             input.value = '';
-        });
-
         // Utils
         function executeSearch(query) { 
             query = normalize(query); if(!query) return;
             document.getElementById('main-content-sections').classList.add('hidden'); 
             document.getElementById('top-users-section').classList.add('hidden'); 
-            
-            // Ocultar la sección de personajes también al buscar
             document.getElementById('character-stories-section').classList.add('hidden');
 
             document.getElementById('search-results-container').classList.remove('hidden'); 
@@ -936,7 +1186,6 @@
             
             const matchedUsers = usersCache.filter(u => (u.username && normalize(u.username).includes(query))); 
             
-            // Búsqueda mejorada para incluir nombre de personaje
             const matchedGallery = unifiedGalleryData.filter(i => 
                 (i.title && normalize(i.title).includes(query)) || 
                 (i.tags && i.tags.some(t => normalize(t).includes(query))) || 
@@ -952,10 +1201,11 @@
         
         function resetSearchView(){ 
             document.getElementById('search-input').value = ''; 
+            document.getElementById('search-suggestions').classList.remove('visible');
             document.getElementById('search-results-container').classList.add('hidden'); 
             document.getElementById('main-content-sections').classList.remove('hidden'); 
             document.getElementById('top-users-section').classList.remove('hidden'); 
-            document.getElementById('character-stories-section').classList.remove('hidden'); // Mostrar personajes de nuevo
+            document.getElementById('character-stories-section').classList.remove('hidden'); 
             document.getElementById('clear-search-btn').classList.add('hidden'); 
         }
         
