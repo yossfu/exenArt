@@ -585,7 +585,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
-        const CATBOX_USERHASH = "341adb9d3c2d09d0485aa908c";
+        const CATBOX_USERHASH = "756cfede7da5c77b25bcab5dd";
 
         let currentUser = null;
         let currentUserData = null;
@@ -1278,13 +1278,54 @@
         // --- VIEWER ---
         function normalize(text) { return text ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''; }
 
-        function openMainViewerById(postId, imgIndex = 0) {
+        async function openMainViewerById(postId, imgIndex = 0) {
             let index = displayedPosts.findIndex(p => p.id === postId);
             let sourceList = displayedPosts;
-            if (index === -1) { index = allPostsCache.findIndex(p => p.id === postId); if (index !== -1) sourceList = allPostsCache; else return; }
-            currentViewPosts = sourceList; currentPostIndex = index; window.currentInternalIndex = imgIndex;
+            
+            if (index === -1) { 
+                index = allPostsCache.findIndex(p => p.id === postId); 
+                if (index !== -1) {
+                    sourceList = allPostsCache; 
+                } else {
+                    // Not found in cache, fetch from DB (CORRECCIÓN CRÍTICA PARA NOTIFICACIONES)
+                    showToast("Cargando publicación...");
+                    
+                    try {
+                        const snap = await db.ref('feed_posts/' + postId).once('value');
+                        if(snap.exists()) {
+                            const fetchedPost = { id: snap.key, ...snap.val() };
+                            
+                            // Set as single view context
+                            currentViewPosts = [fetchedPost];
+                            currentPostIndex = 0;
+                            window.currentInternalIndex = imgIndex;
+                            updateViewerContent();
+                            
+                            const modal = document.getElementById('modal'); 
+                            modal.classList.add('visible'); 
+                            modal.classList.remove('fullscreen-mode'); 
+                            document.body.style.overflow = 'hidden';
+                            return;
+                        } else {
+                            showToast("La publicación ya no existe.");
+                            return;
+                        }
+                    } catch(e) {
+                        console.error(e);
+                        showToast("Error al cargar la publicación.");
+                        return;
+                    }
+                }
+            }
+            
+            currentViewPosts = sourceList; 
+            currentPostIndex = index; 
+            window.currentInternalIndex = imgIndex;
             updateViewerContent();
-            const modal = document.getElementById('modal'); modal.classList.add('visible'); modal.classList.remove('fullscreen-mode'); document.body.style.overflow = 'hidden';
+            const modal = document.getElementById('modal'); 
+            modal.classList.add('visible'); 
+            modal.classList.remove('fullscreen-mode'); 
+            document.body.style.overflow = 'hidden';
         }
 
         function updateViewerContent() {
