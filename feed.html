@@ -731,24 +731,23 @@
             });
         }
 
-        // --- SISTEMA DE NOTIFICACIONES CORREGIDO ---
+        // --- SISTEMA DE NOTIFICACIONES CORREGIDO Y MEJORADO ---
         function initNotificationSystem(uid) {
             const badge = document.getElementById('notif-badge');
             
-            // Listener para la ÚLTIMA notificación entrante en tiempo real (para el badge)
+            // Listener para la ÚLTIMA notificación para controlar el badge
             db.ref('notifications/' + uid).orderByChild('timestamp').limitToLast(1).on('value', snap => {
-                if(!snap.exists()) {
+                if (!snap.exists()) {
                     badge.classList.add('hidden');
                     return;
                 }
-                
-                // Obtener la notificación más reciente
+
                 let lastNotif = null;
                 snap.forEach(child => { lastNotif = child.val(); });
 
-                // Comprobar si es más reciente que la última vez que abrimos el panel
-                const lastSeenTimestamp = localStorage.getItem('lastSeenNotif_' + uid) || 0;
-                
+                // Comparar con lo visto localmente (aseguramos conversión a entero)
+                const lastSeenTimestamp = parseInt(localStorage.getItem('lastSeenNotif_' + uid) || '0');
+
                 if (lastNotif.timestamp > lastSeenTimestamp) {
                     badge.classList.remove('hidden');
                 } else {
@@ -760,22 +759,17 @@
         function toggleNotifications() {
             const dd = document.getElementById('notification-dropdown');
             const badge = document.getElementById('notif-badge');
-            
-            if (dd.classList.contains('visible')) { 
-                dd.classList.remove('visible'); 
-            } else { 
-                // ABRIR PANEL
-                dd.classList.add('visible'); 
-                
-                // Ocultar badge inmediatamente (ya que el usuario está viendo)
-                badge.classList.add('hidden');
-                
-                // Actualizar timestamp local para que el badge no vuelva a salir al recargar
+
+            if (dd.classList.contains('visible')) {
+                dd.classList.remove('visible');
+            } else {
+                dd.classList.add('visible');
+                // Al abrir, marcamos como visto todo hasta AHORA
                 if(currentUser) {
-                    localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now());
+                    localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now().toString());
+                    badge.classList.add('hidden'); // Ocultar badge visualmente inmediato
+                    loadNotifications(); // Cargar data
                 }
-                
-                loadNotifications(); // Cargar lista lazy
             }
         }
 
@@ -783,61 +777,51 @@
             const list = document.getElementById('notif-list');
             list.innerHTML = '<div class="p-8 text-center text-gray-500 text-xs italic"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando...</div>';
 
-            // Cargar últimas 20 (Lazy Load real)
+            // Cargar historial (Lazy), traemos 20
             db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
                 list.innerHTML = '';
-                if (!snap.exists()) { 
-                    list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones recientes.</div>'; 
-                    return; 
+                if (!snap.exists()) {
+                    list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones recientes.</div>';
+                    return;
                 }
-                
-                const notifs = []; 
+
+                const notifs = [];
                 snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
-                
-                // Ordenar más reciente primero
+
+                // Ordenar: Más nuevo arriba
                 notifs.sort((a, b) => b.timestamp - a.timestamp);
 
                 notifs.forEach(n => {
-                    const item = document.createElement('div'); 
-                    const isUnread = !n.read; 
-                    item.className = `notif-item ${isUnread ? 'unread' : 'read'}`; 
-                    item.id = `notif-item-${n.key}`;
-                    
-                    let icon = 'fas fa-bell', text = 'Nueva interacción';
-                    
-                    // Definir acción según tipo
-                    item.onclick = () => {
-                        markAsRead(n.key, item);
-                        if (n.type === 'like' || n.type === 'comment' || n.type.startsWith('mention')) {
-                            openMainViewerById(n.postId);
-                        } else if (n.type === 'follow') {
-                            goToProfile(n.fromUserId);
-                        }
-                        // Cerrar dropdown
-                        document.getElementById('notification-dropdown').classList.remove('visible');
-                    };
+                    const item = document.createElement('div');
+                    // Estilos
+                    const isUnread = !n.read; // Opcional, si queremos tracking de lectura individual en DB
+                    item.className = `notif-item ${isUnread ? 'unread' : 'read'}`;
 
-                    if (n.type === 'like') { 
-                        icon = 'fas fa-heart text-red-500'; 
-                        text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`; 
+                    let icon = 'fas fa-bell';
+                    let text = 'Nueva interacción';
+                    let action = () => {};
+
+                    // Configurar contenido y acción según tipo
+                    if (n.type === 'like') {
+                        icon = 'fas fa-heart text-red-500';
+                        text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`;
+                        // IMPORTANTE: openMainViewerById usa el ID específico de ESTA notificación
+                        action = () => openMainViewerById(n.postId);
+                    } else if (n.type === 'comment') {
+                        icon = 'fas fa-comment text-blue-400';
+                        text = `<b>${n.fromUserName}</b> comentó tu publicación.`;
+                        action = () => openMainViewerById(n.postId);
+                    } else if (n.type === 'follow') {
+                        icon = 'fas fa-user-plus text-green-400';
+                        text = `<b>${n.fromUserName}</b> empezó a seguirte.`;
+                        // IMPORTANTE: Redirige al perfil, no a una foto
+                        action = () => goToProfile(n.fromUserId);
+                    } else if (n.type.startsWith('mention')) {
+                        icon = 'fas fa-at text-orange-400';
+                        text = `<b>${n.fromUserName}</b> te mencionó.`;
+                        action = () => openMainViewerById(n.postId);
                     }
-                    else if (n.type === 'comment') { 
-                        icon = 'fas fa-comment text-blue-400'; 
-                        text = `<b>${n.fromUserName}</b> comentó tu publicación.`; 
-                    }
-                    else if (n.type === 'follow') { 
-                        icon = 'fas fa-user-plus text-green-400'; 
-                        text = `<b>${n.fromUserName}</b> empezó a seguirte.`; 
-                    }
-                    else if (n.type === 'mention_post') { 
-                        icon = 'fas fa-at text-orange-400'; 
-                        text = `<b>${n.fromUserName}</b> te mencionó en una publicación.`; 
-                    }
-                    else if (n.type === 'mention_comment') { 
-                        icon = 'fas fa-at text-orange-400'; 
-                        text = `<b>${n.fromUserName}</b> te mencionó en un comentario.`; 
-                    }
-                    
+
                     item.innerHTML = `
                         <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 flex-shrink-0">
                             <i class="${icon}"></i>
@@ -846,9 +830,17 @@
                             ${text} <br>
                             <span class="text-[10px] text-gray-500">${timeAgo(n.timestamp)}</span>
                         </div>
-                        ${isUnread ? '<div class="w-2 h-2 rounded-full bg-orange-500"></div>' : ''}
                     `;
-                    
+
+                    item.onclick = () => {
+                        // Marcar leido en UI (opcional)
+                        item.classList.remove('unread');
+                        // Cerrar dropdown
+                        document.getElementById('notification-dropdown').classList.remove('visible');
+                        // Ejecutar acción específica definida arriba
+                        action();
+                    };
+
                     list.appendChild(item);
                 });
             });
