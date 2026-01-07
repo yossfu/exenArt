@@ -82,6 +82,7 @@
     <style>
         :root { 
             --accent: #f97316; 
+            --accent-light: #ff8c42;
             --nav-height: 70px;
             --header-height: 56px; 
         }
@@ -227,6 +228,19 @@
         #toast-container { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
         .skeleton { background: linear-gradient(90deg, #1f1f22 25%, #2a2a2e 50%, #1f1f22 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px; }
+
+        /* Similar Slider Styles (MATCHING FEED.HTML) */
+        .similar-card {
+            min-width: 120px; width: 120px; aspect-ratio: 2/3; /* Portrait format */
+            border-radius: 0.75rem; overflow: hidden; position: relative;
+            flex-shrink: 0; scroll-snap-align: start;
+            border: 1px solid rgba(255,255,255,0.1); 
+            transition: transform 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out;
+            background-color: #1a1a1c;
+        }
+        .similar-card:hover { transform: scale(1.03); border-color: var(--accent-light); box-shadow: 0 0 15px rgba(249, 115, 22, 0.3); }
+        .similar-card:active { transform: scale(0.95); border-color: var(--accent); box-shadow: 0 0 5px rgba(249, 115, 22, 0.2); }
+        .similar-card img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body class="antialiased selection:bg-orange-500 selection:text-white">
@@ -435,7 +449,7 @@
                         
                         <div class="mb-6">
                             <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-3 tracking-widest">Similares</h4>
-                            <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-2 hide-scrollbar snap-x"></div>
+                            <div id="similar-grid" class="flex gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x"></div>
                         </div>
 
                         <div>
@@ -567,7 +581,16 @@
             const snapshot = await db.ref('images').once('value'); 
             if (snapshot.exists()) { 
                 const allData = []; 
-                snapshot.forEach(child => { allData.push({ id: child.key, type: 'gallery', ...child.val() }); }); 
+                snapshot.forEach(child => { 
+                    const val = child.val();
+                    // Para galería legacy, intentamos obtener un string de tags si existe
+                    let tStr = "";
+                    if (val.tags) {
+                        if (Array.isArray(val.tags)) tStr = val.tags.join(',');
+                        else if (typeof val.tags === 'string') tStr = val.tags;
+                    }
+                    allData.push({ id: child.key, type: 'gallery', ...val, tagsStr: tStr }); 
+                }); 
                 fullGalleryCache = allData; 
             } 
             
@@ -606,6 +629,7 @@
                             title: post.title || 'Sin título', 
                             desc: post.text, 
                             tags: post.tags ? post.tags.split(',').map(t=>t.trim()) : [],
+                            tagsStr: post.tags || "", // GUARDAR RAW STRING PARA PESOS
                             category: post.category, 
                             characterName: post.characterName || '',
                             user: { name: currentName, avatar: currentAvatar, id: post.userId, isVerified: isVerified },
@@ -959,7 +983,8 @@
             // Cargar comentarios en tiempo real
             loadComments(img.id, currentContext); 
             
-            loadSimilarImagesInSlider(img.tags || [], img.id, img.characterName);
+            // AQUI ESTA LA MAGIA: Pasamos img.tagsStr (el string crudo para pesos)
+            loadSimilarImagesInSlider(img.tagsStr || "", img.id, img.characterName, img.userId);
 
             document.getElementById('prev-image').style.display = currentIndex > 0 ? 'flex' : 'none';
             document.getElementById('next-image').style.display = currentIndex < currentPlaylist.length - 1 ? 'flex' : 'none';
@@ -1149,23 +1174,130 @@
             });
         }
 
-        function loadSimilarImagesInSlider(tags, currentId, currentCharacterName) {
-            const container = document.getElementById('similar-grid'); container.innerHTML = '';
+        // --- SISTEMA DE TAGS Y SIMILARES (PORTED FROM FEED.HTML) ---
+
+        // Función 1: Parseo de tags con pesos
+        function parseWeightedTags(tagStr) {
+            const tags = {};
+            if (!tagStr) return tags;
+
+            // Normalizar: quitar saltos de línea y espacios extra
+            const normalized = tagStr.replace(/\n/g, ' ').trim();
+
+            // Detectar formato #(tag:score)
+            const regex = /#\(([^:]+):([\d.]+)\)/g;
+            let match;
+            let foundFormatted = false;
+
+            while ((match = regex.exec(normalized)) !== null) {
+                foundFormatted = true;
+                const tagName = normalize(match[1]); 
+                const score = parseFloat(match[2]);
+                tags[tagName] = isNaN(score) ? 1.0 : score;
+            }
+
+            // Fallback para tags normales separados por comas
+            if (!foundFormatted) {
+                const simpleTags = normalized.split(',');
+                simpleTags.forEach(t => {
+                    const clean = normalize(t.replace(/^#/, ''));
+                    if (clean) tags[clean] = 1.0;
+                });
+            }
+
+            return tags;
+        }
+
+        // Función 2: Carga de similares con algoritmo de pesos
+        function loadSimilarImagesInSlider(tagsStr, currentId, currentCharacterName, currentUserId) {
+            const container = document.getElementById('similar-grid'); 
+            container.innerHTML = '';
+
+            // Filtrar candidatos (excluyendo el post actual)
             const candidates = unifiedGalleryData.filter(p => p.id !== currentId && p.url);
-            let finalResults = []; let addedIds = new Set();
+            
+            if (candidates.length === 0) { 
+                container.innerHTML = '<span class="text-[10px] text-gray-500 italic px-2 self-center">No hay similares.</span>'; 
+                return; 
+            }
+
+            // 1. Parsear los tags del post actual con sus pesos
+            const currentTagsMap = parseWeightedTags(tagsStr);
             const normCharName = normalize(currentCharacterName);
-            if (normCharName) { const charMatches = candidates.filter(p => p.characterName && normalize(p.characterName) === normCharName).slice(0, 5); charMatches.forEach(p => { finalResults.push(p); addedIds.add(p.id); }); }
-            if (tags && tags.length > 0) { const tagMatches = candidates.filter(p => !addedIds.has(p.id)).map(p => { const pTags = Array.isArray(p.tags) ? p.tags.map(t=>normalize(t)) : []; const common = pTags.filter(t => tags.map(tt=>normalize(tt)).includes(t)); return { post: p, score: common.length }; }).filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.post); finalResults = finalResults.concat(tagMatches); }
-            if (finalResults.length === 0) { container.innerHTML = '<span class="text-[10px] text-gray-500 italic px-2">No hay similares.</span>'; return; }
-            finalResults.slice(0, 10).forEach(post => {
-                const div = document.createElement('div'); div.className = "relative min-w-[70px] w-[70px] h-[70px] rounded-lg overflow-hidden flex-shrink-0 cursor-pointer border border-white/10 hover:border-orange-500/50 transition opacity-80 hover:opacity-100"; 
-                div.onclick = () => { stopFloatingComments(); updateModalContent(post); initFloatingComments(post.id, post.type); };
-                div.innerHTML = `<img src="${post.thumbnailUrl || post.url}" loading="lazy" class="w-full h-full object-cover">`;
+
+            // 2. Calcular puntuación para cada candidato
+            const scoredCandidates = candidates.map(p => {
+                let score = 0;
+
+                // A. Bonus por personaje (prioridad alta)
+                if (normCharName && p.characterName && normalize(p.characterName) === normCharName) { 
+                    score += 10; 
+                    if (p.userId !== currentUserId) score += 5; // Bonus por descubrir otros artistas
+                }
+
+                // B. Comparación de tags con pesos
+                // Nota: p.tagsStr viene de cacheAllDataForSearch. Si es legacy gallery, puede que no tenga weights, pero parseWeightedTags lo maneja.
+                const pTagsMap = parseWeightedTags(p.tagsStr || (Array.isArray(p.tags) ? p.tags.join(',') : p.tags));
+                
+                // Iterar sobre los tags del post actual
+                Object.keys(currentTagsMap).forEach(tagName => {
+                    if (pTagsMap.hasOwnProperty(tagName)) {
+                        const w1 = currentTagsMap[tagName]; // Peso en el post actual
+                        const w2 = pTagsMap[tagName];     // Peso en el candidato
+                        
+                        // Factor de similitud de peso
+                        const diff = Math.abs(w1 - w2);
+                        const similarity = Math.max(0, 1.0 - diff); 
+                        
+                        // Añadir al score. Multiplicamos por w1 para dar importancia a tags de alta confianza.
+                        score += (similarity * w1); 
+                        
+                        // Bonus base por coincidir
+                        score += 0.1;
+                    }
+                });
+
+                return { post: p, score: score };
+            });
+
+            // 3. Filtrar y Ordenar
+            const finalResults = scoredCandidates
+                .filter(item => item.score > 0.5) // Umbral mínimo de similitud
+                .sort((a, b) => b.score - a.score)
+                .map(item => item.post)
+                .slice(0, 15);
+
+            if (finalResults.length === 0) { 
+                container.innerHTML = '<span class="text-[10px] text-gray-500 italic px-2 self-center">No hay similares.</span>'; 
+                return; 
+            }
+
+            // 4. Renderizar (ESTILO PORTRAIT COPIADO DE FEED.HTML)
+            finalResults.forEach(post => {
+                const div = document.createElement('div'); 
+                // Clase portrait definida en el CSS
+                div.className = "similar-card cursor-pointer group"; 
+                div.onclick = () => { 
+                    stopFloatingComments(); 
+                    // Necesitamos encontrar el post en unifiedGalleryData para tener el contexto correcto
+                    const idx = unifiedGalleryData.findIndex(p => p.id === post.id);
+                    if (idx !== -1) {
+                        currentPlaylist = unifiedGalleryData;
+                        currentIndex = idx;
+                        currentImageId = post.id;
+                        currentContext = post.type;
+                        updateModalContent(post);
+                        initFloatingComments(post.id, post.type);
+                    }
+                }; 
+                
+                const imgUrl = post.thumbnailUrl || post.url;
+                // Estructura HTML idéntica a Feed
+                div.innerHTML = `<img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
                 container.appendChild(div);
             });
         }
         
-        function toggleTags() { const div = document.getElementById('modal-tags'); const btn = document.getElementById('tags-toggle-btn'); if (div.classList.contains('hidden')) { div.classList.remove('hidden'); btn.innerHTML = '<span>Ocultar</span> <i class="fas fa-chevron-up text-xs"></i>'; } else { div.classList.add('hidden'); btn.innerHTML = '<span>Etiquetas</span> <i class="fas fa-chevron-down text-xs"></i>'; } }
         function navigateToNext() { if(currentIndex < currentPlaylist.length - 1) { stopFloatingComments(); currentIndex++; updateModalContent(currentPlaylist[currentIndex]); initFloatingComments(currentPlaylist[currentIndex].id, currentPlaylist[currentIndex].type); } }
         function navigateToPrevious() { if(currentIndex > 0) { stopFloatingComments(); currentIndex--; updateModalContent(currentPlaylist[currentIndex]); initFloatingComments(currentPlaylist[currentIndex].id, currentPlaylist[currentIndex].type); } }
         const imageArea = document.getElementById('modal-image-area'); imageArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
