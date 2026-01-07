@@ -46,7 +46,7 @@
         }
 
         /* Scrollbars */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -188,6 +188,163 @@
 
         #toast-container { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #custom-alert > div, #custom-confirm > div { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        /* ================= STORIES (Historias) ================= */
+        .stories-container {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 8px 4px;
+            margin-bottom: 20px;
+            scroll-snap-type: x mandatory;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .stories-container::-webkit-scrollbar { display: none; }
+        
+        .story-card {
+            position: relative;
+            min-width: 105px;
+            width: 105px;
+            height: 165px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            cursor: pointer;
+            scroll-snap-align: start;
+            border: 1px solid rgba(255,255,255,0.15);
+            transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: #27272a;
+        }
+        .story-card:active { transform: scale(0.96); }
+        .story-bg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        .story-card:hover .story-bg { transform: scale(1.05); }
+        .story-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 30%, transparent 80%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 8px;
+            pointer-events: none;
+        }
+        .story-avatar-ring {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            padding: 2px;
+            background: rgba(0,0,0,0.5);
+        }
+        .story-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #000;
+        }
+        .story-name {
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            line-height: 1.2;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        /* ================= SUGGESTIONS WIDGET (A quién seguir) ================= */
+        .suggestion-widget {
+            background: #18181b;
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 16px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .suggestion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+        .suggestion-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #f3f4f6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .suggestion-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .suggestion-scroll::-webkit-scrollbar { display: none; }
+        
+        .suggested-user-card {
+            min-width: 120px;
+            width: 120px;
+            background: #27272a;
+            border-radius: 12px;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
+            position: relative;
+            transition: background 0.2s;
+        }
+        .suggested-user-card:active { background: #3f3f46; }
+        .s-u-avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #3f3f46;
+        }
+        .s-u-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+        .s-u-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .s-u-btn:active { transform: scale(0.95); }
+        .s-u-btn.following { background: transparent; border: 1px solid #555; color: #aaa; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -241,6 +398,13 @@
 
         <main class="container mx-auto max-w-lg px-0 sm:px-4 py-2 overflow-x-hidden">
             
+            <!-- HISTORIAS (STORIES) SECTION -->
+            <div id="stories-section-wrapper" class="px-2 sm:px-0">
+                <div id="stories-wrapper" class="stories-container">
+                    <!-- Las historias se inyectarán aquí vía JS -->
+                </div>
+            </div>
+
             <!-- UPLOAD CARD -->
             <div class="px-2 sm:px-0">
                 <div class="feed-card upload-card p-4 rounded-2xl mb-4">
@@ -268,10 +432,8 @@
                                 <div id="character-suggestions" class="suggestions-dropdown custom-scrollbar"></div>
                             </div>
                             
-                            <!-- Campo de Tags Generales (DeepDanbooru) -->
                             <div class="hidden"><input type="text" id="post-tags" placeholder="Auto-tagging..." readonly></div>
                             
-                            <!-- NUEVO CAMPO: Descripción / Etiquetas Detalladas (WD Tagger) -->
                             <div class="hidden">
                                 <input type="text" id="post-description" placeholder="Etiquetas detalladas (WD)..." class="custom-input bg-black/40 border-zinc-700 text-xs pl-8 tags-readonly" readonly>
                             </div>
@@ -442,11 +604,7 @@
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
         
-        // Configuración DeepDanbooru (Original)
         const TAGGER_CONFIG = { threshold: 0.5, useSpace: false, useEscape: true, keepConfidences: true, descend: true };
-        
-        // Configuración WD Tagger (Nuevo)
-        // El espacio suele usar: [imagen, umbral_general, umbral_personaje]
         const WD_CONFIG = { gen_threshold: 0.35, char_threshold: 0.85 };
 
         async function resizeImageForApi(file) {
@@ -462,7 +620,7 @@
 
         window.runAutoTagging = async function(originalFile) {
             const tagInput = document.getElementById('post-tags'); 
-            const descInput = document.getElementById('post-description'); // Nuevo campo
+            const descInput = document.getElementById('post-description'); 
             const publishBtn = document.getElementById('publish-btn');
             
             tagInput.value = ""; 
@@ -472,46 +630,32 @@
 
             try {
                 const processedFile = await resizeImageForApi(originalFile);
-
-                // Ejecutamos ambos modelos en paralelo usando Promise.all
                 const [resultDeep, resultWD] = await Promise.allSettled([
-                    // Tagger 1: DeepDanbooru
                     Client.connect("Jossle/deepdanbooru_online_Exen").then(client => 
                         client.predict(0, [processedFile, TAGGER_CONFIG.threshold, TAGGER_CONFIG.useSpace, TAGGER_CONFIG.useEscape, TAGGER_CONFIG.keepConfidences, TAGGER_CONFIG.descend])
                     ),
-                    // Tagger 2: SmilingWolf WD Tagger (v1.4 vit v2 es el estándar para esto)
                     Client.connect("SmilingWolf/wd-v1-4-vit-tagger-v2").then(client => 
                         client.predict(0, [processedFile, WD_CONFIG.gen_threshold, WD_CONFIG.char_threshold])
                     )
                 ]);
 
-                // Procesar resultado DeepDanbooru (Tags simples)
                 if (resultDeep.status === 'fulfilled' && resultDeep.value && resultDeep.value.data && resultDeep.value.data[0]) {
                     tagInput.value = resultDeep.value.data[0];
                 }
-
-                // Procesar resultado WD Tagger (Descriptivo/Detallado)
                 if (resultWD.status === 'fulfilled' && resultWD.value && resultWD.value.data) {
-                    const labelData = resultWD.value.data[0]; // Suele ser un objeto {tag: conf, tag2: conf}
+                    const labelData = resultWD.value.data[0]; 
                     if (labelData && typeof labelData === 'object') {
-                        // Filtramos y ordenamos las etiquetas por confianza
                         const sortedTags = Object.entries(labelData)
-                            .filter(([tag, conf]) => conf > WD_CONFIG.gen_threshold) // Filtrar por umbral
-                            .sort((a, b) => b[1] - a[1]) // Ordenar descendente por confianza
-                            .map(([tag, conf]) => tag.replaceAll('_', ' ')); // Reemplazar _ con espacios para que sea más natural/descriptivo
-                        
-                        // Unimos para crear una "descripción" basada en tags
-                        if (sortedTags.length > 0) {
-                            descInput.value = sortedTags.join(", ");
-                        }
+                            .filter(([tag, conf]) => conf > WD_CONFIG.gen_threshold) 
+                            .sort((a, b) => b[1] - a[1]) 
+                            .map(([tag, conf]) => tag.replaceAll('_', ' ')); 
+                        if (sortedTags.length > 0) descInput.value = sortedTags.join(", ");
                     }
                 }
-
             } catch (error) {
                 console.error("Error Tagging:", error); 
             } finally {
-                publishBtn.disabled = false; 
-                publishBtn.classList.remove('btn-disabled');
+                publishBtn.disabled = false; publishBtn.classList.remove('btn-disabled');
                 publishBtn.innerHTML = 'Publicar';
             }
         }
@@ -616,7 +760,6 @@
         function closeCustomConfirm(res) { document.getElementById('custom-confirm').classList.add('hidden'); document.getElementById('custom-confirm').classList.remove('flex'); if(res && confirmCallback) confirmCallback(); confirmCallback = null; }
         function requireLogin(event) { if (!currentUser) { if(event) { event.preventDefault(); event.stopPropagation(); } window.location.href = 'login.html'; return false; } return true; }
 
-        // --- COMPRESIÓN MEJORADA (150KB LÍMITE ESTRICTO) ---
         function compressImage(file) {
             return new Promise((resolve, reject) => {
                 const maxSizeKB = 150; 
@@ -630,7 +773,6 @@
                     let width = img.width, height = img.height;
                     const maxDim = 1920; 
 
-                    // Resize inicial si es gigante
                     if (width > maxDim || height > maxDim) {
                         if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; } 
                         else { width = Math.round((width * maxDim) / height); height = maxDim; }
@@ -642,22 +784,14 @@
                     ctx.drawImage(img, 0, 0, width, height);
 
                     let quality = 0.9;
-                    
                     const tryCompression = () => {
                         canvas.toBlob(blob => {
                             if (!blob) { reject(new Error("Error procesando imagen.")); return; }
-                            
-                            // Éxito: Tamaño correcto o calidad mínima alcanzada
                             if (blob.size / 1024 <= maxSizeKB || quality <= 0.3) {
                                 resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), { type: "image/webp", lastModified: Date.now() }));
                             } else {
-                                // Fallo: Reducir calidad
                                 quality -= 0.1;
-                                // Si la calidad baja mucho, reducir dimensiones drásticamente para asegurar <150kb
-                                if (quality < 0.5) {
-                                    canvas.width *= 0.8; canvas.height *= 0.8;
-                                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                                }
+                                if (quality < 0.5) { canvas.width *= 0.8; canvas.height *= 0.8; ctx.drawImage(img, 0, 0, canvas.width, canvas.height); }
                                 tryCompression();
                             }
                         }, 'image/webp', quality);
@@ -725,7 +859,6 @@
             throw new Error("Error de conexión. Intenta más tarde.");
         }
 
-        // --- SUBIDA DE POST CORREGIDA (ANTI-GHOST) ---
         async function uploadPost() {
             if(!requireLogin()) return;
 
@@ -733,7 +866,7 @@
             const title = document.getElementById('post-title').value.trim();
             const characterName = document.getElementById('post-character').value.trim();
             const tags = document.getElementById('post-tags').value.trim();
-            const description = document.getElementById('post-description').value.trim(); // Nuevo campo descriptivo
+            const description = document.getElementById('post-description').value.trim(); 
             const category = document.getElementById('post-category').value;
             let colId = document.getElementById('post-collection').value;
             const newColName = document.getElementById('new-collection-name').value.trim();
@@ -746,7 +879,6 @@
             const progress = document.getElementById('upload-progress');
             btn.disabled = true; btn.classList.add('btn-disabled'); 
             
-            // Indicador de "Procesando" antes de subir
             btn.innerHTML = '<i class="fas fa-cog fa-spin"></i> Procesando imágenes...';
             progress.classList.remove('hidden');
             
@@ -763,18 +895,12 @@
                 let uploadedUrls = [];
                 if (selectedFiles.length > 0) {
                     for (const file of selectedFiles) {
-                        // 1. Comprimir
                         let processedFile = await compressImage(file);
-                        // 2. Subir
                         btn.innerHTML = '<i class="fas fa-cloud-upload-alt fa-bounce"></i> Subiendo...';
                         const url = await uploadToCatboxWithFallback(processedFile);
                         uploadedUrls.push(url);
                     }
-                    
-                    // SEGURIDAD ANTI-GHOST: Si seleccionó archivos pero no hay URLs, ABORTAR.
-                    if (uploadedUrls.length === 0) {
-                        throw new Error("La subida de imágenes falló. No se creó la publicación.");
-                    }
+                    if (uploadedUrls.length === 0) throw new Error("La subida de imágenes falló.");
                 }
                 
                 const finalUserName = (currentUserData && currentUserData.username) ? currentUserData.username : (currentUser?.displayName || 'Usuario');
@@ -783,15 +909,13 @@
                 const newPostRef = db.ref('feed_posts').push();
                 const newPostId = newPostRef.key;
                 
-                // Concatenamos las tags descriptivas al texto principal si se desea, o las guardamos en el objeto
-                // Aquí las guardamos en el objeto 'postData' como 'descriptionTags'
                 const postData = {
                     text, 
                     imageUrl: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
                     imageUrls: uploadedUrls,
                     title, 
                     tags: tags,
-                    descriptionTags: description, // Guardamos la descripción generada
+                    descriptionTags: description,
                     category, characterName,
                     userId: currentUser.uid, userName: finalUserName, userAvatar: finalUserAvatar,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, likes: 0,
@@ -830,13 +954,13 @@
                 const tempPosts = [];
                 snapshot.forEach(child => { 
                     const val = child.val();
-                    // Limpieza preventiva de datos corruptos al cargar
                     if(val.text || (val.imageUrls && val.imageUrls.length > 0) || val.imageUrl) {
                         tempPosts.push({ id: child.key, ...val }); 
                     }
                 });
                 allPostsCache = tempPosts.sort((a,b) => b.timestamp - a.timestamp);
                 applyFiltersAndRender();
+                renderStories(); // Cargar historias al inicio
             });
         }
 
@@ -846,7 +970,6 @@
             });
         }
         
-        // --- ORDENAMIENTO DE FEED CORREGIDO (MIX INTELIGENTE) ---
         function applyFiltersAndRender() {
             let filtered = [...allPostsCache];
             const filterBar = document.getElementById('filter-bar');
@@ -871,43 +994,24 @@
                 const otherPosts = [];
 
                 filtered.forEach(post => {
-                    // Limpieza: Ignorar posts sin contenido
                     if (!post.text && (!post.imageUrls || post.imageUrls.length === 0)) return;
-
-                    if (post.userId === currentUser.uid) {
-                        myPosts.push(post);
-                    } else if (followingCache[post.userId]) {
-                        followedPosts.push(post);
-                    } else {
-                        otherPosts.push(post);
-                    }
+                    if (post.userId === currentUser.uid) myPosts.push(post);
+                    else if (followingCache[post.userId]) followedPosts.push(post);
+                    else otherPosts.push(post);
                 });
 
                 myPosts.sort((a, b) => b.timestamp - a.timestamp);
                 followedPosts.sort((a, b) => b.timestamp - a.timestamp);
                 otherPosts.sort((a, b) => b.timestamp - a.timestamp);
 
-                // Algoritmo de Mezcla: Priorizar Seguidos pero no ocultar el resto
-                // Ratio aproximado: 3 Seguidos - 1 Descubrimiento
                 const mixed = [];
-                let fIndex = 0;
-                let oIndex = 0;
-                
+                let fIndex = 0, oIndex = 0;
                 while(fIndex < followedPosts.length || oIndex < otherPosts.length) {
-                    // Añadir hasta 3 de seguidos
                     for(let i=0; i<3 && fIndex < followedPosts.length; i++) mixed.push(followedPosts[fIndex++]);
-                    // Añadir 1 de descubrimiento
                     if(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]);
-                    
-                    // Relleno final
-                    if(fIndex >= followedPosts.length && oIndex < otherPosts.length) 
-                        while(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]);
-                    if(oIndex >= otherPosts.length && fIndex < followedPosts.length) 
-                        while(fIndex < followedPosts.length) mixed.push(followedPosts[fIndex++]);
+                    if(fIndex >= followedPosts.length && oIndex < otherPosts.length) while(oIndex < otherPosts.length) mixed.push(otherPosts[oIndex++]);
+                    if(oIndex >= otherPosts.length && fIndex < followedPosts.length) while(fIndex < followedPosts.length) mixed.push(followedPosts[fIndex++]);
                 }
-
-                // Insertar mis posts en la mezcla por fecha natural o al principio si son muy recientes
-                // Para simplificar, mostramos mis posts recientes primero, luego el mix
                 displayedPosts = [...myPosts.slice(0, 1), ...mixed, ...myPosts.slice(1)];
 
             } else if (currentSortOrder === 'oldest') {
@@ -938,21 +1042,125 @@
             const feedContainer = document.getElementById('feed-list-container');
             const gridContainer = document.getElementById('grid-view-container');
             
-            chunk.forEach(post => {
-                // Doble chequeo anti-ghost
+            chunk.forEach((post, idx) => {
                 if((post.text || (post.imageUrls && post.imageUrls.length > 0)) && !document.getElementById(`post-card-${post.id}`)) {
                     feedContainer.appendChild(createPostCard(post));
+                    
+                    // LÓGICA DE SUGERENCIAS: Insertar cada 5 posts
+                    const absoluteIndex = currentRenderIndex + idx + 1;
+                    if (absoluteIndex > 0 && absoluteIndex % 5 === 0) {
+                        createSuggestionWidget(feedContainer);
+                    }
                 }
                 const imgs = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
-                if (imgs.length > 0) {
-                     gridContainer.appendChild(createGridItem(post, imgs[0]));
-                }
+                if (imgs.length > 0) { gridContainer.appendChild(createGridItem(post, imgs[0])); }
                 updateUserAvatarInUI(post.userId);
             });
             currentRenderIndex = nextIndex;
             if (currentRenderIndex >= displayedPosts.length) document.getElementById('scroll-spinner').style.opacity = '0';
         }
-        
+
+        // ================= NUEVAS FUNCIONES: HISTORIAS Y SUGERENCIAS =================
+
+        // 1. Renderizar Historias (Imágenes de usuarios aleatorios)
+        function renderStories() {
+            const container = document.getElementById('stories-wrapper');
+            container.innerHTML = '';
+
+            // Obtener posts recientes que tengan imágenes
+            const candidates = allPostsCache.filter(p => (p.imageUrls && p.imageUrls.length > 0) || p.imageUrl);
+            
+            // Agrupar por usuario (Solo 1 historia por usuario)
+            const userStories = {};
+            candidates.forEach(p => {
+                if (!userStories[p.userId]) {
+                    userStories[p.userId] = p;
+                }
+            });
+
+            const uniqueStories = Object.values(userStories);
+            
+            // Mezclar aleatoriamente
+            uniqueStories.sort(() => Math.random() - 0.5);
+
+            if (uniqueStories.length === 0) {
+                document.getElementById('stories-section-wrapper').style.display = 'none';
+                return;
+            } else {
+                document.getElementById('stories-section-wrapper').style.display = 'block';
+            }
+
+            uniqueStories.slice(0, 10).forEach(story => {
+                const img = (story.imageUrls && story.imageUrls.length > 0) ? story.imageUrls[0] : story.imageUrl;
+                const div = document.createElement('div');
+                div.className = 'story-card';
+                div.onclick = () => openMainViewerById(story.id, 0); // Abrir el visor al hacer clic
+                div.innerHTML = `
+                    <img src="${img}" class="story-bg" loading="lazy">
+                    <div class="story-overlay">
+                        <div class="story-avatar-ring">
+                            <img src="${story.userAvatar || 'https://placehold.co/50'}" class="story-avatar user-avatar-${story.userId}">
+                        </div>
+                        <span class="story-name">${story.userName}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+                updateUserAvatarInUI(story.userId);
+            });
+        }
+
+        // 2. Crear Widget de Sugerencias "A quién seguir"
+        function createSuggestionWidget(container) {
+            // Filtrar usuarios candidatos: Únicos, que no sean yo, y que no siga
+            const candidates = [];
+            const seenUsers = new Set();
+
+            allPostsCache.forEach(p => {
+                if (p.userId !== currentUser.uid && !followingCache[p.userId] && !seenUsers.has(p.userId)) {
+                    seenUsers.add(p.userId);
+                    candidates.push({ userId: p.userId, userName: p.userName, userAvatar: p.userAvatar });
+                }
+            });
+
+            // Si no hay sugerencias, no mostrar nada
+            if (candidates.length === 0) return;
+
+            // Mezclar y tomar 5-10
+            candidates.sort(() => Math.random() - 0.5);
+            const suggestions = candidates.slice(0, 8);
+
+            const widget = document.createElement('div');
+            widget.className = 'suggestion-widget animate-enter';
+            
+            let cardsHtml = '';
+            suggestions.forEach(u => {
+                cardsHtml += `
+                    <div class="suggested-user-card" id="suggestion-card-${u.userId}">
+                        <div class="s-u-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></div>
+                        <img src="${u.userAvatar || 'https://placehold.co/100x100'}" class="s-u-avatar user-avatar-${u.userId}" onclick="goToProfile('${u.userId}')">
+                        <span class="s-u-name">${u.userName}</span>
+                        <button class="s-u-btn" onclick="toggleFollow('${u.userId}', this)">Seguir</button>
+                    </div>
+                `;
+            });
+
+            widget.innerHTML = `
+                <div class="suggestion-header">
+                    <span class="suggestion-title"><i class="fas fa-user-plus text-orange-500"></i> A quién seguir</span>
+                </div>
+                <div class="suggestion-scroll">
+                    ${cardsHtml}
+                </div>
+            `;
+            
+            container.appendChild(widget);
+            
+            // Actualizar avatares por si acaso
+            suggestions.forEach(u => updateUserAvatarInUI(u.userId));
+        }
+
+        // ================= FIN NUEVAS FUNCIONES =================
+
         const scrollObserver = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && currentRenderIndex < displayedPosts.length) setTimeout(() => loadMorePosts(), 500);
         }, { rootMargin: '100px' });
@@ -968,13 +1176,17 @@
                 delete followingCache[targetUid]; 
                 db.ref(`follows/${currentUser.uid}/${targetUid}`).remove();
                 db.ref(`followers/${targetUid}/${currentUser.uid}`).remove();
-                if(btn) { btn.classList.remove('following'); btn.classList.add('not-following'); btn.innerHTML = 'Seguir'; }
+                if(btn) { btn.classList.remove('following'); btn.classList.add('not-following'); btn.innerHTML = 'Seguir'; if(btn.classList.contains('s-u-btn')) btn.classList.remove('following'); }
             } else {
                 followingCache[targetUid] = true; 
                 db.ref(`follows/${currentUser.uid}/${targetUid}`).set(true);
                 db.ref(`followers/${targetUid}/${currentUser.uid}`).set(true);
                 sendNotification(targetUid, 'follow');
-                if(btn) { btn.classList.remove('not-following'); btn.classList.add('following'); btn.innerHTML = 'Siguiendo'; }
+                if(btn) { 
+                    btn.innerHTML = 'Siguiendo'; 
+                    btn.classList.add('following'); 
+                    if(!btn.classList.contains('s-u-btn')) { btn.classList.remove('not-following'); }
+                }
             }
         }
 
@@ -983,7 +1195,6 @@
             div.id = `post-card-${post.id}`;
             
             let textHtml = '';
-            // Mostrar texto y descripción generada
             if (post.text || post.descriptionTags) {
                 const fullText = (post.text || "") + (post.descriptionTags ? "\n\n" + post.descriptionTags : "");
                 if (fullText.length > 150) {
@@ -1082,7 +1293,6 @@
             document.getElementById('modal-image').src = imgToShow;
             document.getElementById('modal-title').textContent = post.title || 'Sin título';
             
-            // Mostrar también la descripción automática en el visor
             const fullDesc = (post.text || '') + (post.descriptionTags ? '\n\n' + post.descriptionTags : '');
             document.getElementById('modal-desc').innerHTML = fullDesc.replace(/#(\w+)/g, '<span class="text-orange-400 font-bold cursor-pointer hover:underline" onclick="filterByTagFromModal(\'$1\')">#$1</span>');
             
