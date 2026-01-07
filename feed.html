@@ -168,13 +168,24 @@
         .notif-badge { position: absolute; top: 0px; right: 0px; width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; border: 2px solid var(--bg-dark); box-shadow: 0 0 5px rgba(249, 115, 22, 0.8); animation: badgePulse 1.5s infinite ease-out; }
         @keyframes badgePulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
         
-        .notification-dropdown { position: fixed; top: 60px; right: 10px; left: 10px; max-width: 400px; margin: 0 auto; background: #1c1c1f; border: 1px solid var(--border-color); border-radius: 16px; z-index: 5000; box-shadow: 0 15px 50px rgba(0,0,0,0.9); max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: top right; transform: scale(0.95); }
-        .notification-dropdown.visible { max-height: 400px; opacity: 1; transform: scale(1); }
+        /* NOTIFICATIONS FIXED STYLE */
+        .notification-dropdown { 
+            position: fixed; top: 60px; right: 10px; left: 10px; max-width: 400px; margin: 0 auto; 
+            background: #1c1c1f; border: 1px solid var(--border-color); border-radius: 16px; 
+            z-index: 5000; box-shadow: 0 15px 50px rgba(0,0,0,0.9); 
+            max-height: 0; overflow: hidden; opacity: 0; 
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+            transform-origin: top right; transform: scale(0.95); 
+            display: flex; flex-direction: column;
+        }
+        .notification-dropdown.visible { max-height: 500px; opacity: 1; transform: scale(1); }
         
-        /* ADJUSTMENT FOR SCROLLABLE NOTIFICATIONS */
-        #notif-list { max-height: 350px; overflow-y: auto; padding-bottom: 10px; }
+        #notif-list { 
+            overflow-y: auto; padding-bottom: 10px; max-height: 400px;
+            display: flex; flex-direction: column;
+        }
 
-        .notif-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; cursor: pointer; transition: background 0.2s; background: transparent; }
+        .notif-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; cursor: pointer; transition: background 0.2s; background: transparent; flex-shrink: 0; }
         .notif-item.unread { background: rgba(249, 115, 22, 0.08); border-left: 3px solid var(--accent); }
         .notif-item.read { opacity: 0.7; }
         .notif-item:hover { background: rgba(255,255,255,0.05); }
@@ -300,7 +311,7 @@
                     </button>
                     <!-- NOTIFICACIONES (MEJORADO) -->
                     <div id="notification-dropdown" class="notification-dropdown custom-scrollbar">
-                        <div class="p-3 border-b border-white/5 flex justify-between items-center bg-[#18181b]">
+                        <div class="p-3 border-b border-white/5 flex justify-between items-center bg-[#18181b] flex-shrink-0">
                             <span class="text-sm font-bold text-white">Notificaciones</span>
                             <span class="text-[10px] text-gray-500">Recientes</span>
                         </div>
@@ -731,11 +742,11 @@
             });
         }
 
-        // --- SISTEMA DE NOTIFICACIONES CORREGIDO Y MEJORADO ---
+        // --- SISTEMA DE NOTIFICACIONES CORREGIDO (MULTIPLE & LAZY) ---
         function initNotificationSystem(uid) {
             const badge = document.getElementById('notif-badge');
             
-            // Listener para la ÚLTIMA notificación para controlar el badge
+            // Listener LIGERO: Solo escucha la ÚLTIMA notificación para controlar el badge
             db.ref('notifications/' + uid).orderByChild('timestamp').limitToLast(1).on('value', snap => {
                 if (!snap.exists()) {
                     badge.classList.add('hidden');
@@ -745,7 +756,7 @@
                 let lastNotif = null;
                 snap.forEach(child => { lastNotif = child.val(); });
 
-                // Comparar con lo visto localmente (aseguramos conversión a entero)
+                // Comparar con el timestamp guardado en localStorage
                 const lastSeenTimestamp = parseInt(localStorage.getItem('lastSeenNotif_' + uid) || '0');
 
                 if (lastNotif.timestamp > lastSeenTimestamp) {
@@ -764,11 +775,10 @@
                 dd.classList.remove('visible');
             } else {
                 dd.classList.add('visible');
-                // Al abrir, marcamos como visto todo hasta AHORA
+                // Al abrir, marcamos como visto visualmente y cargamos datos
                 if(currentUser) {
-                    localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now().toString());
-                    badge.classList.add('hidden'); // Ocultar badge visualmente inmediato
-                    loadNotifications(); // Cargar data
+                    badge.classList.add('hidden'); // Ocultar badge inmediatamente
+                    loadNotifications(); // Cargar la lista completa (Lazy Load)
                 }
             }
         }
@@ -777,11 +787,14 @@
             const list = document.getElementById('notif-list');
             list.innerHTML = '<div class="p-8 text-center text-gray-500 text-xs italic"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando...</div>';
 
-            // Cargar historial (Lazy), traemos 20
+            // Cargar historial bajo demanda (últimas 20)
             db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
                 list.innerHTML = '';
+                
                 if (!snap.exists()) {
                     list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones recientes.</div>';
+                    // Actualizar last seen para que no salga el punto rojo si estaba vacío
+                    localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now().toString());
                     return;
                 }
 
@@ -791,32 +804,38 @@
                 // Ordenar: Más nuevo arriba
                 notifs.sort((a, b) => b.timestamp - a.timestamp);
 
+                // Guardar el timestamp de la más nueva como "visto"
+                if (notifs.length > 0) {
+                    localStorage.setItem('lastSeenNotif_' + currentUser.uid, notifs[0].timestamp.toString());
+                }
+
                 notifs.forEach(n => {
                     const item = document.createElement('div');
-                    // Estilos
-                    const isUnread = !n.read; // Opcional, si queremos tracking de lectura individual en DB
+                    // Estilos visuales
+                    const isUnread = false; // Ya marcamos todo como visto al abrir, pero visualmente podemos destacar
                     item.className = `notif-item ${isUnread ? 'unread' : 'read'}`;
 
                     let icon = 'fas fa-bell';
                     let text = 'Nueva interacción';
                     let action = () => {};
 
-                    // Configurar contenido y acción según tipo
+                    // Lógica de clic robusta (usando closures implícitos de let)
                     if (n.type === 'like') {
                         icon = 'fas fa-heart text-red-500';
                         text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`;
-                        // IMPORTANTE: openMainViewerById usa el ID específico de ESTA notificación
+                        // Clic lleva a la FOTO específica
                         action = () => openMainViewerById(n.postId);
                     } else if (n.type === 'comment') {
                         icon = 'fas fa-comment text-blue-400';
                         text = `<b>${n.fromUserName}</b> comentó tu publicación.`;
+                        // Clic lleva a la FOTO específica
                         action = () => openMainViewerById(n.postId);
                     } else if (n.type === 'follow') {
                         icon = 'fas fa-user-plus text-green-400';
-                        text = `<b>${n.fromUserName}</b> empezó a seguirte.`;
-                        // IMPORTANTE: Redirige al perfil, no a una foto
+                        text = `<b>${n.fromUserName}</b> te ha seguido.`;
+                        // Clic lleva al PERFIL del usuario
                         action = () => goToProfile(n.fromUserId);
-                    } else if (n.type.startsWith('mention')) {
+                    } else if (n.type && n.type.startsWith('mention')) {
                         icon = 'fas fa-at text-orange-400';
                         text = `<b>${n.fromUserName}</b> te mencionó.`;
                         action = () => openMainViewerById(n.postId);
@@ -833,11 +852,7 @@
                     `;
 
                     item.onclick = () => {
-                        // Marcar leido en UI (opcional)
-                        item.classList.remove('unread');
-                        // Cerrar dropdown
                         document.getElementById('notification-dropdown').classList.remove('visible');
-                        // Ejecutar acción específica definida arriba
                         action();
                     };
 
@@ -846,16 +861,9 @@
             });
         }
         
-        function markAsRead(key, element) { 
-            db.ref(`notifications/${currentUser.uid}/${key}/read`).set(true); 
-            element.classList.remove('unread'); 
-            element.classList.add('read'); 
-            const dot = element.querySelector('.bg-orange-500'); 
-            if(dot) dot.remove(); 
-        }
-        
         function sendNotification(targetUid, type, postId = null) {
-            if (targetUid === currentUser.uid) return;
+            if (targetUid === currentUser.uid) return; // No auto-notificarse
+            
             const notifRef = db.ref(`notifications/${targetUid}`).push();
             notifRef.set({ 
                 type: type, 
