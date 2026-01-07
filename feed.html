@@ -39,7 +39,7 @@
         body { 
             font-family: var(--body-font); 
             background-image: radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.06) 0%, transparent 50%), 
-                              url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVDb2xvck1hdHJpeCBpbiA9ICJTb3VyY2VHcmFwaGljIiB0eXBlPSJtYXRyaXgiIHZhbHVlcz0iLjMzMzMgLjMzMzMgLjMzMzMgMCAwIC4zMzMzIC4zMzMzIC4zMzMzIDAgMCAuMzMzMyAuMzMzMyAuMzMzMyIDAgMCAwIDAgMCAxIDAiLz48ZmVDb2xvck1hdHJpeCBpbiA9ICJTb3VyY2VHcmFwaGljIiB0eXBlPSJtYXRyaXgiIHZhbHVlcz0iLjMzMzMgLjMzMzMgLjMzMzMgMCAwIC4zMzMzIC4zMzMzIC4zMzMzIDAgMCAuMzMzMyAuMzMzMyAuMzMzMyAwIDAgMCAwIDAgMSAwIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMwOTAwMGIiLz48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0idXJsKCNncmFkKSIvPjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSJ1cmwoI25vaXNlKSIvPjwvc3ZnPg==');
+                              url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVDb2xvck1hdHJpeCBpbiA9ICJTb3VyY2VHcmFwaGljIiB0eXBlPSJtYXRyaXgiIHZhbHVlcz0iLjMzMzMgLjMzMzMgLjMzMzMgMCAwIC4zMzMzIC4zMzMzIC4zMzMzIDAgMCAuMzMzMyAuMzMzMyAuMzMzMyAwIDAgMCAwIDAgMSAwIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMwOTAwMGIiLz48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0idXJsKCNncmFkKSIvPjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSJ1cmwoI25vaXNlKSIvPjwvc3ZnPg==');
             background-size: cover, 100px 100px; 
             background-blend-mode: overlay;
             color: #f3f4f6; padding-bottom: 90px; min-height: 100vh;
@@ -723,47 +723,157 @@
             });
         }
 
+        // ==========================================
+        // SISTEMA DE NOTIFICACIONES CORREGIDO
+        // ==========================================
+
         function initNotificationSystem(uid) {
             const badge = document.getElementById('notif-badge');
+            // Escuchar SOLO nuevas notificaciones añadidas en tiempo real
             db.ref('notifications/' + uid).orderByKey().limitToLast(1).on('child_added', snap => {
                 if(!snap.exists()) return;
                 const lastNotif = snap.val();
-                const lastSeenTimestamp = localStorage.getItem('lastSeenNotif_' + uid) || 0;
-                if (lastNotif.timestamp > lastSeenTimestamp) badge.classList.remove('hidden'); else badge.classList.add('hidden');
+                
+                // Comparar con la última vez que se abrió el panel
+                const lastSeenTimestamp = parseInt(localStorage.getItem('lastSeenNotif_' + uid) || '0');
+                
+                // Si la nueva notificación es posterior a la última revisión
+                if (lastNotif.timestamp > lastSeenTimestamp) {
+                    badge.classList.remove('hidden');
+                    // Opcional: Sonido o Toast visual breve
+                } else {
+                    badge.classList.add('hidden');
+                }
             });
         }
+
         function toggleNotifications() {
             const dd = document.getElementById('notification-dropdown');
             const badge = document.getElementById('notif-badge');
-            if (dd.classList.contains('visible')) { dd.classList.remove('visible'); } else { dd.classList.add('visible'); badge.classList.add('hidden'); if(currentUser) localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now()); loadNotifications(); }
+            
+            if (dd.classList.contains('visible')) {
+                // Cerrar
+                dd.classList.remove('visible');
+            } else {
+                // Abrir
+                dd.classList.add('visible');
+                
+                // OCULTAR PUNTO ROJO INMEDIATAMENTE
+                badge.classList.add('hidden');
+                
+                // Actualizar timestamp de "visto"
+                if(currentUser) {
+                    localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now().toString());
+                }
+                
+                // Cargar lista
+                loadNotifications();
+            }
         }
+
         function loadNotifications() {
             const list = document.getElementById('notif-list');
+            list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
+
             db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
-                list.innerHTML = '';
-                if (!snap.exists()) { list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones recientes.</div>'; return; }
-                const notifs = []; snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
+                list.innerHTML = ''; // Limpiar loader
+                
+                if (!snap.exists()) {
+                    list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones recientes.</div>';
+                    return;
+                }
+
+                const notifs = [];
+                snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
+                
+                // Mostrar de más nueva a más vieja
                 notifs.reverse().forEach(n => {
-                    const item = document.createElement('div'); const isUnread = !n.read; item.className = `notif-item ${isUnread ? 'unread' : 'read'}`; item.id = `notif-item-${n.key}`;
-                    let icon = 'fas fa-bell', text = 'Nueva interacción', linkFn = '';
-                    if (n.type === 'like') { icon = 'fas fa-heart text-red-500'; text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
-                    else if (n.type === 'comment') { icon = 'fas fa-comment text-blue-400'; text = `<b>${n.fromUserName}</b> comentó tu publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
-                    else if (n.type === 'follow') { icon = 'fas fa-user-plus text-green-400'; text = `<b>${n.fromUserName}</b> empezó a seguirte.`; linkFn = `goToProfile('${n.fromUserId}')`; }
-                    else if (n.type === 'mention_post') { icon = 'fas fa-at text-orange-400'; text = `<b>${n.fromUserName}</b> te mencionó en una publicación.`; linkFn = `openMainViewerById('${n.postId}')`; }
-                    else if (n.type === 'mention_comment') { icon = 'fas fa-at text-orange-400'; text = `<b>${n.fromUserName}</b> te mencionó en un comentario.`; linkFn = `openMainViewerById('${n.postId}')`; }
+                    const item = document.createElement('div');
+                    const isUnread = !n.read;
+                    item.className = `notif-item ${isUnread ? 'unread' : 'read'}`;
+                    item.id = `notif-item-${n.key}`;
+
+                    let icon = 'fas fa-bell';
+                    let text = 'Nueva interacción';
                     
-                    item.innerHTML = `<div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 flex-shrink-0"><i class="${icon}"></i></div><div class="flex-1 text-sm text-gray-300 leading-tight">${text} <br><span class="text-[10px] text-gray-500">${timeAgo(n.timestamp)}</span></div>${isUnread ? '<div class="w-2 h-2 rounded-full bg-orange-500"></div>' : ''}`;
-                    item.onclick = () => { markAsRead(n.key, item); eval(linkFn); document.getElementById('notification-dropdown').classList.remove('visible'); };
+                    // Configurar icono y texto según tipo
+                    if (n.type === 'like') {
+                        icon = 'fas fa-heart text-red-500';
+                        text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`;
+                    } else if (n.type === 'comment') {
+                        icon = 'fas fa-comment text-blue-400';
+                        text = `<b>${n.fromUserName}</b> comentó tu publicación.`;
+                    } else if (n.type === 'follow') {
+                        icon = 'fas fa-user-plus text-green-400';
+                        text = `<b>${n.fromUserName}</b> empezó a seguirte.`;
+                    } else if (n.type === 'mention_post') {
+                        icon = 'fas fa-at text-orange-400';
+                        text = `<b>${n.fromUserName}</b> te mencionó en un post.`;
+                    } else if (n.type === 'mention_comment') {
+                        icon = 'fas fa-at text-orange-400';
+                        text = `<b>${n.fromUserName}</b> te mencionó en un comentario.`;
+                    }
+                    
+                    item.innerHTML = `
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 flex-shrink-0">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="flex-1 text-sm text-gray-300 leading-tight">
+                            ${text} <br>
+                            <span class="text-[10px] text-gray-500">${timeAgo(n.timestamp)}</span>
+                        </div>
+                        ${isUnread ? '<div class="w-2 h-2 rounded-full bg-orange-500"></div>' : ''}
+                    `;
+
+                    // CLICK HANDLER: Redirección Inteligente
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        // Marcar como leída visualmente y en DB
+                        markAsRead(n.key, item);
+                        
+                        // Cerrar dropdown
+                        document.getElementById('notification-dropdown').classList.remove('visible');
+
+                        // Acciones según tipo
+                        if (n.type === 'follow') {
+                            // Ir al perfil del usuario
+                            goToProfile(n.fromUserId);
+                        } else if (n.postId) {
+                            // Abrir el post específico
+                            openMainViewerById(n.postId);
+                        }
+                    };
+                    
                     list.appendChild(item);
                 });
             });
         }
-        function markAsRead(key, element) { db.ref(`notifications/${currentUser.uid}/${key}/read`).set(true); element.classList.remove('unread'); element.classList.add('read'); const dot = element.querySelector('.bg-orange-500'); if(dot) dot.remove(); }
+
+        function markAsRead(key, element) {
+            db.ref(`notifications/${currentUser.uid}/${key}/read`).set(true);
+            element.classList.remove('unread');
+            element.classList.add('read');
+            const dot = element.querySelector('.bg-orange-500');
+            if(dot) dot.remove();
+        }
+
         function sendNotification(targetUid, type, postId = null) {
             if (targetUid === currentUser.uid) return;
+            
             const notifRef = db.ref(`notifications/${targetUid}`).push();
-            notifRef.set({ type: type, fromUserId: currentUser.uid, fromUserName: (currentUserData && currentUserData.username) ? currentUserData.username : 'Alguien', postId: postId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false });
+            notifRef.set({
+                type: type,
+                fromUserId: currentUser.uid,
+                fromUserName: (currentUserData && currentUserData.username) ? currentUserData.username : 'Alguien',
+                postId: postId, // IMPORTANTE: Guardamos el ID del post específico
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                read: false
+            });
         }
+        
+        // ==========================================
+        // FIN LÓGICA NOTIFICACIONES
+        // ==========================================
 
         function showToast(msg) { const t = document.getElementById('toast-container'); document.getElementById('toast-message').innerText = msg; t.classList.remove('opacity-0', 'translate-y-4'); setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3000); }
         function showAlert(msg) { document.getElementById('custom-alert-msg').innerText = msg; document.getElementById('custom-alert').classList.remove('hidden'); document.getElementById('custom-alert').classList.add('flex'); }
