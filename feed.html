@@ -52,10 +52,10 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Similar Slider Styles */
+        /* Similar Slider Styles (UPDATED FOR PORTRAIT & LARGER) */
         .similar-card {
-            min-width: 90px; width: 90px; aspect-ratio: 1/1;
-            border-radius: 0.5rem; overflow: hidden; position: relative;
+            min-width: 120px; width: 120px; aspect-ratio: 2/3; /* Portrait format */
+            border-radius: 0.75rem; overflow: hidden; position: relative;
             flex-shrink: 0; scroll-snap-align: start;
             border: 1px solid rgba(255,255,255,0.1); 
             transition: transform 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out;
@@ -1324,6 +1324,7 @@
             db.ref(`feed_likes/${post.id}/${uid}`).on('value', s => { if(s.exists()) { likeBtn.classList.add('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "fas fa-heart text-lg text-red-500 like-anim"; } else { likeBtn.classList.remove('text-red-500', 'bg-red-500/10', 'border-red-500/30'); likeBtn.querySelector('i').className = "far fa-heart text-lg text-gray-400"; } });
             db.ref(`feed_posts/${post.id}/likes`).on('value', s => likesCount.innerText = s.val() || 0);
             
+            // Usamos la nueva función con el algoritmo de pesos
             loadSimilarImagesInSlider(post.tags, post.id, post.characterName, post.userId);
 
             const commentsList = document.getElementById('modal-comments-list'); commentsList.innerHTML = '';
@@ -1335,27 +1336,114 @@
             document.getElementById('modal-next').style.display = (!isLastImg || !isLastPost) ? 'flex' : 'none';
         }
         
-        function loadSimilarImagesInSlider(tagsStr, currentId, currentCharacterName, currentUserId) {
-            const container = document.getElementById('similar-grid'); container.innerHTML = '';
-            const candidates = allPostsCache.filter(p => p.id !== currentId && (p.imageUrls || p.imageUrl));
-            if (candidates.length === 0) { container.innerHTML = '<span class="text-xs text-gray-500 italic px-2 self-center">No hay similares.</span>'; return; }
+        // --- FUNCIÓN DE PARSEO DE TAGS CON PESO ---
+        function parseWeightedTags(tagStr) {
+            const tags = {};
+            if (!tagStr) return tags;
 
-            const currentTags = tagsStr ? tagsStr.split(',').map(t => normalize(t)) : [];
+            // Normalizar: quitar saltos de línea y espacios extra
+            const normalized = tagStr.replace(/\n/g, ' ').trim();
+
+            // Detectar formato #(tag:score)
+            // Regex explicación: #\( captura #(, ([^:]+) captura el tag hasta los dos puntos, : captura los dos puntos, ([\d.]+) captura el numero, \) captura el cierre.
+            const regex = /#\(([^:]+):([\d.]+)\)/g;
+            let match;
+            let foundFormatted = false;
+
+            while ((match = regex.exec(normalized)) !== null) {
+                foundFormatted = true;
+                const tagName = normalize(match[1]); // Normalizar nombre del tag
+                const score = parseFloat(match[2]);
+                tags[tagName] = isNaN(score) ? 1.0 : score;
+            }
+
+            // Fallback para tags normales separados por comas si no se encontró el formato especial
+            if (!foundFormatted) {
+                const simpleTags = normalized.split(',');
+                simpleTags.forEach(t => {
+                    const clean = normalize(t.replace(/^#/, ''));
+                    if (clean) tags[clean] = 1.0;
+                });
+            }
+
+            return tags;
+        }
+
+        // --- ALGORITMO DE SIMILITUD ACTUALIZADO ---
+        function loadSimilarImagesInSlider(tagsStr, currentId, currentCharacterName, currentUserId) {
+            const container = document.getElementById('similar-grid'); 
+            container.innerHTML = '';
+
+            // Filtrar candidatos (excluyendo el post actual)
+            const candidates = allPostsCache.filter(p => p.id !== currentId && (p.imageUrls || p.imageUrl));
+            if (candidates.length === 0) { 
+                container.innerHTML = '<span class="text-xs text-gray-500 italic px-2 self-center">No hay similares.</span>'; 
+                return; 
+            }
+
+            // 1. Parsear los tags del post actual con sus pesos
+            const currentTagsMap = parseWeightedTags(tagsStr);
             const normCharName = normalize(currentCharacterName);
 
+            // 2. Calcular puntuación para cada candidato
             const scoredCandidates = candidates.map(p => {
                 let score = 0;
-                if (normCharName && p.characterName && normalize(p.characterName) === normCharName) { score += 100; if (p.userId !== currentUserId) score += 50; }
-                if (p.tags) { const pTags = p.tags.split(',').map(t => normalize(t)); const common = pTags.filter(t => currentTags.includes(t)); score += common.length; }
+
+                // A. Bonus por personaje (prioridad alta)
+                if (normCharName && p.characterName && normalize(p.characterName) === normCharName) { 
+                    score += 10; 
+                    if (p.userId !== currentUserId) score += 5; // Bonus por descubrir otros artistas
+                }
+
+                // B. Comparación de tags con pesos
+                const pTagsMap = parseWeightedTags(p.tags);
+                
+                // Iterar sobre los tags del post actual
+                Object.keys(currentTagsMap).forEach(tagName => {
+                    if (pTagsMap.hasOwnProperty(tagName)) {
+                        const w1 = currentTagsMap[tagName]; // Peso en el post actual
+                        const w2 = pTagsMap[tagName];     // Peso en el candidato
+                        
+                        // Factor de similitud de peso:
+                        // Si w1 = 1.0 y w2 = 1.0, diff = 0, similarity = 1.0
+                        // Si w1 = 1.0 y w2 = 0.5, diff = 0.5, similarity = 0.5
+                        const diff = Math.abs(w1 - w2);
+                        const similarity = Math.max(0, 1.0 - diff); 
+                        
+                        // Añadir al score. Multiplicamos por w1 para dar importancia a los tags
+                        // en los que la imagen original tiene alta confianza.
+                        score += (similarity * w1); 
+                        
+                        // Pequeño bonus base solo por coincidir, independientemente del peso
+                        score += 0.1;
+                    }
+                });
+
                 return { post: p, score: score };
             });
 
-            const finalResults = scoredCandidates.filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.post).slice(0, 15);
-            if (finalResults.length === 0) { container.innerHTML = '<span class="text-xs text-gray-500 italic px-2 self-center">No hay similares.</span>'; return; }
+            // 3. Filtrar y Ordenar
+            const finalResults = scoredCandidates
+                .filter(item => item.score > 0.5) // Umbral mínimo de similitud
+                .sort((a, b) => b.score - a.score)
+                .map(item => item.post)
+                .slice(0, 15);
+
+            if (finalResults.length === 0) { 
+                container.innerHTML = '<span class="text-xs text-gray-500 italic px-2 self-center">No hay similares.</span>'; 
+                return; 
+            }
+            
+            // Mostrar sección
             container.closest('.mb-6').style.display = 'block';
 
+            // 4. Renderizar (Ahora en formato Portrait)
             finalResults.forEach(post => {
-                const div = document.createElement('div'); div.className = "similar-card cursor-pointer group"; div.onclick = () => openMainViewerById(post.id, 0); 
+                const div = document.createElement('div'); 
+                // Clase modificada en CSS para ser portrait
+                div.className = "similar-card cursor-pointer group"; 
+                div.onclick = () => openMainViewerById(post.id, 0); 
+                
                 const imgUrl = (post.imageUrls && post.imageUrls.length > 0) ? post.imageUrls[0] : post.imageUrl;
                 div.innerHTML = `<img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover"><div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>`;
                 container.appendChild(div);
@@ -1413,11 +1501,8 @@
             }); 
         }
         
-        // --- CORRECCIÓN: Estado visual del like ---
         function checkLikeStatus(id) { 
             const uid = currentUser ? currentUser.uid : deviceID;
-            // Usamos un listener para asegurarnos que se actualice si cambia en otro lado,
-            // pero lo importante es que verifique la existencia al cargar.
             db.ref(`feed_likes/${id}/${uid}`).on('value', s => { 
                 const btn = document.getElementById(`like-btn-${id}`); 
                 if(btn) { 
@@ -1430,7 +1515,6 @@
                     } 
                 } 
             });
-            // Listener separado para el contador
             db.ref(`feed_posts/${id}/likes`).on('value', s => { 
                 const el = document.getElementById(`likes-count-${id}`); 
                 if(el) el.innerText = s.val() || 0; 
