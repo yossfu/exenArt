@@ -163,33 +163,6 @@
         .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3); }
         .toggle-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: #999; }
 
-        .notif-btn { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: #ccc; transition: all 0.2s; }
-        .notif-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
-        .notif-badge { position: absolute; top: 0px; right: 0px; width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; border: 2px solid var(--bg-dark); box-shadow: 0 0 5px rgba(249, 115, 22, 0.8); animation: badgePulse 1.5s infinite ease-out; }
-        @keyframes badgePulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
-        
-        /* NOTIFICATIONS FIXED STYLE */
-        .notification-dropdown { 
-            position: fixed; top: 60px; right: 10px; left: 10px; max-width: 400px; margin: 0 auto; 
-            background: #1c1c1f; border: 1px solid var(--border-color); border-radius: 16px; 
-            z-index: 5000; box-shadow: 0 15px 50px rgba(0,0,0,0.9); 
-            max-height: 0; overflow: hidden; opacity: 0; 
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
-            transform-origin: top right; transform: scale(0.95); 
-            display: flex; flex-direction: column;
-        }
-        .notification-dropdown.visible { max-height: 500px; opacity: 1; transform: scale(1); }
-        
-        #notif-list { 
-            overflow-y: auto; padding-bottom: 10px; max-height: 400px;
-            display: flex; flex-direction: column;
-        }
-
-        .notif-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; cursor: pointer; transition: background 0.2s; background: transparent; flex-shrink: 0; }
-        .notif-item.unread { background: rgba(249, 115, 22, 0.08); border-left: 3px solid var(--accent); }
-        .notif-item.read { opacity: 0.7; }
-        .notif-item:hover { background: rgba(255,255,255,0.05); }
-
         .follow-btn { padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; transition: all 0.2s; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid transparent; }
         .follow-btn.not-following { background: var(--accent); color: white; box-shadow: 0 2px 10px rgba(249, 115, 22, 0.3); }
         .follow-btn.following { background: transparent; border-color: #444; color: #888; }
@@ -304,23 +277,6 @@
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="relative">
-                    <button onclick="toggleNotifications()" class="notif-btn">
-                        <i class="far fa-bell text-lg"></i>
-                        <div id="notif-badge" class="notif-badge hidden"></div>
-                    </button>
-                    <!-- NOTIFICACIONES (MEJORADO) -->
-                    <div id="notification-dropdown" class="notification-dropdown custom-scrollbar">
-                        <div class="p-3 border-b border-white/5 flex justify-between items-center bg-[#18181b] flex-shrink-0">
-                            <span class="text-sm font-bold text-white">Notificaciones</span>
-                            <span class="text-[10px] text-gray-500">Recientes</span>
-                        </div>
-                        <div id="notif-list" class="flex flex-col custom-scrollbar">
-                            <div class="p-8 text-center text-gray-500 text-xs italic"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando...</div>
-                        </div>
-                    </div>
-                </div>
-
                 <a href="profile.html" onclick="return requireLogin(event)" class="w-9 h-9 rounded-full overflow-hidden border border-zinc-600 block relative active:scale-90 transition">
                     <img id="current-user-avatar" src="https://placehold.co/100x100/333/fff?text=U" class="w-full h-full object-cover">
                 </a>
@@ -644,9 +600,6 @@
                     initFeedOnce(); 
                 });
                 
-                // INICIAR NOTIFICACIONES CON USUARIO
-                initNotificationSystem(user.uid);
-                
                 loadUserCollectionsSelect();
                 initCharacterStatsListener();
                 cacheAllUsers(); 
@@ -726,152 +679,6 @@
                     return `<span class="mention-link" onclick="goToProfile('${found.uid}')">@${username}</span>`;
                 }
                 return match;
-            });
-        }
-
-        function checkAndNotifyMentions(text, contentId, type) {
-            const mentions = text.match(/@(\w+)/g);
-            if (!mentions) return;
-            const uniqueMentions = [...new Set(mentions)];
-            uniqueMentions.forEach(m => {
-                const username = m.substring(1).toLowerCase();
-                const user = allUsersCache.find(u => u.username.toLowerCase() === username);
-                if (user && user.uid !== currentUser.uid) {
-                    sendNotification(user.uid, type, contentId);
-                }
-            });
-        }
-
-        // --- SISTEMA DE NOTIFICACIONES CORREGIDO (MULTIPLE & LAZY) ---
-        function initNotificationSystem(uid) {
-            const badge = document.getElementById('notif-badge');
-            
-            // Listener LIGERO: Solo escucha la ÚLTIMA notificación para controlar el badge
-            db.ref('notifications/' + uid).orderByChild('timestamp').limitToLast(1).on('value', snap => {
-                if (!snap.exists()) {
-                    badge.classList.add('hidden');
-                    return;
-                }
-
-                let lastNotif = null;
-                snap.forEach(child => { lastNotif = child.val(); });
-
-                // Comparar con el timestamp guardado en localStorage
-                const lastSeenTimestamp = parseInt(localStorage.getItem('lastSeenNotif_' + uid) || '0');
-
-                if (lastNotif.timestamp > lastSeenTimestamp) {
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
-            });
-        }
-
-        function toggleNotifications() {
-            const dd = document.getElementById('notification-dropdown');
-            const badge = document.getElementById('notif-badge');
-
-            if (dd.classList.contains('visible')) {
-                dd.classList.remove('visible');
-            } else {
-                dd.classList.add('visible');
-                // Al abrir, marcamos como visto visualmente y cargamos datos
-                if(currentUser) {
-                    badge.classList.add('hidden'); // Ocultar badge inmediatamente
-                    loadNotifications(); // Cargar la lista completa (Lazy Load)
-                }
-            }
-        }
-
-        function loadNotifications() {
-            const list = document.getElementById('notif-list');
-            list.innerHTML = '<div class="p-8 text-center text-gray-500 text-xs italic"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando...</div>';
-
-            // Cargar historial bajo demanda (últimas 20)
-            db.ref(`notifications/${currentUser.uid}`).orderByChild('timestamp').limitToLast(20).once('value', snap => {
-                list.innerHTML = '';
-                
-                if (!snap.exists()) {
-                    list.innerHTML = '<div class="p-6 text-center text-gray-500 text-xs">No tienes notificaciones recientes.</div>';
-                    // Actualizar last seen para que no salga el punto rojo si estaba vacío
-                    localStorage.setItem('lastSeenNotif_' + currentUser.uid, Date.now().toString());
-                    return;
-                }
-
-                const notifs = [];
-                snap.forEach(c => notifs.push({key: c.key, ...c.val()}));
-
-                // Ordenar: Más nuevo arriba
-                notifs.sort((a, b) => b.timestamp - a.timestamp);
-
-                // Guardar el timestamp de la más nueva como "visto"
-                if (notifs.length > 0) {
-                    localStorage.setItem('lastSeenNotif_' + currentUser.uid, notifs[0].timestamp.toString());
-                }
-
-                notifs.forEach(n => {
-                    const item = document.createElement('div');
-                    // Estilos visuales
-                    const isUnread = false; // Ya marcamos todo como visto al abrir, pero visualmente podemos destacar
-                    item.className = `notif-item ${isUnread ? 'unread' : 'read'}`;
-
-                    let icon = 'fas fa-bell';
-                    let text = 'Nueva interacción';
-                    let action = () => {};
-
-                    // Lógica de clic robusta (usando closures implícitos de let)
-                    if (n.type === 'like') {
-                        icon = 'fas fa-heart text-red-500';
-                        text = `A <b>${n.fromUserName}</b> le gusta tu publicación.`;
-                        // Clic lleva a la FOTO específica
-                        action = () => openMainViewerById(n.postId);
-                    } else if (n.type === 'comment') {
-                        icon = 'fas fa-comment text-blue-400';
-                        text = `<b>${n.fromUserName}</b> comentó tu publicación.`;
-                        // Clic lleva a la FOTO específica
-                        action = () => openMainViewerById(n.postId);
-                    } else if (n.type === 'follow') {
-                        icon = 'fas fa-user-plus text-green-400';
-                        text = `<b>${n.fromUserName}</b> te ha seguido.`;
-                        // Clic lleva al PERFIL del usuario
-                        action = () => goToProfile(n.fromUserId);
-                    } else if (n.type && n.type.startsWith('mention')) {
-                        icon = 'fas fa-at text-orange-400';
-                        text = `<b>${n.fromUserName}</b> te mencionó.`;
-                        action = () => openMainViewerById(n.postId);
-                    }
-
-                    item.innerHTML = `
-                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 flex-shrink-0">
-                            <i class="${icon}"></i>
-                        </div>
-                        <div class="flex-1 text-sm text-gray-300 leading-tight">
-                            ${text} <br>
-                            <span class="text-[10px] text-gray-500">${timeAgo(n.timestamp)}</span>
-                        </div>
-                    `;
-
-                    item.onclick = () => {
-                        document.getElementById('notification-dropdown').classList.remove('visible');
-                        action();
-                    };
-
-                    list.appendChild(item);
-                });
-            });
-        }
-        
-        function sendNotification(targetUid, type, postId = null) {
-            if (targetUid === currentUser.uid) return; // No auto-notificarse
-            
-            const notifRef = db.ref(`notifications/${targetUid}`).push();
-            notifRef.set({ 
-                type: type, 
-                fromUserId: currentUser.uid, 
-                fromUserName: (currentUserData && currentUserData.username) ? currentUserData.username : 'Alguien', 
-                postId: postId, 
-                timestamp: firebase.database.ServerValue.TIMESTAMP, 
-                read: false 
             });
         }
 
@@ -1049,9 +856,6 @@
                 const localPost = { ...postData, id: newPostId, timestamp: Date.now() }; 
                 allPostsCache.unshift(localPost);
                 applyFiltersAndRender(); 
-                
-                // NOTIFICACIONES DE MENCIONES
-                checkAndNotifyMentions(text, newPostId, 'mention_post');
                 
                 if (characterName) {
                     const normalizedChar = characterName.toLowerCase().replace(/[.#$\[\]]/g, ""); 
@@ -1294,7 +1098,6 @@
                 followingCache[targetUid] = true; 
                 db.ref(`follows/${currentUser.uid}/${targetUid}`).set(true);
                 db.ref(`followers/${targetUid}/${currentUser.uid}`).set(true);
-                sendNotification(targetUid, 'follow');
                 if(btn) { 
                     btn.innerHTML = 'Siguiendo'; 
                     btn.classList.add('following'); 
@@ -1397,7 +1200,7 @@
                 if (index !== -1) {
                     sourceList = allPostsCache; 
                 } else {
-                    // Not found in cache, fetch from DB (CORRECCIÓN CRÍTICA PARA NOTIFICACIONES)
+                    // Not found in cache, fetch from DB
                     showToast("Cargando publicación...");
                     
                     try {
@@ -1625,8 +1428,7 @@
         function selectCustomOption(containerId, value, displayText) { const container = document.getElementById(containerId); container.querySelector('input[type="hidden"]').value = value; container.querySelector('.custom-select-trigger span').innerHTML = displayText; container.querySelector('.custom-select-trigger').classList.remove('active'); container.querySelector('.custom-select-options').classList.remove('show'); if (containerId === 'dropdown-collection') toggleCollectionInput(); }
         function changeSortOrder(value, displayText) { currentSortOrder = value; const container = document.getElementById('dropdown-sort'); container.querySelector('#display-sort').innerText = displayText; toggleCustomSelect('dropdown-sort'); applyFiltersAndRender(); }
         window.addEventListener('click', function(e) { if (!e.target.closest('.custom-select-container')) { document.querySelectorAll('.custom-select-options.show').forEach(el => { el.classList.remove('show'); el.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); }); } });
-        window.addEventListener('click', function(e) { if (!e.target.closest('.relative') || e.target.closest('.notif-item')) { const d = document.getElementById('notification-dropdown'); if(d && !e.target.closest('.notif-btn')) d.classList.remove('visible'); } });
-
+        
         function loadUserCollectionsSelect() { if (!currentUser) return; db.ref('collections/' + currentUser.uid).on('value', snap => { let html = `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '', '<i class=\\'fas fa-folder mr-2 text-xs text-orange-500\\'></i> Álbum')">Ningún Álbum</div><div class="option-item special-option" onclick="selectCustomOption('dropdown-collection', 'new', '➕ Crear Nueva Colección...')">➕ Crear Nueva Colección...</div>`; snap.forEach(child => { html += `<div class="option-item" onclick="selectCustomOption('dropdown-collection', '${child.key}', '📁 ${child.val().name}')">📁 ${child.val().name}</div>`; }); const el = document.getElementById('collection-options-list'); if(el) el.innerHTML = html; }); }
         function toggleCollectionInput() { const v = document.getElementById('post-collection').value; const c = document.getElementById('new-collection-container'); if(v==='new') c.classList.remove('hidden'); else c.classList.add('hidden'); }
         async function updateCollectionPreviews(uid, cid, url) { if(!cid||cid==='new'||!url)return; const r=db.ref(`collections/${uid}/${cid}/previews`); await r.transaction(l=>{ l=l||[]; if(!Array.isArray(l))l=[]; l.unshift(url); return l.slice(0,4); }); db.ref(`collections/${uid}/${cid}/cover`).set(url); }
@@ -1648,7 +1450,7 @@
             const ref = db.ref(`feed_likes/${id}/${uid}`); 
             ref.once('value', s => { 
                 if(s.exists()) { ref.remove(); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||1)-1); } 
-                else { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); sendNotification(postOwnerId, 'like', id); } 
+                else { ref.set(true); db.ref(`feed_posts/${id}/likes`).transaction(c => (c||0)+1); } 
             }); 
         }
         
@@ -1672,7 +1474,24 @@
             }); 
         }
 
-        function checkCommentStatus(id) { db.ref(`feed_comments/${id}`).on('value', s => { const c = s.numChildren(); const el = document.getElementById(`comments-count-${id}`); if(el) { el.innerText = c || 0; if(c>0) el.classList.add('text-white'); else el.classList.remove('text-white'); } }); }
+        function checkCommentStatus(id) { 
+            // CAMBIO: Modo Lazy - Usar once() en lugar de on() para reducir escuchas y solo actualizar al renderizar
+            db.ref(`feed_comments/${id}`).once('value').then(s => { 
+                const c = s.numChildren(); 
+                // Pequeño timeout para asegurar que el DOM ya tiene el elemento tras el append
+                setTimeout(() => {
+                    const el = document.getElementById(`comments-count-${id}`); 
+                    if(el) { 
+                        el.innerText = c || 0; 
+                        if(c>0) el.classList.add('text-white'); 
+                        else el.classList.remove('text-white'); 
+                    }
+                }, 0);
+            }); 
+        }
+
+        function checkCommentStatusLive(id) { db.ref(`feed_comments/${id}`).on('value', s => { const c = s.numChildren(); const el = document.getElementById(`comments-count-${id}`); if(el) { el.innerText = c || 0; if(c>0) el.classList.add('text-white'); else el.classList.remove('text-white'); } }); }
+        
         function toggleComments(id) { const el = document.getElementById(`comments-${id}`); if(el.classList.contains('hidden')) { el.classList.remove('hidden'); db.ref(`feed_comments/${id}`).off(); document.getElementById(`comments-list-${id}`).innerHTML = ''; db.ref(`feed_comments/${id}`).on('child_added', s => { const c = s.val(); const div = document.createElement('div'); div.className = "flex gap-2 items-start text-sm animate-enter"; div.innerHTML = `<img src="${c.userAvatar}" class="w-6 h-6 rounded-full mt-1 border border-zinc-700 object-cover cursor-pointer" onclick="goToProfile('${c.userId}')"><div class="bg-zinc-800 p-2.5 rounded-2xl rounded-tl-none"><span class="font-bold text-gray-300 block text-xs mb-0.5 cursor-pointer hover:text-orange-400" onclick="goToProfile('${c.userId}')">${c.userName}</span><span class="text-gray-200 font-light">${processTextWithMentions(c.text)}</span></div>`; document.getElementById(`comments-list-${id}`).appendChild(div); }); } else el.classList.add('hidden'); }
         
         function postComment(e, id, postOwnerId) { 
@@ -1682,10 +1501,6 @@
             const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; 
             db.ref(`feed_comments/${id}`).push({ text:input.value, userId:currentUser.uid, userName:uN, userAvatar:uA, timestamp:Date.now() }); 
             
-            // Notificar menciones en comentario
-            checkAndNotifyMentions(input.value, id, 'mention_comment');
-            // Notificar al dueño si no es él mismo
-            sendNotification(postOwnerId, 'comment', id); 
             input.value=''; 
         }
         function postCommentInModal(e) { 
@@ -1695,8 +1510,6 @@
             const uA = (currentUserData&&currentUserData.profilePic)?currentUserData.profilePic:'https://placehold.co/100x100/333/fff?text=U'; 
             db.ref(`feed_comments/${post.id}`).push({ text:input.value, userId:currentUser.uid, userName:uN, userAvatar:uA, timestamp:Date.now() }); 
             
-            checkAndNotifyMentions(input.value, post.id, 'mention_comment');
-            sendNotification(post.userId, 'comment', post.id); 
             input.value=''; 
         }
         function updateUserAvatarInUI(uid) { if(!userProfileCache[uid]) db.ref(`users/${uid}/profilePic`).once('value', s => { const url = s.val()||'https://placehold.co/100x100/333/fff?text=U'; userProfileCache[uid]=url; document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = url); }); else document.querySelectorAll(`.user-avatar-${uid}`).forEach(i => i.src = userProfileCache[uid]); }
