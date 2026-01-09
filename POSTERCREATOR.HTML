@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Script para convertir HTML a Imagen -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <style>
         body {
@@ -37,6 +39,13 @@
             margin-bottom: 15px;
         }
 
+        /* Contenedor de controles (botones) */
+        .controls-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
         .poster-container {
             width: 400px;
             height: 600px;
@@ -50,6 +59,8 @@
             justify-content: flex-end;
             align-items: center;
             padding: 0;
+            /* Importante para html2canvas: asegurar que el fondo sea renderizado correctamente */
+            transform: translateZ(0); 
         }
 
         .poster-canvas {
@@ -102,7 +113,7 @@
             z-index: 3;
         }
 
-        /* --- NUEVO ESTILO PARA EL QR --- */
+        /* --- ESTILO PARA EL QR --- */
         .qr-watermark {
             position: absolute;
             top: 25px;
@@ -226,7 +237,7 @@
             margin-bottom: 10px;
         }
 
-        /* Botón de carga */
+        /* Botones */
         .upload-btn {
             background-color: #333 !important;
             color: #fff !important;
@@ -236,9 +247,39 @@
             text-transform: uppercase;
             letter-spacing: 0.8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: inline-flex;
+            align-items: center;
+            height: 36px;
+            line-height: 36px;
+        }
+        .upload-btn i {
+            margin-right: 8px;
         }
         .upload-btn:hover {
             background-color: #555 !important;
+        }
+
+        .download-btn {
+            background-color: #E60023 !important;
+            color: #fff !important;
+            border-radius: 3px;
+            padding: 0 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: inline-flex;
+            align-items: center;
+            height: 36px;
+            line-height: 36px;
+        }
+        .download-btn:hover {
+            background-color: #ff1a3c !important;
+        }
+
+        /* Estilo para cuando se está descargando/cargando */
+        .downloading .poster-container {
+            cursor: wait;
         }
     </style>
 </head>
@@ -247,14 +288,18 @@
     <div class="app-wrapper">
         <h5 class="center-align title">Generador de Póster</h5>
         
-        <div class="file-input center-align">
+        <div class="controls-container">
             <label class="waves-effect waves-light btn upload-btn z-depth-1">
-                <i class="material-icons left">wallpaper</i> Cargar Imagen
+                <i class="material-icons">wallpaper</i> Cargar
                 <input type="file" id="photo-input" accept="image/*" style="display: none;">
             </label>
+            
+            <button id="download-btn" class="waves-effect waves-light btn download-btn z-depth-1">
+                <i class="material-icons left">file_download</i> Descargar
+            </button>
         </div>
 
-        <div class="poster-container card">
+        <div class="poster-container card" id="capture-target">
             <canvas id="poster-canvas" class="poster-canvas" width="400" height="600"></canvas>
             <div class="gradient-overlay"></div>
             
@@ -265,8 +310,8 @@
 
             <span class="brand-logo">EXEN</span>
 
-            <!-- AQUÍ ESTÁ EL CÓDIGO QR NUEVO -->
-            <img src="https://files.catbox.moe/s5kefv.png" alt="QR Code" class="qr-watermark">
+            <!-- AQUÍ ESTÁ EL CÓDIGO QR -->
+            <img src="https://files.catbox.moe/s5kefv.png" alt="QR Code" class="qr-watermark" crossorigin="anonymous">
 
             <div class="content-area">
                 <div style="flex-grow: 1;"></div> 
@@ -296,11 +341,12 @@
             const canvas = document.getElementById('poster-canvas');
             const ctx = canvas.getContext('2d');
             const placeholder = document.querySelector('.placeholder');
+            const downloadBtn = document.getElementById('download-btn');
             
             // Función para dibujar la imagen en el canvas
             function drawImageOnCanvas(imgSrc) {
                 const img = new Image();
-                img.crossOrigin = "Anonymous"; // Importante para evitar problemas de CORS si se guarda el canvas
+                img.crossOrigin = "Anonymous"; // Importante para evitar problemas de CORS
                 img.onload = function() {
                     const canvasRatio = canvas.width / canvas.height;
                     const imgRatio = img.width / img.height;
@@ -322,6 +368,9 @@
                     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
                     placeholder.style.display = 'none';
                 };
+                img.onerror = function() {
+                    M.toast({html: 'Error al cargar la imagen. Intenta con otra.', classes: 'red'});
+                };
                 img.src = imgSrc;
             }
 
@@ -341,6 +390,43 @@
 
             document.querySelector('.editable-text').addEventListener('dblclick', function() {
                 this.focus();
+            });
+
+            // --- Lógica de Descarga ---
+            downloadBtn.addEventListener('click', function() {
+                const elementToCapture = document.getElementById('capture-target');
+                
+                // Feedback visual de carga
+                const originalText = downloadBtn.innerHTML;
+                downloadBtn.innerHTML = '<i class="material-icons left">hourglass_empty</i> Procesando...';
+                downloadBtn.classList.add('disabled');
+                document.body.classList.add('downloading');
+
+                html2canvas(elementToCapture, {
+                    scale: 2, // Mejor resolución (Retina)
+                    useCORS: true, // Permitir imágenes externas (si el servidor lo permite)
+                    backgroundColor: null, // Fondo transparente si lo hubiera
+                    logging: false
+                }).then(canvas => {
+                    // Crear un enlace temporal
+                    const link = document.createElement('a');
+                    link.download = 'poster_exen.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+
+                    // Restaurar botón
+                    downloadBtn.innerHTML = originalText;
+                    downloadBtn.classList.remove('disabled');
+                    document.body.classList.remove('downloading');
+                    
+                    M.toast({html: '¡Póster descargado!', classes: 'green darken-1'});
+                }).catch(err => {
+                    console.error('Error al descargar:', err);
+                    downloadBtn.innerHTML = originalText;
+                    downloadBtn.classList.remove('disabled');
+                    document.body.classList.remove('downloading');
+                    M.toast({html: 'Hubo un error al generar la imagen.', classes: 'red'});
+                });
             });
         });
     </script>
